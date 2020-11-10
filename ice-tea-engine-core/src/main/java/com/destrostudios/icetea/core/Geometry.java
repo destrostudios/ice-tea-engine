@@ -2,7 +2,7 @@ package com.destrostudios.icetea.core;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.joml.Quaternionf;
+import org.joml.Quaternionfc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.PointerBuffer;
@@ -31,7 +31,7 @@ public class Geometry {
     private Transform localTransform = new Transform();
     @Getter
     private Transform worldTransform = new Transform();
-    private boolean worldTransformUpdateRequired;
+    private boolean isWorldTransformOutdated;
     @Getter
     private int[] indices;
     @Getter
@@ -350,27 +350,37 @@ public class Geometry {
         cleanupDescriptorSets();
     }
 
-    public void move(Vector3fc translation) {
-        localTransform.getTranslation().add(translation);
-        worldTransformUpdateRequired = true;
+    public void setLocalTranslation(Vector3fc translation) {
+        localTransform.setTranslation(translation);
     }
 
-    public void rotate(Quaternionf rotation) {
-        localTransform.getQuaternion().mul(rotation);
-        worldTransformUpdateRequired = true;
+    public void setLocalRotation(Quaternionfc rotation) {
+        localTransform.setRotation(rotation);
+    }
+
+    public void setLocalScale(Vector3fc scale) {
+        localTransform.setScale(scale);
+    }
+
+    public void move(Vector3fc translation) {
+        localTransform.move(translation);
+    }
+
+    public void rotate(Quaternionfc rotation) {
+        localTransform.rotate(rotation);
     }
 
     public void scale(Vector3fc scale) {
-        localTransform.getScale().mul(scale);
-        worldTransformUpdateRequired = true;
+        localTransform.scale(scale);
     }
 
-    public void updateWorldTransformIfNeeded() {
-        if (worldTransformUpdateRequired) {
-            worldTransform.getTranslation().set(localTransform.getTranslation());
-            worldTransform.getQuaternion().set(localTransform.getQuaternion());
-            worldTransform.getScale().set(localTransform.getScale());
-            worldTransformUpdateRequired = false;
+    public void update() {
+        if (localTransform.updateMatrixIfNecessary()) {
+            isWorldTransformOutdated = true;
+        }
+        if (isWorldTransformOutdated) {
+            worldTransform.set(localTransform);
+            isWorldTransformOutdated = false;
         }
     }
 }
