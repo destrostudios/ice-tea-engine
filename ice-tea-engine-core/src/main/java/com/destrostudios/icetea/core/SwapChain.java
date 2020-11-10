@@ -23,7 +23,6 @@ import static org.lwjgl.vulkan.VK10.*;
 public class SwapChain {
 
     private Application application;
-    private Geometry geometry;
     @Getter
     private VkExtent2D extent;
     @Getter
@@ -34,7 +33,6 @@ public class SwapChain {
     private List<Long> imageViews;
     @Getter
     private long renderPass;
-    private GraphicsPipeline graphicsPipeline;
     private long colorImage;
     private long colorImageMemory;
     private long colorImageView;
@@ -58,21 +56,19 @@ public class SwapChain {
         }
         vkDeviceWaitIdle(application.getLogicalDevice());
         cleanup();
-        init(application, geometry);
+        init(application);
     }
 
-    public void init(Application application, Geometry geometry) {
+    public void init(Application application) {
         this.application = application;
-        this.geometry = geometry;
         initSwapChain();
         initImageViews();
         initRenderPass();
-        initGraphicsPipeline();
         initColorResources();
         initDepthResources();
         initFrameBuffers();
         initDescriptorPool();
-        initGeometry();
+        initGeometries();
         initCommandBuffers();
     }
 
@@ -279,10 +275,6 @@ public class SwapChain {
         throw new RuntimeException("Failed to find supported format");
     }
 
-    private void initGraphicsPipeline() {
-        graphicsPipeline = new GraphicsPipeline(application, geometry);
-    }
-
     private void initColorResources() {
         try (MemoryStack stack = stackPush()) {
             LongBuffer pColorImage = stack.mallocLong(1);
@@ -362,29 +354,35 @@ public class SwapChain {
         try (MemoryStack stack = stackPush()) {
             VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(2, stack);
 
+            // TODO: Has to be dynamic at some point, currently the scene is fixed
+            int descriptorSetsCount = application.getGeometries().size() * images.size();
+
             VkDescriptorPoolSize uniformBufferPoolSize = poolSizes.get(0);
             uniformBufferPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            uniformBufferPoolSize.descriptorCount(images.size());
+            uniformBufferPoolSize.descriptorCount(descriptorSetsCount);
 
             VkDescriptorPoolSize textureSamplerPoolSize = poolSizes.get(1);
             textureSamplerPoolSize.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            textureSamplerPoolSize.descriptorCount(images.size());
+            textureSamplerPoolSize.descriptorCount(descriptorSetsCount);
 
-            VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.callocStack(stack);
-            poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
-            poolInfo.pPoolSizes(poolSizes);
-            poolInfo.maxSets(images.size());
+            VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.callocStack(stack);
+            poolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+            poolCreateInfo.pPoolSizes(poolSizes);
+            poolCreateInfo.maxSets(descriptorSetsCount);
 
             LongBuffer pDescriptorPool = stack.mallocLong(1);
-            if (vkCreateDescriptorPool(application.getLogicalDevice(), poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
+            if (vkCreateDescriptorPool(application.getLogicalDevice(), poolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create descriptor pool");
             }
             descriptorPool = pDescriptorPool.get(0);
         }
     }
 
-    private void initGeometry() {
-        geometry.onSwapChainCreation();
+    private void initGeometries() {
+        for (Geometry geometry : application.getGeometries()) {
+            geometry.initGraphicsPipeline();
+            geometry.onSwapChainCreation();
+        }
     }
 
     private void initCommandBuffers() {
@@ -431,14 +429,16 @@ public class SwapChain {
                 renderPassBeginInfo.framebuffer(framebuffers.get(i));
                 vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-                // TODO: This is currently only for one geometry
-                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipeline());
-                LongBuffer vertexBuffers = stack.longs(geometry.getVertexBuffer());
-                LongBuffer offsets = stack.longs(0);
-                vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                vkCmdBindIndexBuffer(commandBuffer, geometry.getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayout(), 0, stack.longs(geometry.getDescriptorSets().get(i)), null);
-                vkCmdDrawIndexed(commandBuffer, geometry.getIndices().length, 1, 0, 0, 0);
+                for (Geometry geometry : application.getGeometries()) {
+                    GraphicsPipeline graphicsPipeline = geometry.getGraphicsPipeline();
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipeline());
+                    LongBuffer vertexBuffers = stack.longs(geometry.getVertexBuffer());
+                    LongBuffer offsets = stack.longs(0);
+                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                    vkCmdBindIndexBuffer(commandBuffer, geometry.getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayout(), 0, stack.longs(geometry.getDescriptorSets().get(i)), null);
+                    vkCmdDrawIndexed(commandBuffer, geometry.getIndices().length, 1, 0, 0, 0);
+                }
 
                 vkCmdEndRenderPass(commandBuffer);
                 if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -457,7 +457,9 @@ public class SwapChain {
         vkDestroyImage(application.getLogicalDevice(), depthImage, null);
         vkFreeMemory(application.getLogicalDevice(), depthImageMemory, null);
 
-        geometry.cleanupSwapChainDependencies();
+        for (Geometry geometry : application.getGeometries()) {
+            geometry.cleanupSwapChainDependencies();
+        }
 
         vkDestroyDescriptorPool(application.getLogicalDevice(), descriptorPool, null);
 
@@ -465,9 +467,11 @@ public class SwapChain {
 
         vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers));
 
-        vkDestroyPipeline(application.getLogicalDevice(), graphicsPipeline.getGraphicsPipeline(), null);
-
-        vkDestroyPipelineLayout(application.getLogicalDevice(), graphicsPipeline.getPipelineLayout(), null);
+        for (Geometry geometry : application.getGeometries()) {
+            GraphicsPipeline graphicsPipeline = geometry.getGraphicsPipeline();
+            vkDestroyPipeline(application.getLogicalDevice(), graphicsPipeline.getGraphicsPipeline(), null);
+            vkDestroyPipelineLayout(application.getLogicalDevice(), graphicsPipeline.getPipelineLayout(), null);
+        }
 
         vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
 

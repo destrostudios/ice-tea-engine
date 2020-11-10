@@ -1,6 +1,10 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
+import org.joml.AxisAngle4f;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -57,7 +61,8 @@ public class Application {
     @Getter
     private SwapChain swapChain;
 
-    private Geometry geometry;
+    @Getter
+    private List<Geometry> geometries;
 
     private List<Frame> inFlightFrames;
     private Map<Integer, Frame> imagesInFlight;
@@ -80,15 +85,32 @@ public class Application {
         initLogicalDevice();
         initCommandPool();
 
-        geometry = new Geometry();
-        geometry.loadModel("models/chalet.obj");
-        Material material = new Material();
-        material.setVertexShaderFile("shaders/my_shader.vert");
-        material.setFragmentShaderFile("shaders/my_shader.frag");
-        Texture texture = new Texture(this, "textures/chalet.jpg");
-        material.setTexture(texture);
-        geometry.setMaterial(material);
-        geometry.init(this);
+        geometries = new LinkedList<>();
+
+        Geometry geometry1 = new Geometry();
+        geometry1.loadModel("models/chalet.obj");
+        Material material1 = new Material();
+        material1.setVertexShaderFile("shaders/my_shader.vert");
+        material1.setFragmentShaderFile("shaders/my_shader.frag");
+        Texture texture1 = new Texture(this, "textures/chalet.jpg");
+        material1.setTexture(texture1);
+        geometry1.setMaterial(material1);
+        geometry1.init(this);
+        geometry1.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
+        geometry1.move(new Vector3f(1.5f, 0, 0));
+        geometry1.scale(new Vector3f(0.5f, 0.5f, 1));
+        geometries.add(geometry1);
+
+        Geometry geometry2 = new Geometry();
+        geometry2.loadModel("models/chalet.obj");
+        Material material2 = new Material();
+        material2.setVertexShaderFile("shaders/my_shader.vert");
+        material2.setFragmentShaderFile("shaders/my_shader.frag");
+        Texture texture2 = new Texture(this, "textures/chalet.jpg");
+        material2.setTexture(texture2);
+        geometry2.setMaterial(material2);
+        geometry2.init(this);
+        geometries.add(geometry2);
 
         initSwapChain();
         initSyncObjects();
@@ -103,10 +125,10 @@ public class Application {
         if (window == NULL) {
             throw new RuntimeException("Cannot create window");
         }
-        glfwSetFramebufferSizeCallback(window, this::framebufferResizeCallback);
+        glfwSetFramebufferSizeCallback(window, this::onFrameBufferResized);
     }
 
-    private void framebufferResizeCallback(long window, int width, int height) {
+    private void onFrameBufferResized(long window, int width, int height) {
         wasResized = true;
     }
 
@@ -203,7 +225,7 @@ public class Application {
 
     private void initSwapChain() {
         swapChain = new SwapChain();
-        swapChain.init(this, geometry);
+        swapChain.init(this);
     }
 
     private void initSyncObjects() {
@@ -272,7 +294,7 @@ public class Application {
                 throw new RuntimeException("Cannot get image");
             }
             int imageIndex = pImageIndex.get(0);
-            updateUniformBuffer(imageIndex);
+            updateUniformBuffers(imageIndex);
 
             if (imagesInFlight.containsKey(imageIndex)) {
                 vkWaitForFences(logicalDevice, imagesInFlight.get(imageIndex).getFence(), true, MathUtil.UINT64_MAX);
@@ -310,31 +332,40 @@ public class Application {
         }
     }
 
-    private void updateUniformBuffer(int currentImage) {
+    private void updateUniformBuffers(int currentImage) {
         try (MemoryStack stack = stackPush()) {
-            UniformBufferObject ubo = new UniformBufferObject();
-            ubo.getModel().rotate((float) (glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f);
-            ubo.getView().lookAt(2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-            ubo.getProj().perspective((float) Math.toRadians(45), (float) swapChain.getExtent().width() / (float) swapChain.getExtent().height(), 0.1f, 10.0f);
-            ubo.getProj().m11(ubo.getProj().m11() * -1);
+            UniformBufferObject uniformBufferObject = new UniformBufferObject();
+            uniformBufferObject.getView().lookAt(2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+            uniformBufferObject.getProj().perspective((float) Math.toRadians(45), (float) swapChain.getExtent().width() / (float) swapChain.getExtent().height(), 0.1f, 10.0f);
+            uniformBufferObject.getProj().m11(uniformBufferObject.getProj().m11() * -1);
+            for (Geometry geometry : geometries) {
+                geometry.updateWorldTransformIfNeeded();
+                uniformBufferObject.getModel().set(new Matrix4f());
+                uniformBufferObject.getModel().translate(geometry.getWorldTransform().getTranslation());
+                uniformBufferObject.getModel().rotate(geometry.getWorldTransform().getQuaternion());
+                uniformBufferObject.getModel().rotate((float) (glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f);
+                uniformBufferObject.getModel().scale(geometry.getWorldTransform().getScale());
 
-            PointerBuffer data = stack.mallocPointer(1);
-            vkMapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage), 0, UniformBufferObject.SIZEOF, 0, data);
-            BufferUtil.memcpy(data.getByteBuffer(0, UniformBufferObject.SIZEOF), ubo);
-            vkUnmapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage));
+                PointerBuffer data = stack.mallocPointer(1);
+                vkMapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage), 0, UniformBufferObject.SIZEOF, 0, data);
+                BufferUtil.memcpy(data.getByteBuffer(0, UniformBufferObject.SIZEOF), uniformBufferObject);
+                vkUnmapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage));
+            }
         }
     }
 
     private void cleanup() {
         swapChain.cleanup();
 
-        Texture texture = geometry.getMaterial().getTexture();
-        vkDestroySampler(logicalDevice, texture.getSampler(), null);
-        vkDestroyImageView(logicalDevice, texture.getImageView(), null);
-        vkDestroyImage(logicalDevice, texture.getImage(), null);
-        vkFreeMemory(logicalDevice, texture.getImageMemory(), null);
+        for (Geometry geometry : getGeometries()) {
+            Texture texture = geometry.getMaterial().getTexture();
+            vkDestroySampler(logicalDevice, texture.getSampler(), null);
+            vkDestroyImageView(logicalDevice, texture.getImageView(), null);
+            vkDestroyImage(logicalDevice, texture.getImage(), null);
+            vkFreeMemory(logicalDevice, texture.getImageMemory(), null);
 
-        geometry.cleanup();
+            geometry.cleanup();
+        }
 
         inFlightFrames.forEach(frame -> {
             vkDestroySemaphore(logicalDevice, frame.getRenderFinishedSemaphore(), null);

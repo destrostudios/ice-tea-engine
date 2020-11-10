@@ -2,6 +2,7 @@ package com.destrostudios.icetea.core;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.PointerBuffer;
@@ -27,6 +28,11 @@ public class Geometry {
     private Material material;
     private Vertex[] vertices;
     @Getter
+    private Transform localTransform = new Transform();
+    @Getter
+    private Transform worldTransform = new Transform();
+    private boolean worldTransformUpdateRequired;
+    @Getter
     private int[] indices;
     @Getter
     private Long vertexBuffer;
@@ -37,11 +43,13 @@ public class Geometry {
     @Getter
     private Long indexBufferMemory;
     @Getter
+    private Long descriptorSetLayout;
+    @Getter
+    private GraphicsPipeline graphicsPipeline;
+    @Getter
     private List<Long> uniformBuffers;
     @Getter
     private List<Long> uniformBuffersMemory;
-    @Getter
-    private Long descriptorSetLayout;
     @Getter
     private List<Long> descriptorSets;
 
@@ -222,6 +230,10 @@ public class Geometry {
         initDescriptorSets();
     }
 
+    public void initGraphicsPipeline() {
+        graphicsPipeline = new GraphicsPipeline(application, this);
+    }
+
     private void initUniformBuffers() {
         try (MemoryStack stack = stackPush()) {
             int uniformBuffersCount = application.getSwapChain().getImages().size();
@@ -336,6 +348,30 @@ public class Geometry {
     public void cleanupSwapChainDependencies() {
         cleanupUniformBuffers();
         cleanupDescriptorSets();
+    }
+
+    public void move(Vector3fc translation) {
+        localTransform.getTranslation().add(translation);
+        worldTransformUpdateRequired = true;
+    }
+
+    public void rotate(Quaternionf rotation) {
+        localTransform.getQuaternion().mul(rotation);
+        worldTransformUpdateRequired = true;
+    }
+
+    public void scale(Vector3fc scale) {
+        localTransform.getScale().mul(scale);
+        worldTransformUpdateRequired = true;
+    }
+
+    public void updateWorldTransformIfNeeded() {
+        if (worldTransformUpdateRequired) {
+            worldTransform.getTranslation().set(localTransform.getTranslation());
+            worldTransform.getQuaternion().set(localTransform.getQuaternion());
+            worldTransform.getScale().set(localTransform.getScale());
+            worldTransformUpdateRequired = false;
+        }
     }
 }
 
