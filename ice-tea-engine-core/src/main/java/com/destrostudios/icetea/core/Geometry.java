@@ -339,6 +339,7 @@ public class Geometry {
     }
 
     public void cleanup() {
+        material.cleanup();
         cleanupVertexBuffer();
         cleanupIndexBuffer();
         cleanupDescriptorSetLayout();

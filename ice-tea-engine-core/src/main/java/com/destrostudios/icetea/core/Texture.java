@@ -29,13 +29,13 @@ public class Texture {
     private Application application;
     private int mipLevels;
     @Getter
-    private long image;
+    private Long image;
     @Getter
-    private long imageMemory;
+    private Long imageMemory;
     @Getter
-    private long imageView;
+    private Long imageView;
     @Getter
-    private long sampler;
+    private Long sampler;
 
     private void initImage(String filePath) {
         try (MemoryStack stack = stackPush()) {
@@ -240,6 +240,25 @@ public class Texture {
                 throw new RuntimeException("Failed to create texture sampler");
             }
             sampler = pSampler.get(0);
+        }
+    }
+
+    public void cleanup() {
+        if (sampler != null) {
+            vkDestroySampler(application.getLogicalDevice(), sampler, null);
+            sampler = null;
+        }
+        if (imageView != null) {
+            vkDestroyImageView(application.getLogicalDevice(), imageView, null);
+            imageView = null;
+        }
+        if (image != null) {
+            vkDestroyImage(application.getLogicalDevice(), image, null);
+            image = null;
+        }
+        if (imageMemory != null) {
+            vkFreeMemory(application.getLogicalDevice(), imageMemory, null);
+            imageMemory = null;
         }
     }
 }

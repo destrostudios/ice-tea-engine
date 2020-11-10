@@ -345,12 +345,6 @@ public abstract class Application {
         swapChain.cleanup();
 
         for (Geometry geometry : getGeometries()) {
-            Texture texture = geometry.getMaterial().getTexture();
-            vkDestroySampler(logicalDevice, texture.getSampler(), null);
-            vkDestroyImageView(logicalDevice, texture.getImageView(), null);
-            vkDestroyImage(logicalDevice, texture.getImage(), null);
-            vkFreeMemory(logicalDevice, texture.getImageMemory(), null);
-
             geometry.cleanup();
         }
 

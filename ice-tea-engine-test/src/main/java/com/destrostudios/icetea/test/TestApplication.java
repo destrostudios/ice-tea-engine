@@ -14,14 +14,15 @@ public class TestApplication extends Application {
 
     @Override
     protected void initScene() {
+        Material material = new Material();
+        material.setVertexShaderFile("shaders/my_shader.vert");
+        material.setFragmentShaderFile("shaders/my_shader.frag");
+        Texture texture = new Texture(this, "textures/chalet.jpg");
+        material.setTexture(texture);
+
         Geometry geometry1 = new Geometry();
         geometry1.loadModel("models/chalet.obj");
-        Material material1 = new Material();
-        material1.setVertexShaderFile("shaders/my_shader.vert");
-        material1.setFragmentShaderFile("shaders/my_shader.frag");
-        Texture texture1 = new Texture(this, "textures/chalet.jpg");
-        material1.setTexture(texture1);
-        geometry1.setMaterial(material1);
+        geometry1.setMaterial(material);
         geometry1.init(this);
         geometry1.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         geometry1.move(new Vector3f(1.5f, 0, 0));
@@ -30,12 +31,7 @@ public class TestApplication extends Application {
 
         Geometry geometry2 = new Geometry();
         geometry2.loadModel("models/chalet.obj");
-        Material material2 = new Material();
-        material2.setVertexShaderFile("shaders/my_shader.vert");
-        material2.setFragmentShaderFile("shaders/my_shader.frag");
-        Texture texture2 = new Texture(this, "textures/chalet.jpg");
-        material2.setTexture(texture2);
-        geometry2.setMaterial(material2);
+        geometry2.setMaterial(material);
         geometry2.init(this);
         geometries.add(geometry2);
     }
