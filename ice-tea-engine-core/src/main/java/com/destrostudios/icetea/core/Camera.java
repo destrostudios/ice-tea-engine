@@ -1,15 +1,13 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
+import org.joml.*;
 
 public class Camera {
 
     public Camera() {
         location = new Vector3f();
-        rotation = new Quaternionf();
+        direction = new Vector3f(0, 1, 0);
 
         viewMatrix = new Matrix4f();
         projectionMatrix = new Matrix4f();
@@ -18,7 +16,7 @@ public class Camera {
     @Getter
     private Vector3f location;
     @Getter
-    private Quaternionf rotation;
+    private Vector3f direction;
     @Getter
     private Matrix4f viewMatrix;
     @Getter
@@ -42,8 +40,8 @@ public class Camera {
         isOutdated_View = true;
     }
 
-    public void setRotation(Quaternionf rotation) {
-        this.rotation.set(rotation);
+    public void setDirection(Vector3fc direction) {
+        this.direction.set(direction);
         isOutdated_View = true;
     }
 
@@ -82,7 +80,11 @@ public class Camera {
     }
 
     public void updateViewMatrix() {
-        viewMatrix.lookAt(location.x(), location.y(), location.z(), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+        viewMatrix.lookAt(
+            location.x(), location.y(), location.z(),
+            location.x() + direction.x(), location.y() + direction.y(), location.z() + direction.z(),
+            0, 0, 1
+        );
     }
 
     public void updateProjectionMatrix() {

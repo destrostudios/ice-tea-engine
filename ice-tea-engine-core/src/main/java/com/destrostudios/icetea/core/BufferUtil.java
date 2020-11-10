@@ -56,10 +56,10 @@ public class BufferUtil {
         buffer.rewind();
     }
 
-    public static void memcpy(ByteBuffer buffer, UniformBufferObject ubo) {
+    public static void memcpy(ByteBuffer buffer, UniformBuffer uniformBuffer) {
         final int mat4Size = 16 * Float.BYTES;
-        ubo.getModel().get(0, buffer);
-        ubo.getView().get(AlignmentUtils.alignas(mat4Size, AlignmentUtils.alignof(ubo.getView())), buffer);
-        ubo.getProj().get(AlignmentUtils.alignas(mat4Size * 2, AlignmentUtils.alignof(ubo.getView())), buffer);
+        uniformBuffer.getModel().get(0, buffer);
+        uniformBuffer.getView().get(AlignmentUtils.alignas(mat4Size, AlignmentUtils.alignof(uniformBuffer.getView())), buffer);
+        uniformBuffer.getProj().get(AlignmentUtils.alignas(mat4Size * 2, AlignmentUtils.alignof(uniformBuffer.getView())), buffer);
     }
 }

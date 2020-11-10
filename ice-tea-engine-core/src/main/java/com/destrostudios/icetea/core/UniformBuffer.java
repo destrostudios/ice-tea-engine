@@ -6,7 +6,7 @@ import org.joml.Matrix4f;
 
 @Getter
 @Setter
-public class UniformBufferObject {
+public class UniformBuffer {
 
     public static final int SIZEOF = 3 * 16 * Float.BYTES;
 

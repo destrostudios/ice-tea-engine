@@ -18,7 +18,7 @@ public class TestApplication extends Application {
         material.setVertexShaderFile("shaders/my_shader.vert");
         material.setFragmentShaderFile("shaders/my_shader.frag");
         Texture texture = new Texture(this, "textures/chalet.jpg");
-        material.setTexture(texture);
+        material.addTexture(texture);
 
         Geometry geometry1 = new Geometry();
         geometry1.loadModel("models/chalet.obj");

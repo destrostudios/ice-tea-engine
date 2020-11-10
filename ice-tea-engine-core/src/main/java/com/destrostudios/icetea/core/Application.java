@@ -1,8 +1,6 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -63,7 +61,7 @@ public abstract class Application {
     @Getter
     protected List<Geometry> geometries;
     @Getter
-    private Camera camera;
+    protected Camera camera;
 
     private List<Frame> inFlightFrames;
     private Map<Integer, Frame> imagesInFlight;
@@ -234,12 +232,13 @@ public abstract class Application {
 
     private void initCamera() {
         camera = new Camera();
-        camera.setLocation(new Vector3f(2, 2, 2));
-        camera.setRotation(new Quaternionf(new AxisAngle4f(0, 0, 0, 1)));
         camera.setFieldOfViewY((float) Math.toRadians(45));
         camera.setAspect((float) swapChain.getExtent().width() / (float) swapChain.getExtent().height());
         camera.setZNear(0.1f);
-        camera.setZFar(10);
+        camera.setZFar(100);
+
+        camera.setLocation(new Vector3f(2, 2, 2));
+        camera.setDirection(new Vector3f(-1, -1, -1));
     }
 
     public int findMemoryType(int typeFilter, int properties) {
@@ -326,16 +325,16 @@ public abstract class Application {
     private void updateUniformBuffers(int currentImage) {
         camera.update();
         try (MemoryStack stack = stackPush()) {
-            UniformBufferObject uniformBufferObject = new UniformBufferObject();
-            uniformBufferObject.setView(camera.getViewMatrix());
-            uniformBufferObject.setProj(camera.getProjectionMatrix());
+            UniformBuffer uniformBuffer = new UniformBuffer();
+            uniformBuffer.setView(camera.getViewMatrix());
+            uniformBuffer.setProj(camera.getProjectionMatrix());
             for (Geometry geometry : geometries) {
                 geometry.update();
-                uniformBufferObject.setModel(geometry.getWorldTransform().getMatrix());
+                uniformBuffer.setModel(geometry.getWorldTransform().getMatrix());
 
                 PointerBuffer data = stack.mallocPointer(1);
-                vkMapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage), 0, UniformBufferObject.SIZEOF, 0, data);
-                BufferUtil.memcpy(data.getByteBuffer(0, UniformBufferObject.SIZEOF), uniformBufferObject);
+                vkMapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage), 0, UniformBuffer.SIZEOF, 0, data);
+                BufferUtil.memcpy(data.getByteBuffer(0, UniformBuffer.SIZEOF), uniformBuffer);
                 vkUnmapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage));
             }
         }

@@ -190,21 +190,25 @@ public class Geometry {
         cleanupDescriptorSetLayout();
 
         try (MemoryStack stack = stackPush()) {
-            VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.callocStack(2, stack);
+            int bindingsCount = 1 + material.getTextures().size();
 
-            VkDescriptorSetLayoutBinding uboLayoutBinding = bindings.get(0);
-            uboLayoutBinding.binding(0);
-            uboLayoutBinding.descriptorCount(1);
-            uboLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            uboLayoutBinding.pImmutableSamplers(null);
-            uboLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+            VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.callocStack(bindingsCount, stack);
 
-            VkDescriptorSetLayoutBinding samplerLayoutBinding = bindings.get(1);
-            samplerLayoutBinding.binding(1);
-            samplerLayoutBinding.descriptorCount(1);
-            samplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            samplerLayoutBinding.pImmutableSamplers(null);
-            samplerLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
+            VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = bindings.get(0);
+            uniformBufferLayoutBinding.binding(0);
+            uniformBufferLayoutBinding.descriptorCount(1);
+            uniformBufferLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            uniformBufferLayoutBinding.pImmutableSamplers(null);
+            uniformBufferLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+
+            for (int i = 1; i < bindingsCount; i++) {
+                VkDescriptorSetLayoutBinding imageSamplerLayoutBinding = bindings.get(i);
+                imageSamplerLayoutBinding.binding(1);
+                imageSamplerLayoutBinding.descriptorCount(1);
+                imageSamplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                imageSamplerLayoutBinding.pImmutableSamplers(null);
+                imageSamplerLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
+            }
 
             VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.callocStack(stack);
             layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
@@ -243,7 +247,7 @@ public class Geometry {
             LongBuffer pBufferMemory = stack.mallocLong(1);
             for (int i = 0; i < uniformBuffersCount; i++) {
                 application.getBufferManager().createBuffer(
-                    UniformBufferObject.SIZEOF,
+                    UniformBuffer.SIZEOF,
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                     pBuffer,
@@ -289,39 +293,43 @@ public class Geometry {
             }
             descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
 
-            VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
-            bufferInfo.offset(0);
-            bufferInfo.range(UniformBufferObject.SIZEOF);
+            int bindingsCount = 1 + material.getTextures().size();
+            VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.callocStack(bindingsCount, stack);
 
-            VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.callocStack(1, stack);
-            imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            imageInfo.imageView(material.getTexture().getImageView());
-            imageInfo.sampler(material.getTexture().getSampler());
+            VkWriteDescriptorSet uniformBufferDescriptorWrite = descriptorWrites.get(0);
+            uniformBufferDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+            uniformBufferDescriptorWrite.dstBinding(0);
+            uniformBufferDescriptorWrite.dstArrayElement(0);
+            uniformBufferDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            uniformBufferDescriptorWrite.descriptorCount(1);
+            VkDescriptorBufferInfo.Buffer uniformBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
+            uniformBufferInfo.offset(0);
+            uniformBufferInfo.range(UniformBuffer.SIZEOF);
+            uniformBufferDescriptorWrite.pBufferInfo(uniformBufferInfo);
 
-            VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.callocStack(2, stack);
+            for (int i = 1; i < bindingsCount; i++) {
+                Texture texture = material.getTextures().get(i - 1);
 
-            VkWriteDescriptorSet uboDescriptorWrite = descriptorWrites.get(0);
-            uboDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-            uboDescriptorWrite.dstBinding(0);
-            uboDescriptorWrite.dstArrayElement(0);
-            uboDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            uboDescriptorWrite.descriptorCount(1);
-            uboDescriptorWrite.pBufferInfo(bufferInfo);
-
-            VkWriteDescriptorSet samplerDescriptorWrite = descriptorWrites.get(1);
-            samplerDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-            samplerDescriptorWrite.dstBinding(1);
-            samplerDescriptorWrite.dstArrayElement(0);
-            samplerDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            samplerDescriptorWrite.descriptorCount(1);
-            samplerDescriptorWrite.pImageInfo(imageInfo);
+                VkWriteDescriptorSet imageDescriptorWrite = descriptorWrites.get(i);
+                imageDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                imageDescriptorWrite.dstBinding(1);
+                imageDescriptorWrite.dstArrayElement(0);
+                imageDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                imageDescriptorWrite.descriptorCount(1);
+                VkDescriptorImageInfo.Buffer imageBufferInfo = VkDescriptorImageInfo.callocStack(1, stack);
+                imageBufferInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                imageBufferInfo.imageView(texture.getImageView());
+                imageBufferInfo.sampler(texture.getSampler());
+                imageDescriptorWrite.pImageInfo(imageBufferInfo);
+            }
 
             for (int i = 0; i < pDescriptorSets.capacity(); i++) {
                 long descriptorSet = pDescriptorSets.get(i);
-                uboDescriptorWrite.dstSet(descriptorSet);
-                samplerDescriptorWrite.dstSet(descriptorSet);
-
-                bufferInfo.buffer(uniformBuffers.get(i));
+                for (int r = 0; r < bindingsCount; r++) {
+                    VkWriteDescriptorSet descriptorWrite = descriptorWrites.get(r);
+                    descriptorWrite.dstSet(descriptorSet);
+                }
+                uniformBufferInfo.buffer(uniformBuffers.get(i));
 
                 vkUpdateDescriptorSets(application.getLogicalDevice(), descriptorWrites, null);
                 descriptorSets.add(descriptorSet);

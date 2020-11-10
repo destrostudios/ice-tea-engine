@@ -3,15 +3,27 @@ package com.destrostudios.icetea.core;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 public class Material {
 
+    public Material() {
+        textures = new ArrayList<>();
+    }
     private String vertexShaderFile;
     private String fragmentShaderFile;
-    private Texture texture;
+    private List<Texture> textures;
+
+    public void addTexture(Texture texture) {
+        textures.add(texture);
+    }
 
     public void cleanup() {
-        texture.cleanup();
+        for (Texture texture : textures) {
+            texture.cleanup();
+        }
     }
 }
