@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An utility class for dealing with alignments in Uniform Buffer Objects
+ * Utility class for dealing with alignments in Uniform Buffer Objects
  *
  * Vulkan expects the data in your structure to be aligned in memory in a specific way, for example:
  *
