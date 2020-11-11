@@ -432,12 +432,12 @@ public class SwapChain {
                 for (Geometry geometry : application.getGeometries()) {
                     GraphicsPipeline graphicsPipeline = geometry.getGraphicsPipeline();
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipeline());
-                    LongBuffer vertexBuffers = stack.longs(geometry.getVertexBuffer());
+                    LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
                     LongBuffer offsets = stack.longs(0);
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                    vkCmdBindIndexBuffer(commandBuffer, geometry.getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayout(), 0, stack.longs(geometry.getDescriptorSets().get(i)), null);
-                    vkCmdDrawIndexed(commandBuffer, geometry.getIndices().length, 1, 0, 0, 0);
+                    vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
                 }
 
                 vkCmdEndRenderPass(commandBuffer);

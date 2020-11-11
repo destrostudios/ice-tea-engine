@@ -237,8 +237,8 @@ public abstract class Application {
         camera.setZNear(0.1f);
         camera.setZFar(100);
 
-        camera.setLocation(new Vector3f(2, 2, 2));
-        camera.setDirection(new Vector3f(-1, -1, -1));
+        camera.setLocation(new Vector3f(0, -3, 1.25f));
+        camera.setDirection(new Vector3f(0, 1, -0.25f).normalize());
     }
 
     public int findMemoryType(int typeFilter, int properties) {

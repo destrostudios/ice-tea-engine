@@ -45,11 +45,11 @@ public class ModelLoader {
         IntBuffer meshIndices = node.mMeshes();
         for (int i = 0; i < meshIndices.capacity(); i++) {
             AIMesh mesh = AIMesh.create(pMeshes.get(meshIndices.get(i)));
-            processMesh(scene, mesh, model);
+            processMesh(mesh, model);
         }
     }
 
-    private static void processMesh(AIScene scene, AIMesh mesh, Model model) {
+    private static void processMesh(AIMesh mesh, Model model) {
         processPositions(mesh, model.getPositions());
         processTexCoords(mesh, model.getTexCoords());
         processIndices(mesh, model.getIndices());
@@ -66,7 +66,7 @@ public class ModelLoader {
     private static void processTexCoords(AIMesh mesh, List<Vector2fc> texCoords) {
         AIVector3D.Buffer aiTexCoords = requireNonNull(mesh.mTextureCoords(0));
         for (int i = 0; i < aiTexCoords.capacity(); i++) {
-            final AIVector3D coords = aiTexCoords.get(i);
+            AIVector3D coords = aiTexCoords.get(i);
             texCoords.add(new Vector2f(coords.x(), coords.y()));
         }
     }
