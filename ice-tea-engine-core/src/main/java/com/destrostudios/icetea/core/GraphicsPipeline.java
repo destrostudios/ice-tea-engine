@@ -183,4 +183,9 @@ public class GraphicsPipeline {
             return pShaderModule.get(0);
         }
     }
+
+    public void cleanup() {
+        vkDestroyPipeline(application.getLogicalDevice(), graphicsPipeline, null);
+        vkDestroyPipelineLayout(application.getLogicalDevice(), pipelineLayout, null);
+    }
 }

@@ -30,6 +30,7 @@ public class Geometry {
     @Getter
     private Transform worldTransform = new Transform();
     private boolean isWorldTransformOutdated;
+    private Long descriptorPool;
     @Getter
     private Long descriptorSetLayout;
     @Getter
@@ -44,16 +45,15 @@ public class Geometry {
     public void init(Application application) {
         this.application = application;
         mesh.init(application);
-        recreateDescriptorSetLayout();
+        initDescriptorSetLayout();
+        createSwapChainDependencies();
     }
 
-    private void recreateDescriptorSetLayout() {
-        cleanupDescriptorSetLayout();
-
+    private void initDescriptorSetLayout() {
         try (MemoryStack stack = stackPush()) {
-            int bindingsCount = 1 + material.getTextures().size();
+            int descriptorsCount = 1 + material.getTextures().size();
 
-            VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.callocStack(bindingsCount, stack);
+            VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.callocStack(descriptorsCount, stack);
 
             VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = bindings.get(0);
             uniformBufferLayoutBinding.binding(0);
@@ -62,7 +62,7 @@ public class Geometry {
             uniformBufferLayoutBinding.pImmutableSamplers(null);
             uniformBufferLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
 
-            for (int i = 1; i < bindingsCount; i++) {
+            for (int i = 1; i < descriptorsCount; i++) {
                 VkDescriptorSetLayoutBinding imageSamplerLayoutBinding = bindings.get(i);
                 imageSamplerLayoutBinding.binding(1);
                 imageSamplerLayoutBinding.descriptorCount(1);
@@ -90,23 +90,64 @@ public class Geometry {
         }
     }
 
-    public void onSwapChainCreation() {
+    public void createSwapChainDependencies() {
+        graphicsPipeline = new GraphicsPipeline(application, this);
+        initDescriptorPool();
         initUniformBuffers();
         initDescriptorSets();
     }
 
-    public void initGraphicsPipeline() {
-        graphicsPipeline = new GraphicsPipeline(application, this);
+    public void cleanupSwapChainDependencies() {
+        graphicsPipeline.cleanup();
+        graphicsPipeline = null;
+        cleanupUniformBuffers();
+        cleanupDescriptorSets();
+        cleanupDescriptorPool();
+    }
+
+    private void initDescriptorPool() {
+        try (MemoryStack stack = stackPush()) {
+            int descriptorSetsCount = getDescriptorSetsCount();
+            VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(descriptorSetsCount, stack);
+
+            VkDescriptorPoolSize uniformBufferPoolSize = poolSizes.get(0);
+            uniformBufferPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            uniformBufferPoolSize.descriptorCount(descriptorSetsCount);
+
+            for (int i = 1; i < descriptorSetsCount; i++) {
+                VkDescriptorPoolSize textureSamplerPoolSize = poolSizes.get(i);
+                textureSamplerPoolSize.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                textureSamplerPoolSize.descriptorCount(descriptorSetsCount);
+            }
+
+            VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.callocStack(stack);
+            poolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+            poolCreateInfo.pPoolSizes(poolSizes);
+            poolCreateInfo.maxSets(descriptorSetsCount);
+
+            LongBuffer pDescriptorPool = stack.mallocLong(1);
+            if (vkCreateDescriptorPool(application.getLogicalDevice(), poolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create descriptor pool");
+            }
+            descriptorPool = pDescriptorPool.get(0);
+        }
+    }
+
+    private void cleanupDescriptorPool() {
+        if (descriptorPool != null) {
+            vkDestroyDescriptorPool(application.getLogicalDevice(), descriptorPool, null);
+            descriptorPool = null;
+        }
     }
 
     private void initUniformBuffers() {
         try (MemoryStack stack = stackPush()) {
-            int uniformBuffersCount = application.getSwapChain().getImages().size();
-            uniformBuffers = new ArrayList<>(uniformBuffersCount);
-            uniformBuffersMemory = new ArrayList<>(uniformBuffersCount);
+            int swapChainImagesCount = application.getSwapChain().getImages().size();
+            uniformBuffers = new ArrayList<>(swapChainImagesCount);
+            uniformBuffersMemory = new ArrayList<>(swapChainImagesCount);
             LongBuffer pBuffer = stack.mallocLong(1);
             LongBuffer pBufferMemory = stack.mallocLong(1);
-            for (int i = 0; i < uniformBuffersCount; i++) {
+            for (int i = 0; i < swapChainImagesCount; i++) {
                 application.getBufferManager().createBuffer(
                     UniformBuffer.SIZEOF,
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -139,16 +180,16 @@ public class Geometry {
         try (MemoryStack stack = stackPush()) {
             VkDescriptorSetAllocateInfo allocateInfo = VkDescriptorSetAllocateInfo.callocStack(stack);
             allocateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
-            allocateInfo.descriptorPool(application.getSwapChain().getDescriptorPool());
+            allocateInfo.descriptorPool(descriptorPool);
 
-            List<Long> swapChainImages = application.getSwapChain().getImages();
-            LongBuffer layouts = stack.mallocLong(swapChainImages.size());
+            int descriptorSetsCount = getDescriptorSetsCount();
+            LongBuffer layouts = stack.mallocLong(descriptorSetsCount);
             for (int i = 0; i < layouts.capacity(); i++) {
                 layouts.put(i, descriptorSetLayout);
             }
             allocateInfo.pSetLayouts(layouts);
 
-            LongBuffer pDescriptorSets = stack.mallocLong(swapChainImages.size());
+            LongBuffer pDescriptorSets = stack.mallocLong(descriptorSetsCount);
             if (vkAllocateDescriptorSets(application.getLogicalDevice(), allocateInfo, pDescriptorSets) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to allocate descriptor sets");
             }
@@ -201,22 +242,24 @@ public class Geometry {
     private void cleanupDescriptorSets() {
         if (descriptorSets != null) {
             for (long descriptorSet : descriptorSets) {
-                vkFreeDescriptorSets(application.getLogicalDevice(), application.getSwapChain().getDescriptorPool(), descriptorSet);
+                vkFreeDescriptorSets(application.getLogicalDevice(), descriptorPool, descriptorSet);
             }
             descriptorSets = null;
         }
+    }
+
+    private int getDescriptorSetsCount() {
+        return application.getSwapChain().getImages().size();
     }
 
     public void cleanup() {
         material.cleanup();
         mesh.cleanup();
         cleanupDescriptorSetLayout();
-        cleanupSwapChainDependencies();
-    }
-
-    public void cleanupSwapChainDependencies() {
-        cleanupUniformBuffers();
-        cleanupDescriptorSets();
+        // Can already be cleanuped by swap chain cleanup
+        if (graphicsPipeline != null) {
+            cleanupSwapChainDependencies();
+        }
     }
 
     public void setLocalTranslation(Vector3fc translation) {

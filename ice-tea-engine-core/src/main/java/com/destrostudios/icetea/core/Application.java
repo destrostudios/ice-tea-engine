@@ -59,7 +59,7 @@ public abstract class Application {
     private SwapChain swapChain;
 
     @Getter
-    protected List<Geometry> geometries;
+    protected SceneGraph sceneGraph;
     @Getter
     protected Camera camera;
 
@@ -77,15 +77,15 @@ public abstract class Application {
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
-        geometries = new LinkedList<>();
+        sceneGraph = new SceneGraph(this);
         initWindow();
         createInstance();
         initSurface();
         initPhysicalDevice();
         initLogicalDevice();
         initCommandPool();
-        initScene();
         initSwapChain();
+        initScene();
         initSyncObjects();
         initCamera();
     }
@@ -197,12 +197,12 @@ public abstract class Application {
         }
     }
 
-    protected abstract void initScene();
-
     private void initSwapChain() {
         swapChain = new SwapChain();
         swapChain.init(this);
     }
+
+    protected abstract void initScene();
 
     private void initSyncObjects() {
         inFlightFrames = new ArrayList<>(MAX_FRAMES_IN_FLIGHT);
@@ -256,6 +256,8 @@ public abstract class Application {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
             update();
+            camera.update();
+            sceneGraph.update();
             drawFrame();
         }
         vkDeviceWaitIdle(logicalDevice);
@@ -323,13 +325,11 @@ public abstract class Application {
     }
 
     private void updateUniformBuffers(int currentImage) {
-        camera.update();
         try (MemoryStack stack = stackPush()) {
             UniformBuffer uniformBuffer = new UniformBuffer();
             uniformBuffer.setView(camera.getViewMatrix());
             uniformBuffer.setProj(camera.getProjectionMatrix());
-            for (Geometry geometry : geometries) {
-                geometry.update();
+            for (Geometry geometry : sceneGraph.getGeometries()) {
                 uniformBuffer.setModel(geometry.getWorldTransform().getMatrix());
 
                 PointerBuffer data = stack.mallocPointer(1);
@@ -343,9 +343,7 @@ public abstract class Application {
     private void cleanup() {
         swapChain.cleanup();
 
-        for (Geometry geometry : getGeometries()) {
-            geometry.cleanup();
-        }
+        sceneGraph.cleanup();
 
         inFlightFrames.forEach(frame -> {
             vkDestroySemaphore(logicalDevice, frame.getRenderFinishedSemaphore(), null);

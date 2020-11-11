@@ -41,8 +41,6 @@ public class SwapChain {
     private long depthImageView;
     private List<Long> framebuffers;
     @Getter
-    private long descriptorPool;
-    @Getter
     private List<VkCommandBuffer> commandBuffers;
 
     public void recreate() {
@@ -57,6 +55,7 @@ public class SwapChain {
         vkDeviceWaitIdle(application.getLogicalDevice());
         cleanup();
         init(application);
+        recreateCommandBuffers();
     }
 
     public void init(Application application) {
@@ -67,9 +66,7 @@ public class SwapChain {
         initColorResources();
         initDepthResources();
         initFrameBuffers();
-        initDescriptorPool();
         initGeometries();
-        initCommandBuffers();
     }
 
     private void initSwapChain() {
@@ -350,42 +347,15 @@ public class SwapChain {
         }
     }
 
-    private void initDescriptorPool() {
-        try (MemoryStack stack = stackPush()) {
-            VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(2, stack);
-
-            // TODO: Has to be dynamic at some point, currently the scene is fixed
-            int descriptorSetsCount = application.getGeometries().size() * images.size();
-
-            VkDescriptorPoolSize uniformBufferPoolSize = poolSizes.get(0);
-            uniformBufferPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            uniformBufferPoolSize.descriptorCount(descriptorSetsCount);
-
-            VkDescriptorPoolSize textureSamplerPoolSize = poolSizes.get(1);
-            textureSamplerPoolSize.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            textureSamplerPoolSize.descriptorCount(descriptorSetsCount);
-
-            VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.callocStack(stack);
-            poolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
-            poolCreateInfo.pPoolSizes(poolSizes);
-            poolCreateInfo.maxSets(descriptorSetsCount);
-
-            LongBuffer pDescriptorPool = stack.mallocLong(1);
-            if (vkCreateDescriptorPool(application.getLogicalDevice(), poolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create descriptor pool");
-            }
-            descriptorPool = pDescriptorPool.get(0);
-        }
-    }
-
     private void initGeometries() {
-        for (Geometry geometry : application.getGeometries()) {
-            geometry.initGraphicsPipeline();
-            geometry.onSwapChainCreation();
+        for (Geometry geometry : application.getSceneGraph().getGeometries()) {
+            geometry.createSwapChainDependencies();
         }
     }
 
-    private void initCommandBuffers() {
+    public void recreateCommandBuffers() {
+        cleanupCommandBuffers();
+
         int commandBuffersCount = framebuffers.size();
         commandBuffers = new ArrayList<>(commandBuffersCount);
         try (MemoryStack stack = stackPush()) {
@@ -429,7 +399,7 @@ public class SwapChain {
                 renderPassBeginInfo.framebuffer(framebuffers.get(i));
                 vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-                for (Geometry geometry : application.getGeometries()) {
+                for (Geometry geometry : application.getSceneGraph().getGeometries()) {
                     GraphicsPipeline graphicsPipeline = geometry.getGraphicsPipeline();
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipeline());
                     LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
@@ -448,6 +418,13 @@ public class SwapChain {
         }
     }
 
+    public void cleanupCommandBuffers() {
+        if (commandBuffers != null) {
+            vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers));
+            commandBuffers = null;
+        }
+    }
+
     public void cleanup() {
         vkDestroyImageView(application.getLogicalDevice(), colorImageView, null);
         vkDestroyImage(application.getLogicalDevice(), colorImage, null);
@@ -457,21 +434,13 @@ public class SwapChain {
         vkDestroyImage(application.getLogicalDevice(), depthImage, null);
         vkFreeMemory(application.getLogicalDevice(), depthImageMemory, null);
 
-        for (Geometry geometry : application.getGeometries()) {
+        for (Geometry geometry : application.getSceneGraph().getGeometries()) {
             geometry.cleanupSwapChainDependencies();
         }
 
-        vkDestroyDescriptorPool(application.getLogicalDevice(), descriptorPool, null);
-
         framebuffers.forEach(framebuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), framebuffer, null));
 
-        vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers));
-
-        for (Geometry geometry : application.getGeometries()) {
-            GraphicsPipeline graphicsPipeline = geometry.getGraphicsPipeline();
-            vkDestroyPipeline(application.getLogicalDevice(), graphicsPipeline.getGraphicsPipeline(), null);
-            vkDestroyPipelineLayout(application.getLogicalDevice(), graphicsPipeline.getPipelineLayout(), null);
-        }
+        cleanupCommandBuffers();
 
         vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
 

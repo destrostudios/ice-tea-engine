@@ -9,6 +9,9 @@ import static org.lwjgl.glfw.GLFW.glfwGetTime;
 
 public class TestApplication extends Application {
 
+    private Geometry geometryDennis;
+    private boolean hasAddedDennis;
+
     @Override
     protected void initScene() {
         // Chalet
@@ -24,13 +27,11 @@ public class TestApplication extends Application {
 
         Geometry geometryChalet1 = new Geometry(meshChalet);
         geometryChalet1.setMaterial(materialChalet);
-        geometryChalet1.init(this);
-        geometries.add(geometryChalet1);
+        sceneGraph.addGeometry(geometryChalet1);
 
         Geometry geometryChalet2 = new Geometry(meshChalet);
         geometryChalet2.setMaterial(materialChalet);
-        geometryChalet2.init(this);
-        geometries.add(geometryChalet2);
+        sceneGraph.addGeometry(geometryChalet2);
         geometryChalet2.move(new Vector3f(1.5f, 1, 0));
         geometryChalet2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         geometryChalet2.scale(new Vector3f(0.5f, 0.5f, 1));
@@ -48,8 +49,7 @@ public class TestApplication extends Application {
 
         Geometry geometryTrees = new Geometry(meshTrees);
         geometryTrees.setMaterial(materialTrees);
-        geometryTrees.init(this);
-        geometries.add(geometryTrees);
+        sceneGraph.addGeometry(geometryTrees);
         geometryTrees.move(new Vector3f(0, -1, 0));
         geometryTrees.scale(new Vector3f(0.01f, 0.01f, 0.01f));
 
@@ -64,18 +64,21 @@ public class TestApplication extends Application {
         Texture textureDennis = new Texture(this, "textures/dennis.jpg");
         materialDennis.addTexture(textureDennis);
 
-        Geometry geometry4 = new Geometry(meshDennis);
-        geometry4.setMaterial(materialDennis);
-        geometry4.init(this);
-        geometries.add(geometry4);
-        geometry4.move(new Vector3f(0, -1, 0));
-        geometry4.scale(new Vector3f(0.005f, 0.005f, 0.005f));
+        geometryDennis = new Geometry(meshDennis);
+        geometryDennis.setMaterial(materialDennis);
+        geometryDennis.move(new Vector3f(0, -1, 0));
+        geometryDennis.scale(new Vector3f(0.005f, 0.005f, 0.005f));
     }
 
     @Override
     protected void update() {
-        for (Geometry geometry : geometries) {
-            geometry.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
+        double time = glfwGetTime();
+        if ((time > 6) && (!hasAddedDennis)) {
+            sceneGraph.addGeometry(geometryDennis);
+            hasAddedDennis = true;
+        }
+        for (Geometry geometry : sceneGraph.getGeometries()) {
+            geometry.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
         }
     }
 }
