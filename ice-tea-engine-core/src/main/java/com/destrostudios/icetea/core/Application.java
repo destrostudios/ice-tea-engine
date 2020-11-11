@@ -268,7 +268,6 @@ public abstract class Application {
     private void drawFrame() {
         try (MemoryStack stack = stackPush()) {
             Frame thisFrame = inFlightFrames.get(currentFrame);
-            vkWaitForFences(logicalDevice, thisFrame.getPFence(), true, MathUtil.UINT64_MAX);
 
             IntBuffer pImageIndex = stack.mallocInt(1);
             int vkResult = vkAcquireNextImageKHR(
@@ -321,6 +320,9 @@ public abstract class Application {
             }
 
             currentFrame = ((currentFrame + 1) % MAX_FRAMES_IN_FLIGHT);
+
+            // Wait for GPU to be finished, so we can safely access memory in our logic again (e.g. freeing memory of removed objects)
+            vkWaitForFences(logicalDevice, thisFrame.getPFence(), true, MathUtil.UINT64_MAX);
         }
     }
 

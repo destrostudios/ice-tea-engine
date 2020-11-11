@@ -16,14 +16,10 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class Geometry {
 
-    public Geometry(Mesh mesh) {
-        this.mesh = mesh;
-    }
     private Application application;
     @Getter
     private Mesh mesh;
     @Getter
-    @Setter
     private Material material;
     @Getter
     private Transform localTransform = new Transform();
@@ -44,7 +40,9 @@ public class Geometry {
 
     public void init(Application application) {
         this.application = application;
-        mesh.init(application);
+        if (!mesh.isInitialized()) {
+            mesh.init(application);
+        }
         initDescriptorSetLayout();
         createSwapChainDependencies();
     }
@@ -252,13 +250,43 @@ public class Geometry {
         return application.getSwapChain().getImages().size();
     }
 
+    public void setMesh(Mesh mesh) {
+        tryUnregisterMesh();
+        this.mesh = mesh;
+        mesh.increaseUsingGeometriesCount();
+    }
+
+    public void setMaterial(Material material) {
+        tryUnregisterMaterial();
+        this.material = material;
+        material.increaseUsingGeometriesCount();
+    }
+
     public void cleanup() {
-        material.cleanup();
-        mesh.cleanup();
+        tryUnregisterMesh();
+        tryUnregisterMaterial();
         cleanupDescriptorSetLayout();
         // Can already be cleanuped by swap chain cleanup
         if (graphicsPipeline != null) {
             cleanupSwapChainDependencies();
+        }
+    }
+
+    private void tryUnregisterMesh() {
+        if (mesh != null) {
+            mesh.decreaseUsingGeometriesCount();
+            if (mesh.isUnused()) {
+                mesh.cleanup();
+            }
+        }
+    }
+
+    private void tryUnregisterMaterial() {
+        if (material != null) {
+            material.decreaseUsingGeometriesCount();
+            if (material.isUnused()) {
+                material.cleanup();
+            }
         }
     }
 

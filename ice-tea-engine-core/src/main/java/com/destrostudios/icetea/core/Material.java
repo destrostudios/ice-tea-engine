@@ -16,9 +16,22 @@ public class Material {
     private String vertexShaderFile;
     private String fragmentShaderFile;
     private List<Texture> textures;
+    private int usingGeometriesCount;
 
     public void addTexture(Texture texture) {
         textures.add(texture);
+    }
+
+    public void increaseUsingGeometriesCount() {
+        usingGeometriesCount++;
+    }
+
+    public void decreaseUsingGeometriesCount() {
+        usingGeometriesCount--;
+    }
+
+    public boolean isUnused() {
+        return (usingGeometriesCount <= 0);
     }
 
     public void cleanup() {

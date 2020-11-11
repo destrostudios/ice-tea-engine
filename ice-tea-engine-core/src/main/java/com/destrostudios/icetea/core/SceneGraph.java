@@ -22,6 +22,12 @@ public class SceneGraph {
         modified = true;
     }
 
+    public void removeGeometry(Geometry geometry) {
+        geometry.cleanup();
+        geometries.remove(geometry);
+        modified = true;
+    }
+
     public void update() {
         for (Geometry geometry : geometries) {
             geometry.update();

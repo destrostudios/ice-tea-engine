@@ -31,6 +31,7 @@ public class Mesh {
     private Long indexBuffer;
     @Getter
     private Long indexBufferMemory;
+    private int usingGeometriesCount;
 
     public void loadModel(String filePath) {
         File modelFile = new File(getSystemClassLoader().getResource(filePath).getFile());
@@ -51,6 +52,10 @@ public class Mesh {
         for (int i = 0; i < indices.length; i++) {
             indices[i] = model.getIndices().get(i);
         }
+    }
+
+    public boolean isInitialized() {
+        return (application != null);
     }
 
     public void init(Application application) {
@@ -162,6 +167,18 @@ public class Mesh {
             vkFreeMemory(application.getLogicalDevice(), indexBufferMemory, null);
             indexBufferMemory = null;
         }
+    }
+
+    public void increaseUsingGeometriesCount() {
+        usingGeometriesCount++;
+    }
+
+    public void decreaseUsingGeometriesCount() {
+        usingGeometriesCount--;
+    }
+
+    public boolean isUnused() {
+        return (usingGeometriesCount <= 0);
     }
 
     public void cleanup() {
