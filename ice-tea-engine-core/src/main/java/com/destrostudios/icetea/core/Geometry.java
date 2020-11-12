@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.joml.Quaternionfc;
 import org.joml.Vector3fc;
 import org.lwjgl.system.MemoryStack;
@@ -147,7 +146,7 @@ public class Geometry {
             LongBuffer pBufferMemory = stack.mallocLong(1);
             for (int i = 0; i < swapChainImagesCount; i++) {
                 application.getBufferManager().createBuffer(
-                    UniformBuffer.SIZEOF,
+                    Application.TRANSFORM_UNIFORM_BUFFER_SIZE,
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                     pBuffer,
@@ -204,7 +203,7 @@ public class Geometry {
             uniformBufferDescriptorWrite.descriptorCount(1);
             VkDescriptorBufferInfo.Buffer uniformBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
             uniformBufferInfo.offset(0);
-            uniformBufferInfo.range(UniformBuffer.SIZEOF);
+            uniformBufferInfo.range(Application.TRANSFORM_UNIFORM_BUFFER_SIZE);
             uniformBufferDescriptorWrite.pBufferInfo(uniformBufferInfo);
 
             for (int i = 1; i < bindingsCount; i++) {

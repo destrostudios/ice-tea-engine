@@ -6,6 +6,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
@@ -26,6 +27,7 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 public abstract class Application {
 
     static final Set<String> DEVICE_EXTENSIONS_NAMES = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME).collect(toSet());
+    static final int TRANSFORM_UNIFORM_BUFFER_SIZE = (3 * 16 * Float.BYTES);
     private static final int MAX_FRAMES_IN_FLIGHT = 2;
 
     @Getter
@@ -57,6 +59,7 @@ public abstract class Application {
     private long commandPool;
     @Getter
     private SwapChain swapChain;
+    private UniformData transformUniformData;
 
     @Getter
     protected SceneGraph sceneGraph;
@@ -88,6 +91,7 @@ public abstract class Application {
         initScene();
         initSyncObjects();
         initCamera();
+        initTransformUniformData();
     }
 
     private void initWindow() {
@@ -241,6 +245,10 @@ public abstract class Application {
         camera.setDirection(new Vector3f(0, 1, -0.25f).normalize());
     }
 
+    private void initTransformUniformData() {
+        transformUniformData = new UniformData();
+    }
+
     public int findMemoryType(int typeFilter, int properties) {
         VkPhysicalDeviceMemoryProperties memoryProperties = VkPhysicalDeviceMemoryProperties.mallocStack();
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, memoryProperties);
@@ -285,7 +293,7 @@ public abstract class Application {
                 throw new RuntimeException("Cannot get image");
             }
             int imageIndex = pImageIndex.get(0);
-            updateUniformBuffers(imageIndex);
+            updateTransformUniformBuffers(imageIndex);
 
             if (imagesInFlight.containsKey(imageIndex)) {
                 vkWaitForFences(logicalDevice, imagesInFlight.get(imageIndex).getFence(), true, MathUtil.UINT64_MAX);
@@ -326,18 +334,19 @@ public abstract class Application {
         }
     }
 
-    private void updateUniformBuffers(int currentImage) {
+    private void updateTransformUniformBuffers(int currentImage) {
         try (MemoryStack stack = stackPush()) {
-            UniformBuffer uniformBuffer = new UniformBuffer();
-            uniformBuffer.setView(camera.getViewMatrix());
-            uniformBuffer.setProj(camera.getProjectionMatrix());
+            transformUniformData.setMatrix4f("view", camera.getViewMatrix());
+            transformUniformData.setMatrix4f("proj", camera.getProjectionMatrix());
             for (Geometry geometry : sceneGraph.getGeometries()) {
-                uniformBuffer.setModel(geometry.getWorldTransform().getMatrix());
+                transformUniformData.setMatrix4f("model", geometry.getWorldTransform().getMatrix());
 
+                long uniformBufferMemory = geometry.getUniformBuffersMemory().get(currentImage);
                 PointerBuffer data = stack.mallocPointer(1);
-                vkMapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage), 0, UniformBuffer.SIZEOF, 0, data);
-                BufferUtil.memcpy(data.getByteBuffer(0, UniformBuffer.SIZEOF), uniformBuffer);
-                vkUnmapMemory(logicalDevice, geometry.getUniformBuffersMemory().get(currentImage));
+                vkMapMemory(logicalDevice, uniformBufferMemory, 0, transformUniformData.getSize(), 0, data);
+                ByteBuffer byteBuffer = data.getByteBuffer(0, transformUniformData.getSize());
+                transformUniformData.write(byteBuffer);
+                vkUnmapMemory(logicalDevice, uniformBufferMemory);
             }
         }
     }
