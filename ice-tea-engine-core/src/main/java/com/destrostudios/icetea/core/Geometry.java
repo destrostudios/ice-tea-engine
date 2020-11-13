@@ -44,8 +44,8 @@ public class Geometry {
         if (!mesh.isInitialized()) {
             mesh.init(application);
         }
-        initDescriptorSetLayout();
-        createDescriptorDependencies();
+        transformUniformData.setApplication(application);
+        material.getParameters().setApplication(application);
     }
 
     public boolean update() {
@@ -57,7 +57,9 @@ public class Geometry {
             updateWorldTransformUniform();
             isWorldTransformOutdated = false;
         }
-        if (transformUniformData.isStructureModified() || material.getParameters().isStructureModified()) {
+        boolean recreateDescriptorDependencies = transformUniformData.recreateBufferIfNecessary();
+        recreateDescriptorDependencies |= material.getParameters().recreateBufferIfNecessary();
+        if (recreateDescriptorDependencies) {
             cleanupDescriptorSetLayout();
             initDescriptorSetLayout();
             cleanupDescriptorDependencies();
@@ -95,18 +97,18 @@ public class Geometry {
             descriptorIndex++;
 
             if (material.getParameters().getSize() > 0) {
-                VkDescriptorSetLayoutBinding materialParametersLayoutBinding = bindings.get(1);
+                VkDescriptorSetLayoutBinding materialParametersLayoutBinding = bindings.get(descriptorIndex);
                 materialParametersLayoutBinding.binding(descriptorIndex);
                 materialParametersLayoutBinding.descriptorCount(1);
                 materialParametersLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
                 materialParametersLayoutBinding.pImmutableSamplers(null);
-                materialParametersLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+                materialParametersLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
                 descriptorIndex++;
             }
 
             for (int i = descriptorIndex; i < descriptorsCount; i++) {
                 VkDescriptorSetLayoutBinding imageSamplerLayoutBinding = bindings.get(i);
-                imageSamplerLayoutBinding.binding(descriptorIndex);
+                imageSamplerLayoutBinding.binding(i);
                 imageSamplerLayoutBinding.descriptorCount(1);
                 imageSamplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 imageSamplerLayoutBinding.pImmutableSamplers(null);
@@ -134,21 +136,17 @@ public class Geometry {
 
     public void createDescriptorDependencies() {
         graphicsPipeline = new GraphicsPipeline(application, this);
-        transformUniformData.setApplication(application);
-        transformUniformData.initBuffer();
-        material.getParameters().setApplication(application);
-        material.getParameters().initBuffer();
         initDescriptorPool();
         initDescriptorSets();
     }
 
     public void cleanupDescriptorDependencies() {
-        graphicsPipeline.cleanup();
-        graphicsPipeline = null;
-        transformUniformData.cleanupBuffer();
-        material.getParameters().cleanupBuffer();
-        cleanupDescriptorSets();
-        cleanupDescriptorPool();
+        if (graphicsPipeline != null) {
+            graphicsPipeline.cleanup();
+            graphicsPipeline = null;
+            cleanupDescriptorSets();
+            cleanupDescriptorPool();
+        }
     }
 
     private void initDescriptorPool() {
@@ -340,10 +338,7 @@ public class Geometry {
         tryUnregisterMesh();
         tryUnregisterMaterial();
         cleanupDescriptorSetLayout();
-        // Can already be cleanuped by swap chain cleanup
-        if (graphicsPipeline != null) {
-            cleanupDescriptorDependencies();
-        }
+        cleanupDescriptorDependencies();
     }
 
     private void tryUnregisterMesh() {

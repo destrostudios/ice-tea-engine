@@ -1,14 +1,14 @@
 package com.destrostudios.icetea.core;
 
-import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.nio.ByteBuffer;
 
-public class Matrix4fUniformValue extends UniformValue<Matrix4f> {
+public class Vector3fUniformValue extends UniformValue<Vector3f> {
 
     @Override
     public int getSize() {
-        return 16 * Float.BYTES;
+        return 4 * Float.BYTES;
     }
 
     @Override

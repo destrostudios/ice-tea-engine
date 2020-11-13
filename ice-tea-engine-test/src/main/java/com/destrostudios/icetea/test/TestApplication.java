@@ -4,6 +4,7 @@ import com.destrostudios.icetea.core.*;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
 
@@ -28,6 +29,7 @@ public class TestApplication extends Application {
         materialChalet.setFragmentShaderFile("shaders/my_shader.frag");
         Texture textureChalet = new Texture(this, "textures/chalet.jpg");
         materialChalet.addTexture(textureChalet);
+        materialChalet.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
 
         Geometry geometryChalet1 = new Geometry();
         geometryChalet1.setMesh(meshChalet);
@@ -42,6 +44,14 @@ public class TestApplication extends Application {
         geometryChalet2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         geometryChalet2.scale(new Vector3f(0.5f, 0.5f, 1));
 
+        Geometry geometryChalet3 = new Geometry();
+        geometryChalet3.setMesh(meshChalet);
+        geometryChalet3.setMaterial(materialChalet);
+        sceneGraph.addGeometry(geometryChalet3);
+        geometryChalet3.move(new Vector3f(-1.5f, 1, 0));
+        geometryChalet3.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-45), 0, 0, 1)));
+        geometryChalet3.scale(new Vector3f(0.5f, 0.5f, 1));
+
         // Trees
 
         Mesh meshTrees = new Mesh();
@@ -52,6 +62,7 @@ public class TestApplication extends Application {
         materialTrees.setFragmentShaderFile("shaders/my_shader.frag");
         Texture textureTree = new Texture(this, "textures/trees.jpg");
         materialTrees.addTexture(textureTree);
+        materialTrees.getParameters().setVector4f("color", new Vector4f(0, 0, 1, 1));
 
         Geometry geometryTrees = new Geometry();
         geometryTrees.setMesh(meshTrees);
@@ -70,6 +81,7 @@ public class TestApplication extends Application {
         materialDennis.setFragmentShaderFile("shaders/my_shader.frag");
         Texture textureDennis = new Texture(this, "textures/dennis.jpg");
         materialDennis.addTexture(textureDennis);
+        materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
         geometryDennis = new Geometry();
         geometryDennis.setMesh(meshDennis);

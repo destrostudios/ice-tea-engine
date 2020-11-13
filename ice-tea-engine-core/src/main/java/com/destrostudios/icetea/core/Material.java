@@ -41,6 +41,7 @@ public class Material {
     }
 
     public void cleanup() {
+        parameters.cleanupBuffer();
         for (Texture texture : textures) {
             texture.cleanup();
         }
