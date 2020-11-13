@@ -5,24 +5,20 @@ import org.joml.*;
 
 public class Camera {
 
-    public Camera() {
+    public Camera(Application application) {
         location = new Vector3f();
         direction = new Vector3f(0, 1, 0);
 
-        viewMatrix = new Matrix4f();
         projectionMatrix = new Matrix4f();
+        viewMatrix = new Matrix4f();
         viewProjectionMatrix = new Matrix4f();
+
+        transformUniformData = new UniformData();
+        transformUniformData.setApplication(application);
+        updateProjectionMatrixUniform();
+        updateViewMatrixUniform();
+        transformUniformData.initBuffer();
     }
-    @Getter
-    private Vector3f location;
-    @Getter
-    private Vector3f direction;
-    @Getter
-    private Matrix4f viewMatrix;
-    @Getter
-    private Matrix4f projectionMatrix;
-    @Getter
-    private Matrix4f viewProjectionMatrix;
     @Getter
     private float fieldOfViewY;
     @Getter
@@ -32,18 +28,20 @@ public class Camera {
     @Getter
     private float zFar;
     @Getter
-    private boolean isOutdated_View;
+    private Vector3f location;
+    @Getter
+    private Vector3f direction;
+    @Getter
+    private Matrix4f projectionMatrix;
+    @Getter
+    private Matrix4f viewMatrix;
+    @Getter
+    private Matrix4f viewProjectionMatrix;
+    @Getter
     private boolean isOutdated_Projection;
-
-    public void setLocation(Vector3f location) {
-        this.location.set(location);
-        isOutdated_View = true;
-    }
-
-    public void setDirection(Vector3fc direction) {
-        this.direction.set(direction);
-        isOutdated_View = true;
-    }
+    private boolean isOutdated_View;
+    @Getter
+    private UniformData transformUniformData;
 
     public void setFieldOfViewY(float fieldOfViewY) {
         this.fieldOfViewY = fieldOfViewY;
@@ -65,18 +63,38 @@ public class Camera {
         isOutdated_Projection = true;
     }
 
+    public void setLocation(Vector3f location) {
+        this.location.set(location);
+        isOutdated_View = true;
+    }
+
+    public void setDirection(Vector3fc direction) {
+        this.direction.set(direction);
+        isOutdated_View = true;
+    }
+
     public void update() {
-        if (isOutdated_View || isOutdated_Projection) {
-            if (isOutdated_View) {
-                updateViewMatrix();
-                isOutdated_View = false;
-            }
+        if (isOutdated_Projection || isOutdated_View) {
             if (isOutdated_Projection) {
                 updateProjectionMatrix();
                 isOutdated_Projection = false;
             }
+            if (isOutdated_View) {
+                updateViewMatrix();
+                isOutdated_View = false;
+            }
             updateViewProjectionMatrix();
         }
+    }
+
+    public void updateProjectionMatrix() {
+        projectionMatrix.perspective(fieldOfViewY, aspect, zNear, zFar);
+        projectionMatrix.m11(projectionMatrix.m11() * -1);
+        updateProjectionMatrixUniform();
+    }
+
+    private void updateProjectionMatrixUniform() {
+        transformUniformData.setMatrix4f("proj", projectionMatrix);
     }
 
     public void updateViewMatrix() {
@@ -87,12 +105,16 @@ public class Camera {
         );
     }
 
-    public void updateProjectionMatrix() {
-        projectionMatrix.perspective(fieldOfViewY, aspect, zNear, zFar);
-        projectionMatrix.m11(projectionMatrix.m11() * -1);
-    }
-
     public void updateViewProjectionMatrix() {
         viewProjectionMatrix.set(projectionMatrix).mul(viewMatrix);
+        updateViewMatrixUniform();
+    }
+
+    private void updateViewMatrixUniform() {
+        transformUniformData.setMatrix4f("view", viewMatrix);
+    }
+
+    public void cleanup() {
+        transformUniformData.cleanupBuffer();
     }
 }

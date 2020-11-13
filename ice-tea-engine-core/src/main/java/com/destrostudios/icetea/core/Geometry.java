@@ -15,6 +15,10 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class Geometry {
 
+    public Geometry() {
+        transformUniformData = new UniformData();
+        updateWorldTransformUniform();
+    }
     private Application application;
     @Getter
     private Mesh mesh;
@@ -31,9 +35,7 @@ public class Geometry {
     @Getter
     private GraphicsPipeline graphicsPipeline;
     @Getter
-    private List<Long> uniformBuffers;
-    @Getter
-    private List<Long> uniformBuffersMemory;
+    private UniformData transformUniformData;
     @Getter
     private List<Long> descriptorSets;
 
@@ -43,37 +45,80 @@ public class Geometry {
             mesh.init(application);
         }
         initDescriptorSetLayout();
-        createSwapChainDependencies();
+        createDescriptorDependencies();
+    }
+
+    public boolean update() {
+        if (localTransform.updateMatrixIfNecessary()) {
+            isWorldTransformOutdated = true;
+        }
+        if (isWorldTransformOutdated) {
+            worldTransform.set(localTransform);
+            updateWorldTransformUniform();
+            isWorldTransformOutdated = false;
+        }
+        if (transformUniformData.isStructureModified() || material.getParameters().isStructureModified()) {
+            cleanupDescriptorSetLayout();
+            initDescriptorSetLayout();
+            cleanupDescriptorDependencies();
+            createDescriptorDependencies();
+            return true;
+        }
+        return false;
+    }
+
+    private void updateWorldTransformUniform() {
+        transformUniformData.setMatrix4f("model", worldTransform.getMatrix());
     }
 
     private void initDescriptorSetLayout() {
         try (MemoryStack stack = stackPush()) {
-            int descriptorsCount = 1 + material.getTextures().size();
-
+            int descriptorsCount = getDescriptorsCount();
             VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.callocStack(descriptorsCount, stack);
 
-            VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = bindings.get(0);
-            uniformBufferLayoutBinding.binding(0);
-            uniformBufferLayoutBinding.descriptorCount(1);
-            uniformBufferLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            uniformBufferLayoutBinding.pImmutableSamplers(null);
-            uniformBufferLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+            int descriptorIndex = 0;
 
-            for (int i = 1; i < descriptorsCount; i++) {
+            VkDescriptorSetLayoutBinding cameraTransformDescriptorLayoutBinding = bindings.get(descriptorIndex);
+            cameraTransformDescriptorLayoutBinding.binding(descriptorIndex);
+            cameraTransformDescriptorLayoutBinding.descriptorCount(1);
+            cameraTransformDescriptorLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            cameraTransformDescriptorLayoutBinding.pImmutableSamplers(null);
+            cameraTransformDescriptorLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+            descriptorIndex++;
+
+            VkDescriptorSetLayoutBinding transformDescriptorLayoutBinding = bindings.get(descriptorIndex);
+            transformDescriptorLayoutBinding.binding(descriptorIndex);
+            transformDescriptorLayoutBinding.descriptorCount(1);
+            transformDescriptorLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            transformDescriptorLayoutBinding.pImmutableSamplers(null);
+            transformDescriptorLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+            descriptorIndex++;
+
+            if (material.getParameters().getSize() > 0) {
+                VkDescriptorSetLayoutBinding materialParametersLayoutBinding = bindings.get(1);
+                materialParametersLayoutBinding.binding(descriptorIndex);
+                materialParametersLayoutBinding.descriptorCount(1);
+                materialParametersLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                materialParametersLayoutBinding.pImmutableSamplers(null);
+                materialParametersLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+                descriptorIndex++;
+            }
+
+            for (int i = descriptorIndex; i < descriptorsCount; i++) {
                 VkDescriptorSetLayoutBinding imageSamplerLayoutBinding = bindings.get(i);
-                imageSamplerLayoutBinding.binding(1);
+                imageSamplerLayoutBinding.binding(descriptorIndex);
                 imageSamplerLayoutBinding.descriptorCount(1);
                 imageSamplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 imageSamplerLayoutBinding.pImmutableSamplers(null);
                 imageSamplerLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
             }
 
-            VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.callocStack(stack);
-            layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
-            layoutInfo.pBindings(bindings);
+            VkDescriptorSetLayoutCreateInfo layoutCreateInfo = VkDescriptorSetLayoutCreateInfo.callocStack(stack);
+            layoutCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
+            layoutCreateInfo.pBindings(bindings);
 
             LongBuffer pDescriptorSetLayout = stack.mallocLong(1);
-            if (vkCreateDescriptorSetLayout(application.getLogicalDevice(), layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
+            if (vkCreateDescriptorSetLayout(application.getLogicalDevice(), layoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create descriptor set layout");
             }
             descriptorSetLayout = pDescriptorSetLayout.get(0);
@@ -87,17 +132,21 @@ public class Geometry {
         }
     }
 
-    public void createSwapChainDependencies() {
+    public void createDescriptorDependencies() {
         graphicsPipeline = new GraphicsPipeline(application, this);
+        transformUniformData.setApplication(application);
+        transformUniformData.initBuffer();
+        material.getParameters().setApplication(application);
+        material.getParameters().initBuffer();
         initDescriptorPool();
-        initUniformBuffers();
         initDescriptorSets();
     }
 
-    public void cleanupSwapChainDependencies() {
+    public void cleanupDescriptorDependencies() {
         graphicsPipeline.cleanup();
         graphicsPipeline = null;
-        cleanupUniformBuffers();
+        transformUniformData.cleanupBuffer();
+        material.getParameters().cleanupBuffer();
         cleanupDescriptorSets();
         cleanupDescriptorPool();
     }
@@ -105,13 +154,29 @@ public class Geometry {
     private void initDescriptorPool() {
         try (MemoryStack stack = stackPush()) {
             int descriptorSetsCount = getDescriptorSetsCount();
-            VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(descriptorSetsCount, stack);
+            int descriptorsCount = getDescriptorsCount();
+            VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(descriptorsCount, stack);
 
-            VkDescriptorPoolSize uniformBufferPoolSize = poolSizes.get(0);
-            uniformBufferPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            uniformBufferPoolSize.descriptorCount(descriptorSetsCount);
+            int descriptorIndex = 0;
 
-            for (int i = 1; i < descriptorSetsCount; i++) {
+            VkDescriptorPoolSize cameraTransformDescriptorsPoolSize = poolSizes.get(descriptorIndex);
+            cameraTransformDescriptorsPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            cameraTransformDescriptorsPoolSize.descriptorCount(descriptorSetsCount);
+            descriptorIndex++;
+
+            VkDescriptorPoolSize geometryTransformDescriptorsPoolSize = poolSizes.get(descriptorIndex);
+            geometryTransformDescriptorsPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            geometryTransformDescriptorsPoolSize.descriptorCount(descriptorSetsCount);
+            descriptorIndex++;
+
+            if (material.getParameters().getSize() > 0) {
+                VkDescriptorPoolSize materialParametersPoolSize = poolSizes.get(descriptorIndex);
+                materialParametersPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                materialParametersPoolSize.descriptorCount(descriptorSetsCount);
+                descriptorIndex++;
+            }
+
+            for (int i = descriptorIndex; i < descriptorsCount; i++) {
                 VkDescriptorPoolSize textureSamplerPoolSize = poolSizes.get(i);
                 textureSamplerPoolSize.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 textureSamplerPoolSize.descriptorCount(descriptorSetsCount);
@@ -137,42 +202,6 @@ public class Geometry {
         }
     }
 
-    private void initUniformBuffers() {
-        try (MemoryStack stack = stackPush()) {
-            int swapChainImagesCount = application.getSwapChain().getImages().size();
-            uniformBuffers = new ArrayList<>(swapChainImagesCount);
-            uniformBuffersMemory = new ArrayList<>(swapChainImagesCount);
-            LongBuffer pBuffer = stack.mallocLong(1);
-            LongBuffer pBufferMemory = stack.mallocLong(1);
-            for (int i = 0; i < swapChainImagesCount; i++) {
-                application.getBufferManager().createBuffer(
-                    Application.TRANSFORM_UNIFORM_BUFFER_SIZE,
-                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    pBuffer,
-                    pBufferMemory
-                );
-                uniformBuffers.add(pBuffer.get(0));
-                uniformBuffersMemory.add(pBufferMemory.get(0));
-            }
-        }
-    }
-
-    private void cleanupUniformBuffers() {
-        if (uniformBuffers != null) {
-            for (long uniformBuffer : uniformBuffers) {
-                vkDestroyBuffer(application.getLogicalDevice(), uniformBuffer, null);
-            }
-            uniformBuffers = null;
-        }
-        if (uniformBuffersMemory != null) {
-            for (long uniformBufferMemory : uniformBuffersMemory) {
-                vkFreeMemory(application.getLogicalDevice(), uniformBufferMemory, null);
-            }
-            uniformBuffersMemory = null;
-        }
-    }
-
     private void initDescriptorSets() {
         try (MemoryStack stack = stackPush()) {
             VkDescriptorSetAllocateInfo allocateInfo = VkDescriptorSetAllocateInfo.callocStack(stack);
@@ -192,26 +221,56 @@ public class Geometry {
             }
             descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
 
-            int bindingsCount = 1 + material.getTextures().size();
-            VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.callocStack(bindingsCount, stack);
+            int descriptorsCount = getDescriptorsCount();
+            VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.callocStack(descriptorsCount, stack);
 
-            VkWriteDescriptorSet uniformBufferDescriptorWrite = descriptorWrites.get(0);
-            uniformBufferDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-            uniformBufferDescriptorWrite.dstBinding(0);
-            uniformBufferDescriptorWrite.dstArrayElement(0);
-            uniformBufferDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            uniformBufferDescriptorWrite.descriptorCount(1);
-            VkDescriptorBufferInfo.Buffer uniformBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
-            uniformBufferInfo.offset(0);
-            uniformBufferInfo.range(Application.TRANSFORM_UNIFORM_BUFFER_SIZE);
-            uniformBufferDescriptorWrite.pBufferInfo(uniformBufferInfo);
+            int descriptorIndex = 0;
 
-            for (int i = 1; i < bindingsCount; i++) {
-                Texture texture = material.getTextures().get(i - 1);
+            VkWriteDescriptorSet cameraTransformDescriptorWrite = descriptorWrites.get(descriptorIndex);
+            cameraTransformDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+            cameraTransformDescriptorWrite.dstBinding(descriptorIndex);
+            cameraTransformDescriptorWrite.dstArrayElement(0);
+            cameraTransformDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            cameraTransformDescriptorWrite.descriptorCount(1);
+            VkDescriptorBufferInfo.Buffer cameraTransformDescriptorBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
+            cameraTransformDescriptorBufferInfo.offset(0);
+            cameraTransformDescriptorBufferInfo.range(application.getCamera().getTransformUniformData().getSize());
+            cameraTransformDescriptorWrite.pBufferInfo(cameraTransformDescriptorBufferInfo);
+            descriptorIndex++;
+
+            VkWriteDescriptorSet geometryTransformDescriptorWrite = descriptorWrites.get(descriptorIndex);
+            geometryTransformDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+            geometryTransformDescriptorWrite.dstBinding(descriptorIndex);
+            geometryTransformDescriptorWrite.dstArrayElement(0);
+            geometryTransformDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            geometryTransformDescriptorWrite.descriptorCount(1);
+            VkDescriptorBufferInfo.Buffer geometryTransformDescriptorBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
+            geometryTransformDescriptorBufferInfo.offset(0);
+            geometryTransformDescriptorBufferInfo.range(transformUniformData.getSize());
+            geometryTransformDescriptorWrite.pBufferInfo(geometryTransformDescriptorBufferInfo);
+            descriptorIndex++;
+
+            VkDescriptorBufferInfo.Buffer materialParameterDescriptorBufferInfo = null;
+            if (material.getParameters().getSize() > 0) {
+                VkWriteDescriptorSet materialParameterDescriptorWrite = descriptorWrites.get(descriptorIndex);
+                materialParameterDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                materialParameterDescriptorWrite.dstBinding(descriptorIndex);
+                materialParameterDescriptorWrite.dstArrayElement(0);
+                materialParameterDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                materialParameterDescriptorWrite.descriptorCount(1);
+                materialParameterDescriptorBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
+                materialParameterDescriptorBufferInfo.offset(0);
+                materialParameterDescriptorBufferInfo.range(material.getParameters().getSize());
+                materialParameterDescriptorWrite.pBufferInfo(materialParameterDescriptorBufferInfo);
+                descriptorIndex++;
+            }
+
+            for (int i = descriptorIndex; i < descriptorsCount; i++) {
+                Texture texture = material.getTextures().get(i - descriptorIndex);
 
                 VkWriteDescriptorSet imageDescriptorWrite = descriptorWrites.get(i);
                 imageDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                imageDescriptorWrite.dstBinding(1);
+                imageDescriptorWrite.dstBinding(i);
                 imageDescriptorWrite.dstArrayElement(0);
                 imageDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 imageDescriptorWrite.descriptorCount(1);
@@ -224,11 +283,18 @@ public class Geometry {
 
             for (int i = 0; i < pDescriptorSets.capacity(); i++) {
                 long descriptorSet = pDescriptorSets.get(i);
-                for (int r = 0; r < bindingsCount; r++) {
+                for (int r = 0; r < descriptorsCount; r++) {
                     VkWriteDescriptorSet descriptorWrite = descriptorWrites.get(r);
                     descriptorWrite.dstSet(descriptorSet);
                 }
-                uniformBufferInfo.buffer(uniformBuffers.get(i));
+
+                cameraTransformDescriptorBufferInfo.buffer(application.getCamera().getTransformUniformData().getUniformBuffers().get(i));
+                if (geometryTransformDescriptorBufferInfo != null) {
+                    geometryTransformDescriptorBufferInfo.buffer(transformUniformData.getUniformBuffers().get(i));
+                }
+                if (materialParameterDescriptorBufferInfo != null) {
+                    materialParameterDescriptorBufferInfo.buffer(material.getParameters().getUniformBuffers().get(i));
+                }
 
                 vkUpdateDescriptorSets(application.getLogicalDevice(), descriptorWrites, null);
                 descriptorSets.add(descriptorSet);
@@ -249,6 +315,15 @@ public class Geometry {
         return application.getSwapChain().getImages().size();
     }
 
+    private int getDescriptorsCount() {
+        int descriptorsCount = 2;
+        if (material.getParameters().getSize() > 0) {
+            descriptorsCount++;
+        }
+        descriptorsCount += material.getTextures().size();
+        return descriptorsCount;
+    }
+
     public void setMesh(Mesh mesh) {
         tryUnregisterMesh();
         this.mesh = mesh;
@@ -267,7 +342,7 @@ public class Geometry {
         cleanupDescriptorSetLayout();
         // Can already be cleanuped by swap chain cleanup
         if (graphicsPipeline != null) {
-            cleanupSwapChainDependencies();
+            cleanupDescriptorDependencies();
         }
     }
 
@@ -311,16 +386,6 @@ public class Geometry {
 
     public void scale(Vector3fc scale) {
         localTransform.scale(scale);
-    }
-
-    public void update() {
-        if (localTransform.updateMatrixIfNecessary()) {
-            isWorldTransformOutdated = true;
-        }
-        if (isWorldTransformOutdated) {
-            worldTransform.set(localTransform);
-            isWorldTransformOutdated = false;
-        }
     }
 }
 

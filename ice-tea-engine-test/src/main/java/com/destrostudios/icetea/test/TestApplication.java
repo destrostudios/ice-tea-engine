@@ -15,6 +15,9 @@ public class TestApplication extends Application {
 
     @Override
     protected void initScene() {
+        camera.setLocation(new Vector3f(0, -3, 1.25f));
+        camera.setDirection(new Vector3f(0, 1, -0.25f).normalize());
+
         // Chalet
 
         Mesh meshChalet = new Mesh();

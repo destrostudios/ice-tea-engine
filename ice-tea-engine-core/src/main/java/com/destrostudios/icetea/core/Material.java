@@ -6,15 +6,21 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
 public class Material {
 
     public Material() {
         textures = new ArrayList<>();
+        parameters = new UniformData();
     }
+    @Getter
+    @Setter
     private String vertexShaderFile;
+    @Getter
+    @Setter
     private String fragmentShaderFile;
+    @Getter
+    private UniformData parameters;
+    @Getter
     private List<Texture> textures;
     private int usingGeometriesCount;
 

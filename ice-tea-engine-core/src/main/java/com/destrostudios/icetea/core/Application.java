@@ -1,12 +1,10 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
-import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
@@ -27,7 +25,6 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 public abstract class Application {
 
     static final Set<String> DEVICE_EXTENSIONS_NAMES = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME).collect(toSet());
-    static final int TRANSFORM_UNIFORM_BUFFER_SIZE = (3 * 16 * Float.BYTES);
     private static final int MAX_FRAMES_IN_FLIGHT = 2;
 
     @Getter
@@ -59,7 +56,6 @@ public abstract class Application {
     private long commandPool;
     @Getter
     private SwapChain swapChain;
-    private UniformData transformUniformData;
 
     @Getter
     protected SceneGraph sceneGraph;
@@ -88,10 +84,9 @@ public abstract class Application {
         initLogicalDevice();
         initCommandPool();
         initSwapChain();
+        initCamera();
         initScene();
         initSyncObjects();
-        initCamera();
-        initTransformUniformData();
     }
 
     private void initWindow() {
@@ -206,6 +201,14 @@ public abstract class Application {
         swapChain.init(this);
     }
 
+    private void initCamera() {
+        camera = new Camera(this);
+        camera.setFieldOfViewY((float) Math.toRadians(45));
+        camera.setAspect((float) swapChain.getExtent().width() / (float) swapChain.getExtent().height());
+        camera.setZNear(0.1f);
+        camera.setZFar(100);
+    }
+
     protected abstract void initScene();
 
     private void initSyncObjects() {
@@ -232,21 +235,6 @@ public abstract class Application {
                 inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
             }
         }
-    }
-
-    private void initCamera() {
-        camera = new Camera();
-        camera.setFieldOfViewY((float) Math.toRadians(45));
-        camera.setAspect((float) swapChain.getExtent().width() / (float) swapChain.getExtent().height());
-        camera.setZNear(0.1f);
-        camera.setZFar(100);
-
-        camera.setLocation(new Vector3f(0, -3, 1.25f));
-        camera.setDirection(new Vector3f(0, 1, -0.25f).normalize());
-    }
-
-    private void initTransformUniformData() {
-        transformUniformData = new UniformData();
     }
 
     public int findMemoryType(int typeFilter, int properties) {
@@ -293,7 +281,7 @@ public abstract class Application {
                 throw new RuntimeException("Cannot get image");
             }
             int imageIndex = pImageIndex.get(0);
-            updateTransformUniformBuffers(imageIndex);
+            updateUniformBuffers(imageIndex);
 
             if (imagesInFlight.containsKey(imageIndex)) {
                 vkWaitForFences(logicalDevice, imagesInFlight.get(imageIndex).getFence(), true, MathUtil.UINT64_MAX);
@@ -334,19 +322,12 @@ public abstract class Application {
         }
     }
 
-    private void updateTransformUniformBuffers(int currentImage) {
+    private void updateUniformBuffers(int currentImage) {
         try (MemoryStack stack = stackPush()) {
-            transformUniformData.setMatrix4f("view", camera.getViewMatrix());
-            transformUniformData.setMatrix4f("proj", camera.getProjectionMatrix());
+            camera.getTransformUniformData().updateBufferIfNecessary(currentImage, stack);
             for (Geometry geometry : sceneGraph.getGeometries()) {
-                transformUniformData.setMatrix4f("model", geometry.getWorldTransform().getMatrix());
-
-                long uniformBufferMemory = geometry.getUniformBuffersMemory().get(currentImage);
-                PointerBuffer data = stack.mallocPointer(1);
-                vkMapMemory(logicalDevice, uniformBufferMemory, 0, transformUniformData.getSize(), 0, data);
-                ByteBuffer byteBuffer = data.getByteBuffer(0, transformUniformData.getSize());
-                transformUniformData.write(byteBuffer);
-                vkUnmapMemory(logicalDevice, uniformBufferMemory);
+                geometry.getTransformUniformData().updateBufferIfNecessary(currentImage, stack);
+                geometry.getMaterial().getParameters().updateBufferIfNecessary(currentImage, stack);
             }
         }
     }
@@ -355,6 +336,8 @@ public abstract class Application {
         swapChain.cleanup();
 
         sceneGraph.cleanup();
+
+        camera.cleanup();
 
         inFlightFrames.forEach(frame -> {
             vkDestroySemaphore(logicalDevice, frame.getRenderFinishedSemaphore(), null);

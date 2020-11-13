@@ -44,10 +44,11 @@ public class SwapChain {
     private List<VkCommandBuffer> commandBuffers;
 
     public void recreate() {
+        // Wait if minimized
         try (MemoryStack stack = stackPush()) {
             IntBuffer width = stack.ints(0);
             IntBuffer height = stack.ints(0);
-            while (width.get(0) == 0 && height.get(0) == 0) {
+            while ((width.get(0)) == 0 && (height.get(0) == 0)) {
                 glfwGetFramebufferSize(application.getWindow(), width, height);
                 glfwWaitEvents();
             }
@@ -66,7 +67,7 @@ public class SwapChain {
         initColorResources();
         initDepthResources();
         initFrameBuffers();
-        initGeometries();
+        initGeometriesDescriptors();
     }
 
     private void initSwapChain() {
@@ -347,9 +348,9 @@ public class SwapChain {
         }
     }
 
-    private void initGeometries() {
+    private void initGeometriesDescriptors() {
         for (Geometry geometry : application.getSceneGraph().getGeometries()) {
-            geometry.createSwapChainDependencies();
+            geometry.createDescriptorDependencies();
         }
     }
 
@@ -435,7 +436,7 @@ public class SwapChain {
         vkFreeMemory(application.getLogicalDevice(), depthImageMemory, null);
 
         for (Geometry geometry : application.getSceneGraph().getGeometries()) {
-            geometry.cleanupSwapChainDependencies();
+            geometry.cleanupDescriptorDependencies();
         }
 
         framebuffers.forEach(framebuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), framebuffer, null));

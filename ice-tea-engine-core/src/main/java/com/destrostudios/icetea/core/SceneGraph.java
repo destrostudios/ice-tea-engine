@@ -14,27 +14,29 @@ public class SceneGraph {
     private Application application;
     @Getter
     private List<Geometry> geometries;
-    private boolean modified;
+    private boolean commandBufferOutdated;
 
     public void addGeometry(Geometry geometry) {
         geometry.init(application);
         geometries.add(geometry);
-        modified = true;
+        commandBufferOutdated = true;
     }
 
     public void removeGeometry(Geometry geometry) {
         geometry.cleanup();
         geometries.remove(geometry);
-        modified = true;
+        commandBufferOutdated = true;
     }
 
     public void update() {
         for (Geometry geometry : geometries) {
-            geometry.update();
+            if (geometry.update()) {
+                commandBufferOutdated = true;
+            }
         }
-        if (modified) {
+        if (commandBufferOutdated) {
             application.getSwapChain().recreateCommandBuffers();
-            modified = false;
+            commandBufferOutdated = false;
         }
     }
 
