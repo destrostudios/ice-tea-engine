@@ -57,9 +57,7 @@ public class Geometry {
             updateWorldTransformUniform();
             isWorldTransformOutdated = false;
         }
-        boolean recreateDescriptorDependencies = transformUniformData.recreateBufferIfNecessary();
-        recreateDescriptorDependencies |= material.getParameters().recreateBufferIfNecessary();
-        if (recreateDescriptorDependencies) {
+        if (transformUniformData.recreateBufferIfNecessary() | material.getParameters().recreateBufferIfNecessary()) {
             cleanupDescriptorSetLayout();
             initDescriptorSetLayout();
             cleanupDescriptorDependencies();
