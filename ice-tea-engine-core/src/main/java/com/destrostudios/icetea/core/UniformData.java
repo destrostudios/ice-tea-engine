@@ -34,6 +34,10 @@ public class UniformData {
     private boolean structureModified;
     private ArrayList<Boolean> contentModified;
 
+    public void setFloat(String name, Float value) {
+        set(name, value, FloatUniformValue::new);
+    }
+
     public void setVector3f(String name, Vector3f value) {
         set(name, value, Vector3fUniformValue::new);
     }
@@ -71,6 +75,10 @@ public class UniformData {
                 contentModified.set(i, true);
             }
         }
+    }
+
+    public Float getFloat(String name) {
+        return get(name);
     }
 
     public Vector3f getVector3f(String name) {
