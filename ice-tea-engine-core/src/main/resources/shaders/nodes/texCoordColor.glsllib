@@ -1,0 +1,3 @@
+vec4 shaderNode_texCoordColor(vec2 texCoord) {
+    return vec4(texCoord.x, texCoord.y, 0, 1);
+}

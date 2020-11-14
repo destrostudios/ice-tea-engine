@@ -6,20 +6,15 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
 public class ShaderSPIRVUtils {
 
-    public static SPIRV compileShaderFile(String shaderFile, ShaderType shaderType) {
-        return compileShaderAbsoluteFile(getSystemClassLoader().getResource(shaderFile).toExternalForm(), shaderType);
-    }
-
-    public static SPIRV compileShaderAbsoluteFile(String shaderFile, ShaderType shaderType) {
+    public static String readSource(String shaderFile) {
         try {
-            String source = new String(Files.readAllBytes(Paths.get(new URI(shaderFile))));
-            return compileShader(shaderFile, source, shaderType);
+            String externalFormFilePath = ClassLoader.getSystemClassLoader().getResource(shaderFile).toExternalForm();
+            return new String(Files.readAllBytes(Paths.get(new URI(externalFormFilePath))));
         } catch (IOException | URISyntaxException ex) {
             ex.printStackTrace();
         }

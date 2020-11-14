@@ -28,8 +28,8 @@ public class GraphicsPipeline {
     public void init() {
         try (MemoryStack stack = stackPush()) {
             Material material = geometry.getMaterial();
-            SPIRV vertShaderSPIRV = ShaderSPIRVUtils.compileShaderFile(material.getVertexShaderFile(), ShaderType.VERTEX_SHADER);
-            SPIRV fragShaderSPIRV = ShaderSPIRVUtils.compileShaderFile(material.getFragmentShaderFile(), ShaderType.FRAGMENT_SHADER);
+            SPIRV vertShaderSPIRV = material.getVertexShader().compile(ShaderType.VERTEX_SHADER);
+            SPIRV fragShaderSPIRV = material.getFragmentShader().compile(ShaderType.FRAGMENT_SHADER);
 
             long vertShaderModule = createShaderModule(application, vertShaderSPIRV.bytecode());
             long fragShaderModule = createShaderModule(application, fragShaderSPIRV.bytecode());

@@ -14,10 +14,10 @@ public class Material {
     }
     @Getter
     @Setter
-    private String vertexShaderFile;
+    private Shader vertexShader;
     @Getter
     @Setter
-    private String fragmentShaderFile;
+    private Shader fragmentShader;
     @Getter
     private UniformData parameters;
     @Getter

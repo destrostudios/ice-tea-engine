@@ -19,14 +19,22 @@ public class TestApplication extends Application {
         camera.setLocation(new Vector3f(0, -3, 1.25f));
         camera.setDirection(new Vector3f(0, 1, -0.25f).normalize());
 
+        Shader vertexShaderDefault = new Shader("shaders/my_shader.vert");
+        Shader fragShaderDefault = new Shader("shaders/my_shader.frag");
+        Shader fragShaderCool = new Shader("shaders/my_cool_shader.frag", new String[] { "texCoordColor" });
+
+        Material materialCool = new Material();
+        materialCool.setVertexShader(vertexShaderDefault);
+        materialCool.setFragmentShader(fragShaderCool);
+
         // Chalet
 
         Mesh meshChalet = new Mesh();
         meshChalet.loadModel("models/chalet.obj");
 
         Material materialChalet = new Material();
-        materialChalet.setVertexShaderFile("shaders/my_shader.vert");
-        materialChalet.setFragmentShaderFile("shaders/my_shader.frag");
+        materialChalet.setVertexShader(vertexShaderDefault);
+        materialChalet.setFragmentShader(fragShaderDefault);
         Texture textureChalet = new Texture(this, "textures/chalet.jpg");
         materialChalet.addTexture(textureChalet);
         materialChalet.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
@@ -46,7 +54,7 @@ public class TestApplication extends Application {
 
         Geometry geometryChalet3 = new Geometry();
         geometryChalet3.setMesh(meshChalet);
-        geometryChalet3.setMaterial(materialChalet);
+        geometryChalet3.setMaterial(materialCool);
         sceneGraph.addGeometry(geometryChalet3);
         geometryChalet3.move(new Vector3f(-1.5f, 1, 0));
         geometryChalet3.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-45), 0, 0, 1)));
@@ -58,8 +66,8 @@ public class TestApplication extends Application {
         meshTrees.loadModel("models/trees.obj");
 
         Material materialTrees = new Material();
-        materialTrees.setVertexShaderFile("shaders/my_shader.vert");
-        materialTrees.setFragmentShaderFile("shaders/my_shader.frag");
+        materialTrees.setVertexShader(vertexShaderDefault);
+        materialTrees.setFragmentShader(fragShaderDefault);
         Texture textureTree = new Texture(this, "textures/trees.jpg");
         materialTrees.addTexture(textureTree);
         materialTrees.getParameters().setVector4f("color", new Vector4f(0, 0, 1, 1));
@@ -77,8 +85,8 @@ public class TestApplication extends Application {
         meshDennis.loadModel("models/dennis.obj");
 
         Material materialDennis = new Material();
-        materialDennis.setVertexShaderFile("shaders/my_shader.vert");
-        materialDennis.setFragmentShaderFile("shaders/my_shader.frag");
+        materialDennis.setVertexShader(vertexShaderDefault);
+        materialDennis.setFragmentShader(fragShaderDefault);
         Texture textureDennis = new Texture(this, "textures/dennis.jpg");
         materialDennis.addTexture(textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
