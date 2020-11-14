@@ -10,6 +10,7 @@ import static org.lwjgl.glfw.GLFW.glfwGetTime;
 
 public class TestApplication extends Application {
 
+    private Material materialCool;
     private Geometry geometryDennis;
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
@@ -21,11 +22,12 @@ public class TestApplication extends Application {
 
         Shader vertexShaderDefault = new Shader("shaders/my_shader.vert");
         Shader fragShaderDefault = new Shader("shaders/my_shader.frag");
-        Shader fragShaderCool = new Shader("shaders/my_cool_shader.frag", new String[] { "texCoordColor" });
+        Shader fragShaderCool = new Shader("shaders/my_cool_shader.frag", new String[] { "texCoordColor", "alphaPulsate" });
 
-        Material materialCool = new Material();
+        materialCool = new Material();
         materialCool.setVertexShader(vertexShaderDefault);
         materialCool.setFragmentShader(fragShaderCool);
+        materialCool.setTransparent(true);
 
         // Chalet
 
@@ -111,5 +113,6 @@ public class TestApplication extends Application {
         for (Geometry geometry : sceneGraph.getGeometries()) {
             geometry.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
         }
+        materialCool.getParameters().setFloat("time", (float) time);
     }
 }

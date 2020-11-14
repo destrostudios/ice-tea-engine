@@ -23,6 +23,9 @@ public class Material {
     @Getter
     private List<Texture> textures;
     private int usingGeometriesCount;
+    @Setter
+    @Getter
+    private boolean transparent;
 
     public void addTexture(Texture texture) {
         textures.add(texture);
