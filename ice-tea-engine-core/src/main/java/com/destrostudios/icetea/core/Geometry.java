@@ -1,8 +1,6 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
-import org.joml.Quaternionfc;
-import org.joml.Vector3fc;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -13,22 +11,15 @@ import java.util.List;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class Geometry {
+public class Geometry extends Spatial {
 
     public Geometry() {
         transformUniformData = new UniformData();
-        updateWorldTransformUniform();
     }
-    private Application application;
     @Getter
     private Mesh mesh;
     @Getter
     private Material material;
-    @Getter
-    private Transform localTransform = new Transform();
-    @Getter
-    private Transform worldTransform = new Transform();
-    private boolean isWorldTransformOutdated;
     private Long descriptorPool;
     @Getter
     private Long descriptorSetLayout;
@@ -39,8 +30,22 @@ public class Geometry {
     @Getter
     private List<Long> descriptorSets;
 
-    public void init(Application application) {
-        this.application = application;
+    @Override
+    public boolean update(Application application) {
+        boolean commandBufferOutdated = super.update(application);
+        if (transformUniformData.recreateBufferIfNecessary() | material.getParameters().recreateBufferIfNecessary()) {
+            cleanupDescriptorSetLayout();
+            initDescriptorSetLayout();
+            cleanupDescriptorDependencies();
+            createDescriptorDependencies();
+            commandBufferOutdated = true;
+        }
+        return commandBufferOutdated;
+    }
+
+    @Override
+    public void init() {
+        super.init();
         if (!mesh.isInitialized()) {
             mesh.init(application);
         }
@@ -48,23 +53,10 @@ public class Geometry {
         material.getParameters().setApplication(application);
     }
 
-    public boolean update() {
-        if (localTransform.updateMatrixIfNecessary()) {
-            isWorldTransformOutdated = true;
-        }
-        if (isWorldTransformOutdated) {
-            worldTransform.set(localTransform);
-            updateWorldTransformUniform();
-            isWorldTransformOutdated = false;
-        }
-        if (transformUniformData.recreateBufferIfNecessary() | material.getParameters().recreateBufferIfNecessary()) {
-            cleanupDescriptorSetLayout();
-            initDescriptorSetLayout();
-            cleanupDescriptorDependencies();
-            createDescriptorDependencies();
-            return true;
-        }
-        return false;
+    @Override
+    protected void updateWorldTransform() {
+        super.updateWorldTransform();
+        updateWorldTransformUniform();
     }
 
     private void updateWorldTransformUniform() {
@@ -332,6 +324,11 @@ public class Geometry {
         material.increaseUsingGeometriesCount();
     }
 
+    public void updateUniformBuffers(int currentImage, MemoryStack stack) {
+        transformUniformData.updateBufferIfNecessary(currentImage, stack);
+        material.getParameters().updateBufferIfNecessary(currentImage, stack);
+    }
+
     public void cleanup() {
         tryUnregisterMesh();
         tryUnregisterMaterial();
@@ -356,29 +353,4 @@ public class Geometry {
             }
         }
     }
-
-    public void setLocalTranslation(Vector3fc translation) {
-        localTransform.setTranslation(translation);
-    }
-
-    public void setLocalRotation(Quaternionfc rotation) {
-        localTransform.setRotation(rotation);
-    }
-
-    public void setLocalScale(Vector3fc scale) {
-        localTransform.setScale(scale);
-    }
-
-    public void move(Vector3fc translation) {
-        localTransform.move(translation);
-    }
-
-    public void rotate(Quaternionfc rotation) {
-        localTransform.rotate(rotation);
-    }
-
-    public void scale(Vector3fc scale) {
-        localTransform.scale(scale);
-    }
 }
-

@@ -325,17 +325,14 @@ public abstract class Application {
     private void updateUniformBuffers(int currentImage) {
         try (MemoryStack stack = stackPush()) {
             camera.getTransformUniformData().updateBufferIfNecessary(currentImage, stack);
-            for (Geometry geometry : sceneGraph.getGeometries()) {
-                geometry.getTransformUniformData().updateBufferIfNecessary(currentImage, stack);
-                geometry.getMaterial().getParameters().updateBufferIfNecessary(currentImage, stack);
-            }
+            sceneGraph.getRootNode().forEachGeometry(geometry -> geometry.updateUniformBuffers(currentImage, stack));
         }
     }
 
     private void cleanup() {
         swapChain.cleanup();
 
-        sceneGraph.cleanup();
+        sceneGraph.getRootNode().forEachGeometry(Geometry::cleanup);
 
         camera.cleanup();
 

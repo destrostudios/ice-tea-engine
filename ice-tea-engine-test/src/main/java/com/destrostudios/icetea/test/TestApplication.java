@@ -44,12 +44,12 @@ public class TestApplication extends Application {
         Geometry geometryChalet1 = new Geometry();
         geometryChalet1.setMesh(meshChalet);
         geometryChalet1.setMaterial(materialChalet);
-        sceneGraph.addGeometry(geometryChalet1);
+        sceneGraph.getRootNode().add(geometryChalet1);
 
         Geometry geometryChalet2 = new Geometry();
         geometryChalet2.setMesh(meshChalet);
         geometryChalet2.setMaterial(materialChalet);
-        sceneGraph.addGeometry(geometryChalet2);
+        sceneGraph.getRootNode().add(geometryChalet2);
         geometryChalet2.move(new Vector3f(1.5f, 1, 0));
         geometryChalet2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         geometryChalet2.scale(new Vector3f(0.5f, 0.5f, 1));
@@ -57,10 +57,14 @@ public class TestApplication extends Application {
         Geometry geometryChalet3 = new Geometry();
         geometryChalet3.setMesh(meshChalet);
         geometryChalet3.setMaterial(materialCool);
-        sceneGraph.addGeometry(geometryChalet3);
-        geometryChalet3.move(new Vector3f(-1.5f, 1, 0));
-        geometryChalet3.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-45), 0, 0, 1)));
+        geometryChalet3.move(new Vector3f(0, 1, 0));
         geometryChalet3.scale(new Vector3f(0.5f, 0.5f, 1));
+
+        Node nodeChalet3 = new Node();
+        nodeChalet3.add(geometryChalet3);
+        nodeChalet3.move(new Vector3f(-1.5f, 0, 0));
+        nodeChalet3.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-45), 0, 1, 0)));
+        sceneGraph.getRootNode().add(nodeChalet3);
 
         // Trees
 
@@ -77,7 +81,7 @@ public class TestApplication extends Application {
         Geometry geometryTrees = new Geometry();
         geometryTrees.setMesh(meshTrees);
         geometryTrees.setMaterial(materialTrees);
-        sceneGraph.addGeometry(geometryTrees);
+        sceneGraph.getRootNode().add(geometryTrees);
         geometryTrees.move(new Vector3f(0, -1, 0));
         geometryTrees.scale(new Vector3f(0.01f, 0.01f, 0.01f));
 
@@ -104,15 +108,15 @@ public class TestApplication extends Application {
     protected void update() {
         double time = glfwGetTime();
         if ((time > 6) && (!hasAddedDennis)) {
-            sceneGraph.addGeometry(geometryDennis);
+            sceneGraph.getRootNode().add(geometryDennis);
             hasAddedDennis = true;
         } else if ((time > 10) && (!hasRemovedDennis)) {
-            sceneGraph.removeGeometry(geometryDennis);
+            sceneGraph.getRootNode().remove(geometryDennis);
             hasRemovedDennis = true;
         }
-        for (Geometry geometry : sceneGraph.getGeometries()) {
+        sceneGraph.getRootNode().forEachGeometry(geometry -> {
             geometry.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
-        }
+        });
         materialCool.getParameters().setFloat("time", (float) time);
     }
 }

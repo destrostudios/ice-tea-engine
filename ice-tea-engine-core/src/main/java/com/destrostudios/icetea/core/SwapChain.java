@@ -349,9 +349,7 @@ public class SwapChain {
     }
 
     private void initGeometriesDescriptors() {
-        for (Geometry geometry : application.getSceneGraph().getGeometries()) {
-            geometry.createDescriptorDependencies();
-        }
+        application.getSceneGraph().getRootNode().forEachGeometry(Geometry::createDescriptorDependencies);
     }
 
     public void recreateCommandBuffers() {
@@ -392,7 +390,7 @@ public class SwapChain {
             clearValues.get(1).depthStencil().set(1.0f, 0);
             renderPassBeginInfo.pClearValues(clearValues);
 
-            for(int i = 0;i < commandBuffersCount;i++) {
+            for(int i = 0; i < commandBuffersCount;i++) {
                 VkCommandBuffer commandBuffer = commandBuffers.get(i);
                 if (vkBeginCommandBuffer(commandBuffer, bufferBeginInfo) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to begin recording command buffer");
@@ -400,16 +398,17 @@ public class SwapChain {
                 renderPassBeginInfo.framebuffer(framebuffers.get(i));
                 vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-                for (Geometry geometry : application.getSceneGraph().getGeometries()) {
+                final int commandBufferIndex = i;
+                application.getSceneGraph().getRootNode().forEachGeometry(geometry -> {
                     GraphicsPipeline graphicsPipeline = geometry.getGraphicsPipeline();
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipeline());
                     LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
                     LongBuffer offsets = stack.longs(0);
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
                     vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayout(), 0, stack.longs(geometry.getDescriptorSets().get(i)), null);
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayout(), 0, stack.longs(geometry.getDescriptorSets().get(commandBufferIndex)), null);
                     vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
-                }
+                });
 
                 vkCmdEndRenderPass(commandBuffer);
                 if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -435,9 +434,7 @@ public class SwapChain {
         vkDestroyImage(application.getLogicalDevice(), depthImage, null);
         vkFreeMemory(application.getLogicalDevice(), depthImageMemory, null);
 
-        for (Geometry geometry : application.getSceneGraph().getGeometries()) {
-            geometry.cleanupDescriptorDependencies();
-        }
+        application.getSceneGraph().getRootNode().forEachGeometry(Geometry::cleanupDescriptorDependencies);
 
         framebuffers.forEach(framebuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), framebuffer, null));
 
