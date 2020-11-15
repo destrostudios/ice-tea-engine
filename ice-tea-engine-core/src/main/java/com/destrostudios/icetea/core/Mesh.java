@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.PointerBuffer;
@@ -20,8 +21,10 @@ public class Mesh {
 
     private Application application;
     @Getter
+    @Setter
     private Vertex[] vertices;
     @Getter
+    @Setter
     private int[] indices;
     @Getter
     private Long vertexBuffer;

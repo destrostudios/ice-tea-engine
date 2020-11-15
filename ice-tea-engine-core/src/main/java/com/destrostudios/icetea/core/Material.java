@@ -12,6 +12,7 @@ public class Material {
         textures = new ArrayList<>();
         parameters = new UniformData();
     }
+    private Application application;
     @Getter
     @Setter
     private Shader vertexShader;
@@ -26,6 +27,17 @@ public class Material {
     @Setter
     @Getter
     private boolean transparent;
+
+    public boolean isInitialized() {
+        return (application != null);
+    }
+
+    public void init(Application application) {
+        this.application = application;
+        for (Texture texture : textures) {
+            texture.init(application);
+        }
+    }
 
     public void addTexture(Texture texture) {
         textures.add(texture);

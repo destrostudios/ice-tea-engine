@@ -20,14 +20,11 @@ import static org.lwjgl.vulkan.VK10.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
 public class Texture {
 
-    public Texture(Application application, String filePath) {
-        this.application = application;
-        initImage(filePath);
-        initImageView();
-        initSampler();
+    public Texture(String filePath) {
+        this.filePath = filePath;
     }
     private Application application;
-    private int mipLevels;
+    private String filePath;
     @Getter
     private Long image;
     @Getter
@@ -36,8 +33,16 @@ public class Texture {
     private Long imageView;
     @Getter
     private Long sampler;
+    private int mipLevels;
 
-    private void initImage(String filePath) {
+    public void init(Application application) {
+        this.application = application;
+        initImage();
+        initImageView();
+        initSampler();
+    }
+
+    private void initImage() {
         try (MemoryStack stack = stackPush()) {
             String externalFormFileName = Paths.get(new URI(getSystemClassLoader().getResource(filePath).toExternalForm())).toString();
 

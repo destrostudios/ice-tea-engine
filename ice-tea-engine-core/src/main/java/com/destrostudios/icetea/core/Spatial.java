@@ -2,10 +2,7 @@ package com.destrostudios.icetea.core;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.joml.Quaternionf;
-import org.joml.Quaternionfc;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.*;
 
 public class Spatial {
 
@@ -52,6 +49,10 @@ public class Spatial {
         } else {
             worldTransform.set(localTransform);
         }
+    }
+
+    public void setLocalTransform(Matrix4fc transform) {
+        localTransform.set(transform);
     }
 
     public void setLocalTranslation(Vector3fc translation) {

@@ -1,0 +1,184 @@
+package com.destrostudios.icetea.core;
+
+import de.javagl.jgltf.model.*;
+import de.javagl.jgltf.model.io.GltfModelReader;
+import lombok.Getter;
+import org.joml.*;
+
+import java.io.*;
+import java.util.LinkedList;
+
+import static java.lang.ClassLoader.getSystemClassLoader;
+
+public class GltfModelLoader {
+
+    public GltfModelLoader(String filePath) {
+        try {
+            File file = new File(getExternalFilePath(filePath));
+            GltfModelReader gltfModelReader = new GltfModelReader();
+            gltfModel = gltfModelReader.read(file.toURI());
+            loadScenes();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+    private GltfModel gltfModel;
+    @Getter
+    private Node rootNode;
+
+    private void loadScenes() {
+        rootNode = new Node();
+        for (SceneModel sceneModel : gltfModel.getSceneModels()) {
+            Node sceneNode = new Node();
+            for (NodeModel nodeModel : sceneModel.getNodeModels()) {
+                Node node = loadNode(nodeModel);
+                sceneNode.add(node);
+            }
+            rootNode.add(sceneNode);
+        }
+    }
+
+    private Node loadNode(NodeModel nodeModel) {
+        Node node = new Node();
+        for (MeshModel meshModel : nodeModel.getMeshModels()) {
+            Node meshNode = loadNode(meshModel);
+            node.add(meshNode);
+        }
+        for (NodeModel childNodeModel : nodeModel.getChildren()) {
+            Spatial child = loadNode(childNodeModel);
+            node.add(child);
+        }
+        float[] matrix = nodeModel.getMatrix();
+        if (matrix != null) {
+            node.setLocalTransform(new Matrix4f(
+                matrix[0], matrix[1], matrix[2], matrix[3],
+                matrix[4], matrix[5], matrix[6], matrix[7],
+                matrix[8], matrix[9], matrix[10], matrix[11],
+                matrix[12], matrix[13], matrix[14], matrix[15]
+            ));
+        }
+        return node;
+    }
+
+    private Node loadNode(MeshModel meshModel) {
+        Node node = new Node();
+        for (MeshPrimitiveModel meshPrimitiveModel : meshModel.getMeshPrimitiveModels()) {
+            Geometry geometry = loadGeometry(meshPrimitiveModel);
+            node.add(geometry);
+        }
+        return node;
+    }
+
+    private Geometry loadGeometry(MeshPrimitiveModel meshPrimitiveModel) {
+        Geometry geometry = new Geometry();
+        Mesh mesh = new Mesh();
+
+        LinkedList<Object> indicesList = readValues(meshPrimitiveModel.getIndices());
+        int[] indices = new int[indicesList.size()];
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] = (int) indicesList.get(i);
+        }
+        mesh.setIndices(indices);
+
+        LinkedList<Object> positionList = readValues(meshPrimitiveModel.getAttributes().get("POSITION"));
+        LinkedList<Object> texCoordList = readValues(meshPrimitiveModel.getAttributes().get("TEXCOORD_0"));
+        Vertex[] vertices = new Vertex[positionList.size()];
+        for (int i = 0; i < vertices.length; i++) {
+            float[] positionArray = (float[]) positionList.get(i);
+            float[] texCoordArray = (float[]) texCoordList.get(i);
+
+            Vector3fc position = new Vector3f(positionArray[0], positionArray[1], positionArray[2]);
+            Vector2fc texCoord = new Vector2f(texCoordArray[0], texCoordArray[1]);
+            Vertex vertex = new Vertex(position, new Vector3f(1, 1, 1), texCoord);
+            vertices[i] = vertex;
+        }
+        mesh.setVertices(vertices);
+        geometry.setMesh(mesh);
+
+        Material material = loadMaterial(meshPrimitiveModel.getMaterialModel());
+        geometry.setMaterial(material);
+
+        return geometry;
+    }
+
+    private LinkedList<Object> readValues(AccessorModel accessorModel) {
+        LinkedList<Object> values = new LinkedList<>();
+        BufferViewModel bufferViewModel = accessorModel.getBufferViewModel();
+        File file = new File(getExternalFilePath("models/" + bufferViewModel.getBufferModel().getUri()));
+        try {
+            DataInputStream dataInputStream = new DataInputStream(new FileInputStream(file));
+            dataInputStream.skip(bufferViewModel.getByteOffset() + accessorModel.getByteOffset());
+            int readBytes;
+            for (int i = 0; i < accessorModel.getCount(); i++) {
+                switch (accessorModel.getComponentType()) {
+                    case GltfConstants.GL_UNSIGNED_SHORT:
+                        switch (accessorModel.getElementType()) {
+                            case SCALAR: {
+                                int value = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                values.add(value);
+                                readBytes = 2;
+                                break;
+                            }
+                            default:
+                                throw new UnsupportedOperationException("GLTF GL_UNSIGNED_SHORT element type " + accessorModel.getElementType());
+                        }
+                        break;
+                    case GltfConstants.GL_FLOAT:
+                        switch (accessorModel.getElementType()) {
+                            case SCALAR: {
+                                float value = LowEndianUtil.readFloat(dataInputStream);
+                                values.add(value);
+                                readBytes = 4;
+                                break;
+                            }
+                            case VEC2: {
+                                float x = LowEndianUtil.readFloat(dataInputStream);
+                                float y = LowEndianUtil.readFloat(dataInputStream);
+                                values.add(new float[] { x, y });
+                                readBytes = 8;
+                                break;
+                            }
+                            case VEC3: {
+                                float x = LowEndianUtil.readFloat(dataInputStream);
+                                float y = LowEndianUtil.readFloat(dataInputStream);
+                                float z = LowEndianUtil.readFloat(dataInputStream);
+                                values.add(new float[] { x, y, z });
+                                readBytes = 12;
+                                break;
+                            }
+                            default:
+                                throw new UnsupportedOperationException("GLTF GL_FLOAT element type " + accessorModel.getElementType());
+                        }
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("GLTF component type " + accessorModel.getComponentType());
+                }
+                Integer byteStride = bufferViewModel.getByteStride();
+                if (byteStride != null) {
+                    dataInputStream.skipBytes(byteStride - readBytes);
+                }
+            }
+            dataInputStream.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return values;
+    }
+
+    private Material loadMaterial(MaterialModel materialModel) {
+        Material material = new Material();
+        material.setVertexShader(new Shader("shaders/my_shader.vert"));
+        material.setFragmentShader(new Shader("shaders/my_shader.frag"));
+        int baseColorTextureIndex = (int) materialModel.getValues().get("baseColorTexture");
+        TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
+        String textureFilePath = "models/" + baseColorTextureModel.getImageModel().getUri();
+        Texture texture = new Texture(textureFilePath);
+        material.addTexture(texture);
+        material.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
+        return material;
+    }
+
+    private String getExternalFilePath(String filePath) {
+        return getSystemClassLoader().getResource(filePath).getFile();
+    }
+}

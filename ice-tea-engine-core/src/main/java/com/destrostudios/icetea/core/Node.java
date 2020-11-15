@@ -1,5 +1,7 @@
 package com.destrostudios.icetea.core;
 
+import lombok.Getter;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -9,6 +11,7 @@ public class Node extends Spatial {
     public Node() {
         children = new LinkedList<>();
     }
+    @Getter
     private List<Spatial> children;
     private boolean modified;
 

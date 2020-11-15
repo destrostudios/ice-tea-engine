@@ -49,6 +49,9 @@ public class Geometry extends Spatial {
         if (!mesh.isInitialized()) {
             mesh.init(application);
         }
+        if (!material.isInitialized()) {
+            material.init(application);
+        }
         transformUniformData.setApplication(application);
         material.getParameters().setApplication(application);
     }

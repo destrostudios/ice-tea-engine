@@ -76,6 +76,10 @@
             <artifactId>joml</artifactId>
         </dependency>
         <dependency>
+            <groupId>de.javagl</groupId>
+            <artifactId>jgltf-model</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
