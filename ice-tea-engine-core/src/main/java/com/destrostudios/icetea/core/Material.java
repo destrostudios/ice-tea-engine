@@ -35,7 +35,9 @@ public class Material {
     public void init(Application application) {
         this.application = application;
         for (Texture texture : textures) {
-            texture.init(application);
+            if (!texture.isInitialized()) {
+                texture.init(application);
+            }
         }
     }
 

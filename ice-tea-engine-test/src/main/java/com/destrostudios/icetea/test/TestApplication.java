@@ -97,6 +97,7 @@ public class TestApplication extends Application {
         materialDennis.setVertexShader(vertexShaderDefault);
         materialDennis.setFragmentShader(fragShaderDefault);
         Texture textureDennis = new Texture("textures/dennis.jpg");
+        textureDennis.init(this);
         materialDennis.addTexture(textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
@@ -140,10 +141,10 @@ public class TestApplication extends Application {
     @Override
     protected void update() {
         double time = glfwGetTime();
-        if ((time > 6) && (!hasAddedDennis)) {
+        if ((time > 8) && (!hasAddedDennis)) {
             sceneGraph.getRootNode().add(geometryDennis);
             hasAddedDennis = true;
-        } else if ((time > 10) && (!hasRemovedDennis)) {
+        } else if ((time > 12) && (!hasRemovedDennis)) {
             sceneGraph.getRootNode().remove(geometryDennis);
             hasRemovedDennis = true;
         }

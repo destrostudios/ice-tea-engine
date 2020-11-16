@@ -13,9 +13,9 @@ layout(location = 1) in PhongLightVertexInfo phongLightVertexInfo;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
-    vec4 ambientColor = vec4(0.1, 0.1, 0.1, 0.1);
-    vec4 specularColor = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 lightColor = vec4(1, 1, 1, 1);
+    vec4 ambientColor = vec4(0.1, 0.1, 0.1, 1);
+    vec4 specularColor = vec4(1, 1, 1, 1);
     float shininess = 32;
 
     vec4 effectiveLightColor = shaderNode_phongLight_getLightColor(phongLightVertexInfo, lightColor, ambientColor, specularColor, shininess);

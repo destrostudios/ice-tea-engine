@@ -35,6 +35,10 @@ public class Texture {
     private Long sampler;
     private int mipLevels;
 
+    public boolean isInitialized() {
+        return (application != null);
+    }
+
     public void init(Application application) {
         this.application = application;
         initImage();
