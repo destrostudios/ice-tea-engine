@@ -1,0 +1,28 @@
+struct PhongLightVertexInfo
+{
+  vec3 viewSpaceVertexPosition;
+  vec3 viewSpaceVertexNormal;
+  vec3 viewSpaceLightDirection;
+};
+
+PhongLightVertexInfo shaderNode_phongLight_getVertexInfo(mat4 viewMatrix, mat4 modelMatrix, vec3 modelSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightPosition) {
+    vec3 viewSpaceVertexPosition = vec3(viewMatrix * modelMatrix * vec4(modelSpaceVertexPosition, 1.0));
+    vec3 viewSpaceVertexNormal = normalize(mat3(transpose(inverse(viewMatrix * modelMatrix))) * modelSpaceVertexNormal);
+    vec3 viewSpaceLightPosition = vec3(viewMatrix * vec4(worldSpaceLightPosition, 1.0));
+    vec3 viewSpaceLightDirection = normalize(viewSpaceLightPosition - viewSpaceVertexPosition);
+    return PhongLightVertexInfo(viewSpaceVertexPosition, viewSpaceVertexNormal, viewSpaceLightDirection);
+}
+
+vec4 shaderNode_phongLight_getLightColor(PhongLightVertexInfo phongLightVertexInfo, vec4 lightColor, vec4 ambientColor, vec4 specularColor, float shininess) {
+    vec4 ambient = ambientColor * lightColor;
+
+    float cosTheta = max(dot(phongLightVertexInfo.viewSpaceVertexNormal, phongLightVertexInfo.viewSpaceLightDirection), 0.0);
+    vec4 diffuse = cosTheta * lightColor;
+
+    vec3 viewDirection = normalize(-phongLightVertexInfo.viewSpaceVertexPosition); // The viewer is always at (0,0,0) in view space
+    vec3 reflectDirection = reflect(-phongLightVertexInfo.viewSpaceLightDirection, phongLightVertexInfo.viewSpaceVertexNormal);
+    float cosAlpha = pow(max(dot(viewDirection, reflectDirection), 0.0), shininess);
+    vec4 specular = specularColor * cosAlpha * lightColor;
+
+    return (ambient + diffuse + specular);
+}

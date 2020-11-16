@@ -1,17 +1,13 @@
 package com.destrostudios.icetea.core;
 
 import org.joml.Vector2f;
-import org.joml.Vector2fc;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 
 import java.io.File;
 import java.nio.IntBuffer;
-import java.util.List;
 
-import static java.util.Objects.requireNonNull;
 import static org.lwjgl.assimp.Assimp.aiGetErrorString;
 import static org.lwjgl.assimp.Assimp.aiImportFile;
 
@@ -50,35 +46,36 @@ public class ModelLoader {
     }
 
     private static void processMesh(AIMesh mesh, Model model) {
-        processPositions(mesh, model.getPositions());
-        processTexCoords(mesh, model.getTexCoords());
-        processIndices(mesh, model.getIndices());
-    }
-
-    private static void processPositions(AIMesh mesh, List<Vector3fc> positions) {
-        AIVector3D.Buffer vertices = requireNonNull(mesh.mVertices());
+        // Positions
+        AIVector3D.Buffer vertices = mesh.mVertices();
         for (int i = 0; i < vertices.capacity(); i++) {
             AIVector3D position = vertices.get(i);
-            positions.add(new Vector3f(position.x(), position.y(), position.z()));
+            model.getPositions().add(new Vector3f(position.x(), position.y(), position.z()));
         }
-    }
-
-    private static void processTexCoords(AIMesh mesh, List<Vector2fc> texCoords) {
-        AIVector3D.Buffer aiTexCoords = requireNonNull(mesh.mTextureCoords(0));
+        // TexCoords
+        AIVector3D.Buffer aiTexCoords = mesh.mTextureCoords(0);
         for (int i = 0; i < aiTexCoords.capacity(); i++) {
             AIVector3D coords = aiTexCoords.get(i);
-            texCoords.add(new Vector2f(coords.x(), coords.y()));
+            model.getTexCoords().add(new Vector2f(coords.x(), coords.y()));
         }
-    }
-
-    private static void processIndices(AIMesh mesh, List<Integer> indices) {
+        // Indices
         AIFace.Buffer aiFaces = mesh.mFaces();
         for (int i = 0; i < mesh.mNumFaces(); i++) {
             AIFace face = aiFaces.get(i);
             IntBuffer pIndices = face.mIndices();
             for (int j = 0; j < face.mNumIndices(); j++) {
-                indices.add(pIndices.get(j));
+                model.getIndices().add(pIndices.get(j));
             }
+        }
+        // Normals
+        AIVector3D.Buffer normals = mesh.mNormals();
+        if (normals != null) {
+            for (int i = 0; i < normals.capacity(); i++) {
+                AIVector3D normal = normals.get(i);
+                model.getNormals().add(new Vector3f(normal.x(), normal.y(), normal.z()));
+            }
+        } else {
+            model.setNormals(null);
         }
     }
 }

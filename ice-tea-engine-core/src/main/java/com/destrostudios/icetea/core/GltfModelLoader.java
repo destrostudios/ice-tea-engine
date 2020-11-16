@@ -2,7 +2,6 @@ package com.destrostudios.icetea.core;
 
 import de.javagl.jgltf.model.*;
 import de.javagl.jgltf.model.io.GltfModelReader;
-import lombok.Getter;
 import org.joml.*;
 
 import java.io.*;
@@ -13,6 +12,19 @@ import static java.lang.ClassLoader.getSystemClassLoader;
 public class GltfModelLoader {
 
     public GltfModelLoader(String filePath) {
+        this(filePath, new GltfModelLoaderSettings());
+    }
+
+    public GltfModelLoader(String filePath, GltfModelLoaderSettings settings) {
+        this.filePath = filePath;
+        this.settings = settings;
+    }
+    private String filePath;
+    private GltfModelLoaderSettings settings;
+    private GltfModel gltfModel;
+    private Node rootNode;
+
+    public Node load() {
         try {
             File file = new File(getExternalFilePath(filePath));
             GltfModelReader gltfModelReader = new GltfModelReader();
@@ -21,10 +33,8 @@ public class GltfModelLoader {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        return rootNode;
     }
-    private GltfModel gltfModel;
-    @Getter
-    private Node rootNode;
 
     private void loadScenes() {
         rootNode = new Node();
@@ -82,17 +92,30 @@ public class GltfModelLoader {
 
         LinkedList<Object> positionList = readValues(meshPrimitiveModel.getAttributes().get("POSITION"));
         LinkedList<Object> texCoordList = readValues(meshPrimitiveModel.getAttributes().get("TEXCOORD_0"));
+        LinkedList<Object> normalList = readValues(meshPrimitiveModel.getAttributes().get("NORMAL"));
         Vertex[] vertices = new Vertex[positionList.size()];
         for (int i = 0; i < vertices.length; i++) {
             float[] positionArray = (float[]) positionList.get(i);
             float[] texCoordArray = (float[]) texCoordList.get(i);
+            float[] normalArray = (float[]) normalList.get(i);
 
             Vector3fc position = new Vector3f(positionArray[0], positionArray[1], positionArray[2]);
             Vector2fc texCoord = new Vector2f(texCoordArray[0], texCoordArray[1]);
-            Vertex vertex = new Vertex(position, new Vector3f(1, 1, 1), texCoord);
+            Vector3fc normal = new Vector3f(normalArray[0], normalArray[1], normalArray[2]);
+
+            Vertex vertex = new Vertex();
+            vertex.setPosition(position);
+            vertex.setColor(new Vector3f(1, 1, 1));
+            vertex.setTexCoords(texCoord);
+            vertex.setNormal(normal);
             vertices[i] = vertex;
         }
         mesh.setVertices(vertices);
+
+        if (settings.isGenerateNormals()) {
+            mesh.generateNormals();
+        }
+
         geometry.setMesh(mesh);
 
         Material material = loadMaterial(meshPrimitiveModel.getMaterialModel());
@@ -167,8 +190,8 @@ public class GltfModelLoader {
 
     private Material loadMaterial(MaterialModel materialModel) {
         Material material = new Material();
-        material.setVertexShader(new Shader("shaders/my_shader.vert"));
-        material.setFragmentShader(new Shader("shaders/my_shader.frag"));
+        material.setVertexShader(new Shader("shaders/my_shader.vert", new String[] { "phongLight" }));
+        material.setFragmentShader(new Shader("shaders/my_shader.frag", new String[] { "phongLight" }));
         int baseColorTextureIndex = (int) materialModel.getValues().get("baseColorTexture");
         TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
         String textureFilePath = "models/" + baseColorTextureModel.getImageModel().getUri();

@@ -20,12 +20,14 @@ public class TestApplication extends Application {
         camera.setLocation(new Vector3f(0, -3, 1.25f));
         camera.setDirection(new Vector3f(0, 1, -0.25f).normalize());
 
-        Shader vertexShaderDefault = new Shader("shaders/my_shader.vert");
-        Shader fragShaderDefault = new Shader("shaders/my_shader.frag");
+        Shader vertexShaderDefault = new Shader("shaders/my_shader.vert", new String[] { "phongLight" });
+        Shader fragShaderDefault = new Shader("shaders/my_shader.frag", new String[] { "phongLight" });
+
+        Shader vertexShaderCool = new Shader("shaders/my_cool_shader.vert");
         Shader fragShaderCool = new Shader("shaders/my_cool_shader.frag", new String[] { "texCoordColor", "alphaPulsate" });
 
         materialCool = new Material();
-        materialCool.setVertexShader(vertexShaderDefault);
+        materialCool.setVertexShader(vertexShaderCool);
         materialCool.setFragmentShader(fragShaderCool);
         materialCool.setTransparent(true);
 
@@ -33,6 +35,7 @@ public class TestApplication extends Application {
 
         Mesh meshChalet = new Mesh();
         meshChalet.loadModel("models/chalet.obj");
+        meshChalet.generateNormals();
 
         Material materialChalet = new Material();
         materialChalet.setVertexShader(vertexShaderDefault);
@@ -105,7 +108,7 @@ public class TestApplication extends Application {
 
         // Duck
 
-        Node nodeDuck = new GltfModelLoader("models/duck.gltf").getRootNode();
+        Node nodeDuck = new GltfModelLoader("models/duck.gltf").load();
         nodeDuck.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
 
         Node nodeDuckWrapper = new Node();
@@ -113,6 +116,25 @@ public class TestApplication extends Application {
         nodeDuckWrapper.move(new Vector3f(1, -1, 0));
         nodeDuckWrapper.scale(new Vector3f(0.25f, 0.25f, 0.25f));
         sceneGraph.getRootNode().add(nodeDuckWrapper);
+
+        // Knot
+
+        Mesh meshKnot = new Mesh();
+        meshKnot.loadModel("models/knot.obj");
+
+        Material materialKnot = new Material();
+        materialKnot.setVertexShader(vertexShaderDefault);
+        materialKnot.setFragmentShader(fragShaderDefault);
+        Texture textureKnot = new Texture("textures/chalet.jpg");
+        materialKnot.addTexture(textureKnot);
+        materialKnot.getParameters().setVector4f("color", new Vector4f(0, 1, 0, 1));
+
+        Geometry geometryKnot = new Geometry();
+        geometryKnot.setMesh(meshKnot);
+        geometryKnot.setMaterial(materialKnot);
+        geometryKnot.move(new Vector3f(-1.5f, -0.2f, 0.5f));
+        geometryKnot.scale(new Vector3f(0.01f, 0.01f, 0.01f));
+        sceneGraph.getRootNode().add(geometryKnot);
     }
 
     @Override

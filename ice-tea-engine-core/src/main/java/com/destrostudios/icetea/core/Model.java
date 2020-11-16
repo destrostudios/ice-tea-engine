@@ -16,8 +16,10 @@ public class Model {
         this.positions = new ArrayList<>();
         this.texCoords = new ArrayList<>();
         this.indices = new ArrayList<>();
+        this.normals = new ArrayList<>();
     }
     private List<Vector3fc> positions;
     private List<Vector2fc> texCoords;
     private List<Integer> indices;
+    private List<Vector3fc> normals;
 }

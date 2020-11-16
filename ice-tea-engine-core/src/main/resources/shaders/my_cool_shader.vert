@@ -12,14 +12,11 @@ layout(binding = 1) uniform Geometry {
 
 layout(location = 0) in vec3 modelSpaceVertexPosition;
 layout(location = 2) in vec2 modelSpaceVertexTexCoord;
-layout(location = 3) in vec3 modelSpaceVertexNormal;
 
 layout(location = 0) out vec2 vertexTexCoord;
-layout(location = 1) out PhongLightVertexInfo phongLightVertexInfo;
 
 void main() {
     gl_Position = camera.proj * camera.view * geometry.model * vec4(modelSpaceVertexPosition, 1);
 
     vertexTexCoord = modelSpaceVertexTexCoord;
-    phongLightVertexInfo = shaderNode_phongLight_getVertexInfo(camera.view, geometry.model, modelSpaceVertexPosition, modelSpaceVertexNormal, vec3(0, -5, 5));
 }
