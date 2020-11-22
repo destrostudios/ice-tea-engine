@@ -190,13 +190,13 @@ public class GltfModelLoader {
 
     private Material loadMaterial(MaterialModel materialModel) {
         Material material = new Material();
-        material.setVertexShader(new Shader("shaders/my_shader.vert", new String[] { "phongLight" }));
-        material.setFragmentShader(new Shader("shaders/my_shader.frag", new String[] { "phongLight" }));
+        material.setVertexShader(new Shader("shaders/my_shader.vert", new String[] { "light", "shadow" }));
+        material.setFragmentShader(new Shader("shaders/my_shader.frag", new String[] { "light", "shadow" }));
         int baseColorTextureIndex = (int) materialModel.getValues().get("baseColorTexture");
         TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
         String textureFilePath = "models/" + baseColorTextureModel.getImageModel().getUri();
-        Texture texture = new Texture(textureFilePath);
-        material.addTexture(texture);
+        Texture texture = new FileTexture(textureFilePath);
+        material.setTexture("diffuseMap", texture);
         material.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
         return material;
     }

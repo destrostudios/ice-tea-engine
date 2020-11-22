@@ -13,4 +13,9 @@ public class FloatUniformValue extends UniformValue<Float> {
     public void write(ByteBuffer buffer, int index) {
         buffer.putFloat(index, value);
     }
+
+    @Override
+    public String getShaderDefinitionType() {
+        return "float";
+    }
 }

@@ -58,9 +58,11 @@ public abstract class Application {
     private SwapChain swapChain;
 
     @Getter
-    protected SceneGraph sceneGraph;
-    @Getter
     protected Camera camera;
+    @Getter
+    protected Node rootNode;
+    @Getter
+    private Light light;
 
     private List<Frame> inFlightFrames;
     private Map<Integer, Frame> imagesInFlight;
@@ -76,7 +78,7 @@ public abstract class Application {
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
-        sceneGraph = new SceneGraph(this);
+        rootNode = new Node();
         initWindow();
         createInstance();
         initSurface();
@@ -198,6 +200,7 @@ public abstract class Application {
 
     private void initSwapChain() {
         swapChain = new SwapChain();
+        swapChain.getRenderJobManager().getBucketScene().add(new SceneRenderJob());
         swapChain.init(this);
     }
 
@@ -248,18 +251,44 @@ public abstract class Application {
         throw new RuntimeException("Failed to find suitable memory type");
     }
 
+    public void setLight(Light light) {
+        light.setModified(true);
+        this.light = light;
+    }
+
     private void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
-            update();
-            camera.update();
-            sceneGraph.update();
+            updateState();
             drawFrame();
         }
         vkDeviceWaitIdle(logicalDevice);
     }
 
+    private void updateState() {
+        update();
+        camera.update();
+        if (updateLights()) {
+            swapChain.recreateRenderJobs();
+        }
+        if (rootNode.update(this)) {
+            swapChain.recreateCommandBuffers();
+        }
+    }
+
     protected abstract void update();
+
+    private boolean updateLights() {
+        if (light != null) {
+            light.update(this);
+            if (light.isModified()) {
+                swapChain.getRenderJobManager().getBucketPreScene().addAll(light.getShadowMapRenderJobs());
+                light.setModified(false);
+                return true;
+            }
+        }
+        return false;
+    }
 
     private void drawFrame() {
         try (MemoryStack stack = stackPush()) {
@@ -324,15 +353,19 @@ public abstract class Application {
 
     private void updateUniformBuffers(int currentImage) {
         try (MemoryStack stack = stackPush()) {
+            swapChain.getRenderJobManager().forEachRenderJob(renderJob -> renderJob.updateUniformBuffers(currentImage, stack));
             camera.getTransformUniformData().updateBufferIfNecessary(currentImage, stack);
-            sceneGraph.getRootNode().forEachGeometry(geometry -> geometry.updateUniformBuffers(currentImage, stack));
+            if (light != null) {
+                light.updateUniformBuffers(currentImage, stack);
+            }
+            rootNode.forEachGeometry(geometry -> geometry.updateUniformBuffers(currentImage, stack));
         }
     }
 
     private void cleanup() {
         swapChain.cleanup();
 
-        sceneGraph.getRootNode().forEachGeometry(Geometry::cleanup);
+        rootNode.forEachGeometry(Geometry::cleanup);
 
         camera.cleanup();
 

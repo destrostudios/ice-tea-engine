@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.joml.*;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class Spatial {
 
     protected Application application;
@@ -81,5 +84,14 @@ public class Spatial {
 
     protected void onWorldTransformOutdated() {
         isWorldTransformOutdated = true;
+    }
+
+    public List<Light> getAffectingLights() {
+        List<Light> affectingLights = new LinkedList<>();
+        Light light = application.getLight();
+        if ((light != null) && light.isAffecting(this)) {
+            affectingLights.add(light);
+        }
+        return affectingLights;
     }
 }

@@ -25,10 +25,10 @@ public class Mesh {
     private Application application;
     @Getter
     @Setter
-    private Vertex[] vertices;
+    protected Vertex[] vertices;
     @Getter
     @Setter
-    private int[] indices;
+    protected int[] indices;
     @Getter
     private Long vertexBuffer;
     @Getter

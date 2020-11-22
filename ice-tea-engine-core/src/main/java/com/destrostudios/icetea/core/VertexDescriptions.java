@@ -7,11 +7,11 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class VertexDescriptions {
 
-    public static final int SIZEOF = (3 + 3 + 2 + 3) * Float.BYTES;
-    private static final int OFFSETOF_POS = 0;
-    private static final int OFFSETOF_COLOR = 3 * Float.BYTES;
-    private static final int OFFSETOF_TEXTCOORDS = (3 + 3) * Float.BYTES;
-    private static final int OFFSETOF_NORMAL = (3 + 3 + 2) * Float.BYTES;
+    private static final int OFFSET_POSITION = 0;
+    private static final int OFFSET_COLOR = OFFSET_POSITION + (3 * Float.BYTES);
+    private static final int OFFSET_TEX_COORDS = OFFSET_COLOR + (3 * Float.BYTES);
+    private static final int OFFSET_NORMAL = OFFSET_TEX_COORDS + (2 * Float.BYTES);
+    public static final int SIZEOF = OFFSET_NORMAL + (3 * Float.BYTES);
 
     public static VkVertexInputBindingDescription.Buffer getBindingDescription() {
         VkVertexInputBindingDescription.Buffer bindingDescription =  VkVertexInputBindingDescription.callocStack(1);
@@ -21,37 +21,50 @@ public class VertexDescriptions {
         return bindingDescription;
     }
 
-    public static VkVertexInputAttributeDescription.Buffer getAttributeDescriptions() {
-        VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(3);
-
-        // Position
-        VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
-        posDescription.binding(0);
-        posDescription.location(0);
-        posDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-        posDescription.offset(OFFSETOF_POS);
-
-        // Color
-        VkVertexInputAttributeDescription colorDescription = attributeDescriptions.get(1);
-        colorDescription.binding(0);
-        colorDescription.location(1);
-        colorDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-        colorDescription.offset(OFFSETOF_COLOR);
-
-        // Texture coordinates
-        VkVertexInputAttributeDescription texCoordsDescription = attributeDescriptions.get(2);
-        texCoordsDescription.binding(0);
-        texCoordsDescription.location(2);
-        texCoordsDescription.format(VK_FORMAT_R32G32_SFLOAT);
-        texCoordsDescription.offset(OFFSETOF_TEXTCOORDS);
-
-        // Normal
-        VkVertexInputAttributeDescription normalDescription = attributeDescriptions.get(1);
-        normalDescription.binding(0);
-        normalDescription.location(3);
-        normalDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-        normalDescription.offset(OFFSETOF_NORMAL);
-
+    public static VkVertexInputAttributeDescription.Buffer getAttributeDescriptions_All() {
+        VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(4);
+        setPosition(attributeDescriptions, 0);
+        setColor(attributeDescriptions, 1);
+        setTextureCoordinates(attributeDescriptions, 2);
+        setNormal(attributeDescriptions, 3);
         return attributeDescriptions.rewind();
+    }
+
+    public static VkVertexInputAttributeDescription.Buffer getAttributeDescriptions_PositionOnly() {
+        VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(1);
+        setPosition(attributeDescriptions, 0);
+        return attributeDescriptions.rewind();
+    }
+
+    private static void setPosition(VkVertexInputAttributeDescription.Buffer attributeDescriptions, int index) {
+        VkVertexInputAttributeDescription attributeDescription = attributeDescriptions.get(index);
+        attributeDescription.binding(0);
+        attributeDescription.location(index);
+        attributeDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
+        attributeDescription.offset(OFFSET_POSITION);
+    }
+
+    private static void setColor(VkVertexInputAttributeDescription.Buffer attributeDescriptions, int index) {
+        VkVertexInputAttributeDescription attributeDescription = attributeDescriptions.get(index);
+        attributeDescription.binding(0);
+        attributeDescription.location(index);
+        attributeDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
+        attributeDescription.offset(OFFSET_COLOR);
+    }
+
+    private static void setTextureCoordinates(VkVertexInputAttributeDescription.Buffer attributeDescriptions, int index) {
+        VkVertexInputAttributeDescription attributeDescription = attributeDescriptions.get(index);
+        attributeDescription.binding(0);
+        attributeDescription.location(index);
+        attributeDescription.format(VK_FORMAT_R32G32_SFLOAT);
+        attributeDescription.offset(OFFSET_TEX_COORDS);
+    }
+
+    private static void setNormal(VkVertexInputAttributeDescription.Buffer attributeDescriptions, int index) {
+        VkVertexInputAttributeDescription attributeDescription = attributeDescriptions.get(index);
+        attributeDescription.binding(0);
+        attributeDescription.location(index);
+        attributeDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
+        attributeDescription.offset(OFFSET_NORMAL);
     }
 }

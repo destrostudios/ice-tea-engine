@@ -1,6 +1,9 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.lights.DirectionalLight;
+import com.destrostudios.icetea.core.lights.SpotLight;
+import com.destrostudios.icetea.core.meshes.Quad;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -11,17 +14,31 @@ import static org.lwjgl.glfw.GLFW.glfwGetTime;
 public class TestApplication extends Application {
 
     private Material materialCool;
+    private Geometry geometryGround;
     private Geometry geometryDennis;
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
 
     @Override
     protected void initScene() {
-        camera.setLocation(new Vector3f(0, -3, 1.25f));
-        camera.setDirection(new Vector3f(0, 1, -0.25f).normalize());
+        camera.setLocation(new Vector3f(0, -5, 1.25f));
+        camera.setRotation(new Vector3f(-80, 0, 0));
 
-        Shader vertexShaderDefault = new Shader("shaders/my_shader.vert", new String[] { "phongLight" });
-        Shader fragShaderDefault = new Shader("shaders/my_shader.frag", new String[] { "phongLight" });
+        DirectionalLight directionalLight = new DirectionalLight();
+        directionalLight.setDirection(new Vector3f(1, 0, -0.25f).normalize());
+        directionalLight.addAffectedSpatial(rootNode);
+        directionalLight.addShadows(2048);
+        setLight(directionalLight);
+
+        SpotLight spotLight = new SpotLight();
+        spotLight.setTranslation(new Vector3f(-2, -2.5f, 3));
+        spotLight.setRotation(new Vector3f(-60, 0, 0));
+        spotLight.addAffectedSpatial(rootNode);
+        spotLight.addShadows(2048);
+        // setLight(spotLight);
+
+        Shader vertexShaderDefault = new Shader("shaders/my_shader.vert", new String[] { "light", "shadow" });
+        Shader fragShaderDefault = new Shader("shaders/my_shader.frag", new String[] { "light", "shadow" });
 
         Shader vertexShaderCool = new Shader("shaders/my_cool_shader.vert");
         Shader fragShaderCool = new Shader("shaders/my_cool_shader.frag", new String[] { "texCoordColor", "alphaPulsate" });
@@ -30,6 +47,21 @@ public class TestApplication extends Application {
         materialCool.setVertexShader(vertexShaderCool);
         materialCool.setFragmentShader(fragShaderCool);
         materialCool.setTransparent(true);
+
+        // Ground
+
+        Quad meshGround = new Quad(10, 10);
+
+        Material materialGround = new Material();
+        materialGround.setVertexShader(vertexShaderDefault);
+        materialGround.setFragmentShader(fragShaderDefault);
+        materialGround.getParameters().setVector4f("color", new Vector4f(1, 1, 1, 1));
+
+        geometryGround = new Geometry();
+        geometryGround.setMesh(meshGround);
+        geometryGround.setMaterial(materialGround);
+        geometryGround.move(new Vector3f(0, 0, -0.5f));
+        rootNode.add(geometryGround);
 
         // Chalet
 
@@ -40,14 +72,13 @@ public class TestApplication extends Application {
         Material materialChalet = new Material();
         materialChalet.setVertexShader(vertexShaderDefault);
         materialChalet.setFragmentShader(fragShaderDefault);
-        Texture textureChalet = new Texture("textures/chalet.jpg");
-        materialChalet.addTexture(textureChalet);
-        materialChalet.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
+        Texture textureChalet = new FileTexture("textures/chalet.jpg");
+        materialChalet.setTexture("diffuseMap", textureChalet);
 
         Geometry geometryChalet1 = new Geometry();
         geometryChalet1.setMesh(meshChalet);
         geometryChalet1.setMaterial(materialChalet);
-        sceneGraph.getRootNode().add(geometryChalet1);
+        rootNode.add(geometryChalet1);
 
         Geometry geometryChalet2 = new Geometry();
         geometryChalet2.setMesh(meshChalet);
@@ -55,7 +86,7 @@ public class TestApplication extends Application {
         geometryChalet2.move(new Vector3f(1.5f, 1, 0));
         geometryChalet2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         geometryChalet2.scale(new Vector3f(0.5f, 0.5f, 1));
-        sceneGraph.getRootNode().add(geometryChalet2);
+        rootNode.add(geometryChalet2);
 
         Geometry geometryChalet3 = new Geometry();
         geometryChalet3.setMesh(meshChalet);
@@ -67,7 +98,7 @@ public class TestApplication extends Application {
         nodeChalet3.add(geometryChalet3);
         nodeChalet3.move(new Vector3f(-1.2f, 0.8f, 0));
         nodeChalet3.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-45), 0, 1, 0)));
-        sceneGraph.getRootNode().add(nodeChalet3);
+        rootNode.add(nodeChalet3);
 
         // Trees
 
@@ -77,8 +108,8 @@ public class TestApplication extends Application {
         Material materialTrees = new Material();
         materialTrees.setVertexShader(vertexShaderDefault);
         materialTrees.setFragmentShader(fragShaderDefault);
-        Texture textureTree = new Texture("textures/trees.jpg");
-        materialTrees.addTexture(textureTree);
+        Texture textureTree = new FileTexture("textures/trees.jpg");
+        materialTrees.setTexture("diffuseMap", textureTree);
         materialTrees.getParameters().setVector4f("color", new Vector4f(0, 0, 1, 1));
 
         Geometry geometryTrees = new Geometry();
@@ -86,7 +117,7 @@ public class TestApplication extends Application {
         geometryTrees.setMaterial(materialTrees);
         geometryTrees.move(new Vector3f(0, -1, 0));
         geometryTrees.scale(new Vector3f(0.01f, 0.01f, 0.01f));
-        sceneGraph.getRootNode().add(geometryTrees);
+        rootNode.add(geometryTrees);
 
         // Dennis
 
@@ -96,9 +127,9 @@ public class TestApplication extends Application {
         Material materialDennis = new Material();
         materialDennis.setVertexShader(vertexShaderDefault);
         materialDennis.setFragmentShader(fragShaderDefault);
-        Texture textureDennis = new Texture("textures/dennis.jpg");
+        Texture textureDennis = new FileTexture("textures/dennis.jpg");
         textureDennis.init(this);
-        materialDennis.addTexture(textureDennis);
+        materialDennis.setTexture("diffuseMap", textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
         geometryDennis = new Geometry();
@@ -114,9 +145,9 @@ public class TestApplication extends Application {
 
         Node nodeDuckWrapper = new Node();
         nodeDuckWrapper.add(nodeDuck);
-        nodeDuckWrapper.move(new Vector3f(1, -1, 0));
+        nodeDuckWrapper.move(new Vector3f(1, -1.5f, -0.5f));
         nodeDuckWrapper.scale(new Vector3f(0.25f, 0.25f, 0.25f));
-        sceneGraph.getRootNode().add(nodeDuckWrapper);
+        rootNode.add(nodeDuckWrapper);
 
         // Knot
 
@@ -126,8 +157,8 @@ public class TestApplication extends Application {
         Material materialKnot = new Material();
         materialKnot.setVertexShader(vertexShaderDefault);
         materialKnot.setFragmentShader(fragShaderDefault);
-        Texture textureKnot = new Texture("textures/chalet.jpg");
-        materialKnot.addTexture(textureKnot);
+        Texture textureKnot = new FileTexture("textures/chalet.jpg");
+        materialKnot.setTexture("diffuseMap", textureKnot);
         materialKnot.getParameters().setVector4f("color", new Vector4f(0, 1, 0, 1));
 
         Geometry geometryKnot = new Geometry();
@@ -135,21 +166,23 @@ public class TestApplication extends Application {
         geometryKnot.setMaterial(materialKnot);
         geometryKnot.move(new Vector3f(-1.5f, -0.2f, 0.5f));
         geometryKnot.scale(new Vector3f(0.01f, 0.01f, 0.01f));
-        sceneGraph.getRootNode().add(geometryKnot);
+        rootNode.add(geometryKnot);
     }
 
     @Override
     protected void update() {
         double time = glfwGetTime();
         if ((time > 8) && (!hasAddedDennis)) {
-            sceneGraph.getRootNode().add(geometryDennis);
+            rootNode.add(geometryDennis);
             hasAddedDennis = true;
         } else if ((time > 12) && (!hasRemovedDennis)) {
-            sceneGraph.getRootNode().remove(geometryDennis);
+            rootNode.remove(geometryDennis);
             hasRemovedDennis = true;
         }
-        for (Spatial spatial : sceneGraph.getRootNode().getChildren()) {
-            spatial.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
+        for (Spatial spatial : rootNode.getChildren()) {
+            if (spatial != geometryGround) {
+                spatial.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
+            }
         }
         materialCool.getParameters().setFloat("time", (float) time);
     }

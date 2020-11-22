@@ -1,0 +1,20 @@
+vec4 shaderNode_shadow_getShadowMapPosition(mat4 projectionMatrix, mat4 viewMatrix, mat4 modelMatrix, vec3 modelSpaceVertexPosition) {
+    mat4 biasMat = mat4(
+        0.5, 0.0, 0.0, 0.0,
+        0.0, 0.5, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.5, 0.5, 0.0, 1.0
+    );
+    return (biasMat * projectionMatrix * viewMatrix * modelMatrix) * vec4(modelSpaceVertexPosition, 1);
+}
+
+float shaderNode_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2D shadowMap) {
+    vec4 projectedShadowMapPosition = shadowMapPosition / shadowMapPosition.w;
+    if ((projectedShadowMapPosition.z > -1) && (projectedShadowMapPosition.z < 1)) {
+        float dist = texture(shadowMap, projectedShadowMapPosition.st).r;
+        if ((projectedShadowMapPosition.w > 0) && (dist < projectedShadowMapPosition.z)) {
+            return 0.1;
+        }
+    }
+    return 1;
+}

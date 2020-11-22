@@ -15,4 +15,9 @@ public class Vector4fUniformValue extends UniformValue<Vector4f> {
     public void write(ByteBuffer buffer, int index) {
         value.get(index, buffer);
     }
+
+    @Override
+    public String getShaderDefinitionType() {
+        return "vec4";
+    }
 }

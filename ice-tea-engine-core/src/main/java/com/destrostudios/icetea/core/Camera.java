@@ -7,7 +7,7 @@ public class Camera {
 
     public Camera(Application application) {
         location = new Vector3f();
-        direction = new Vector3f(0, 1, 0);
+        rotation = new Vector3f();
 
         projectionMatrix = new Matrix4f();
         viewMatrix = new Matrix4f();
@@ -30,7 +30,7 @@ public class Camera {
     @Getter
     private Vector3f location;
     @Getter
-    private Vector3f direction;
+    private Vector3f rotation;
     @Getter
     private Matrix4f projectionMatrix;
     @Getter
@@ -68,8 +68,8 @@ public class Camera {
         isOutdated_View = true;
     }
 
-    public void setDirection(Vector3fc direction) {
-        this.direction.set(direction);
+    public void setRotation(Vector3fc rotation) {
+        this.rotation.set(rotation);
         isOutdated_View = true;
     }
 
@@ -87,8 +87,8 @@ public class Camera {
         }
     }
 
-    public void updateProjectionMatrix() {
-        projectionMatrix.perspective(fieldOfViewY, aspect, zNear, zFar);
+    private void updateProjectionMatrix() {
+        projectionMatrix.perspective(fieldOfViewY, aspect, zNear, zFar, true);
         projectionMatrix.m11(projectionMatrix.m11() * -1);
         updateProjectionMatrixUniform();
     }
@@ -97,21 +97,16 @@ public class Camera {
         transformUniformData.setMatrix4f("proj", projectionMatrix);
     }
 
-    public void updateViewMatrix() {
-        viewMatrix.lookAt(
-            location.x(), location.y(), location.z(),
-            location.x() + direction.x(), location.y() + direction.y(), location.z() + direction.z(),
-            0, 0, 1
-        );
-    }
-
-    public void updateViewProjectionMatrix() {
-        viewProjectionMatrix.set(projectionMatrix).mul(viewMatrix);
-        updateViewMatrixUniform();
+    private void updateViewMatrix() {
+        MathUtil.setViewMatrix(viewMatrix, location, rotation);
     }
 
     private void updateViewMatrixUniform() {
         transformUniformData.setMatrix4f("view", viewMatrix);
+    }
+
+    private void updateViewProjectionMatrix() {
+        viewProjectionMatrix.set(projectionMatrix).mul(viewMatrix);
     }
 
     public void cleanup() {

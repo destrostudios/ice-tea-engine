@@ -25,6 +25,7 @@ public class UniformData {
     }
     @Setter
     private Application application;
+    @Getter
     private Map<String, UniformValue<?>> fields;
     @Getter
     private int size;

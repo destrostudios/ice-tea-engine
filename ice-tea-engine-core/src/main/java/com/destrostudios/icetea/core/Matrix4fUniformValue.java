@@ -15,4 +15,9 @@ public class Matrix4fUniformValue extends UniformValue<Matrix4f> {
     public void write(ByteBuffer buffer, int index) {
         value.get(index, buffer);
     }
+
+    @Override
+    public String getShaderDefinitionType() {
+        return "mat4";
+    }
 }

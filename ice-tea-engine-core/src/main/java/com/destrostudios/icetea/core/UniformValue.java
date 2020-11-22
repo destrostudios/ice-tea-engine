@@ -15,4 +15,6 @@ public abstract class UniformValue<T> {
 
     public abstract void write(ByteBuffer buffer, int offset);
 
+    public abstract String getShaderDefinitionType();
+
 }

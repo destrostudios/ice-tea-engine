@@ -3,13 +3,12 @@ package com.destrostudios.icetea.core;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 public class Material {
 
     public Material() {
-        textures = new ArrayList<>();
+        textures = new HashMap<>();
         parameters = new UniformData();
     }
     private Application application;
@@ -22,7 +21,7 @@ public class Material {
     @Getter
     private UniformData parameters;
     @Getter
-    private List<Texture> textures;
+    private HashMap<String, Texture> textures;
     private int usingGeometriesCount;
     @Setter
     @Getter
@@ -34,15 +33,15 @@ public class Material {
 
     public void init(Application application) {
         this.application = application;
-        for (Texture texture : textures) {
+        for (Texture texture : textures.values()) {
             if (!texture.isInitialized()) {
                 texture.init(application);
             }
         }
     }
 
-    public void addTexture(Texture texture) {
-        textures.add(texture);
+    public void setTexture(String name, Texture texture) {
+        textures.put(name, texture);
     }
 
     public void increaseUsingGeometriesCount() {
@@ -59,7 +58,7 @@ public class Material {
 
     public void cleanup() {
         parameters.cleanupBuffer();
-        for (Texture texture : textures) {
+        for (Texture texture : textures.values()) {
             texture.cleanup();
         }
     }
