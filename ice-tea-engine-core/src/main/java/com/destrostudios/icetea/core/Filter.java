@@ -1,13 +1,13 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.lwjgl.system.MemoryStack;
 
 public class Filter {
 
     public Filter() {
         uniformData = new UniformData();
+        filterRenderJob = new FilterRenderJob(this);
     }
     protected Application application;
     @Getter
@@ -15,8 +15,7 @@ public class Filter {
     @Getter
     protected UniformData uniformData;
     @Getter
-    @Setter
-    private boolean modified;
+    private FilterRenderJob filterRenderJob;
 
     public void init(Application application) {
         uniformData.setApplication(application);
@@ -31,5 +30,10 @@ public class Filter {
 
     protected void updateUniformData() {
 
+    }
+
+    public void cleanup() {
+        uniformData.cleanupBuffer();
+        filterRenderJob.cleanup();
     }
 }

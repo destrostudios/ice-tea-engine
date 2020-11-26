@@ -185,6 +185,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
             }
             frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
             vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
+            application = null;
         }
     }
 }

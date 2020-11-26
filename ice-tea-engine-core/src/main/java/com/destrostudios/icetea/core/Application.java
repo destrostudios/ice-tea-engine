@@ -2,6 +2,7 @@ package com.destrostudios.icetea.core;
 
 import lombok.Getter;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -69,6 +70,11 @@ public abstract class Application {
     private long commandPool;
     @Getter
     private SwapChain swapChain;
+    private boolean renderJobsOutdated;
+    private boolean commandBuffersOutdated;
+    private GLFWKeyCallback glfwKeyCallback;
+    private List<KeyListener> keyListeners;
+    protected float time;
 
     @Getter
     protected Camera camera;
@@ -101,6 +107,7 @@ public abstract class Application {
         initLogicalDevice();
         initCommandPool();
         initSwapChain();
+        initKeyListeners();
         initCamera();
         initScene();
         initSyncObjects();
@@ -225,6 +232,18 @@ public abstract class Application {
         swapChain.init(this);
     }
 
+    private void initKeyListeners() {
+        keyListeners = new LinkedList<>();
+        glfwKeyCallback = new GLFWKeyCallback() {
+
+            @Override
+            public void invoke(long window, int key, int scanCode, int action, int modifiers) {
+                keyListeners.forEach(keyListener -> keyListener.onKeyEvent(new KeyEvent(key, scanCode, action, modifiers)));
+            }
+        };
+        glfwSetKeyCallback(window, glfwKeyCallback);
+    }
+
     private void initCamera() {
         camera = new Camera(this);
         camera.setFieldOfViewY((float) Math.toRadians(45));
@@ -272,14 +291,30 @@ public abstract class Application {
         throw new RuntimeException("Failed to find suitable memory type");
     }
 
+    public void addKeyListener(KeyListener keyListener) {
+        keyListeners.add(keyListener);
+    }
+
+    public void removeKeyListener(KeyListener keyListener) {
+        keyListeners.remove(keyListener);
+    }
+
     public void setLight(Light light) {
         light.setModified(true);
         this.light = light;
     }
 
     public void addFilter(Filter filter) {
-        filter.setModified(true);
         filters.add(filter);
+        swapChain.getRenderJobManager().getQueuePostScene().add(filter.getFilterRenderJob());
+        renderJobsOutdated = true;
+    }
+
+    public void removeFilter(Filter filter) {
+        filter.cleanup();
+        filters.remove(filter);
+        swapChain.getRenderJobManager().getQueuePostScene().remove(filter.getFilterRenderJob());
+        renderJobsOutdated = true;
     }
 
     private void mainLoop() {
@@ -292,40 +327,40 @@ public abstract class Application {
     }
 
     private void updateState() {
-        update();
+        float tpf = calculateNextTpf();
+        update(tpf);
         camera.update();
-        if (updateLights() | updateFilters()) {
+        updateLights();
+        if (renderJobsOutdated) {
             swapChain.recreateRenderJobs();
+            renderJobsOutdated = false;
+            commandBuffersOutdated = true;
         }
-        if (rootNode.update(this)) {
+        commandBuffersOutdated |= rootNode.update(this);
+        if (commandBuffersOutdated) {
             swapChain.recreateCommandBuffers();
+            commandBuffersOutdated = false;
         }
     }
 
-    protected abstract void update();
+    private float calculateNextTpf() {
+        float currentTime = (float) glfwGetTime();
+        float tpf = (currentTime - time);
+        time = currentTime;
+        return tpf;
+    }
 
-    private boolean updateLights() {
+    protected abstract void update(float tpf);
+
+    private void updateLights() {
         if (light != null) {
             light.update(this);
             if (light.isModified()) {
                 swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
                 light.setModified(false);
-                return true;
+                renderJobsOutdated = true;
             }
         }
-        return false;
-    }
-
-    private boolean updateFilters() {
-        boolean recreateRenderJob = false;
-        for (Filter filter : filters) {
-            if (filter.isModified()) {
-                swapChain.getRenderJobManager().getQueuePostScene().add(new FilterRenderJob(filter));
-                filter.setModified(false);
-                recreateRenderJob = true;
-            }
-        }
-        return recreateRenderJob;
     }
 
     private void drawFrame() {
@@ -401,11 +436,17 @@ public abstract class Application {
     }
 
     private void cleanup() {
+        glfwKeyCallback.free();
+
         swapChain.cleanup();
 
         rootNode.forEachGeometry(Geometry::cleanup);
 
         camera.cleanup();
+
+        light.cleanup();
+
+        filters.forEach(Filter::cleanup);
 
         inFlightFrames.forEach(frame -> {
             vkDestroySemaphore(logicalDevice, frame.getRenderFinishedSemaphore(), null);

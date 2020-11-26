@@ -11,7 +11,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import static org.lwjgl.glfw.GLFW.glfwGetTime;
+import static org.lwjgl.glfw.GLFW.*;
 
 public class TestApplication extends Application {
 
@@ -20,6 +20,7 @@ public class TestApplication extends Application {
     private Geometry geometryDennis;
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
+    private Vector3f cameraMoveDirection = new Vector3f();
 
     @Override
     protected void initScene() {
@@ -170,13 +171,59 @@ public class TestApplication extends Application {
         geometryKnot.scale(new Vector3f(0.01f, 0.01f, 0.01f));
         rootNode.add(geometryKnot);
 
-        addFilter(new SepiaFilter());
-        addFilter(new RadialBlurFilter());
+        RadialBlurFilter radialBlurFilter = new RadialBlurFilter();
+        SepiaFilter sepiaFilter = new SepiaFilter();
+
+        addKeyListener(keyEvent -> {
+            // Add/Remove filters
+            switch (keyEvent.getKey()) {
+                case GLFW_KEY_1:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        addFilter(radialBlurFilter);
+                    } else if (keyEvent.getAction() == GLFW_RELEASE) {
+                        removeFilter(radialBlurFilter);
+                    }
+                    break;
+                case GLFW_KEY_2:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        addFilter(sepiaFilter);
+                    } else if (keyEvent.getAction() == GLFW_RELEASE) {
+                        removeFilter(sepiaFilter);
+                    }
+                    break;
+            }
+            // Set camera move direction
+            Integer axis = null;
+            Integer value = null;
+            if (keyEvent.getKey() == GLFW_KEY_W) {
+                axis = 1;
+                value = 1;
+            } else if (keyEvent.getKey() == GLFW_KEY_D) {
+                axis = 0;
+                value = 1;
+            } else if (keyEvent.getKey() == GLFW_KEY_S) {
+                axis = 1;
+                value = -1;
+            } else if (keyEvent.getKey() == GLFW_KEY_A) {
+                axis = 0;
+                value = -1;
+            }
+            if (axis != null) {
+                Integer factor = null;
+                if (keyEvent.getAction() == GLFW_PRESS) {
+                    factor = 1;
+                } else if (keyEvent.getAction() == GLFW_RELEASE) {
+                    factor = 0;
+                }
+                if (factor != null) {
+                    cameraMoveDirection.setComponent(axis, factor * value);
+                }
+            }
+        });
     }
 
     @Override
-    protected void update() {
-        double time = glfwGetTime();
+    protected void update(float tpf) {
         if ((time > 8) && (!hasAddedDennis)) {
             rootNode.add(geometryDennis);
             hasAddedDennis = true;
@@ -189,6 +236,7 @@ public class TestApplication extends Application {
                 spatial.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
             }
         }
-        materialCool.getParameters().setFloat("time", (float) time);
+        materialCool.getParameters().setFloat("time", time);
+        camera.setLocation(camera.getLocation().add(cameraMoveDirection.mul(tpf * 3, new Vector3f())));
     }
 }

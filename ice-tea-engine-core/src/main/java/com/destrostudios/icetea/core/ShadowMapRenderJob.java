@@ -252,6 +252,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         if (isInitialized()) {
             shadowMapTexture.cleanup();
             materialDescriptorSetLayout.cleanupDescriptorSetLayout();
+            lightTransformUniformData.cleanupBuffer();
         }
         super.cleanup();
     }

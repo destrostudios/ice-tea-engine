@@ -99,6 +99,7 @@ public class Camera {
 
     private void updateViewMatrix() {
         MathUtil.setViewMatrix(viewMatrix, location, rotation);
+        updateViewMatrixUniform();
     }
 
     private void updateViewMatrixUniform() {
