@@ -2,27 +2,35 @@ package com.destrostudios.icetea.core;
 
 import lombok.Getter;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
 import java.util.function.Consumer;
 
 public class RenderJobManager {
 
     public RenderJobManager() {
-        bucketPreScene = new HashSet<>();
-        bucketScene = new HashSet<>();
-        bucketPostScene = new HashSet<>();
+        queuePreScene = new LinkedList<>();
+        sceneRenderJob = new SceneRenderJob();
+        queuePostScene = new LinkedList<>();
     }
     @Getter
-    private Set<RenderJob<?>> bucketPreScene;
+    private LinkedList<RenderJob<?>> queuePreScene;
     @Getter
-    private Set<RenderJob<?>> bucketScene;
+    private SceneRenderJob sceneRenderJob;
     @Getter
-    private Set<RenderJob<?>> bucketPostScene;
+    private LinkedList<RenderJob<?>> queuePostScene;
 
     public void forEachRenderJob(Consumer<RenderJob<?>> renderJobConsumer) {
-        bucketPreScene.forEach(renderJobConsumer);
-        bucketScene.forEach(renderJobConsumer);
-        bucketPostScene.forEach(renderJobConsumer);
+        queuePreScene.forEach(renderJobConsumer);
+        renderJobConsumer.accept(sceneRenderJob);
+        queuePostScene.forEach(renderJobConsumer);
+    }
+
+    public RenderJob<?> getPresentingRenderJob() {
+        return ((queuePostScene.size() > 0) ? queuePostScene.getLast() : sceneRenderJob);
+    }
+
+    public RenderJob<?> getPreviousRenderJob(FilterRenderJob filterRenderJob) {
+        int postSceneIndex = queuePostScene.indexOf(filterRenderJob);
+        return ((postSceneIndex > 0) ? queuePostScene.get(postSceneIndex - 1) : sceneRenderJob);
     }
 }

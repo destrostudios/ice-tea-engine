@@ -11,7 +11,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
-import java.util.ArrayList;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -96,7 +95,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             depthAttachmentRef.attachment(0);
             depthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            // Subpass 0: shadow map rendering
+            // Subpass 0: Shadow map rendering
             VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
             subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
             subpass.pDepthStencilAttachment(depthAttachmentRef);
@@ -188,24 +187,9 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     private void initFrameBuffer() {
-        frameBuffers = new ArrayList<>(1);
-        try (MemoryStack stack = stackPush()) {
-            LongBuffer attachments = stack.longs(shadowMapTexture.getImageView());
-            LongBuffer pFrameBuffer = stack.mallocLong(1);
-
-            VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.callocStack(stack);
-            framebufferCreateInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
-            framebufferCreateInfo.renderPass(renderPass);
-            framebufferCreateInfo.width(shadowMapWidth);
-            framebufferCreateInfo.height(shadowMapHeight);
-            framebufferCreateInfo.layers(1);
-            framebufferCreateInfo.pAttachments(attachments);
-
-            if (vkCreateFramebuffer(application.getLogicalDevice(), framebufferCreateInfo, null, pFrameBuffer) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create framebuffer");
-            }
-            frameBuffers.add(pFrameBuffer.get(0));
-        }
+        initFrameBuffers(frameBufferIndex -> new long[] {
+            shadowMapTexture.getImageView()
+        });
     }
 
     private void initDescriptorSetLayout() {
@@ -221,6 +205,11 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         lightTransformUniformData.setMatrix4f("proj", new Matrix4f());
         lightTransformUniformData.setMatrix4f("view", new Matrix4f());
         lightTransformUniformData.initBuffer();
+    }
+
+    @Override
+    public boolean requiresGeometryRenderContext() {
+        return true;
     }
 
     @Override
@@ -241,11 +230,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         VkClearValue.Buffer clearValues = VkClearValue.callocStack(1, stack);
         clearValues.get(0).depthStencil().set(1, 0);
         return clearValues;
-    }
-
-    @Override
-    public long getFramebuffer(int commandBufferIndex) {
-        return frameBuffers.get(0);
     }
 
     @Override

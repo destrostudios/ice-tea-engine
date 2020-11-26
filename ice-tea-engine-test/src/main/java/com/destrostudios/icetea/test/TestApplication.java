@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.filters.RadialBlurFilter;
+import com.destrostudios.icetea.core.filters.SepiaFilter;
 import com.destrostudios.icetea.core.lights.DirectionalLight;
 import com.destrostudios.icetea.core.lights.SpotLight;
 import com.destrostudios.icetea.core.meshes.Quad;
@@ -167,6 +169,9 @@ public class TestApplication extends Application {
         geometryKnot.move(new Vector3f(-1.5f, -0.2f, 0.5f));
         geometryKnot.scale(new Vector3f(0.01f, 0.01f, 0.01f));
         rootNode.add(geometryKnot);
+
+        addFilter(new SepiaFilter());
+        addFilter(new RadialBlurFilter());
     }
 
     @Override

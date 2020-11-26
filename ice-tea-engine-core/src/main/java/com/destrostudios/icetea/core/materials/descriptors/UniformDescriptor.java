@@ -12,7 +12,7 @@ import java.util.Map;
 
 import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-public abstract class UniformDescriptor<LayoutType extends UniformDescriptorLayout> extends MaterialDescriptor<LayoutType> {
+public class UniformDescriptor<LayoutType extends UniformDescriptorLayout> extends MaterialDescriptor<LayoutType> {
 
     public UniformDescriptor(String name, LayoutType layout, UniformData uniformData) {
         super(name, layout);

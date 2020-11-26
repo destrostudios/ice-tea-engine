@@ -25,7 +25,7 @@ public class Geometry extends Spatial {
         boolean commandBufferOutdated = super.update(application);
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
         application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {
-            if (!renderContexts.containsKey(renderJob)) {
+            if (renderJob.requiresGeometryRenderContext() && (!renderContexts.containsKey(renderJob))) {
                 GeometryRenderContext renderContext = renderJob.createGeometryRenderContext();
                 renderContext.init(application, renderJob, this);
                 renderContexts.put(renderJob, renderContext);

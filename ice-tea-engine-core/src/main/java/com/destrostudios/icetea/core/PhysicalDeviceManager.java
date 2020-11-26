@@ -9,6 +9,9 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.KHRDepthStencilResolve.*;
+import static org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+import static org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2.vkGetPhysicalDeviceProperties2KHR;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -40,6 +43,7 @@ public class PhysicalDeviceManager {
                 throw new RuntimeException("Failed to find a suitable GPU");
             }
             physicalDeviceInformation.setMaxSamples(getMaxSamples(physicalDeviceInformation.getPhysicalDevice()));
+            physicalDeviceInformation.setDepthStencilResolveMode(getDepthStencilResolveMode(physicalDeviceInformation.getPhysicalDevice()));
             return physicalDeviceInformation;
         }
     }
@@ -99,6 +103,7 @@ public class PhysicalDeviceManager {
     private boolean isDeviceSuitable(PhysicalDeviceInformation physicalDeviceInformation) {
         return ((physicalDeviceInformation.getQueueFamilyIndexGraphics() != -1)
              && (physicalDeviceInformation.getQueueFamilyIndexSurface() != -1)
+            // TODO: This check won't work right now, it has to check the .extenionName() property, not the extension objcet
              && physicalDeviceInformation.getDeviceExtensions().containsAll(Application.DEVICE_EXTENSIONS_NAMES)
              && physicalDeviceInformation.getSurfaceFormats().hasRemaining()
              && physicalDeviceInformation.getSurfacePresentModes().hasRemaining()
@@ -127,6 +132,30 @@ public class PhysicalDeviceManager {
                 return VK_SAMPLE_COUNT_2_BIT;
             }
             return VK_SAMPLE_COUNT_1_BIT;
+        }
+    }
+
+    private int getDepthStencilResolveMode(VkPhysicalDevice physicalDevice) {
+        try (MemoryStack stack = stackPush()) {
+            VkPhysicalDeviceProperties2KHR physicalDeviceProperties2 = VkPhysicalDeviceProperties2KHR.callocStack(stack);
+            physicalDeviceProperties2.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR);
+
+            VkPhysicalDeviceDepthStencilResolvePropertiesKHR depthStencilResolveProperties = VkPhysicalDeviceDepthStencilResolvePropertiesKHR.callocStack(stack);
+            depthStencilResolveProperties.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES_KHR);
+            physicalDeviceProperties2.pNext(depthStencilResolveProperties.address());
+
+            vkGetPhysicalDeviceProperties2KHR(physicalDevice, physicalDeviceProperties2);
+
+            // We currently use the same one for simplicity, could easily be separated
+            int resolveModeFlags = depthStencilResolveProperties.supportedDepthResolveModes()
+                                 & depthStencilResolveProperties.supportedStencilResolveModes();
+
+            if ((resolveModeFlags & VK_RESOLVE_MODE_SAMPLE_ZERO_BIT_KHR) != 0) {
+                return VK_RESOLVE_MODE_SAMPLE_ZERO_BIT_KHR;
+            } else if ((resolveModeFlags & VK_RESOLVE_MODE_MAX_BIT_KHR) != 0) {
+                return VK_RESOLVE_MODE_MAX_BIT_KHR;
+            }
+            return VK_RESOLVE_MODE_MIN_BIT_KHR;
         }
     }
 

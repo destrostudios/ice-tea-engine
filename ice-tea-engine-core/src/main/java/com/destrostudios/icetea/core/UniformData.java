@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
@@ -37,6 +38,10 @@ public class UniformData {
 
     public void setFloat(String name, Float value) {
         set(name, value, FloatUniformValue::new);
+    }
+
+    public void setVector2f(String name, Vector2f value) {
+        set(name, value, Vector2fUniformValue::new);
     }
 
     public void setVector3f(String name, Vector3f value) {
@@ -82,6 +87,10 @@ public class UniformData {
         return get(name);
     }
 
+    public Vector2f getVector2f(String name) {
+        return get(name);
+    }
+
     public Vector3f getVector3f(String name) {
         return get(name);
     }
@@ -120,11 +129,11 @@ public class UniformData {
                 LongBuffer pBufferMemory = stack.mallocLong(1);
                 for (int i = 0; i < swapChainImagesCount; i++) {
                     application.getBufferManager().createBuffer(
-                            size,
-                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                            pBuffer,
-                            pBufferMemory
+                        size,
+                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        pBuffer,
+                        pBufferMemory
                     );
                     uniformBuffers.add(pBuffer.get(0));
                     uniformBuffersMemory.add(pBufferMemory.get(0));

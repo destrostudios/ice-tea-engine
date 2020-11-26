@@ -8,25 +8,21 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
-public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
+public class FilterRenderPipeline extends RenderPipeline<FilterRenderJob> {
 
-    public SceneRenderPipeline(Application application, SceneRenderJob renderJob, Geometry geometry, SceneGeometryRenderContext sceneGeometryRenderContext) {
+    public FilterRenderPipeline(Application application, FilterRenderJob renderJob) {
         super(application, renderJob);
-        this.geometry = geometry;
-        this.sceneGeometryRenderContext = sceneGeometryRenderContext;
     }
-    private Geometry geometry;
-    private SceneGeometryRenderContext sceneGeometryRenderContext;
 
     @Override
     public void init() {
         try (MemoryStack stack = stackPush()) {
-            Material material = geometry.getMaterial();
-            MaterialDescriptorSet materialDescriptorSet = sceneGeometryRenderContext.getMaterialDescriptorSet();
-            SPIRV vertShaderSPIRV = material.getVertexShader().compile(ShaderType.VERTEX_SHADER, materialDescriptorSet);
-            SPIRV fragShaderSPIRV = material.getFragmentShader().compile(ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
+            MaterialDescriptorSet materialDescriptorSet = renderJob.getMaterialDescriptorSet();
+            Shader vertShader = new Shader("shaders/filter.vert");
+            Shader fragShader = renderJob.getFilter().getFragmentShader();
+            SPIRV vertShaderSPIRV = vertShader.compile(ShaderType.VERTEX_SHADER, materialDescriptorSet);
+            SPIRV fragShaderSPIRV = fragShader.compile(ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
 
             long vertShaderModule = createShaderModule(application, vertShaderSPIRV.bytecode());
             long fragShaderModule = createShaderModule(application, fragShaderSPIRV.bytecode());
@@ -50,8 +46,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.callocStack(stack);
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-            vertexInputInfo.pVertexBindingDescriptions(VertexDescriptions.getBindingDescription());
-            vertexInputInfo.pVertexAttributeDescriptions(VertexDescriptions.getAttributeDescriptions_All());
+            // No vertex binding or vertex attribute descriptions needed
 
             // ===> ASSEMBLY STAGE <===
 
@@ -88,7 +83,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             rasterizer.rasterizerDiscardEnable(false);
             rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
             rasterizer.lineWidth(1);
-            rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
+            rasterizer.cullMode(VK_CULL_MODE_FRONT_BIT);
             rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
             rasterizer.depthBiasEnable(false);
 
@@ -116,15 +111,6 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 
             VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.callocStack(1, stack);
             colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-            colorBlendAttachment.blendEnable(material.isTransparent());
-            if (material.isTransparent()) {
-                colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-                colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
-                colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
-                colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
-                colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-                colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
-            }
 
             VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.callocStack(stack);
             colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);

@@ -17,6 +17,11 @@ import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
 import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.vulkan.KHRCreateRenderpass2.VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRDepthStencilResolve.VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRMaintenance2.VK_KHR_MAINTENANCE2_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRMultiview.VK_KHR_MULTIVIEW_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
@@ -24,7 +29,15 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public abstract class Application {
 
-    static final Set<String> DEVICE_EXTENSIONS_NAMES = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME).collect(toSet());
+    static final Set<String> DEVICE_EXTENSIONS_NAMES = Stream.of(
+        // Required to use swapchains
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        // Required to resolve multisampled depth buffers (for postprocessing)
+        VK_KHR_MULTIVIEW_EXTENSION_NAME,
+        VK_KHR_MAINTENANCE2_EXTENSION_NAME,
+        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+        VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME
+    ).collect(toSet());
     private static final int MAX_FRAMES_IN_FLIGHT = 2;
 
     @Getter
@@ -63,6 +76,7 @@ public abstract class Application {
     protected Node rootNode;
     @Getter
     private Light light;
+    private List<Filter> filters;
 
     private List<Frame> inFlightFrames;
     private Map<Integer, Frame> imagesInFlight;
@@ -79,6 +93,7 @@ public abstract class Application {
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
         rootNode = new Node();
+        filters = new LinkedList<>();
         initWindow();
         createInstance();
         initSurface();
@@ -111,7 +126,6 @@ public abstract class Application {
         try (MemoryStack stack = stackPush()) {
             VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.callocStack(stack);
             instanceCreateInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
-            // Use calloc to initialize the structs with 0s - Otherwise, the program can crash due to random values
             VkApplicationInfo applicationInfo = VkApplicationInfo.callocStack(stack);
             applicationInfo.sType(VK_STRUCTURE_TYPE_APPLICATION_INFO);
             applicationInfo.pApplicationName(stack.UTF8Safe("Hello Triangle"));
@@ -120,8 +134,7 @@ public abstract class Application {
             applicationInfo.engineVersion(VK_MAKE_VERSION(1, 0, 0));
             applicationInfo.apiVersion(VK_API_VERSION_1_0);
             instanceCreateInfo.pApplicationInfo(applicationInfo);
-            PointerBuffer requiredExtensions = glfwGetRequiredInstanceExtensions();
-            instanceCreateInfo.ppEnabledExtensionNames(requiredExtensions);
+            instanceCreateInfo.ppEnabledExtensionNames(getRequiredExtensions(stack));
 
             PointerBuffer instancePointer = stack.mallocPointer(1);
             if (vkCreateInstance(instanceCreateInfo, null, instancePointer) != VK_SUCCESS) {
@@ -129,6 +142,15 @@ public abstract class Application {
             }
             instance = new VkInstance(instancePointer.get(0), instanceCreateInfo);
         }
+    }
+
+    private PointerBuffer getRequiredExtensions(MemoryStack stack) {
+        PointerBuffer glfwExtensions = glfwGetRequiredInstanceExtensions();
+        PointerBuffer allRequiredExtensions = stack.mallocPointer(glfwExtensions.capacity() + 1);
+        allRequiredExtensions.put(glfwExtensions);
+        // Required to use the extension to resolve multisampled depth buffers (for postprocessing)
+        allRequiredExtensions.put(stack.UTF8(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME));
+        return allRequiredExtensions.rewind();
     }
 
     private void initSurface() {
@@ -200,7 +222,6 @@ public abstract class Application {
 
     private void initSwapChain() {
         swapChain = new SwapChain();
-        swapChain.getRenderJobManager().getBucketScene().add(new SceneRenderJob());
         swapChain.init(this);
     }
 
@@ -256,6 +277,11 @@ public abstract class Application {
         this.light = light;
     }
 
+    public void addFilter(Filter filter) {
+        filter.setModified(true);
+        filters.add(filter);
+    }
+
     private void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -268,7 +294,7 @@ public abstract class Application {
     private void updateState() {
         update();
         camera.update();
-        if (updateLights()) {
+        if (updateLights() | updateFilters()) {
             swapChain.recreateRenderJobs();
         }
         if (rootNode.update(this)) {
@@ -282,12 +308,24 @@ public abstract class Application {
         if (light != null) {
             light.update(this);
             if (light.isModified()) {
-                swapChain.getRenderJobManager().getBucketPreScene().addAll(light.getShadowMapRenderJobs());
+                swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
                 light.setModified(false);
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean updateFilters() {
+        boolean recreateRenderJob = false;
+        for (Filter filter : filters) {
+            if (filter.isModified()) {
+                swapChain.getRenderJobManager().getQueuePostScene().add(new FilterRenderJob(filter));
+                filter.setModified(false);
+                recreateRenderJob = true;
+            }
+        }
+        return recreateRenderJob;
     }
 
     private void drawFrame() {

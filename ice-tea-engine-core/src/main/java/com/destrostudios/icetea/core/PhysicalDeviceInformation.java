@@ -22,6 +22,7 @@ public class PhysicalDeviceInformation {
     private IntBuffer surfacePresentModes;
     private boolean anisotropySupported;
     private int maxSamples;
+    private int depthStencilResolveMode;
 
     public int[] getUniqueQueueFamilyIndices() {
         return IntStream.of(queueFamilyIndexGraphics, queueFamilyIndexSurface).distinct().toArray();

@@ -25,9 +25,6 @@ public abstract class Light {
     private List<ShadowMapRenderJob> shadowMapRenderJobs;
     @Getter
     @Setter
-    private boolean modified;
-    @Getter
-    @Setter
     private Vector4f lightColor;
     @Getter
     @Setter
@@ -37,6 +34,9 @@ public abstract class Light {
     private Vector4f specularColor;
     @Getter
     protected UniformData uniformData;
+    @Getter
+    @Setter
+    private boolean modified;
 
     public void update(Application application) {
         if (this.application == null) {

@@ -10,6 +10,12 @@ public class Texture {
 
     }
 
+    public Texture(long image, long imageMemory, long imageView) {
+        this.image = image;
+        this.imageMemory = imageMemory;
+        this.imageView = imageView;
+    }
+
     public Texture(long image, long imageMemory, long imageView, long imageSampler) {
         this.image = image;
         this.imageMemory = imageMemory;

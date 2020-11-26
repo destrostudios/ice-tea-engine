@@ -9,7 +9,6 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwWaitEvents;
@@ -201,9 +200,9 @@ public class SwapChain {
                 if (vkBeginCommandBuffer(commandBuffer, bufferBeginInfo) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to begin recording command buffer");
                 }
-                render(renderJobManager.getBucketPreScene(), commandBuffer, i, renderPassBeginInfo, stack);
-                render(renderJobManager.getBucketScene(), commandBuffer, i, renderPassBeginInfo, stack);
-                render(renderJobManager.getBucketPostScene(), commandBuffer, i, renderPassBeginInfo, stack);
+                render(renderJobManager.getQueuePreScene(), commandBuffer, i, renderPassBeginInfo, stack);
+                render(renderJobManager.getSceneRenderJob(), commandBuffer, i, renderPassBeginInfo, stack);
+                render(renderJobManager.getQueuePostScene(), commandBuffer, i, renderPassBeginInfo, stack);
                 if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to record command buffer");
                 }
@@ -211,18 +210,22 @@ public class SwapChain {
         }
     }
 
-    private void render(Set<RenderJob<?>> renderJobBucket, VkCommandBuffer commandBuffer, int commandBufferIndex, VkRenderPassBeginInfo renderPassBeginInfo, MemoryStack stack) {
+    private void render(List<RenderJob<?>> renderJobBucket, VkCommandBuffer commandBuffer, int commandBufferIndex, VkRenderPassBeginInfo renderPassBeginInfo, MemoryStack stack) {
         renderJobBucket.forEach(renderJob -> {
-            renderPassBeginInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-            renderPassBeginInfo.renderPass(renderJob.getRenderPass());
-            renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
-            renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
-            renderPassBeginInfo.framebuffer(renderJob.getFramebuffer(commandBufferIndex));
-
-            vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-            renderJob.render(commandBuffer, commandBufferIndex, stack);
-            vkCmdEndRenderPass(commandBuffer);
+            render(renderJob, commandBuffer, commandBufferIndex, renderPassBeginInfo, stack);
         });
+    }
+
+    private void render(RenderJob<?> renderJob, VkCommandBuffer commandBuffer, int commandBufferIndex, VkRenderPassBeginInfo renderPassBeginInfo, MemoryStack stack) {
+        renderPassBeginInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+        renderPassBeginInfo.renderPass(renderJob.getRenderPass());
+        renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
+        renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
+        renderPassBeginInfo.framebuffer(renderJob.getFramebuffer(commandBufferIndex));
+
+        vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        renderJob.render(commandBuffer, commandBufferIndex, stack);
+        vkCmdEndRenderPass(commandBuffer);
     }
 
     private void cleanupCommandBuffers() {
