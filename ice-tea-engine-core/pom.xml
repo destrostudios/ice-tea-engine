@@ -77,6 +77,10 @@
         </dependency>
         <dependency>
             <groupId>de.javagl</groupId>
+            <artifactId>obj</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.javagl</groupId>
             <artifactId>jgltf-model</artifactId>
         </dependency>
         <dependency>

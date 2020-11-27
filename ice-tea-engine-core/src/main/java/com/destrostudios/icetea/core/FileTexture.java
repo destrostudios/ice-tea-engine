@@ -1,15 +1,15 @@
 package com.destrostudios.icetea.core;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.nio.file.Paths;
 
 import static java.lang.ClassLoader.getSystemClassLoader;
 import static org.lwjgl.stb.STBImage.*;
@@ -34,16 +34,25 @@ public class FileTexture extends Texture {
 
     private void initImage() {
         try (MemoryStack stack = stackPush()) {
-            String externalFormFileName = Paths.get(new URI(getSystemClassLoader().getResource(filePath).toExternalForm())).toString();
-
             IntBuffer pWidth = stack.mallocInt(1);
             IntBuffer pHeight = stack.mallocInt(1);
             IntBuffer pChannels = stack.mallocInt(1);
 
-            ByteBuffer pixels = stbi_load(externalFormFileName, pWidth, pHeight, pChannels, STBI_rgb_alpha);
-            if (pixels == null) {
-                throw new RuntimeException("Failed to load texture image " + externalFormFileName);
+            ByteBuffer pixels = null;
+            try {
+                InputStream inputStream = getSystemClassLoader().getResourceAsStream(filePath);
+                byte[] imageData = inputStream.readAllBytes();
+                ByteBuffer imageBuffer = BufferUtils.createByteBuffer(imageData.length);
+                imageBuffer.put(imageData);
+                imageBuffer.flip();
+                pixels = stbi_load_from_memory(imageBuffer, pWidth, pHeight, pChannels, STBI_rgb_alpha);
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
+            if (pixels == null) {
+                throw new RuntimeException("Failed to load texture '" + filePath + "'");
+            }
+
             long imageSize = pWidth.get(0) * pHeight.get(0) * 4; // pChannels.get(0);
 
             mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(pWidth.get(0), pHeight.get(0)))) + 1);
@@ -98,8 +107,6 @@ public class FileTexture extends Texture {
 
             vkDestroyBuffer(application.getLogicalDevice(), pStagingBuffer.get(0), null);
             vkFreeMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0), null);
-        } catch (URISyntaxException ex) {
-            ex.printStackTrace();
         }
     }
 

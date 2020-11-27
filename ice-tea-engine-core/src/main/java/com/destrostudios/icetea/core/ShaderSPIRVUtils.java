@@ -1,11 +1,8 @@
 package com.destrostudios.icetea.core;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
+import static java.lang.ClassLoader.getSystemClassLoader;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
@@ -13,9 +10,8 @@ public class ShaderSPIRVUtils {
 
     public static String readSource(String shaderFile) {
         try {
-            String externalFormFilePath = ClassLoader.getSystemClassLoader().getResource(shaderFile).toExternalForm();
-            return new String(Files.readAllBytes(Paths.get(new URI(externalFormFilePath))));
-        } catch (IOException | URISyntaxException ex) {
+            return new String(getSystemClassLoader().getResourceAsStream(shaderFile).readAllBytes());
+        } catch (IOException ex) {
             ex.printStackTrace();
         }
         return null;

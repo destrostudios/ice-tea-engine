@@ -7,7 +7,7 @@ import org.joml.Vector3fc;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 
-import java.io.File;
+import java.io.InputStream;
 import java.nio.LongBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.ClassLoader.getSystemClassLoader;
-import static org.lwjgl.assimp.Assimp.aiProcess_FlipUVs;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkFreeMemory;
@@ -40,8 +39,8 @@ public class Mesh {
     private int usingGeometriesCount;
 
     public void loadModel(String filePath) {
-        File modelFile = new File(getSystemClassLoader().getResource(filePath).getFile());
-        Model model = ModelLoader.loadModel(modelFile, aiProcess_FlipUVs);
+        InputStream inputStream = getSystemClassLoader().getResourceAsStream(filePath);
+        Model model = ObjLoader.loadModel(inputStream);
 
         int vertexCount = model.getPositions().size();
         vertices = new Vertex[vertexCount];

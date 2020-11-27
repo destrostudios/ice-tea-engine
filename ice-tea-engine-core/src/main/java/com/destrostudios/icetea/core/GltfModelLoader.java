@@ -16,19 +16,22 @@ public class GltfModelLoader {
     }
 
     public GltfModelLoader(String filePath, GltfModelLoaderSettings settings) {
-        this.filePath = filePath;
+        this(getSystemClassLoader().getResourceAsStream(filePath), settings);
+    }
+
+    public GltfModelLoader(InputStream inputStream, GltfModelLoaderSettings settings) {
+        this.inputStream = inputStream;
         this.settings = settings;
     }
-    private String filePath;
+    private InputStream inputStream;
     private GltfModelLoaderSettings settings;
     private GltfModel gltfModel;
     private Node rootNode;
 
     public Node load() {
         try {
-            File file = new File(getExternalFilePath(filePath));
             GltfModelReader gltfModelReader = new GltfModelReader();
-            gltfModel = gltfModelReader.read(file.toURI());
+            gltfModel = gltfModelReader.readWithoutReferences(inputStream);
             loadScenes();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -127,9 +130,9 @@ public class GltfModelLoader {
     private LinkedList<Object> readValues(AccessorModel accessorModel) {
         LinkedList<Object> values = new LinkedList<>();
         BufferViewModel bufferViewModel = accessorModel.getBufferViewModel();
-        File file = new File(getExternalFilePath("models/" + bufferViewModel.getBufferModel().getUri()));
+        InputStream inputStream = getSystemClassLoader().getResourceAsStream("models/" + bufferViewModel.getBufferModel().getUri());
         try {
-            DataInputStream dataInputStream = new DataInputStream(new FileInputStream(file));
+            DataInputStream dataInputStream = new DataInputStream(inputStream);
             dataInputStream.skip(bufferViewModel.getByteOffset() + accessorModel.getByteOffset());
             int readBytes;
             for (int i = 0; i < accessorModel.getCount(); i++) {
@@ -199,9 +202,5 @@ public class GltfModelLoader {
         material.setTexture("diffuseMap", texture);
         material.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
         return material;
-    }
-
-    private String getExternalFilePath(String filePath) {
-        return getSystemClassLoader().getResource(filePath).getFile();
     }
 }

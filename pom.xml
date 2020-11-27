@@ -17,6 +17,7 @@
         <version.joml>1.9.20</version.joml>
         <version.lwjgl>3.2.3</version.lwjgl>
         <version.lombok>1.18.12</version.lombok>
+        <version.obj>0.3.0</version.obj>
     </properties>
     <build>
         <plugins>
@@ -32,6 +33,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>9</source>
+                    <target>9</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -96,6 +105,12 @@
                 <groupId>org.joml</groupId>
                 <artifactId>joml</artifactId>
                 <version>${version.joml}</version>
+            </dependency>
+            <!--OBJ-->
+            <dependency>
+                <groupId>de.javagl</groupId>
+                <artifactId>obj</artifactId>
+                <version>${version.obj}</version>
             </dependency>
             <!--JGLTF-->
             <dependency>
