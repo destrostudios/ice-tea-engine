@@ -34,25 +34,6 @@ public class BufferUtil {
         source.limit(source.capacity()).rewind();
     }
 
-    public static void memcpy(ByteBuffer buffer, Vertex[] vertices) {
-        for (Vertex vertex : vertices) {
-            buffer.putFloat(vertex.getPosition().x());
-            buffer.putFloat(vertex.getPosition().y());
-            buffer.putFloat(vertex.getPosition().z());
-
-            buffer.putFloat(vertex.getColor().x());
-            buffer.putFloat(vertex.getColor().y());
-            buffer.putFloat(vertex.getColor().z());
-
-            buffer.putFloat(vertex.getTexCoords().x());
-            buffer.putFloat(vertex.getTexCoords().y());
-
-            buffer.putFloat(vertex.getNormal().x());
-            buffer.putFloat(vertex.getNormal().y());
-            buffer.putFloat(vertex.getNormal().z());
-        }
-    }
-
     public static void memcpy(ByteBuffer buffer, int[] indices) {
         for (int index : indices) {
             buffer.putInt(index);

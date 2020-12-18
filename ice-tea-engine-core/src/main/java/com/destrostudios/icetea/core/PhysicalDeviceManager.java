@@ -103,7 +103,7 @@ public class PhysicalDeviceManager {
     private boolean isDeviceSuitable(PhysicalDeviceInformation physicalDeviceInformation) {
         return ((physicalDeviceInformation.getQueueFamilyIndexGraphics() != -1)
              && (physicalDeviceInformation.getQueueFamilyIndexSurface() != -1)
-            // TODO: This check won't work right now, it has to check the .extenionName() property, not the extension objcet
+             // TODO: This check won't work right now, it has to check the .extensionName() property, not the extension objcet
              && physicalDeviceInformation.getDeviceExtensions().containsAll(Application.DEVICE_EXTENSIONS_NAMES)
              && physicalDeviceInformation.getSurfaceFormats().hasRemaining()
              && physicalDeviceInformation.getSurfacePresentModes().hasRemaining()

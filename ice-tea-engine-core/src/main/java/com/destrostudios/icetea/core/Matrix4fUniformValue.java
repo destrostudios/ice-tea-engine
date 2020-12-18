@@ -20,4 +20,9 @@ public class Matrix4fUniformValue extends UniformValue<Matrix4f> {
     public String getShaderDefinitionType() {
         return "mat4";
     }
+
+    @Override
+    public int getFormat() {
+        throw new UnsupportedOperationException();
+    }
 }

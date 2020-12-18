@@ -9,9 +9,9 @@ import java.nio.LongBuffer;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class FilterRenderPipeline extends RenderPipeline<FilterRenderJob> {
+public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadRenderJob> {
 
-    public FilterRenderPipeline(Application application, FilterRenderJob renderJob) {
+    public FullScreenQuadRenderPipeline(Application application, FullScreenQuadRenderJob renderJob) {
         super(application, renderJob);
     }
 
@@ -19,8 +19,8 @@ public class FilterRenderPipeline extends RenderPipeline<FilterRenderJob> {
     public void init() {
         try (MemoryStack stack = stackPush()) {
             MaterialDescriptorSet materialDescriptorSet = renderJob.getMaterialDescriptorSet();
-            Shader vertShader = new Shader("shaders/filter.vert");
-            Shader fragShader = renderJob.getFilter().getFragmentShader();
+            Shader vertShader = new Shader("shaders/fullScreenQuad.vert");
+            Shader fragShader = renderJob.getFragmentShader();
             SPIRV vertShaderSPIRV = vertShader.compile(ShaderType.VERTEX_SHADER, materialDescriptorSet);
             SPIRV fragShaderSPIRV = fragShader.compile(ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
 
@@ -151,7 +151,7 @@ public class FilterRenderPipeline extends RenderPipeline<FilterRenderJob> {
             if (vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create graphics pipeline");
             }
-            graphicsPipeline = pGraphicsPipeline.get(0);
+            pipeline = pGraphicsPipeline.get(0);
 
             // ===> RELEASE RESOURCES <===
 

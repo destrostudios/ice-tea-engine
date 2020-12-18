@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core;
 
 import lombok.Getter;
-import org.lwjgl.system.MemoryStack;
 
 import java.util.*;
 
@@ -21,18 +20,18 @@ public class Geometry extends Spatial {
     private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts;
 
     @Override
-    public boolean update(Application application) {
-        boolean commandBufferOutdated = super.update(application);
+    public boolean update(Application application, float tpf) {
+        boolean commandBufferOutdated = super.update(application, tpf);
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
         application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {
-            if (renderJob.requiresGeometryRenderContext() && (!renderContexts.containsKey(renderJob))) {
+            if (renderJob.isRendering(this) && (!renderContexts.containsKey(renderJob))) {
                 GeometryRenderContext renderContext = renderJob.createGeometryRenderContext();
                 renderContext.init(application, renderJob, this);
                 renderContexts.put(renderJob, renderContext);
                 outdatedRenderContexts.add(renderContext);
             }
         });
-        if (transformUniformData.recreateBufferIfNecessary() | material.getParameters().recreateBufferIfNecessary()) {
+        if (transformUniformData.recreateBuffersIfNecessary(application.getSwapChain().getImages().size()) | material.getParameters().recreateBuffersIfNecessary(application.getSwapChain().getImages().size())) {
             outdatedRenderContexts.addAll(renderContexts.values());
         }
         if (outdatedRenderContexts.size() > 0) {
@@ -83,9 +82,9 @@ public class Geometry extends Spatial {
         return renderContexts.get(renderJob);
     }
 
-    public void updateUniformBuffers(int currentImage, MemoryStack stack) {
-        transformUniformData.updateBufferIfNecessary(currentImage, stack);
-        material.getParameters().updateBufferIfNecessary(currentImage, stack);
+    public void updateUniformBuffers(int currentImage) {
+        transformUniformData.updateBufferIfNecessary(currentImage);
+        material.getParameters().updateBufferIfNecessary(currentImage);
     }
 
     public void cleanup() {

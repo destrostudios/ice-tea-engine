@@ -1,10 +1,12 @@
 package com.destrostudios.icetea.core;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
+import java.util.LinkedList;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -23,41 +25,75 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
     @Override
     public void init() {
         try (MemoryStack stack = stackPush()) {
+            Mesh mesh = geometry.getMesh();
             Material material = geometry.getMaterial();
+
             MaterialDescriptorSet materialDescriptorSet = sceneGeometryRenderContext.getMaterialDescriptorSet();
+
+            int shaderStagesCount = 2;
+            if (material.getTesselationControlShader() != null) {
+                shaderStagesCount++;
+            }
+            if (material.getTesselationEvaluationShader() != null) {
+                shaderStagesCount++;
+            }
+            if (material.getGeometryShader() != null) {
+                shaderStagesCount++;
+            }
+
+            VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(shaderStagesCount, stack);
+
+            int shaderStageIndex = 0;
+            LinkedList<ShaderCleanup> shaderCleanups = new LinkedList<>();
+
             SPIRV vertShaderSPIRV = material.getVertexShader().compile(ShaderType.VERTEX_SHADER, materialDescriptorSet);
-            SPIRV fragShaderSPIRV = material.getFragmentShader().compile(ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
-
             long vertShaderModule = createShaderModule(application, vertShaderSPIRV.bytecode());
+            createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
+            shaderCleanups.add(new ShaderCleanup(vertShaderSPIRV, vertShaderModule));
+            shaderStageIndex++;
+
+            if (material.getTesselationControlShader() != null) {
+                SPIRV tesselationControlShaderSPIRV = material.getTesselationControlShader().compile(ShaderType.TESSELATION_CONTROL_SHADER, materialDescriptorSet);
+                long tesselationControlShaderModule = createShaderModule(application, tesselationControlShaderSPIRV.bytecode());
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tesselationControlShaderModule, stack);
+                shaderCleanups.add(new ShaderCleanup(tesselationControlShaderSPIRV, tesselationControlShaderModule));
+                shaderStageIndex++;
+            }
+
+            if (material.getTesselationEvaluationShader() != null) {
+                SPIRV tesselationEvaluationShaderSPIRV = material.getTesselationEvaluationShader().compile(ShaderType.TESSELATION_EVALUATION_SHADER, materialDescriptorSet);
+                long tesselationEvaluationShaderModule = createShaderModule(application, tesselationEvaluationShaderSPIRV.bytecode());
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tesselationEvaluationShaderModule, stack);
+                shaderCleanups.add(new ShaderCleanup(tesselationEvaluationShaderSPIRV, tesselationEvaluationShaderModule));
+                shaderStageIndex++;
+            }
+
+            if (material.getGeometryShader() != null) {
+                SPIRV geometryShaderSPIRV = material.getGeometryShader().compile(ShaderType.GEOMETRY_SHADER, materialDescriptorSet);
+                long geometryShaderModule = createShaderModule(application, geometryShaderSPIRV.bytecode());
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_GEOMETRY_BIT, geometryShaderModule, stack);
+                shaderCleanups.add(new ShaderCleanup(geometryShaderSPIRV, geometryShaderModule));
+                shaderStageIndex++;
+            }
+
+            SPIRV fragShaderSPIRV = material.getFragmentShader().compile(ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
             long fragShaderModule = createShaderModule(application, fragShaderSPIRV.bytecode());
-
-            VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(2, stack);
-            ByteBuffer entryPoint = stack.UTF8("main");
-
-            VkPipelineShaderStageCreateInfo vertShaderStageInfo = shaderStages.get(0);
-            vertShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            vertShaderStageInfo.stage(VK_SHADER_STAGE_VERTEX_BIT);
-            vertShaderStageInfo.module(vertShaderModule);
-            vertShaderStageInfo.pName(entryPoint);
-
-            VkPipelineShaderStageCreateInfo fragShaderStageInfo = shaderStages.get(1);
-            fragShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            fragShaderStageInfo.stage(VK_SHADER_STAGE_FRAGMENT_BIT);
-            fragShaderStageInfo.module(fragShaderModule);
-            fragShaderStageInfo.pName(entryPoint);
+            createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule, stack);
+            shaderCleanups.add(new ShaderCleanup(fragShaderSPIRV, fragShaderModule));
+            shaderStageIndex++;
 
             // ===> VERTEX STAGE <===
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.callocStack(stack);
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-            vertexInputInfo.pVertexBindingDescriptions(VertexDescriptions.getBindingDescription());
-            vertexInputInfo.pVertexAttributeDescriptions(VertexDescriptions.getAttributeDescriptions_All());
+            vertexInputInfo.pVertexBindingDescriptions(getBindingDescriptions(geometry.getMesh()));
+            vertexInputInfo.pVertexAttributeDescriptions(getAttributeDescriptions(geometry.getMesh()));
 
             // ===> ASSEMBLY STAGE <===
 
             VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(stack);
             inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
-            inputAssembly.topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+            inputAssembly.topology(mesh.getTopology());
             inputAssembly.primitiveRestartEnable(false);
 
             // ===> VIEWPORT & SCISSOR
@@ -88,7 +124,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             rasterizer.rasterizerDiscardEnable(false);
             rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
             rasterizer.lineWidth(1);
-            rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
+            rasterizer.cullMode(material.getCullMode());
             rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
             rasterizer.depthBiasEnable(false);
 
@@ -133,6 +169,15 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             colorBlending.pAttachments(colorBlendAttachment);
             colorBlending.blendConstants(stack.floats(0, 0, 0, 0));
 
+            // ===> TESSELATION <===
+
+            VkPipelineTessellationStateCreateInfo tesselation = null;
+            if (material.getTesselationPatchSize() > 0) {
+                tesselation = VkPipelineTessellationStateCreateInfo.callocStack(stack);
+                tesselation.sType(VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO);
+                tesselation.patchControlPoints(material.getTesselationPatchSize());
+            }
+
             // ===> PIPELINE LAYOUT CREATION <===
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
@@ -155,6 +200,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             pipelineInfo.pMultisampleState(multisampling);
             pipelineInfo.pDepthStencilState(depthStencil);
             pipelineInfo.pColorBlendState(colorBlending);
+            pipelineInfo.pTessellationState(tesselation);
             pipelineInfo.layout(pipelineLayout);
             pipelineInfo.renderPass(renderJob.getRenderPass());
             pipelineInfo.subpass(0);
@@ -165,15 +211,21 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             if (vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create graphics pipeline");
             }
-            graphicsPipeline = pGraphicsPipeline.get(0);
+            pipeline = pGraphicsPipeline.get(0);
 
             // ===> RELEASE RESOURCES <===
 
-            vkDestroyShaderModule(application.getLogicalDevice(), vertShaderModule, null);
-            vkDestroyShaderModule(application.getLogicalDevice(), fragShaderModule, null);
-
-            vertShaderSPIRV.free();
-            fragShaderSPIRV.free();
+            for (ShaderCleanup shaderCleanup : shaderCleanups) {
+                vkDestroyShaderModule(application.getLogicalDevice(), shaderCleanup.getShaderModule(), null);
+                shaderCleanup.getSpirv().free();
+            }
         }
+    }
+
+    @AllArgsConstructor
+    @Getter
+    private static class ShaderCleanup {
+        private SPIRV spirv;
+        private long shaderModule;
     }
 }

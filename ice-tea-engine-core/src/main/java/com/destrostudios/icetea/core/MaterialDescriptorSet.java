@@ -14,14 +14,16 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class MaterialDescriptorSet {
 
-    public MaterialDescriptorSet(Application application, MaterialDescriptorSetLayout setLayout) {
+    public MaterialDescriptorSet(Application application, MaterialDescriptorSetLayout setLayout, int descriptorSetsCount) {
         this.application = application;
         this.setLayout = setLayout;
+        this.descriptorSetsCount = descriptorSetsCount;
         descriptors = new LinkedList<>();
     }
     private Application application;
     @Getter
     private MaterialDescriptorSetLayout setLayout;
+    private int descriptorSetsCount;
     private List<MaterialDescriptor<?>> descriptors;
 
     public void addDescriptor(MaterialDescriptor<?> descriptor) {
@@ -30,7 +32,6 @@ public class MaterialDescriptorSet {
 
     public long createDescriptorPool() {
         try (MemoryStack stack = stackPush()) {
-            int descriptorSetsCount = getDescriptorSetsCount();
             VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(setLayout.getDescriptorsCount(), stack);
 
             int descriptorIndex = 0;
@@ -64,7 +65,6 @@ public class MaterialDescriptorSet {
             allocateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
             allocateInfo.descriptorPool(descriptorPool);
 
-            int descriptorSetsCount = getDescriptorSetsCount();
             LongBuffer layouts = stack.mallocLong(descriptorSetsCount);
             for (int i = 0; i < layouts.capacity(); i++) {
                 layouts.put(i, setLayout.getDescriptorSetLayout());
@@ -112,10 +112,6 @@ public class MaterialDescriptorSet {
         for (long descriptorSet : descriptorSets) {
             vkFreeDescriptorSets(application.getLogicalDevice(), descriptorPool, descriptorSet);
         }
-    }
-
-    private int getDescriptorSetsCount() {
-        return application.getSwapChain().getImages().size();
     }
 
     public String getShaderDeclaration() {

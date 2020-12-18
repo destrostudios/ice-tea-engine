@@ -4,18 +4,23 @@ import com.destrostudios.icetea.core.materials.descriptors.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class SceneGeometryRenderContext extends GeometryRenderContext<SceneRenderJob> {
 
+    public SceneGeometryRenderContext(Supplier<Camera> cameraSupplier) {
+        this.cameraSupplier = cameraSupplier;
+    }
+    private Supplier<Camera> cameraSupplier;
     private SceneRenderPipeline sceneRenderPipeline;
 
     @Override
     protected MaterialDescriptorSet createMaterialDescriptorSet() {
         MaterialDescriptorSetLayout descriptorSetLayout = new MaterialDescriptorSetLayout(application);
-        MaterialDescriptorSet descriptorSet = new MaterialDescriptorSet(application, descriptorSetLayout);
+        MaterialDescriptorSet descriptorSet = new MaterialDescriptorSet(application, descriptorSetLayout, application.getSwapChain().getImages().size());
 
         CameraTransformDescriptorLayout cameraTransformDescriptorLayout = new CameraTransformDescriptorLayout();
-        CameraTransformDescriptor cameraTransformDescriptor = new CameraTransformDescriptor("camera", cameraTransformDescriptorLayout, application.getCamera());
+        CameraTransformDescriptor cameraTransformDescriptor = new CameraTransformDescriptor("camera", cameraTransformDescriptorLayout, cameraSupplier.get());
         descriptorSetLayout.addDescriptorLayout(cameraTransformDescriptorLayout);
         descriptorSet.addDescriptor(cameraTransformDescriptor);
 
@@ -31,9 +36,9 @@ public class SceneGeometryRenderContext extends GeometryRenderContext<SceneRende
             descriptorSet.addDescriptor(materialParamsDescriptor);
         }
 
-        for (Map.Entry<String, Texture> entry : geometry.getMaterial().getTextures().entrySet()) {
+        for (Map.Entry<String, Supplier<Texture>> entry : geometry.getMaterial().getTextureSuppliers().entrySet()) {
             SimpleTextureDescriptorLayout simpleTextureDescriptorLayout = new SimpleTextureDescriptorLayout();
-            SimpleTextureDescriptor simpleTextureDescriptor = new SimpleTextureDescriptor(entry.getKey(), simpleTextureDescriptorLayout, entry.getValue());
+            SimpleTextureDescriptor simpleTextureDescriptor = new SimpleTextureDescriptor(entry.getKey(), simpleTextureDescriptorLayout, entry.getValue().get());
             descriptorSetLayout.addDescriptorLayout(simpleTextureDescriptorLayout);
             descriptorSet.addDescriptor(simpleTextureDescriptor);
         }

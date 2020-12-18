@@ -167,7 +167,16 @@ public class SwapChain {
     }
 
     public void initRenderJobs() {
+        // Make sure all render jobs are initialized first, because they can have dependencies between each other
         renderJobManager.forEachRenderJob(renderJob -> renderJob.init(application));
+        renderJobManager.forEachRenderJob(renderJob -> {
+            application.getRootNode().forEachGeometry(geometry -> {
+                GeometryRenderContext<?> renderContext = geometry.getRenderContext(renderJob);
+                if (renderContext != null) {
+                    renderContext.createDescriptorDependencies();
+                }
+            });
+        });
     }
 
     public void recreateCommandBuffers() {

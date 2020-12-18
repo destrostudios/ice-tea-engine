@@ -26,7 +26,7 @@ public abstract class TextureDescriptor<LayoutType extends TextureDescriptorLayo
     }
 
     @Override
-    protected String getShaderDeclarationType() {
-        return "sampler2D";
+    protected String getShaderDeclaration_Type() {
+        return "uniform sampler2D";
     }
 }

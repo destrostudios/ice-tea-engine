@@ -2,8 +2,8 @@ package com.destrostudios.icetea.core;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.joml.Vector2fc;
-import org.joml.Vector3fc;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +18,8 @@ public class Model {
         this.indices = new ArrayList<>();
         this.normals = new ArrayList<>();
     }
-    private List<Vector3fc> positions;
-    private List<Vector2fc> texCoords;
+    private List<Vector3f> positions;
+    private List<Vector2f> texCoords;
     private List<Integer> indices;
-    private List<Vector3fc> normals;
+    private List<Vector3f> normals;
 }

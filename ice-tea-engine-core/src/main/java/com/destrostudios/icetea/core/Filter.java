@@ -20,12 +20,12 @@ public class Filter {
     public void init(Application application) {
         uniformData.setApplication(application);
         updateUniformData();
-        uniformData.initBuffer();
+        uniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 
-    public void updateUniformBuffers(int currentImage, MemoryStack stack) {
+    public void updateUniformBuffers(int currentImage) {
         updateUniformData();
-        uniformData.updateBufferIfNecessary(currentImage, stack);
+        uniformData.updateBufferIfNecessary(currentImage);
     }
 
     protected void updateUniformData() {

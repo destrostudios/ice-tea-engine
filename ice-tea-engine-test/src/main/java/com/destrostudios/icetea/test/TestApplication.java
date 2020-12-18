@@ -6,26 +6,30 @@ import com.destrostudios.icetea.core.filters.SepiaFilter;
 import com.destrostudios.icetea.core.lights.DirectionalLight;
 import com.destrostudios.icetea.core.lights.SpotLight;
 import com.destrostudios.icetea.core.meshes.Quad;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import com.destrostudios.icetea.core.water.WaterConfig;
+import com.destrostudios.icetea.core.water.WaterFactory;
+import org.joml.*;
+
+import java.lang.Math;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_FRONT_BIT;
 
 public class TestApplication extends Application {
 
     private Material materialCool;
+    private Geometry geometryWater;
     private Geometry geometryGround;
     private Geometry geometryDennis;
+    private Node nodeSkyWrapper;
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
     private Vector3f cameraMoveDirection = new Vector3f();
 
     @Override
     protected void initScene() {
-        camera.setLocation(new Vector3f(0, -5, 1.25f));
-        camera.setRotation(new Vector3f(-80, 0, 0));
+        camera.setLocation(new Vector3f(0, -5, 0.3f));
+        camera.setRotation(new Vector3f(-88, 0, 0));
 
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(1, 0, -0.25f).normalize());
@@ -34,7 +38,7 @@ public class TestApplication extends Application {
         setLight(directionalLight);
 
         SpotLight spotLight = new SpotLight();
-        spotLight.setTranslation(new Vector3f(-2, -2.5f, 3));
+        spotLight.setTranslation(new Vector3f(-2, -2.5f, 3.25f));
         spotLight.setRotation(new Vector3f(-60, 0, 0));
         spotLight.addAffectedSpatial(rootNode);
         spotLight.addShadows(2048);
@@ -51,6 +55,14 @@ public class TestApplication extends Application {
         materialCool.setFragmentShader(fragShaderCool);
         materialCool.setTransparent(true);
 
+        // Water
+
+        float waterSize = 100;
+        geometryWater = WaterFactory.createWater(new WaterConfig());
+        geometryWater.move(new Vector3f(waterSize / -2, waterSize / -2, 0));
+        geometryWater.scale(new Vector3f(waterSize, waterSize, 1));
+        rootNode.add(geometryWater);
+
         // Ground
 
         Quad meshGround = new Quad(10, 10);
@@ -63,8 +75,7 @@ public class TestApplication extends Application {
         geometryGround = new Geometry();
         geometryGround.setMesh(meshGround);
         geometryGround.setMaterial(materialGround);
-        geometryGround.move(new Vector3f(0, 0, -0.5f));
-        rootNode.add(geometryGround);
+        geometryGround.move(new Vector3f(0, 0, -0.25f));
 
         // Chalet
 
@@ -86,7 +97,7 @@ public class TestApplication extends Application {
         Geometry geometryChalet2 = new Geometry();
         geometryChalet2.setMesh(meshChalet);
         geometryChalet2.setMaterial(materialChalet);
-        geometryChalet2.move(new Vector3f(1.5f, 1, 0));
+        geometryChalet2.move(new Vector3f(1.5f, 1, 0.25f));
         geometryChalet2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         geometryChalet2.scale(new Vector3f(0.5f, 0.5f, 1));
         rootNode.add(geometryChalet2);
@@ -94,12 +105,12 @@ public class TestApplication extends Application {
         Geometry geometryChalet3 = new Geometry();
         geometryChalet3.setMesh(meshChalet);
         geometryChalet3.setMaterial(materialCool);
-        geometryChalet3.move(new Vector3f(-0.3f, 0.3f, 0));
+        geometryChalet3.move(new Vector3f(-0.3f, 0.3f, 0.25f));
         geometryChalet3.scale(new Vector3f(0.5f, 0.5f, 1));
 
         Node nodeChalet3 = new Node();
         nodeChalet3.add(geometryChalet3);
-        nodeChalet3.move(new Vector3f(-1.2f, 0.8f, 0));
+        nodeChalet3.move(new Vector3f(-1.2f, 0.8f, 0.25f));
         nodeChalet3.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-45), 0, 1, 0)));
         rootNode.add(nodeChalet3);
 
@@ -118,7 +129,7 @@ public class TestApplication extends Application {
         Geometry geometryTrees = new Geometry();
         geometryTrees.setMesh(meshTrees);
         geometryTrees.setMaterial(materialTrees);
-        geometryTrees.move(new Vector3f(0, -1, 0));
+        geometryTrees.move(new Vector3f(0, -1, 0.25f));
         geometryTrees.scale(new Vector3f(0.01f, 0.01f, 0.01f));
         rootNode.add(geometryTrees);
 
@@ -130,15 +141,13 @@ public class TestApplication extends Application {
         Material materialDennis = new Material();
         materialDennis.setVertexShader(vertexShaderDefault);
         materialDennis.setFragmentShader(fragShaderDefault);
-        Texture textureDennis = new FileTexture("textures/dennis.jpg");
-        textureDennis.init(this);
-        materialDennis.setTexture("diffuseMap", textureDennis);
+        materialDennis.setTexture("diffuseMap", new FileTexture("textures/dennis.jpg"));
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
         geometryDennis = new Geometry();
         geometryDennis.setMesh(meshDennis);
         geometryDennis.setMaterial(materialDennis);
-        geometryDennis.move(new Vector3f(0, -1, 0));
+        geometryDennis.move(new Vector3f(0, -1, 0.25f));
         geometryDennis.scale(new Vector3f(0.005f, 0.005f, 0.005f));
 
         // Duck
@@ -148,9 +157,34 @@ public class TestApplication extends Application {
 
         Node nodeDuckWrapper = new Node();
         nodeDuckWrapper.add(nodeDuck);
-        nodeDuckWrapper.move(new Vector3f(1, -1.5f, -0.5f));
+        nodeDuckWrapper.move(new Vector3f(1, -1.5f, -0.25f));
         nodeDuckWrapper.scale(new Vector3f(0.25f, 0.25f, 0.25f));
         rootNode.add(nodeDuckWrapper);
+
+        // Sky
+
+        Mesh meshSky = new Mesh();
+        meshSky.loadModel("models/dome.obj");
+        for (int i = 0; i< meshSky.getVertices().length; i++) {
+            VertexData vertex = meshSky.getVertices()[i];
+            Vector3f position = vertex.getVector3f("modelSpaceVertexPosition");
+            vertex.setVector2f("vertexTexCoord", new Vector2f((position.x() + 1) * 0.5f, (position.z() + 1) * 0.5f));
+        }
+
+        Material materialSky = new Material();
+        materialSky.setVertexShader(new Shader("shaders/atmosphere.vert"));
+        materialSky.setFragmentShader(new Shader("shaders/atmosphere.frag"));
+        materialSky.setCullMode(VK_CULL_MODE_FRONT_BIT);
+
+        Geometry geometrySky = new Geometry();
+        geometrySky.setMesh(meshSky);
+        geometrySky.setMaterial(materialSky);
+        geometrySky.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+
+        nodeSkyWrapper = new Node();
+        nodeSkyWrapper.add(geometrySky);
+        nodeSkyWrapper.scale(new Vector3f(0.5f * camera.getZFar(), 0.5f * camera.getZFar(), 0.5f * camera.getZFar()));
+        rootNode.add(nodeSkyWrapper);
 
         // Knot
 
@@ -167,7 +201,7 @@ public class TestApplication extends Application {
         Geometry geometryKnot = new Geometry();
         geometryKnot.setMesh(meshKnot);
         geometryKnot.setMaterial(materialKnot);
-        geometryKnot.move(new Vector3f(-1.5f, -0.2f, 0.5f));
+        geometryKnot.move(new Vector3f(-1.5f, -0.2f, 0.75f));
         geometryKnot.scale(new Vector3f(0.01f, 0.01f, 0.01f));
         rootNode.add(geometryKnot);
 
@@ -189,6 +223,24 @@ public class TestApplication extends Application {
                         addFilter(sepiaFilter);
                     } else if (keyEvent.getAction() == GLFW_RELEASE) {
                         removeFilter(sepiaFilter);
+                    }
+                    break;
+                case GLFW_KEY_3:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        if (geometryWater.getParent() == rootNode) {
+                            rootNode.remove(geometryWater);
+                        } else {
+                            rootNode.add(geometryWater);
+                        }
+                    }
+                    break;
+                case GLFW_KEY_4:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        if (geometryGround.getParent() == rootNode) {
+                            rootNode.remove(geometryGround);
+                        } else {
+                            rootNode.add(geometryGround);
+                        }
                     }
                     break;
             }
@@ -232,7 +284,7 @@ public class TestApplication extends Application {
             hasRemovedDennis = true;
         }
         for (Spatial spatial : rootNode.getChildren()) {
-            if (spatial != geometryGround) {
+            if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != nodeSkyWrapper)) {
                 spatial.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
             }
         }

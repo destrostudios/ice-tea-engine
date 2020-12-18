@@ -30,19 +30,36 @@ public abstract class MaterialDescriptor<LayoutType extends MaterialDescriptorLa
 
     public String getShaderDeclaration(int bindingIndex) {
         String text = "";
-        List<String> defines = getShaderDefines();
+        List<String> defines = getShaderDeclaration_Defines();
         for (String define : defines) {
             text += "#define " + define + " 1\n";
         }
-        text += "layout(binding = " + bindingIndex + ") uniform " + getShaderDeclarationType() + " " + name + ";";
+        text += "layout(binding = " + bindingIndex;
+        String layoutAddition = getShaderDeclaration_LayoutAddition();
+        if (layoutAddition != null) {
+            text += ", " + layoutAddition;
+        }
+        text += ") ";
+        for (String keyword : getShaderDeclaration_Keywords()) {
+            text += keyword + " ";
+        }
+        text += getShaderDeclaration_Type() + " " + name + ";";
         return text;
     }
 
-    public List<String> getShaderDefines() {
+    protected List<String> getShaderDeclaration_Defines() {
         LinkedList<String> defines = new LinkedList<>();
         defines.add(name.toUpperCase());
         return defines;
     }
 
-    protected abstract String getShaderDeclarationType();
+    protected String getShaderDeclaration_LayoutAddition() {
+        return null;
+    }
+
+    protected List<String> getShaderDeclaration_Keywords() {
+        return new LinkedList<>();
+    }
+
+    protected abstract String getShaderDeclaration_Type();
 }

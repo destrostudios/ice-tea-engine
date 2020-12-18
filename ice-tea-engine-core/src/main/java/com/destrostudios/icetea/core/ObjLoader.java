@@ -44,10 +44,14 @@ public class ObjLoader {
             } else {
                 model.setNormals(null);
             }
-            for (int i = 0; i < texCoords.capacity(); i += 2) {
-                float x = texCoords.get();
-                float y = (1 - texCoords.get()); // Flip
-                model.getTexCoords().add(new Vector2f(x, y));
+            if (texCoords.capacity() > 0) {
+                for (int i = 0; i < texCoords.capacity(); i += 2) {
+                    float x = texCoords.get();
+                    float y = (1 - texCoords.get()); // Flip
+                    model.getTexCoords().add(new Vector2f(x, y));
+                }
+            } else {
+                model.setTexCoords(null);
             }
             return model;
         } catch (IOException ex) {

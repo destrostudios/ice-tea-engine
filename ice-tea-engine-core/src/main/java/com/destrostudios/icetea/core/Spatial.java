@@ -4,23 +4,30 @@ import lombok.Getter;
 import lombok.Setter;
 import org.joml.*;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class Spatial {
 
+    protected Spatial() {
+        localTransform  = new Transform();
+        worldTransform = new Transform();
+        controls = new HashSet<>();
+    }
     protected Application application;
     @Getter
-    @Setter
     private Node parent;
     @Getter
-    protected Transform localTransform = new Transform();
+    protected Transform localTransform;
     @Getter
-    protected Transform worldTransform = new Transform();
+    protected Transform worldTransform;
     @Setter
     private boolean isWorldTransformOutdated;
+    private Set<Control> controls;
 
-    public boolean update(Application application) {
+    public boolean update(Application application, float tpf) {
         if (this.application == null) {
             this.application = application;
             init();
@@ -32,11 +39,25 @@ public class Spatial {
             updateWorldTransform();
             isWorldTransformOutdated = false;
         }
+        ensureControlsState();
+        for (Control control : controls) {
+            control.update(tpf);
+        }
         return false;
     }
 
     protected void init() {
         isWorldTransformOutdated = true;
+        ensureControlsState();
+    }
+
+    private void ensureControlsState() {
+        for (Control control : controls) {
+            if (!control.isInitialized()) {
+                control.init(application);
+            }
+            control.setSpatial(this);
+        }
     }
 
     protected void updateWorldTransform() {
@@ -93,5 +114,46 @@ public class Spatial {
             affectingLights.add(light);
         }
         return affectingLights;
+    }
+
+    public void addControl(Control control) {
+        controls.add(control);
+    }
+
+    public void removeControl(Control control) {
+        if (controls.remove(control)) {
+            if (isInScene()) {
+                control.onRemoveFromScene();
+            }
+            control.onRemove();
+        }
+    }
+
+    public void setParent(Node parent) {
+        if ((parent == null) && isInScene()) {
+            onRemoveFromScene();
+        }
+        this.parent = parent;
+    }
+
+    public boolean isInScene() {
+        return (application != null) && hasParent(application.getRootNode());
+    }
+
+    public boolean hasParent(Spatial spatial) {
+        Spatial currentSpatial = parent;
+        while (currentSpatial != null) {
+            if (currentSpatial == spatial) {
+                return true;
+            }
+            currentSpatial = currentSpatial.getParent();
+        }
+        return false;
+    }
+
+    private void onRemoveFromScene() {
+        for (Control control : controls) {
+            control.onRemoveFromScene();
+        }
     }
 }

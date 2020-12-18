@@ -4,6 +4,8 @@ import org.joml.Vector4f;
 
 import java.nio.ByteBuffer;
 
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_R32G32B32A32_SFLOAT;
+
 public class Vector4fUniformValue extends UniformValue<Vector4f> {
 
     @Override
@@ -19,5 +21,10 @@ public class Vector4fUniformValue extends UniformValue<Vector4f> {
     @Override
     public String getShaderDefinitionType() {
         return "vec4";
+    }
+
+    @Override
+    public int getFormat() {
+        return VK_FORMAT_R32G32B32A32_SFLOAT;
     }
 }

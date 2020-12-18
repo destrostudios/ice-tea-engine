@@ -3,7 +3,6 @@ package com.destrostudios.icetea.core;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector4f;
-import org.lwjgl.system.MemoryStack;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -42,14 +41,14 @@ public abstract class Light {
         if (this.application == null) {
             uniformData.setApplication(application);
             updateUniformDataFields();
-            uniformData.initBuffer();
+            uniformData.initBuffers(application.getSwapChain().getImages().size());
             this.application = application;
         }
     }
 
-    public void updateUniformBuffers(int currentImage, MemoryStack stack) {
+    public void updateUniformBuffers(int currentImage) {
         updateUniformDataFields();
-        uniformData.updateBufferIfNecessary(currentImage, stack);
+        uniformData.updateBufferIfNecessary(currentImage);
     }
 
     protected void updateUniformDataFields() {

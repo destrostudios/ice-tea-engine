@@ -6,7 +6,6 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackGet;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -32,7 +31,6 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
         initMultisampledDepthTexture();
         initResolvedDepthTexture();
         initFrameBuffers();
-        forEachGeometryRenderContext(GeometryRenderContext::createDescriptorDependencies);
     }
 
     @Override
@@ -271,18 +269,13 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    protected boolean isPresentingRenderJob() {
-        return application.getSwapChain().getRenderJobManager().getQueuePostScene().isEmpty();
-    }
-
-    @Override
-    public boolean requiresGeometryRenderContext() {
+    public boolean isRendering(Geometry geometry) {
         return true;
     }
 
     @Override
     public SceneGeometryRenderContext createGeometryRenderContext() {
-        return new SceneGeometryRenderContext();
+        return new SceneGeometryRenderContext(() -> application.getCamera());
     }
 
     @Override
@@ -297,14 +290,22 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     public void render(VkCommandBuffer commandBuffer, int commandBufferIndex, MemoryStack stack) {
         application.getRootNode().forEachGeometry(geometry -> {
             GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
-            RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getGraphicsPipeline());
-            LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
-            LongBuffer offsets = stack.longs(0);
-            vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
-            vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+            if (geometryRenderContext != null) {
+                RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
+                LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
+                LongBuffer offsets = stack.longs(0);
+                vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                if (geometry.getMesh().getIndexBuffer() != null) {
+                    vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                }
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
+                if (geometry.getMesh().getIndices() != null) {
+                    vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+                } else {
+                    vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
+                }
+            }
         });
     }
 
@@ -314,17 +315,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             multisampledColorTexture.cleanup();
             multisampledDepthTexture.cleanup();
             resolvedDepthTexture.cleanup();
-            forEachGeometryRenderContext(GeometryRenderContext::cleanupDescriptorDependencies);
         }
         super.cleanup();
-    }
-
-    private void forEachGeometryRenderContext(Consumer<GeometryRenderContext<?>> renderContextConsumer) {
-        application.getRootNode().forEachGeometry(geometry -> {
-            GeometryRenderContext<?> renderContext = geometry.getRenderContext(this);
-            if (renderContext != null) {
-                renderContextConsumer.accept(renderContext);
-            }
-        });
     }
 }

@@ -158,11 +158,11 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
         return (this == application.getSwapChain().getRenderJobManager().getPresentingRenderJob());
     }
 
-    public void updateUniformBuffers(int currentImage, MemoryStack stack) {
+    public void updateUniformBuffers(int currentImage) {
 
     }
 
-    public abstract boolean requiresGeometryRenderContext();
+    public abstract boolean isRendering(Geometry geometry);
 
     public abstract GRC createGeometryRenderContext();
 
@@ -179,6 +179,12 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
 
     public void cleanup() {
         if (isInitialized()) {
+            application.getRootNode().forEachGeometry(geometry -> {
+                GeometryRenderContext<?> renderContext = geometry.getRenderContext(this);
+                if (renderContext != null) {
+                    renderContext.cleanupDescriptorDependencies();
+                }
+            });
             if (resolvedColorTexture != null) {
                 resolvedColorTexture.cleanup();
                 resolvedColorTexture = null;

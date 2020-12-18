@@ -96,21 +96,21 @@ public class GltfModelLoader {
         LinkedList<Object> positionList = readValues(meshPrimitiveModel.getAttributes().get("POSITION"));
         LinkedList<Object> texCoordList = readValues(meshPrimitiveModel.getAttributes().get("TEXCOORD_0"));
         LinkedList<Object> normalList = readValues(meshPrimitiveModel.getAttributes().get("NORMAL"));
-        Vertex[] vertices = new Vertex[positionList.size()];
+        VertexData[] vertices = new VertexData[positionList.size()];
         for (int i = 0; i < vertices.length; i++) {
             float[] positionArray = (float[]) positionList.get(i);
             float[] texCoordArray = (float[]) texCoordList.get(i);
             float[] normalArray = (float[]) normalList.get(i);
 
-            Vector3fc position = new Vector3f(positionArray[0], positionArray[1], positionArray[2]);
-            Vector2fc texCoord = new Vector2f(texCoordArray[0], texCoordArray[1]);
-            Vector3fc normal = new Vector3f(normalArray[0], normalArray[1], normalArray[2]);
+            Vector3f position = new Vector3f(positionArray[0], positionArray[1], positionArray[2]);
+            Vector2f texCoord = new Vector2f(texCoordArray[0], texCoordArray[1]);
+            Vector3f normal = new Vector3f(normalArray[0], normalArray[1], normalArray[2]);
 
-            Vertex vertex = new Vertex();
-            vertex.setPosition(position);
-            vertex.setColor(new Vector3f(1, 1, 1));
-            vertex.setTexCoords(texCoord);
-            vertex.setNormal(normal);
+            VertexData vertex = new VertexData();
+            vertex.setVector3f("modelSpaceVertexPosition", position);
+            vertex.setVector3f("vertexColor", new Vector3f(1, 1, 1));
+            vertex.setVector2f("vertexTexCoord", texCoord);
+            vertex.setVector3f("vertexNormal", normal);
             vertices[i] = vertex;
         }
         mesh.setVertices(vertices);

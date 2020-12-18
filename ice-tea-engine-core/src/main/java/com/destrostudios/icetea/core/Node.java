@@ -16,10 +16,10 @@ public class Node extends Spatial {
     private boolean modified;
 
     @Override
-    public boolean update(Application application) {
-        boolean commandBufferOutdated = super.update(application);
+    public boolean update(Application application, float tpf) {
+        boolean commandBufferOutdated = super.update(application, tpf);
         for (Spatial child : children) {
-            if (child.update(application)) {
+            if (child.update(application, tpf)) {
                 commandBufferOutdated = true;
             }
         }

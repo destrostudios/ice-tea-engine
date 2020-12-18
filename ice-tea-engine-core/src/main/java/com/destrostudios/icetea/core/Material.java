@@ -4,12 +4,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.HashMap;
+import java.util.function.Supplier;
+
+import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
 
 public class Material {
 
     public Material() {
-        textures = new HashMap<>();
         parameters = new UniformData();
+        textureSuppliers = new HashMap<>();
     }
     private Application application;
     @Getter
@@ -18,14 +21,29 @@ public class Material {
     @Getter
     @Setter
     private Shader fragmentShader;
+    @Setter
+    @Getter
+    private int tesselationPatchSize;
+    @Getter
+    @Setter
+    private Shader tesselationControlShader;
+    @Getter
+    @Setter
+    private Shader tesselationEvaluationShader;
+    @Getter
+    @Setter
+    private Shader geometryShader;
     @Getter
     private UniformData parameters;
     @Getter
-    private HashMap<String, Texture> textures;
+    private HashMap<String, Supplier<Texture>> textureSuppliers;
     private int usingGeometriesCount;
     @Setter
     @Getter
     private boolean transparent;
+    @Setter
+    @Getter
+    private int cullMode = VK_CULL_MODE_BACK_BIT;
 
     public boolean isInitialized() {
         return (application != null);
@@ -33,7 +51,8 @@ public class Material {
 
     public void init(Application application) {
         this.application = application;
-        for (Texture texture : textures.values()) {
+        for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
+            Texture texture = textureSupplier.get();
             if (!texture.isInitialized()) {
                 texture.init(application);
             }
@@ -41,7 +60,11 @@ public class Material {
     }
 
     public void setTexture(String name, Texture texture) {
-        textures.put(name, texture);
+        setTexture(name, () -> texture);
+    }
+
+    public void setTexture(String name, Supplier<Texture> textureSupplier) {
+        textureSuppliers.put(name, textureSupplier);
     }
 
     public void increaseUsingGeometriesCount() {
@@ -58,8 +81,12 @@ public class Material {
 
     public void cleanup() {
         parameters.cleanupBuffer();
-        for (Texture texture : textures.values()) {
-            texture.cleanup();
+        for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
+            Texture texture = textureSupplier.get();
+            // Can already be cleanuped by the provider (e.g. the responsible render job)
+            if (texture != null) {
+                texture.cleanup();
+            }
         }
     }
 }

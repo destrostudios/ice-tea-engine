@@ -1,5 +1,4 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec3 modelSpaceVertexPosition;
 layout(location = 2) in vec2 modelSpaceVertexTexCoord;
@@ -10,7 +9,12 @@ layout(location = 1) out LightVertexInfo lightVertexInfo;
 layout(location = 4) out vec4 shadowMapPosition;
 
 void main() {
-    gl_Position = camera.proj * camera.view * geometry.model * vec4(modelSpaceVertexPosition, 1);
+    vec4 worldPosition = geometry.model * vec4(modelSpaceVertexPosition, 1);
+    gl_Position = camera.proj * camera.view * worldPosition;
+
+    if (camera.clipPlane.length() > 0) {
+        gl_ClipDistance[0] = dot(worldPosition, camera.clipPlane);
+    }
 
     vertexTexCoord = modelSpaceVertexTexCoord;
 

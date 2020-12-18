@@ -70,7 +70,6 @@ public abstract class Application {
     private long commandPool;
     @Getter
     private SwapChain swapChain;
-    private boolean renderJobsOutdated;
     private boolean commandBuffersOutdated;
     private GLFWKeyCallback glfwKeyCallback;
     private List<KeyListener> keyListeners;
@@ -195,6 +194,10 @@ public abstract class Application {
             VkPhysicalDeviceFeatures enabledDeviceFeatures = VkPhysicalDeviceFeatures.callocStack(stack);
             enabledDeviceFeatures.samplerAnisotropy(true);
             enabledDeviceFeatures.sampleRateShading(true);
+            enabledDeviceFeatures.tessellationShader(true);
+            enabledDeviceFeatures.geometryShader(true);
+            enabledDeviceFeatures.shaderClipDistance(true);
+            enabledDeviceFeatures.fillModeNonSolid(true);
             deviceCreateInfo.pEnabledFeatures(enabledDeviceFeatures);
 
             PointerBuffer pDevice = stack.pointers(VK_NULL_HANDLE);
@@ -307,14 +310,14 @@ public abstract class Application {
     public void addFilter(Filter filter) {
         filters.add(filter);
         swapChain.getRenderJobManager().getQueuePostScene().add(filter.getFilterRenderJob());
-        renderJobsOutdated = true;
+        recreateRenderJobs();
     }
 
     public void removeFilter(Filter filter) {
         filter.cleanup();
         filters.remove(filter);
         swapChain.getRenderJobManager().getQueuePostScene().remove(filter.getFilterRenderJob());
-        renderJobsOutdated = true;
+        recreateRenderJobs();
     }
 
     private void mainLoop() {
@@ -331,12 +334,7 @@ public abstract class Application {
         update(tpf);
         camera.update();
         updateLights();
-        if (renderJobsOutdated) {
-            swapChain.recreateRenderJobs();
-            renderJobsOutdated = false;
-            commandBuffersOutdated = true;
-        }
-        commandBuffersOutdated |= rootNode.update(this);
+        commandBuffersOutdated |= rootNode.update(this, tpf);
         if (commandBuffersOutdated) {
             swapChain.recreateCommandBuffers();
             commandBuffersOutdated = false;
@@ -357,10 +355,15 @@ public abstract class Application {
             light.update(this);
             if (light.isModified()) {
                 swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
+                recreateRenderJobs();
                 light.setModified(false);
-                renderJobsOutdated = true;
             }
         }
+    }
+
+    public void recreateRenderJobs() {
+        swapChain.recreateRenderJobs();
+        commandBuffersOutdated = true;
     }
 
     private void drawFrame() {
@@ -425,14 +428,12 @@ public abstract class Application {
     }
 
     private void updateUniformBuffers(int currentImage) {
-        try (MemoryStack stack = stackPush()) {
-            swapChain.getRenderJobManager().forEachRenderJob(renderJob -> renderJob.updateUniformBuffers(currentImage, stack));
-            camera.getTransformUniformData().updateBufferIfNecessary(currentImage, stack);
-            if (light != null) {
-                light.updateUniformBuffers(currentImage, stack);
-            }
-            rootNode.forEachGeometry(geometry -> geometry.updateUniformBuffers(currentImage, stack));
+        swapChain.getRenderJobManager().forEachRenderJob(renderJob -> renderJob.updateUniformBuffers(currentImage));
+        camera.getTransformUniformData().updateBufferIfNecessary(currentImage);
+        if (light != null) {
+            light.updateUniformBuffers(currentImage);
         }
+        rootNode.forEachGeometry(geometry -> geometry.updateUniformBuffers(currentImage));
     }
 
     private void cleanup() {

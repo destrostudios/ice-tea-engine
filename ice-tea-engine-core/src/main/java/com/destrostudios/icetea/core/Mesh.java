@@ -3,11 +3,11 @@ package com.destrostudios.icetea.core;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,8 +23,10 @@ public class Mesh {
 
     private Application application;
     @Getter
+    protected int topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    @Getter
     @Setter
-    protected Vertex[] vertices;
+    protected VertexData[] vertices;
     @Getter
     @Setter
     protected int[] indices;
@@ -43,14 +45,18 @@ public class Mesh {
         Model model = ObjLoader.loadModel(inputStream);
 
         int vertexCount = model.getPositions().size();
-        vertices = new Vertex[vertexCount];
-        Vector3fc color = new Vector3f(1, 1, 1);
+        vertices = new VertexData[vertexCount];
+        Vector3f color = new Vector3f(1, 1, 1);
         for (int i = 0; i < vertexCount; i++) {
-            Vertex vertex = new Vertex();
-            vertex.setPosition(model.getPositions().get(i));
-            vertex.setColor(color);
-            vertex.setTexCoords(model.getTexCoords().get(i));
-            vertex.setNormal((model.getNormals() != null) ? model.getNormals().get(i) : new Vector3f());
+            VertexData vertex = new VertexData();
+            vertex.setVector3f("modelSpaceVertexPosition", model.getPositions().get(i));
+            vertex.setVector3f("vertexColor", color);
+            if (model.getTexCoords() != null) {
+                vertex.setVector2f("vertexTexCoord", model.getTexCoords().get(i));
+            }
+            if (model.getNormals() != null) {
+                vertex.setVector3f("vertexNormal", model.getNormals().get(i));
+            }
             vertices[i] = vertex;
         }
 
@@ -61,27 +67,27 @@ public class Mesh {
     }
 
     public void generateNormals() {
-        HashMap<Vertex, List<Vector3f>> triangleNormals = new HashMap<>();
+        HashMap<VertexData, List<Vector3f>> triangleNormals = new HashMap<>();
         for (int i = 0; i < indices.length; i += 3) {
-            Vertex v1 = vertices[indices[i]];
-            Vertex v2 = vertices[indices[i + 1]];
-            Vertex v3 = vertices[indices[i + 2]];
+            VertexData v1 = vertices[indices[i]];
+            VertexData v2 = vertices[indices[i + 1]];
+            VertexData v3 = vertices[indices[i + 2]];
 
-            Vector3f edge1 = v2.getPosition().sub(v1.getPosition(), new Vector3f());
-            Vector3f edge2 = v3.getPosition().sub(v1.getPosition(), new Vector3f());
+            Vector3f edge1 = v2.getVector3f("modelSpaceVertexPosition").sub(v1.getVector3f("modelSpaceVertexPosition"), new Vector3f());
+            Vector3f edge2 = v3.getVector3f("modelSpaceVertexPosition").sub(v1.getVector3f("modelSpaceVertexPosition"), new Vector3f());
             Vector3f triangleNormal = edge1.cross(edge2, new Vector3f()).normalize();
 
             triangleNormals.computeIfAbsent(v1, v -> new LinkedList<>()).add(triangleNormal);
             triangleNormals.computeIfAbsent(v2, v -> new LinkedList<>()).add(triangleNormal);
             triangleNormals.computeIfAbsent(v3, v -> new LinkedList<>()).add(triangleNormal);
         }
-        for (Map.Entry<Vertex, List<Vector3f>> entry : triangleNormals.entrySet()) {
+        for (Map.Entry<VertexData, List<Vector3f>> entry : triangleNormals.entrySet()) {
             Vector3f normal = new Vector3f();
             for (Vector3f triangleNormal : entry.getValue()) {
                 normal.add(triangleNormal);
             }
             normal.normalize();
-            entry.getKey().setNormal(normal);
+            entry.getKey().setVector3f("vertexNormal", normal);
         }
     }
 
@@ -99,16 +105,19 @@ public class Mesh {
         cleanupVertexBuffer();
 
         try (MemoryStack stack = stackPush()) {
-            long bufferSize = VertexDescriptions.SIZEOF * vertices.length;
+            long bufferSize = 0;
+            for (VertexData vertex : vertices) {
+                bufferSize += vertex.getSize();
+            }
 
             LongBuffer pBuffer = stack.mallocLong(1);
             LongBuffer pBufferMemory = stack.mallocLong(1);
             application.getBufferManager().createBuffer(
-                    bufferSize,
-                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    pBuffer,
-                    pBufferMemory
+                bufferSize,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                pBuffer,
+                pBufferMemory
             );
 
             long stagingBuffer = pBuffer.get(0);
@@ -117,15 +126,22 @@ public class Mesh {
             PointerBuffer data = stack.mallocPointer(1);
 
             vkMapMemory(application.getLogicalDevice(), stagingBufferMemory, 0, bufferSize, 0, data);
-            BufferUtil.memcpy(data.getByteBuffer(0, (int) bufferSize), vertices);
+            ByteBuffer byteBuffer = data.getByteBuffer(0, (int) bufferSize);
+            int index = 0;
+            for (VertexData vertex : vertices) {
+                for (UniformValue<?> uniformValue : vertex.getFields().values()) {
+                    uniformValue.write(byteBuffer, index);
+                    index += uniformValue.getSize();
+                }
+            }
             vkUnmapMemory(application.getLogicalDevice(), stagingBufferMemory);
 
             application.getBufferManager().createBuffer(
-                    bufferSize,
-                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                    VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
-                    pBuffer,
-                    pBufferMemory
+                bufferSize,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
+                pBuffer,
+                pBufferMemory
             );
 
             vertexBuffer = pBuffer.get(0);
@@ -151,41 +167,43 @@ public class Mesh {
     private void recreateIndexBuffer() {
         cleanupIndexBuffer();
 
-        try (MemoryStack stack = stackPush()) {
-            long bufferSize = Integer.BYTES * indices.length;
-            LongBuffer pBuffer = stack.mallocLong(1);
-            LongBuffer pBufferMemory = stack.mallocLong(1);
-            application.getBufferManager().createBuffer(
-                    bufferSize,
-                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    pBuffer,
-                    pBufferMemory
-            );
+        if (indices != null) {
+            try (MemoryStack stack = stackPush()) {
+                long bufferSize = Integer.BYTES * indices.length;
+                LongBuffer pBuffer = stack.mallocLong(1);
+                LongBuffer pBufferMemory = stack.mallocLong(1);
+                application.getBufferManager().createBuffer(
+                        bufferSize,
+                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        pBuffer,
+                        pBufferMemory
+                );
 
-            long stagingBuffer = pBuffer.get(0);
-            long stagingBufferMemory = pBufferMemory.get(0);
+                long stagingBuffer = pBuffer.get(0);
+                long stagingBufferMemory = pBufferMemory.get(0);
 
-            PointerBuffer data = stack.mallocPointer(1);
+                PointerBuffer data = stack.mallocPointer(1);
 
-            vkMapMemory(application.getLogicalDevice(), stagingBufferMemory, 0, bufferSize, 0, data);
-            BufferUtil.memcpy(data.getByteBuffer(0, (int) bufferSize), indices);
-            vkUnmapMemory(application.getLogicalDevice(), stagingBufferMemory);
+                vkMapMemory(application.getLogicalDevice(), stagingBufferMemory, 0, bufferSize, 0, data);
+                BufferUtil.memcpy(data.getByteBuffer(0, (int) bufferSize), indices);
+                vkUnmapMemory(application.getLogicalDevice(), stagingBufferMemory);
 
-            application.getBufferManager().createBuffer(
-                    bufferSize,
-                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                    VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
-                    pBuffer,
-                    pBufferMemory
-            );
+                application.getBufferManager().createBuffer(
+                        bufferSize,
+                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                        VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
+                        pBuffer,
+                        pBufferMemory
+                );
 
-            indexBuffer = pBuffer.get(0);
-            indexBufferMemory = pBufferMemory.get(0);
+                indexBuffer = pBuffer.get(0);
+                indexBufferMemory = pBufferMemory.get(0);
 
-            application.getBufferManager().copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-            vkDestroyBuffer(application.getLogicalDevice(), stagingBuffer, null);
-            vkFreeMemory(application.getLogicalDevice(), stagingBufferMemory, null);
+                application.getBufferManager().copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+                vkDestroyBuffer(application.getLogicalDevice(), stagingBuffer, null);
+                vkFreeMemory(application.getLogicalDevice(), stagingBufferMemory, null);
+            }
         }
     }
 

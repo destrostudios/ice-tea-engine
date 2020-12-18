@@ -34,7 +34,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     private MaterialDescriptorSetLayout materialDescriptorSetLayout;
     @Getter
     private UniformData lightTransformUniformData;
-    private ShadowMapRenderPipeline renderPipeline;
 
     @Override
     public void init(Application application) {
@@ -47,8 +46,8 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public void updateUniformBuffers(int currentImage, MemoryStack stack) {
-        super.updateUniformBuffers(currentImage, stack);
+    public void updateUniformBuffers(int currentImage) {
+        super.updateUniformBuffers(currentImage);
         Matrix4f projectionMatrix = new Matrix4f();
         Matrix4f viewMatrix = new Matrix4f();
         if (light instanceof DirectionalLight) {
@@ -66,7 +65,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         }
         lightTransformUniformData.setMatrix4f("proj", projectionMatrix);
         lightTransformUniformData.setMatrix4f("view", viewMatrix);
-        lightTransformUniformData.updateBufferIfNecessary(currentImage, stack);
+        lightTransformUniformData.updateBufferIfNecessary(currentImage);
     }
 
     @Override
@@ -204,25 +203,17 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         lightTransformUniformData.setApplication(application);
         lightTransformUniformData.setMatrix4f("proj", new Matrix4f());
         lightTransformUniformData.setMatrix4f("view", new Matrix4f());
-        lightTransformUniformData.initBuffer();
+        lightTransformUniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 
     @Override
-    public boolean requiresGeometryRenderContext() {
+    public boolean isRendering(Geometry geoemetry) {
         return true;
     }
 
     @Override
     public ShadowMapGeometryRenderContext createGeometryRenderContext() {
         return new ShadowMapGeometryRenderContext();
-    }
-
-    public ShadowMapRenderPipeline getOrCreateRenderPipeline(MaterialDescriptorSet referenceMaterialDescriptorSet) {
-        if (renderPipeline == null) {
-            renderPipeline = new ShadowMapRenderPipeline(application, this, referenceMaterialDescriptorSet);
-            renderPipeline.init();
-        }
-        return renderPipeline;
     }
 
     @Override
@@ -237,13 +228,19 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         application.getRootNode().forEachGeometry(geometry -> {
             GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
             RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getGraphicsPipeline());
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
             LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
             LongBuffer offsets = stack.longs(0);
             vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            if (geometry.getMesh().getIndexBuffer() != null) {
+                vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            }
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
-            vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+            if (geometry.getMesh().getIndices() != null) {
+                vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+            } else {
+                vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
+            }
         });
     }
 

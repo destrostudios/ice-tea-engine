@@ -11,17 +11,21 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> {
 
-    public ShadowMapRenderPipeline(Application application, ShadowMapRenderJob renderJob, MaterialDescriptorSet referenceMaterialDescriptorSet) {
+    public ShadowMapRenderPipeline(Application application, ShadowMapRenderJob renderJob, Geometry geometry, ShadowMapGeometryRenderContext shadowMapGeometryRenderContext) {
         super(application, renderJob);
-        this.referenceMaterialDescriptorSet = referenceMaterialDescriptorSet;
+        this.geometry = geometry;
+        this.shadowMapGeometryRenderContext = shadowMapGeometryRenderContext;
     }
-    private MaterialDescriptorSet referenceMaterialDescriptorSet;
+    private Geometry geometry;
+    private ShadowMapGeometryRenderContext shadowMapGeometryRenderContext;
 
     @Override
     public void init() {
         try (MemoryStack stack = stackPush()) {
+            Mesh mesh = geometry.getMesh();
+
             Shader vertexShader = new Shader("shaders/shadow.vert");
-            SPIRV vertShaderSPIRV = vertexShader.compile(ShaderType.VERTEX_SHADER, referenceMaterialDescriptorSet);
+            SPIRV vertShaderSPIRV = vertexShader.compile(ShaderType.VERTEX_SHADER, shadowMapGeometryRenderContext.getMaterialDescriptorSet());
 
             long vertShaderModule = createShaderModule(application, vertShaderSPIRV.bytecode());
 
@@ -38,14 +42,14 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.callocStack(stack);
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-            vertexInputInfo.pVertexBindingDescriptions(VertexDescriptions.getBindingDescription());
-            vertexInputInfo.pVertexAttributeDescriptions(VertexDescriptions.getAttributeDescriptions_PositionOnly());
+            vertexInputInfo.pVertexBindingDescriptions(getBindingDescriptions(mesh));
+            vertexInputInfo.pVertexAttributeDescriptions(getAttributeDescriptions(mesh));
 
             // ===> ASSEMBLY STAGE <===
 
             VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(stack);
             inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
-            inputAssembly.topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+            inputAssembly.topology(mesh.getTopology());
             inputAssembly.primitiveRestartEnable(false);
 
             // ===> VIEWPORT & SCISSOR
@@ -130,7 +134,7 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             if (vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create graphics pipeline");
             }
-            graphicsPipeline = pGraphicsPipeline.get(0);
+            pipeline = pGraphicsPipeline.get(0);
 
             // ===> RELEASE RESOURCES <===
 

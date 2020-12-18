@@ -2,6 +2,8 @@ package com.destrostudios.icetea.core;
 
 import java.nio.ByteBuffer;
 
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_R32_SFLOAT;
+
 public class FloatUniformValue extends UniformValue<Float> {
 
     @Override
@@ -17,5 +19,10 @@ public class FloatUniformValue extends UniformValue<Float> {
     @Override
     public String getShaderDefinitionType() {
         return "float";
+    }
+
+    @Override
+    public int getFormat() {
+        return VK_FORMAT_R32_SFLOAT;
     }
 }

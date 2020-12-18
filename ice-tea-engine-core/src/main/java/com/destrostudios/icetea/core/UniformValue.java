@@ -11,10 +11,16 @@ public abstract class UniformValue<T> {
     @Setter
     protected T value;
 
+    public int getAlignedSize() {
+        return getSize();
+    }
+
     public abstract int getSize();
 
     public abstract void write(ByteBuffer buffer, int offset);
 
     public abstract String getShaderDefinitionType();
+
+    public abstract int getFormat();
 
 }

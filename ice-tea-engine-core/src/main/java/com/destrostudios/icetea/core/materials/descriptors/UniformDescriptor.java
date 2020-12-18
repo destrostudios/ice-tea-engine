@@ -32,12 +32,12 @@ public class UniformDescriptor<LayoutType extends UniformDescriptorLayout> exten
     @Override
     public void updateReferenceDescriptorWrite(VkWriteDescriptorSet descriptorSet, int currentImage) {
         VkDescriptorBufferInfo.Buffer descriptorBufferInfo = descriptorSet.pBufferInfo();
-        descriptorBufferInfo.buffer(uniformData.getUniformBuffers().get(currentImage));
+        descriptorBufferInfo.buffer(uniformData.getBuffers().get(currentImage));
     }
 
     @Override
-    protected String getShaderDeclarationType() {
-        String type = name.toUpperCase() + "_TYPE {\n";
+    protected String getShaderDeclaration_Type() {
+        String type = "uniform " + name.toUpperCase() + "_TYPE {\n";
         for (Map.Entry<String, UniformValue<?>> field : uniformData.getFields().entrySet()) {
             type += "    " + field.getValue().getShaderDefinitionType() + " " + field.getKey() + ";\n";
         }
@@ -46,8 +46,8 @@ public class UniformDescriptor<LayoutType extends UniformDescriptorLayout> exten
     }
 
     @Override
-    public List<String> getShaderDefines() {
-        List<String> defines = super.getShaderDefines();
+    protected List<String> getShaderDeclaration_Defines() {
+        List<String> defines = super.getShaderDeclaration_Defines();
         for (String fieldName : uniformData.getFields().keySet()) {
             defines.add(name.toUpperCase() + "_" + fieldName.toUpperCase());
         }
