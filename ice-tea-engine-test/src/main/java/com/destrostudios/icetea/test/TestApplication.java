@@ -17,6 +17,10 @@ import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_FRONT_BIT;
 
 public class TestApplication extends Application {
 
+    public static void main(String[] args) {
+        new TestApplication().start();
+    }
+
     private Material materialCool;
     private Geometry geometryWater;
     private Geometry geometryGround;
@@ -154,6 +158,7 @@ public class TestApplication extends Application {
 
         Node nodeDuck = new GltfModelLoader("models/duck.gltf").load();
         nodeDuck.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
+        nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1)));
 
         Node nodeDuckWrapper = new Node();
         nodeDuckWrapper.add(nodeDuck);
