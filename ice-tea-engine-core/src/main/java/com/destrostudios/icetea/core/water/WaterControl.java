@@ -90,7 +90,7 @@ public class WaterControl extends Control {
         material.setTexture("normalMap", normalMapComputeJob.getNormalMapTexture());
         material.getParameters().setFloat("capillarStrength", waterConfig.getCapillarStrength());
         material.getParameters().setFloat("capillarDownsampling", waterConfig.getCapillarDownsampling());
-        material.setTexture("dudvMap", new FileTexture("textures/dudv1.jpg"));
+        material.setTexture("dudvMap", new FileTexture(waterConfig.getDudvMapFilePath()));
         material.getParameters().setFloat("dudvDownsampling", waterConfig.getDudvDownsampling());
         material.setTexture("reflectionMap", () -> reflectionRenderJob.getResolvedColorTexture());
         material.setTexture("refractionMap", () -> refractionRenderJob.getResolvedColorTexture());

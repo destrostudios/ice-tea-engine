@@ -33,6 +33,7 @@ public class WaterConfig {
 	private float highDetailRangeTexture = 10;
 	private float capillarDownsampling = 9;
 	private float capillarStrength = 2.5f;
+	private String dudvMapFilePath = "textures/dudv1.jpg";
 	private float dudvDownsampling = 1;
 	private float kReflection = 0.008f;
 	private float kRefraction = 0.008f;
