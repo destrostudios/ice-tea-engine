@@ -27,7 +27,7 @@ public class NormalMapComputeActionGroup extends ComputeActionGroup {
 
     @Override
     public Shader getComputeShader() {
-        return new Shader("shaders/normals.comp");
+        return new Shader("shaders/water/normals.comp");
     }
 
     @Override

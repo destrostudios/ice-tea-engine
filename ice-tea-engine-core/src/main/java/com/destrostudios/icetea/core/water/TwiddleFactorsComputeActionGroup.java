@@ -27,7 +27,7 @@ public class TwiddleFactorsComputeActionGroup extends ComputeActionGroup {
 
     @Override
     public Shader getComputeShader() {
-        return new Shader("shaders/twiddleFactors.comp");
+        return new Shader("shaders/water/twiddleFactors.comp");
     }
 
     @Override
