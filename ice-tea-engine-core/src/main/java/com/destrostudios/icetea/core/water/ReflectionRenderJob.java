@@ -1,6 +1,10 @@
 package com.destrostudios.icetea.core.water;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
+import com.destrostudios.icetea.core.render.scene.SceneRenderJob;
+import com.destrostudios.icetea.core.scene.Camera;
+import com.destrostudios.icetea.core.scene.Geometry;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 

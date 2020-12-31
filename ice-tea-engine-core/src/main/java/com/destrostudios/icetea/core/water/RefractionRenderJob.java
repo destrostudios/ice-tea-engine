@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.core.water;
 
-import com.destrostudios.icetea.core.Geometry;
-import com.destrostudios.icetea.core.SceneRenderJob;
+import com.destrostudios.icetea.core.scene.Geometry;
+import com.destrostudios.icetea.core.render.scene.SceneRenderJob;
 
 public class RefractionRenderJob extends SceneRenderJob {
 

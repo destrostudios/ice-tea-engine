@@ -1,6 +1,11 @@
 package com.destrostudios.icetea.core.water;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.material.Material;
+import com.destrostudios.icetea.core.render.RenderJob;
+import com.destrostudios.icetea.core.scene.Control;
+import com.destrostudios.icetea.core.scene.Geometry;
+import com.destrostudios.icetea.core.shader.Shader;
 
 import java.util.LinkedList;
 

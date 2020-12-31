@@ -1,13 +1,15 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
-import com.destrostudios.icetea.core.filters.RadialBlurFilter;
-import com.destrostudios.icetea.core.filters.SepiaFilter;
-import com.destrostudios.icetea.core.lights.DirectionalLight;
-import com.destrostudios.icetea.core.lights.SpotLight;
-import com.destrostudios.icetea.core.meshes.Quad;
-import com.destrostudios.icetea.core.water.WaterConfig;
-import com.destrostudios.icetea.core.water.WaterFactory;
+import com.destrostudios.icetea.core.data.VertexData;
+import com.destrostudios.icetea.core.filter.*;
+import com.destrostudios.icetea.core.light.*;
+import com.destrostudios.icetea.core.material.Material;
+import com.destrostudios.icetea.core.mesh.*;
+import com.destrostudios.icetea.core.model.GltfModelLoader;
+import com.destrostudios.icetea.core.scene.*;
+import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.water.*;
 import org.joml.*;
 
 import java.lang.Math;
@@ -84,7 +86,7 @@ public class TestApplication extends Application {
         // Chalet
 
         Mesh meshChalet = new Mesh();
-        meshChalet.loadModel("models/chalet.obj");
+        meshChalet.loadObjModel("models/chalet.obj");
         meshChalet.generateNormals();
 
         Material materialChalet = new Material();
@@ -121,7 +123,7 @@ public class TestApplication extends Application {
         // Trees
 
         Mesh meshTrees = new Mesh();
-        meshTrees.loadModel("models/trees.obj");
+        meshTrees.loadObjModel("models/trees.obj");
 
         Material materialTrees = new Material();
         materialTrees.setVertexShader(vertexShaderDefault);
@@ -140,7 +142,7 @@ public class TestApplication extends Application {
         // Dennis
 
         Mesh meshDennis = new Mesh();
-        meshDennis.loadModel("models/dennis.obj");
+        meshDennis.loadObjModel("models/dennis.obj");
 
         Material materialDennis = new Material();
         materialDennis.setVertexShader(vertexShaderDefault);
@@ -169,7 +171,7 @@ public class TestApplication extends Application {
         // Sky
 
         Mesh meshSky = new Mesh();
-        meshSky.loadModel("models/dome.obj");
+        meshSky.loadObjModel("models/dome.obj");
         for (int i = 0; i< meshSky.getVertices().length; i++) {
             VertexData vertex = meshSky.getVertices()[i];
             Vector3f position = vertex.getVector3f("modelSpaceVertexPosition");
@@ -194,7 +196,7 @@ public class TestApplication extends Application {
         // Knot
 
         Mesh meshKnot = new Mesh();
-        meshKnot.loadModel("models/knot.obj");
+        meshKnot.loadObjModel("models/knot.obj");
 
         Material materialKnot = new Material();
         materialKnot.setVertexShader(vertexShaderDefault);

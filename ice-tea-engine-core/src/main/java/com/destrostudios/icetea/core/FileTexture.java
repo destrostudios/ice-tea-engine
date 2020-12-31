@@ -1,5 +1,7 @@
 package com.destrostudios.icetea.core;
 
+import com.destrostudios.icetea.core.util.BufferUtil;
+import com.destrostudios.icetea.core.util.MathUtil;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;

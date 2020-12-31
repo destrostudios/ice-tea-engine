@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.core.water;
 
-import com.destrostudios.icetea.core.Geometry;
-import com.destrostudios.icetea.core.meshes.Grid;
+import com.destrostudios.icetea.core.scene.Geometry;
+import com.destrostudios.icetea.core.mesh.Grid;
 
 public class WaterFactory {
 

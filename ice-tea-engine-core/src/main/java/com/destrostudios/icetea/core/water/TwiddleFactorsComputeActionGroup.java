@@ -1,11 +1,11 @@
 package com.destrostudios.icetea.core.water;
 
-import com.destrostudios.icetea.core.ComputeActionGroup;
-import com.destrostudios.icetea.core.MathUtil;
-import com.destrostudios.icetea.core.Shader;
-import com.destrostudios.icetea.core.materials.descriptors.ComputeImageDescriptorLayout;
-import com.destrostudios.icetea.core.materials.descriptors.StorageBufferDescriptorLayout;
-import com.destrostudios.icetea.core.materials.descriptors.UniformDescriptorLayout;
+import com.destrostudios.icetea.core.compute.ComputeActionGroup;
+import com.destrostudios.icetea.core.util.MathUtil;
+import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptorLayout;
+import com.destrostudios.icetea.core.material.descriptor.StorageBufferDescriptorLayout;
+import com.destrostudios.icetea.core.material.descriptor.UniformDescriptorLayout;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 

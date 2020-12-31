@@ -1,7 +1,10 @@
 package com.destrostudios.icetea.core.water;
 
-import com.destrostudios.icetea.core.*;
-import com.destrostudios.icetea.core.materials.descriptors.ComputeImageDescriptorLayout;
+import com.destrostudios.icetea.core.compute.ComputeAction;
+import com.destrostudios.icetea.core.compute.ComputeActionGroup;
+import com.destrostudios.icetea.core.data.ByteBufferData;
+import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptorLayout;
+import com.destrostudios.icetea.core.shader.Shader;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkMemoryBarrier;

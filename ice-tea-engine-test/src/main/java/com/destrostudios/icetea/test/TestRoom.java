@@ -1,11 +1,11 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.Application;
-import com.destrostudios.icetea.core.GltfModelLoader;
-import com.destrostudios.icetea.core.Node;
-import com.destrostudios.icetea.core.filters.RadialBlurFilter;
-import com.destrostudios.icetea.core.filters.SepiaFilter;
-import com.destrostudios.icetea.core.lights.DirectionalLight;
+import com.destrostudios.icetea.core.model.GltfModelLoader;
+import com.destrostudios.icetea.core.scene.Node;
+import com.destrostudios.icetea.core.filter.RadialBlurFilter;
+import com.destrostudios.icetea.core.filter.SepiaFilter;
+import com.destrostudios.icetea.core.light.DirectionalLight;
 import org.joml.Vector3f;
 
 import static org.lwjgl.glfw.GLFW.*;

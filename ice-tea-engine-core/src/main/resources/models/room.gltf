@@ -1536,7 +1536,7 @@
       "children": [
         2
       ],
-      "name": "RootNode (model correction matrix)"
+      "name": "RootNode (objModel correction matrix)"
     },
     {
       "children": [
@@ -1556,7 +1556,7 @@
         16,
         17
       ],
-      "name": "model.obj.cleaner.materialmerger.gles"
+      "name": "objModel.obj.cleaner.materialmerger.gles"
     },
     {
       "mesh": 0,
