@@ -36,13 +36,13 @@ public class H0kComputeJob extends ComputeJob {
         this.application = application;
         h0kTexture = createTargetTexture();
         h0minuskTexture = createTargetTexture();
-        noiseTexture1 = new FileTexture("textures/noise/Noise" + waterConfig.getN() + "_0.jpg");
+        noiseTexture1 = new FileTexture("textures/water/noise_" + waterConfig.getN() + "_0.jpg");
         noiseTexture1.init(application);
-        noiseTexture2 = new FileTexture("textures/noise/Noise" + waterConfig.getN() + "_1.jpg");
+        noiseTexture2 = new FileTexture("textures/water/noise_" + waterConfig.getN() + "_1.jpg");
         noiseTexture2.init(application);
-        noiseTexture3 = new FileTexture("textures/noise/Noise" + waterConfig.getN() + "_2.jpg");
+        noiseTexture3 = new FileTexture("textures/water/noise_" + waterConfig.getN() + "_2.jpg");
         noiseTexture3.init(application);
-        noiseTexture4 = new FileTexture("textures/noise/Noise" + waterConfig.getN() + "_3.jpg");
+        noiseTexture4 = new FileTexture("textures/water/noise_" + waterConfig.getN() + "_3.jpg");
         noiseTexture4.init(application);
         initUniformData();
         super.init(application);
