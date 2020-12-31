@@ -93,6 +93,6 @@ public class TestRoom extends Application {
     @Override
     protected void update(float tpf) {
         camera.setLocation(camera.getLocation().add(cameraMoveDirection.mul(tpf * 10, new Vector3f())));
-        camera.setRotation(camera.getRotation().add(new Vector3f(0, 0, tpf * 40)));
+        camera.setRotation(camera.getRotation().add(new Vector3f(0, 0, tpf * 30)));
     }
 }

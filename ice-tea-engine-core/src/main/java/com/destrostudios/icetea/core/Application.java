@@ -445,7 +445,9 @@ public abstract class Application {
 
         camera.cleanup();
 
-        light.cleanup();
+        if (light != null) {
+            light.cleanup();
+        }
 
         filters.forEach(Filter::cleanup);
 
