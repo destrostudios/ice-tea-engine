@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.render.scene;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.render.scene.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.Texture;
@@ -28,6 +29,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     private Texture multisampledDepthTexture;
     @Getter
     private Texture resolvedDepthTexture;
+    private BucketRenderer bucketRenderer;
 
     @Override
     public void init(Application application) {
@@ -37,6 +39,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
         initMultisampledDepthTexture();
         initResolvedDepthTexture();
         initFrameBuffers();
+        bucketRenderer = new BucketRenderer(application.getCamera());
     }
 
     @Override
@@ -294,7 +297,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
     @Override
     public void render(VkCommandBuffer commandBuffer, int commandBufferIndex, MemoryStack stack) {
-        application.getRootNode().forEachGeometry(geometry -> {
+        bucketRenderer.render(application.getRootNode(), geometry -> {
             GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
             if (geometryRenderContext != null) {
                 RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
@@ -321,6 +324,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             multisampledColorTexture.cleanup();
             multisampledDepthTexture.cleanup();
             resolvedDepthTexture.cleanup();
+            bucketRenderer = null;
         }
         super.cleanup();
     }

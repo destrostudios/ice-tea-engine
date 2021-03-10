@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core.scene;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Transform;
 import com.destrostudios.icetea.core.light.Light;
+import com.destrostudios.icetea.core.render.scene.bucket.RenderBucketType;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.*;
@@ -29,6 +30,9 @@ public class Spatial {
     @Setter
     private boolean isWorldTransformOutdated;
     private Set<Control> controls;
+    @Setter
+    @Getter
+    private RenderBucketType renderBucket;
 
     public boolean update(Application application, float tpf) {
         if (this.application == null) {

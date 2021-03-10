@@ -48,6 +48,12 @@ public class Material {
     @Setter
     @Getter
     private int cullMode = VK_CULL_MODE_BACK_BIT;
+    @Setter
+    @Getter
+    private boolean depthTest = true;
+    @Setter
+    @Getter
+    private boolean depthWrite = true;
 
     public boolean isInitialized() {
         return (application != null);

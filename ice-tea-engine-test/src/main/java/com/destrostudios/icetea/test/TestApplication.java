@@ -7,6 +7,7 @@ import com.destrostudios.icetea.core.light.*;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
 import com.destrostudios.icetea.core.model.GltfModelLoader;
+import com.destrostudios.icetea.core.render.scene.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.water.*;
@@ -113,6 +114,7 @@ public class TestApplication extends Application {
         geometryChalet3.setMaterial(materialCool);
         geometryChalet3.move(new Vector3f(-0.3f, 0.3f, 0.25f));
         geometryChalet3.scale(new Vector3f(0.5f, 0.5f, 1));
+        geometryChalet3.setRenderBucket(RenderBucketType.TRANSPARENT);
 
         Node nodeChalet3 = new Node();
         nodeChalet3.add(geometryChalet3);
@@ -187,6 +189,7 @@ public class TestApplication extends Application {
         geometrySky.setMesh(meshSky);
         geometrySky.setMaterial(materialSky);
         geometrySky.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+        geometrySky.setRenderBucket(RenderBucketType.BACKGROUND);
 
         nodeSkyWrapper = new Node();
         nodeSkyWrapper.add(geometrySky);

@@ -146,10 +146,11 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 
             // ===> DEPTH STENCIL <===
 
+            // TODO: Only append this whole state if needed? Check if it can be omitted it in some combinations
             VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.callocStack(stack);
             depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
-            depthStencil.depthTestEnable(true);
-            depthStencil.depthWriteEnable(true);
+            depthStencil.depthTestEnable(material.isDepthTest());
+            depthStencil.depthWriteEnable(material.isDepthWrite());
             depthStencil.depthCompareOp(VK_COMPARE_OP_LESS);
             depthStencil.depthBoundsTestEnable(false);
             depthStencil.minDepthBounds(0); // Optional
