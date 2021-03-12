@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.material.descriptor;
 
-import com.destrostudios.icetea.core.scene.Camera;
+import com.destrostudios.icetea.core.camera.Camera;
 
 public class CameraTransformDescriptor extends UniformDescriptor<CameraTransformDescriptorLayout> {
 

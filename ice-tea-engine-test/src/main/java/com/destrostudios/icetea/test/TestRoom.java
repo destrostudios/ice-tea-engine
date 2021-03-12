@@ -20,12 +20,12 @@ public class TestRoom extends Application {
 
     @Override
     protected void initScene() {
-        camera.setLocation(new Vector3f(0, 0, 7));
-        camera.setRotation(new Vector3f(-88, 0, 0));
+        sceneCamera.setLocation(new Vector3f(0, 0, 7));
+        sceneCamera.setRotation(new Vector3f(-88, 0, 0));
 
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(1, 0, -0.25f).normalize());
-        directionalLight.addAffectedSpatial(rootNode);
+        directionalLight.addAffectedSpatial(sceneNode);
         // directionalLight.addShadows(2048);
         // setLight(directionalLight);
 
@@ -37,7 +37,7 @@ public class TestRoom extends Application {
         nodeRoomWrapper.add(nodeRoom);
         nodeRoomWrapper.move(new Vector3f(0, 0, 0));
         nodeRoomWrapper.scale(new Vector3f(2, 2, 2));
-        rootNode.add(nodeRoomWrapper);
+        sceneNode.add(nodeRoomWrapper);
 
         RadialBlurFilter radialBlurFilter = new RadialBlurFilter();
         SepiaFilter sepiaFilter = new SepiaFilter();
@@ -92,7 +92,7 @@ public class TestRoom extends Application {
 
     @Override
     protected void update(float tpf) {
-        camera.setLocation(camera.getLocation().add(cameraMoveDirection.mul(tpf * 10, new Vector3f())));
-        camera.setRotation(camera.getRotation().add(new Vector3f(0, 0, tpf * 30)));
+        sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 10, new Vector3f())));
+        sceneCamera.setRotation(sceneCamera.getRotation().add(new Vector3f(0, 0, tpf * 30)));
     }
 }

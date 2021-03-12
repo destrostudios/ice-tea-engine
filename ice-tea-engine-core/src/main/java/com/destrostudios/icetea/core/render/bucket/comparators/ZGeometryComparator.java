@@ -1,4 +1,4 @@
-package com.destrostudios.icetea.core.render.scene.bucket.comparators;
+package com.destrostudios.icetea.core.render.bucket.comparators;
 
 import com.destrostudios.icetea.core.scene.Geometry;
 

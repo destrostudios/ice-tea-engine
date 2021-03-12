@@ -36,7 +36,7 @@ public class Control {
         spatial = null;
     }
 
-    public void onRemoveFromScene() {
+    public void onRemoveFromRoot() {
         setActive(false);
     }
 

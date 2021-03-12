@@ -1,12 +1,13 @@
 package com.destrostudios.icetea.core.render.scene;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
 import com.destrostudios.icetea.core.material.descriptor.*;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
+import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
-import com.destrostudios.icetea.core.scene.Camera;
 import com.destrostudios.icetea.core.light.Light;
 
 import java.util.List;
@@ -15,10 +16,12 @@ import java.util.function.Supplier;
 
 public class SceneGeometryRenderContext extends GeometryRenderContext<SceneRenderJob> {
 
-    public SceneGeometryRenderContext(Supplier<Camera> cameraSupplier) {
-        this.cameraSupplier = cameraSupplier;
+    public SceneGeometryRenderContext(Supplier<Camera> defaultCameraSupplier, BucketRenderer bucketRenderer) {
+        this.defaultCameraSupplier = defaultCameraSupplier;
+        this.bucketRenderer = bucketRenderer;
     }
-    private Supplier<Camera> cameraSupplier;
+    private Supplier<Camera> defaultCameraSupplier;
+    private BucketRenderer bucketRenderer;
     private SceneRenderPipeline sceneRenderPipeline;
 
     @Override
@@ -26,8 +29,10 @@ public class SceneGeometryRenderContext extends GeometryRenderContext<SceneRende
         MaterialDescriptorSetLayout descriptorSetLayout = new MaterialDescriptorSetLayout(application);
         MaterialDescriptorSet descriptorSet = new MaterialDescriptorSet(application, descriptorSetLayout, application.getSwapChain().getImages().size());
 
+        Camera forcedCamera = bucketRenderer.getBucket(geometry).getForcedCamera();
+        Camera camera = ((forcedCamera != null) ? forcedCamera : defaultCameraSupplier.get());
         CameraTransformDescriptorLayout cameraTransformDescriptorLayout = new CameraTransformDescriptorLayout();
-        CameraTransformDescriptor cameraTransformDescriptor = new CameraTransformDescriptor("camera", cameraTransformDescriptorLayout, cameraSupplier.get());
+        CameraTransformDescriptor cameraTransformDescriptor = new CameraTransformDescriptor("camera", cameraTransformDescriptorLayout, camera);
         descriptorSetLayout.addDescriptorLayout(cameraTransformDescriptorLayout);
         descriptorSet.addDescriptor(cameraTransformDescriptor);
 

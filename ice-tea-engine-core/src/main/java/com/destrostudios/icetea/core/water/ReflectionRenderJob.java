@@ -1,9 +1,9 @@
 package com.destrostudios.icetea.core.water;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
 import com.destrostudios.icetea.core.render.scene.SceneRenderJob;
-import com.destrostudios.icetea.core.scene.Camera;
 import com.destrostudios.icetea.core.scene.Geometry;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -14,28 +14,29 @@ public class ReflectionRenderJob extends SceneRenderJob {
         this.geometryWater = geometryWater;
     }
     private Geometry geometryWater;
-    private Camera reflectionCamera;
+    private SceneCamera reflectionCamera;
 
     @Override
     public void init(Application application) {
         super.init(application);
-        reflectionCamera = new Camera(application);
+        reflectionCamera = new SceneCamera();
+        reflectionCamera.init(application);
     }
 
     @Override
     public boolean isRendering(Geometry geometry) {
-        return (geometry != geometryWater);
+        return ((geometry != geometryWater) && geometry.hasParent(application.getSceneNode()));
     }
 
     @Override
     public SceneGeometryRenderContext createGeometryRenderContext() {
-        return new SceneGeometryRenderContext(() -> reflectionCamera);
+        return new SceneGeometryRenderContext(() -> reflectionCamera, application.getBucketRenderer());
     }
 
     @Override
     public void updateUniformBuffers(int currentImage) {
         super.updateUniformBuffers(currentImage);
-        reflectionCamera.set(application.getCamera());
+        reflectionCamera.set(application.getSceneCamera());
         Vector3f location = reflectionCamera.getLocation();
         float waterHeight = 0;
         float distance = (2 * (location.z() - waterHeight));

@@ -1,5 +1,6 @@
-package com.destrostudios.icetea.core.render.scene.bucket;
+package com.destrostudios.icetea.core.render.bucket;
 
+import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
 
@@ -10,11 +11,18 @@ import java.util.function.Consumer;
 public class RenderBucket {
 
     public RenderBucket(Comparator<Geometry> comparator) {
+        this(comparator, null);
+    }
+
+    public RenderBucket(Comparator<Geometry> comparator, Camera forcedCamera) {
         this.comparator = comparator;
+        this.forcedCamera = forcedCamera;
         geometries = new LinkedList<>();
     }
     @Getter
     private Comparator<Geometry> comparator;
+    @Getter
+    private Camera forcedCamera;
     private LinkedList<Geometry> geometries;
 
     public void clear() {

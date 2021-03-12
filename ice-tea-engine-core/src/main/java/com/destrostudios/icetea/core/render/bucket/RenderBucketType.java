@@ -1,4 +1,4 @@
-package com.destrostudios.icetea.core.render.scene.bucket;
+package com.destrostudios.icetea.core.render.bucket;
 
 public enum RenderBucketType {
     BACKGROUND,

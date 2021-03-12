@@ -1,9 +1,11 @@
 package com.destrostudios.icetea.core;
 
+import com.destrostudios.icetea.core.camera.GuiCamera;
+import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.KeyEvent;
 import com.destrostudios.icetea.core.input.KeyListener;
-import com.destrostudios.icetea.core.scene.Camera;
+import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.scene.Node;
@@ -60,6 +62,10 @@ public abstract class Application {
     @Getter
     private VkInstance instance;
     @Getter
+    private int width = 1280;
+    @Getter
+    private int height = 720;
+    @Getter
     private long window;
     @Getter
     private long surface;
@@ -78,6 +84,8 @@ public abstract class Application {
     @Getter
     private long commandPool;
     @Getter
+    private BucketRenderer bucketRenderer;
+    @Getter
     private SwapChain swapChain;
     private boolean commandBuffersOutdated;
     private GLFWKeyCallback glfwKeyCallback;
@@ -85,9 +93,15 @@ public abstract class Application {
     protected float time;
 
     @Getter
-    protected Camera camera;
+    protected SceneCamera sceneCamera;
     @Getter
-    protected Node rootNode;
+    private GuiCamera guiCamera;
+    @Getter
+    private Node rootNode;
+    @Getter
+    protected Node sceneNode;
+    @Getter
+    protected Node guiNode;
     @Getter
     private Light light;
     private List<Filter> filters;
@@ -107,6 +121,10 @@ public abstract class Application {
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
         rootNode = new Node();
+        sceneNode = new Node();
+        rootNode.add(sceneNode);
+        guiNode = new Node();
+        rootNode.add(guiNode);
         filters = new LinkedList<>();
         initWindow();
         createInstance();
@@ -116,7 +134,7 @@ public abstract class Application {
         initCommandPool();
         initSwapChain();
         initKeyListeners();
-        initCamera();
+        initCameras();
         initScene();
         initSyncObjects();
     }
@@ -126,7 +144,7 @@ public abstract class Application {
             throw new RuntimeException("Cannot initialize GLFW");
         }
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        window = glfwCreateWindow(1280, 720, "IceTea Engine", NULL, NULL);
+        window = glfwCreateWindow(width, height, "IceTea Engine", NULL, NULL);
         if (window == NULL) {
             throw new RuntimeException("Cannot create window");
         }
@@ -134,7 +152,10 @@ public abstract class Application {
     }
 
     private void onFrameBufferResized(long window, int width, int height) {
+        this.width = width;
+        this.height = height;
         wasResized = true;
+        updateGuiCamera();
     }
 
     private void createInstance() {
@@ -240,8 +261,12 @@ public abstract class Application {
     }
 
     private void initSwapChain() {
+        sceneCamera = new SceneCamera();
+        guiCamera = new GuiCamera();
+        bucketRenderer = new BucketRenderer();
         swapChain = new SwapChain();
         swapChain.init(this);
+        bucketRenderer.init(this);
     }
 
     private void initKeyListeners() {
@@ -256,12 +281,19 @@ public abstract class Application {
         glfwSetKeyCallback(window, glfwKeyCallback);
     }
 
-    private void initCamera() {
-        camera = new Camera(this);
-        camera.setFieldOfViewY((float) Math.toRadians(45));
-        camera.setAspect((float) swapChain.getExtent().width() / (float) swapChain.getExtent().height());
-        camera.setZNear(0.1f);
-        camera.setZFar(100);
+    private void initCameras() {
+        sceneCamera.init(this);
+        sceneCamera.setFieldOfViewY((float) Math.toRadians(45));
+        sceneCamera.setAspect((float) swapChain.getExtent().width() / (float) swapChain.getExtent().height());
+        sceneCamera.setZNear(0.1f);
+        sceneCamera.setZFar(100);
+
+        guiCamera.init(this);
+        updateGuiCamera();
+    }
+
+    private void updateGuiCamera() {
+        guiCamera.setApplicationSize(width, height);
     }
 
     protected abstract void initScene();
@@ -341,7 +373,7 @@ public abstract class Application {
     private void updateState() {
         float tpf = calculateNextTpf();
         update(tpf);
-        camera.update();
+        sceneCamera.update();
         updateLights();
         commandBuffersOutdated |= rootNode.update(this, tpf);
         if (commandBuffersOutdated) {
@@ -438,7 +470,8 @@ public abstract class Application {
 
     private void updateUniformBuffers(int currentImage) {
         swapChain.getRenderJobManager().forEachRenderJob(renderJob -> renderJob.updateUniformBuffers(currentImage));
-        camera.getTransformUniformData().updateBufferIfNecessary(currentImage);
+        sceneCamera.getTransformUniformData().updateBufferIfNecessary(currentImage);
+        guiCamera.getTransformUniformData().updateBufferIfNecessary(currentImage);
         if (light != null) {
             light.updateUniformBuffers(currentImage);
         }
@@ -452,7 +485,8 @@ public abstract class Application {
 
         rootNode.forEachGeometry(Geometry::cleanup);
 
-        camera.cleanup();
+        sceneCamera.cleanup();
+        guiCamera.cleanup();
 
         if (light != null) {
             light.cleanup();

@@ -12,6 +12,6 @@ public class RefractionRenderJob extends SceneRenderJob {
 
     @Override
     public boolean isRendering(Geometry geometry) {
-        return (geometry != geometryWater);
+        return ((geometry != geometryWater) && geometry.hasParent(application.getSceneNode()));
     }
 }

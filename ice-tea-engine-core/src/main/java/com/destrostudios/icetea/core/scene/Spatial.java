@@ -3,7 +3,7 @@ package com.destrostudios.icetea.core.scene;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Transform;
 import com.destrostudios.icetea.core.light.Light;
-import com.destrostudios.icetea.core.render.scene.bucket.RenderBucketType;
+import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.*;
@@ -129,21 +129,21 @@ public class Spatial {
 
     public void removeControl(Control control) {
         if (controls.remove(control)) {
-            if (isInScene()) {
-                control.onRemoveFromScene();
+            if (isAttachedToRoot()) {
+                control.onRemoveFromRoot();
             }
             control.onRemove();
         }
     }
 
     public void setParent(Node parent) {
-        if ((parent == null) && isInScene()) {
-            onRemoveFromScene();
+        if ((parent == null) && isAttachedToRoot()) {
+            onRemoveFromRoot();
         }
         this.parent = parent;
     }
 
-    public boolean isInScene() {
+    public boolean isAttachedToRoot() {
         return (application != null) && hasParent(application.getRootNode());
     }
 
@@ -158,9 +158,9 @@ public class Spatial {
         return false;
     }
 
-    private void onRemoveFromScene() {
+    private void onRemoveFromRoot() {
         for (Control control : controls) {
-            control.onRemoveFromScene();
+            control.onRemoveFromRoot();
         }
     }
 }
