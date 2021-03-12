@@ -9,6 +9,7 @@ import com.destrostudios.icetea.core.mesh.*;
 import com.destrostudios.icetea.core.model.GltfModelLoader;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.scene.*;
+import com.destrostudios.icetea.core.scene.gui.Panel;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.water.*;
 import org.joml.*;
@@ -25,7 +26,7 @@ public class TestApplication extends Application {
     }
 
     private Material materialCool;
-    private Geometry geometryButton2;
+    private Panel panel1;
     private Geometry geometryWater;
     private Geometry geometryGround;
     private Geometry geometryDennis;
@@ -65,41 +66,17 @@ public class TestApplication extends Application {
 
         // GUI
 
-        Quad meshButton1 = new Quad(200, 140);
+        panel1 = new Panel();
+        panel1.move(new Vector3f(50, 50, 0));
+        panel1.scale(new Vector3f(200, 140, 1));
+        panel1.setBackground(new FileTexture("textures/icetea1.png"));
+        guiNode.add(panel1);
 
-        Material materialButton1 = new Material();
-        materialButton1.setVertexShader(vertexShaderDefault);
-        materialButton1.setFragmentShader(fragShaderDefault);
-        Texture textureIceTea1 = new FileTexture("textures/icetea1.png");
-        materialButton1.setTexture("diffuseMap", textureIceTea1);
-        materialButton1.setCullMode(VK_CULL_MODE_FRONT_BIT);
-        materialButton1.setDepthTest(false);
-        materialButton1.setDepthWrite(false);
-
-        Geometry geometryButton1 = new Geometry();
-        geometryButton1.setMesh(meshButton1);
-        geometryButton1.setMaterial(materialButton1);
-        geometryButton1.setRenderBucket(RenderBucketType.GUI);
-        geometryButton1.move(new Vector3f(150, 120, 1));
-        guiNode.add(geometryButton1);
-
-        Quad meshButton2 = new Quad(200, 130);
-
-        Material materialButton2 = new Material();
-        materialButton2.setVertexShader(vertexShaderDefault);
-        materialButton2.setFragmentShader(fragShaderDefault);
-        Texture textureIceTea2 = new FileTexture("textures/icetea2.png");
-        materialButton2.setTexture("diffuseMap", textureIceTea2);
-        materialButton2.setCullMode(VK_CULL_MODE_FRONT_BIT);
-        materialButton2.setDepthTest(false);
-        materialButton2.setDepthWrite(false);
-
-        geometryButton2 = new Geometry();
-        geometryButton2.setMesh(meshButton2);
-        geometryButton2.setMaterial(materialButton2);
-        geometryButton2.setRenderBucket(RenderBucketType.GUI);
-        geometryButton2.move(new Vector3f(175, 140, 0));
-        guiNode.add(geometryButton2);
+        Panel panel2 = new Panel();
+        panel2.move(new Vector3f(75, 75, 0));
+        panel2.scale(new Vector3f(200, 130, 0));
+        panel2.setBackground(new FileTexture("textures/icetea2.png"));
+        guiNode.add(panel2);
 
         // Water
 
@@ -121,7 +98,7 @@ public class TestApplication extends Application {
         geometryGround = new Geometry();
         geometryGround.setMesh(meshGround);
         geometryGround.setMaterial(materialGround);
-        geometryGround.move(new Vector3f(0, 0, -0.25f));
+        geometryGround.move(new Vector3f(-5, -5, -0.25f));
 
         // Chalet
 
@@ -337,7 +314,7 @@ public class TestApplication extends Application {
                 updateTimeBasedRotation(spatial);
             }
         }
-        updateTimeBasedRotation(geometryButton2);
+        updateTimeBasedRotation(panel1);
         materialCool.getParameters().setFloat("time", time);
         sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 3, new Vector3f())));
     }
