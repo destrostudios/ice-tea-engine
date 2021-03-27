@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.collision.CollisionResult;
+import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
@@ -28,6 +30,8 @@ public class Geometry extends Spatial {
     @Override
     public boolean update(Application application, float tpf) {
         boolean commandBufferOutdated = super.update(application, tpf);
+        updateWorldBoundsIfNecessary();
+
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
         application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {
             if (renderJob.isRendering(this) && (!renderContexts.containsKey(renderJob))) {
@@ -68,6 +72,12 @@ public class Geometry extends Spatial {
         updateWorldTransformUniform();
     }
 
+    @Override
+    protected void updateWorldBounds() {
+        worldBounds.set(mesh.getBounds());
+        worldBounds.transform(worldTransform);
+    }
+
     private void updateWorldTransformUniform() {
         transformUniformData.setMatrix4f("model", worldTransform.getMatrix());
     }
@@ -91,6 +101,14 @@ public class Geometry extends Spatial {
     public void updateUniformBuffers(int currentImage) {
         transformUniformData.updateBufferIfNecessary(currentImage);
         material.getParameters().updateBufferIfNecessary(currentImage);
+    }
+
+    @Override
+    public void collide(Ray ray, ArrayList<CollisionResult> collisionResults) {
+        int newCollisions = mesh.collide(ray, worldTransform.getMatrix(), worldBounds, collisionResults);
+        for (int i = collisionResults.size() - newCollisions; i < collisionResults.size(); i++) {
+            collisionResults.get(i).setGeometry(this);
+        }
     }
 
     public void cleanup() {

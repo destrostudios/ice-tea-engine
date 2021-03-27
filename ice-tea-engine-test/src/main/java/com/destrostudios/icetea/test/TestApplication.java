@@ -1,6 +1,9 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.collision.BoundingBox;
+import com.destrostudios.icetea.core.collision.CollisionResult;
+import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.filter.*;
 import com.destrostudios.icetea.core.light.*;
@@ -15,9 +18,10 @@ import com.destrostudios.icetea.core.water.*;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.ArrayList;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_FRONT_BIT;
+import static org.lwjgl.vulkan.VK10.*;
 
 public class TestApplication extends Application {
 
@@ -29,8 +33,11 @@ public class TestApplication extends Application {
     private Panel panel1;
     private Geometry geometryWater;
     private Geometry geometryGround;
+    private Geometry geometryChalet1;
     private Geometry geometryDennis;
-    private Node nodeSkyWrapper;
+    private Node nodeSkyWrapper;;
+    private Geometry geometryBounds;
+    private Node nodeCollisions;
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
     private Vector3f cameraMoveDirection = new Vector3f();
@@ -112,7 +119,7 @@ public class TestApplication extends Application {
         Texture textureChalet = new FileTexture("textures/chalet.jpg");
         materialChalet.setTexture("diffuseMap", textureChalet);
 
-        Geometry geometryChalet1 = new Geometry();
+        geometryChalet1 = new Geometry();
         geometryChalet1.setMesh(meshChalet);
         geometryChalet1.setMaterial(materialChalet);
         sceneNode.add(geometryChalet1);
@@ -231,8 +238,33 @@ public class TestApplication extends Application {
         geometryKnot.scale(new Vector3f(0.01f, 0.01f, 0.01f));
         sceneNode.add(geometryKnot);
 
+        // Bounds
+
+        Mesh meshBox = new Box(1, 1, 1);
+
+        Material materialBounds = new Material();
+        materialBounds.setVertexShader(vertexShaderDefault);
+        materialBounds.setFragmentShader(fragShaderDefault);
+        materialBounds.setCullMode(VK_CULL_MODE_NONE);
+        materialBounds.setFillMode(VK_POLYGON_MODE_LINE);
+        materialBounds.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
+
+        geometryBounds = new Geometry();
+        geometryBounds.setMesh(meshBox);
+        geometryBounds.setMaterial(materialBounds);
+        sceneNode.add(geometryBounds);
+
+        // Collisions
+
+        nodeCollisions = new Node();
+        sceneNode.add(nodeCollisions);
+
+        // Filters
+
         RadialBlurFilter radialBlurFilter = new RadialBlurFilter();
         SepiaFilter sepiaFilter = new SepiaFilter();
+
+        // Inputs
 
         addKeyListener(keyEvent -> {
             // Add/Remove filters
@@ -298,6 +330,32 @@ public class TestApplication extends Application {
                 }
             }
         });
+        addMouseButtonListener(mouseButtonEvent -> {
+            if (mouseButtonEvent.getAction() == GLFW_PRESS) {
+                Vector3f worldCoordinatesFront = getWorldCoordinates(sceneCamera, getCursorPosition(), 0);
+                Vector3f worldCoordinatesBack = getWorldCoordinates(sceneCamera, getCursorPosition(), 1);
+                Vector3f rayDirection = worldCoordinatesBack.sub(worldCoordinatesFront, new Vector3f());
+
+                ArrayList<CollisionResult> collisionResults = new ArrayList<>();
+                sceneNode.collide(new Ray(worldCoordinatesFront, rayDirection), collisionResults);
+
+                nodeCollisions.removeAll();
+                for (CollisionResult collisionResult : collisionResults) {
+                    Geometry geometryBox = new Geometry();
+                    geometryBox.setMesh(meshBox);
+
+                    Material materialBox = new Material();
+                    materialBox.setVertexShader(vertexShaderDefault);
+                    materialBox.setFragmentShader(fragShaderDefault);
+                    geometryBox.setMaterial(materialBox);
+
+                    float boxSize = 0.05f;
+                    geometryBox.setLocalTranslation(collisionResult.getPosition().sub((boxSize / 2), (boxSize / 2), (boxSize / 2), new Vector3f()));
+                    geometryBox.setLocalScale(new Vector3f(boxSize, boxSize, boxSize));
+                    nodeCollisions.add(geometryBox);
+                }
+            }
+        });
     }
 
     @Override
@@ -310,11 +368,16 @@ public class TestApplication extends Application {
             hasRemovedDennis = true;
         }
         for (Spatial spatial : sceneNode.getChildren()) {
-            if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != nodeSkyWrapper)) {
+            if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
                 updateTimeBasedRotation(spatial);
             }
         }
         updateTimeBasedRotation(panel1);
+
+        BoundingBox worldBoundsChalet1 = geometryChalet1.getWorldBounds();
+        geometryBounds.setLocalTranslation(worldBoundsChalet1.getCenter().sub(worldBoundsChalet1.getExtent(), new Vector3f()));
+        geometryBounds.setLocalScale(worldBoundsChalet1.getExtent().mul(2, new Vector3f()));
+
         materialCool.getParameters().setFloat("time", time);
         sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 3, new Vector3f())));
     }

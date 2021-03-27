@@ -131,6 +131,7 @@ public class GltfModelLoader {
             vertices[i] = vertex;
         }
         mesh.setVertices(vertices);
+        mesh.updateBounds();
 
         if (settings.isGenerateNormals()) {
             mesh.generateNormals();

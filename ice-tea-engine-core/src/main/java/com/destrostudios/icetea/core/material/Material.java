@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.function.Supplier;
 
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
+import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
 
 public class Material {
 
@@ -54,6 +55,9 @@ public class Material {
     @Setter
     @Getter
     private boolean depthWrite = true;
+    @Setter
+    @Getter
+    private int fillMode = VK_POLYGON_MODE_FILL;
 
     public boolean isInitialized() {
         return (application != null);

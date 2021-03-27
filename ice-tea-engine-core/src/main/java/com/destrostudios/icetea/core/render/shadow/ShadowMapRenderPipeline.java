@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.render.shadow;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
@@ -30,6 +31,7 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
     public void init() {
         try (MemoryStack stack = stackPush()) {
             Mesh mesh = geometry.getMesh();
+            Material material = geometry.getMaterial();
 
             Shader vertexShader = new Shader("shaders/shadow.vert");
             SPIRV vertShaderSPIRV = vertexShader.compile(ShaderType.VERTEX_SHADER, shadowMapGeometryRenderContext.getMaterialDescriptorSet());
@@ -84,7 +86,7 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
             rasterizer.depthClampEnable(false);
             rasterizer.rasterizerDiscardEnable(false);
-            rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
+            rasterizer.polygonMode(material.getFillMode());
             rasterizer.lineWidth(1);
             rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
             rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);

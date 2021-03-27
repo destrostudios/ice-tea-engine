@@ -1,13 +1,19 @@
 package com.destrostudios.icetea.core.mesh;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.collision.BIHTree;
+import com.destrostudios.icetea.core.collision.BoundingBox;
+import com.destrostudios.icetea.core.collision.CollisionResult;
+import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.UniformValue;
 import com.destrostudios.icetea.core.model.ObjModel;
 import com.destrostudios.icetea.core.model.ObjLoader;
 import com.destrostudios.icetea.core.util.BufferUtil;
+import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import lombok.Setter;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -15,10 +21,7 @@ import org.lwjgl.system.MemoryStack;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.ClassLoader.getSystemClassLoader;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -27,6 +30,9 @@ import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 
 public class Mesh {
 
+    public Mesh() {
+        bounds = new BoundingBox();
+    }
     private Application application;
     @Getter
     protected int topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -45,6 +51,9 @@ public class Mesh {
     @Getter
     private Long indexBufferMemory;
     private int usingGeometriesCount;
+    @Getter
+    private BoundingBox bounds;
+    private BIHTree collisionTree;
 
     public void loadObjModel(String filePath) {
         InputStream inputStream = getSystemClassLoader().getResourceAsStream(filePath);
@@ -65,11 +74,22 @@ public class Mesh {
             }
             vertices[i] = vertex;
         }
+        updateBounds();
 
         indices = new int[objModel.getIndices().size()];
         for (int i = 0; i < indices.length; i++) {
             indices[i] = objModel.getIndices().get(i);
         }
+    }
+
+    public void updateBounds() {
+        // TODO: Introduce TempVars
+        Vector3f min = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+        Vector3f max = new Vector3f(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+        for (VertexData vertex : vertices) {
+            MathUtil.updateMinMax(min, max, vertex.getVector3f("modelSpaceVertexPosition"));
+        }
+        bounds.setMinMax(min, max);
     }
 
     public void generateNormals() {
@@ -222,6 +242,17 @@ public class Mesh {
             vkFreeMemory(application.getLogicalDevice(), indexBufferMemory, null);
             indexBufferMemory = null;
         }
+    }
+
+    public int collide(Ray ray, Matrix4f worldMatrix, BoundingBox worldBounds, ArrayList<CollisionResult> collisionResults) {
+        // Only triangle collisions are supported currently
+        if (topology != VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) {
+            return 0;
+        }
+        if (collisionTree == null) {
+            collisionTree = new BIHTree(this);
+        }
+        return collisionTree.collide(ray, worldMatrix, worldBounds, collisionResults);
     }
 
     public void increaseUsingGeometriesCount() {

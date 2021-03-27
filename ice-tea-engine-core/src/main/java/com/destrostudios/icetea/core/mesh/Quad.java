@@ -32,6 +32,8 @@ public class Quad extends Mesh {
         vertex4.setVector3f("vertexNormal", new Vector3f(0, 0, 1));
 
         vertices = new VertexData[] { vertex1, vertex2, vertex3, vertex4 };
+        updateBounds();
+
         indices = new int[] {
             0, 1, 2,
             0, 2, 3

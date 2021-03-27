@@ -2,22 +2,23 @@ package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Transform;
+import com.destrostudios.icetea.core.collision.BoundingBox;
+import com.destrostudios.icetea.core.collision.CollisionResult;
+import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.*;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class Spatial {
+public abstract class Spatial {
 
     protected Spatial() {
         localTransform  = new Transform();
         worldTransform = new Transform();
+        worldBounds = new BoundingBox();
         controls = new HashSet<>();
     }
     protected Application application;
@@ -27,8 +28,10 @@ public class Spatial {
     protected Transform localTransform;
     @Getter
     protected Transform worldTransform;
-    @Setter
+    @Getter
+    protected BoundingBox worldBounds;
     private boolean isWorldTransformOutdated;
+    private boolean isWorldBoundsOutdated;
     private Set<Control> controls;
     @Setter
     @Getter
@@ -39,23 +42,36 @@ public class Spatial {
             this.application = application;
             init();
         }
-        if (localTransform.updateMatrixIfNecessary()) {
-            isWorldTransformOutdated = true;
-        }
-        if (isWorldTransformOutdated) {
-            updateWorldTransform();
-            isWorldTransformOutdated = false;
-        }
         ensureControlsState();
         for (Control control : controls) {
             control.update(tpf);
         }
+        if (localTransform.updateMatrixIfNecessary()) {
+            setWorldTransformOutdated();
+            setWorldBoundsOutdated();
+        }
+        updateWorldTransformIfNecessary();
         return false;
     }
 
     protected void init() {
-        isWorldTransformOutdated = true;
+        setWorldTransformOutdated();
+        setWorldBoundsOutdated();
         ensureControlsState();
+    }
+
+    protected void setWorldTransformOutdated() {
+        isWorldTransformOutdated = true;
+        if (parent != null) {
+            parent.setWorldTransformOutdated();
+        }
+    }
+
+    protected void setWorldBoundsOutdated() {
+        isWorldBoundsOutdated = true;
+        if (parent != null) {
+            parent.setWorldBoundsOutdated();
+        }
     }
 
     private void ensureControlsState() {
@@ -64,6 +80,13 @@ public class Spatial {
                 control.init(application);
             }
             control.setSpatial(this);
+        }
+    }
+
+    protected void updateWorldTransformIfNecessary() {
+        if (isWorldTransformOutdated) {
+            updateWorldTransform();
+            isWorldTransformOutdated = false;
         }
     }
 
@@ -81,6 +104,15 @@ public class Spatial {
             worldTransform.set(localTransform);
         }
     }
+
+    protected void updateWorldBoundsIfNecessary() {
+        if (isWorldBoundsOutdated) {
+            updateWorldBounds();
+            isWorldBoundsOutdated = false;
+        }
+    }
+
+    protected abstract void updateWorldBounds();
 
     public void setLocalTransform(Matrix4fc transform) {
         localTransform.set(transform);
@@ -110,10 +142,6 @@ public class Spatial {
         localTransform.scale(scale);
     }
 
-    protected void onWorldTransformOutdated() {
-        isWorldTransformOutdated = true;
-    }
-
     public List<Light> getAffectingLights() {
         List<Light> affectingLights = new LinkedList<>();
         Light light = application.getLight();
@@ -122,6 +150,8 @@ public class Spatial {
         }
         return affectingLights;
     }
+
+    public abstract void collide(Ray ray, ArrayList<CollisionResult> collisionResults);
 
     public void addControl(Control control) {
         controls.add(control);

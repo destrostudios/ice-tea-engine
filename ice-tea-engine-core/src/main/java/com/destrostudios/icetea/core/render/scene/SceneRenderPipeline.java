@@ -130,7 +130,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
             rasterizer.depthClampEnable(false);
             rasterizer.rasterizerDiscardEnable(false);
-            rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
+            rasterizer.polygonMode(material.getFillMode());
             rasterizer.lineWidth(1);
             rasterizer.cullMode(material.getCullMode());
             rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);

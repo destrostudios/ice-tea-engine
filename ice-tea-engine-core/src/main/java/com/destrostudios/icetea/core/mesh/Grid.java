@@ -42,6 +42,7 @@ public class Grid extends Mesh {
                 vertices[index++] = createVertex(new Vector3f(i + dx, j + dy, 0));
             }
         }
+        updateBounds();
     }
 
     private VertexData createVertex(Vector3f position) {
