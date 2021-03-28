@@ -168,11 +168,14 @@ public class TestApplication extends Application {
 
         Mesh meshDennis = new Mesh();
         meshDennis.loadObjModel("models/dennis.obj");
+        meshDennis.init(this); // Preload to avoid lag later on
 
         Material materialDennis = new Material();
         materialDennis.setVertexShader(vertexShaderDefault);
         materialDennis.setFragmentShader(fragShaderDefault);
-        materialDennis.setTexture("diffuseMap", new FileTexture("textures/dennis.jpg"));
+        FileTexture textureDennis = new FileTexture("textures/dennis.jpg");
+        textureDennis.init(this); // Preload to avoid lag later on
+        materialDennis.setTexture("diffuseMap", textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
         geometryDennis = new Geometry();
