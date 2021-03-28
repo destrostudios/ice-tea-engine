@@ -245,14 +245,23 @@ public class Mesh {
     }
 
     public int collide(Ray ray, Matrix4f worldMatrix, BoundingBox worldBounds, ArrayList<CollisionResult> collisionResults) {
-        // Only triangle collisions are supported currently
-        if (topology != VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) {
-            return 0;
-        }
+        // TODO: Reset collision tree when mesh changed - For now, we just assume the mesh never changes after creating a tree
         if (collisionTree == null) {
-            collisionTree = new BIHTree(this);
+            loadCollisionTree();
         }
-        return collisionTree.collide(ray, worldMatrix, worldBounds, collisionResults);
+        if (collisionTree != null) {
+            return collisionTree.collide(ray, worldMatrix, worldBounds, collisionResults);
+        }
+        return 0;
+    }
+
+    public void loadCollisionTree() {
+        // Only triangle collisions are supported currently
+        if (topology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) {
+            collisionTree = new BIHTree(this);
+        } else {
+            collisionTree = null;
+        }
     }
 
     public void increaseUsingGeometriesCount() {

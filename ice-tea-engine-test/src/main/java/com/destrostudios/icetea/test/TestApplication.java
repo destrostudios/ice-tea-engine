@@ -112,6 +112,7 @@ public class TestApplication extends Application {
         Mesh meshChalet = new Mesh();
         meshChalet.loadObjModel("models/chalet.obj");
         meshChalet.generateNormals();
+        meshChalet.loadCollisionTree(); // Preload to avoid lag later on
 
         Material materialChalet = new Material();
         materialChalet.setVertexShader(vertexShaderDefault);
@@ -169,6 +170,7 @@ public class TestApplication extends Application {
         Mesh meshDennis = new Mesh();
         meshDennis.loadObjModel("models/dennis.obj");
         meshDennis.init(this); // Preload to avoid lag later on
+        meshDennis.loadCollisionTree(); // Preload to avoid lag later on
 
         Material materialDennis = new Material();
         materialDennis.setVertexShader(vertexShaderDefault);
