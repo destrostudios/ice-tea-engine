@@ -11,11 +11,13 @@ import java.util.List;
 public class BIHTree {
 
     public BIHTree(Mesh mesh) {
-        maxTrisPerNode = 21*99999999;
+        maxTrisPerNode = 21;
+        maxDepth = 100;
         tmpTrianglePositions = new float[9];
         loadMesh(mesh);
     }
     private int maxTrisPerNode;
+    private int maxDepth;
     private int[] trianglesIndices;
     private float[] trianglesPositions;
     private float[] tmpTrianglePositions;
@@ -54,11 +56,11 @@ public class BIHTree {
         }
 
         BoundingBox sceneBoundingBox = createBox(0, trianglesCount - 1);
-        root = createTreeItem(0, trianglesCount - 1, sceneBoundingBox);
+        root = createTreeItem(0, trianglesCount - 1, sceneBoundingBox, 0);
     }
 
-    private BIHTreeItem createTreeItem(int leftTriangleIndex, int rightTriangleIndex, BoundingBox sceneGridBoundingBox) {
-        if ((rightTriangleIndex - leftTriangleIndex) < maxTrisPerNode) {
+    private BIHTreeItem createTreeItem(int leftTriangleIndex, int rightTriangleIndex, BoundingBox sceneGridBoundingBox, int depth) {
+        if (((rightTriangleIndex - leftTriangleIndex) < maxTrisPerNode) || (depth > maxDepth)) {
             return new BIHLeaf(leftTriangleIndex, rightTriangleIndex);
         }
 
@@ -79,32 +81,29 @@ public class BIHTree {
 
         float split = sceneGridBoundingBox.getCenter().get(axis);
         int pivot = sortTriangles(leftTriangleIndex, rightTriangleIndex, split, axis);
-        /*TODO: Needed? if (pivot == leftTriangleIndex || pivot == rightTriangleIndex) {
-            pivot = (rightTriangleIndex + leftTriangleIndex) / 2;
-        }*/
 
         if (pivot < leftTriangleIndex) {
             BoundingBox rightSceneGridBoundingBox = new BoundingBox(sceneGridBoundingBox);
             rightSceneGridBoundingBox.setMin(axis, split);
-            return createTreeItem(leftTriangleIndex, rightTriangleIndex, rightSceneGridBoundingBox);
+            return createTreeItem(leftTriangleIndex, rightTriangleIndex, rightSceneGridBoundingBox, depth + 1);
         } else if (pivot > rightTriangleIndex) {
             BoundingBox leftSceneGridBoundingBox = new BoundingBox(sceneGridBoundingBox);
             leftSceneGridBoundingBox.setMax(axis, split);
-            return createTreeItem(leftTriangleIndex, rightTriangleIndex, leftSceneGridBoundingBox);
+            return createTreeItem(leftTriangleIndex, rightTriangleIndex, leftSceneGridBoundingBox, depth + 1);
         } else {
             // Left child
             BoundingBox leftBoundingBox = createBox(leftTriangleIndex, Math.max(leftTriangleIndex, pivot - 1));
             float leftPlane = leftBoundingBox.getMax().get(axis);
             BoundingBox leftSceneGridBoundingBox = new BoundingBox(sceneGridBoundingBox);
             leftSceneGridBoundingBox.setMax(axis, split);
-            BIHTreeItem leftChild = createTreeItem(leftTriangleIndex, Math.max(leftTriangleIndex, pivot - 1), leftSceneGridBoundingBox);
+            BIHTreeItem leftChild = createTreeItem(leftTriangleIndex, Math.max(leftTriangleIndex, pivot - 1), leftSceneGridBoundingBox, depth + 1);
 
             // Right child
             BoundingBox rightBoundingBox = createBox(pivot, rightTriangleIndex);
             float rightPlane = rightBoundingBox.getMin().get(axis);
             BoundingBox rightSceneGridBoundingBox = new BoundingBox(sceneGridBoundingBox);
             rightSceneGridBoundingBox.setMin(axis, split);
-            BIHTreeItem rightChild = createTreeItem(pivot, rightTriangleIndex, rightSceneGridBoundingBox);
+            BIHTreeItem rightChild = createTreeItem(pivot, rightTriangleIndex, rightSceneGridBoundingBox, depth + 1);
 
             return new BIHNode(axis, leftPlane, rightPlane, leftChild, rightChild);
         }
