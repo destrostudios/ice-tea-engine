@@ -1,5 +1,8 @@
 package com.destrostudios.icetea.core;
 
+import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
+import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.ShaderType;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
@@ -32,11 +35,13 @@ public abstract class Pipeline {
         shaderStageCreateInfo.pName(stack.UTF8("main"));
     }
 
-    protected long createShaderModule(Application application, ByteBuffer spirvCode) {
+    protected long createShaderModule(Shader shader, ShaderType shaderType, MaterialDescriptorSet materialDescriptorSet) {
         try (MemoryStack stack = stackPush()) {
+            ByteBuffer compiledShaderCode = application.getShaderManager().getCompiledShaderCode(shader, shaderType, materialDescriptorSet);
+
             VkShaderModuleCreateInfo shaderModuleCreateInfo = VkShaderModuleCreateInfo.callocStack(stack);
             shaderModuleCreateInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
-            shaderModuleCreateInfo.pCode(spirvCode);
+            shaderModuleCreateInfo.pCode(compiledShaderCode);
 
             LongBuffer pShaderModule = stack.mallocLong(1);
             if (vkCreateShaderModule(application.getLogicalDevice(), shaderModuleCreateInfo, null, pShaderModule) != VK_SUCCESS) {

@@ -12,6 +12,7 @@ import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.scene.Node;
+import com.destrostudios.icetea.core.shader.ShaderManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -65,6 +66,8 @@ public abstract class Application {
     private BufferManager bufferManager;
     @Getter
     private ImageManager imageManager;
+    @Getter
+    private ShaderManager shaderManager;
 
     @Getter
     private VkInstance instance;
@@ -132,6 +135,7 @@ public abstract class Application {
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
+        shaderManager = new ShaderManager();
         rootNode = new Node();
         sceneNode = new Node();
         rootNode.add(sceneNode);
@@ -544,6 +548,8 @@ public abstract class Application {
         glfwKeyCallback.free();
         glfwMouseButtonCallback.free();
         glfwCursorPosCallback.free();
+
+        shaderManager.cleanup();
 
         swapChain.cleanup();
 

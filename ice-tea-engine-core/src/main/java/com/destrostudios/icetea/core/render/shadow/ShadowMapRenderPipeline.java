@@ -5,7 +5,6 @@ import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.shader.SPIRV;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
@@ -34,9 +33,7 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             Material material = geometry.getMaterial();
 
             Shader vertexShader = new Shader("shaders/shadow.vert");
-            SPIRV vertShaderSPIRV = vertexShader.compile(ShaderType.VERTEX_SHADER, shadowMapGeometryRenderContext.getMaterialDescriptorSet());
-
-            long vertShaderModule = createShaderModule(application, vertShaderSPIRV.bytecode());
+            long vertShaderModule = createShaderModule(vertexShader, ShaderType.VERTEX_SHADER, shadowMapGeometryRenderContext.getMaterialDescriptorSet());
 
             VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(1, stack);
             ByteBuffer entryPoint = stack.UTF8("main");
@@ -148,8 +145,6 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             // ===> RELEASE RESOURCES <===
 
             vkDestroyShaderModule(application.getLogicalDevice(), vertShaderModule, null);
-
-            vertShaderSPIRV.free();
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.*;
-import com.destrostudios.icetea.core.shader.SPIRV;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
@@ -28,9 +27,7 @@ public class ComputePipeline extends Pipeline {
         try (MemoryStack stack = stackPush()) {
             ComputeAction referenceComputeAction = computeActionGroup.getComputeActions().get(0);
             Shader compShader = computeActionGroup.getComputeShader();
-            SPIRV compShaderSPIRV = compShader.compile(ShaderType.COMPUTE_SHADER, referenceComputeAction.getMaterialDescriptorSet());
-
-            long compShaderModule = createShaderModule(application, compShaderSPIRV.bytecode());
+            long compShaderModule = createShaderModule(compShader, ShaderType.COMPUTE_SHADER, referenceComputeAction.getMaterialDescriptorSet());
 
             VkPipelineShaderStageCreateInfo compShaderStageInfo = VkPipelineShaderStageCreateInfo.callocStack(stack);
             compShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
@@ -73,8 +70,6 @@ public class ComputePipeline extends Pipeline {
             // ===> RELEASE RESOURCES <===
 
             vkDestroyShaderModule(application.getLogicalDevice(), compShaderModule, null);
-
-            compShaderSPIRV.free();
         }
     }
 }

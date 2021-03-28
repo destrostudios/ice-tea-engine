@@ -6,10 +6,7 @@ import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.shader.SPIRV;
 import com.destrostudios.icetea.core.shader.ShaderType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -52,42 +49,37 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(shaderStagesCount, stack);
 
             int shaderStageIndex = 0;
-            LinkedList<ShaderCleanup> shaderCleanups = new LinkedList<>();
+            LinkedList<Long> shaderModules = new LinkedList<>();
 
-            SPIRV vertShaderSPIRV = material.getVertexShader().compile(ShaderType.VERTEX_SHADER, materialDescriptorSet);
-            long vertShaderModule = createShaderModule(application, vertShaderSPIRV.bytecode());
+            long vertShaderModule = createShaderModule(material.getVertexShader(), ShaderType.VERTEX_SHADER, materialDescriptorSet);
             createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
-            shaderCleanups.add(new ShaderCleanup(vertShaderSPIRV, vertShaderModule));
+            shaderModules.add(vertShaderModule);
             shaderStageIndex++;
 
             if (material.getTesselationControlShader() != null) {
-                SPIRV tesselationControlShaderSPIRV = material.getTesselationControlShader().compile(ShaderType.TESSELATION_CONTROL_SHADER, materialDescriptorSet);
-                long tesselationControlShaderModule = createShaderModule(application, tesselationControlShaderSPIRV.bytecode());
+                long tesselationControlShaderModule = createShaderModule(material.getTesselationControlShader(), ShaderType.TESSELATION_CONTROL_SHADER, materialDescriptorSet);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tesselationControlShaderModule, stack);
-                shaderCleanups.add(new ShaderCleanup(tesselationControlShaderSPIRV, tesselationControlShaderModule));
+                shaderModules.add(tesselationControlShaderModule);
                 shaderStageIndex++;
             }
 
             if (material.getTesselationEvaluationShader() != null) {
-                SPIRV tesselationEvaluationShaderSPIRV = material.getTesselationEvaluationShader().compile(ShaderType.TESSELATION_EVALUATION_SHADER, materialDescriptorSet);
-                long tesselationEvaluationShaderModule = createShaderModule(application, tesselationEvaluationShaderSPIRV.bytecode());
+                long tesselationEvaluationShaderModule = createShaderModule(material.getTesselationEvaluationShader(), ShaderType.TESSELATION_EVALUATION_SHADER, materialDescriptorSet);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tesselationEvaluationShaderModule, stack);
-                shaderCleanups.add(new ShaderCleanup(tesselationEvaluationShaderSPIRV, tesselationEvaluationShaderModule));
+                shaderModules.add(tesselationEvaluationShaderModule);
                 shaderStageIndex++;
             }
 
             if (material.getGeometryShader() != null) {
-                SPIRV geometryShaderSPIRV = material.getGeometryShader().compile(ShaderType.GEOMETRY_SHADER, materialDescriptorSet);
-                long geometryShaderModule = createShaderModule(application, geometryShaderSPIRV.bytecode());
+                long geometryShaderModule = createShaderModule(material.getGeometryShader(), ShaderType.GEOMETRY_SHADER, materialDescriptorSet);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_GEOMETRY_BIT, geometryShaderModule, stack);
-                shaderCleanups.add(new ShaderCleanup(geometryShaderSPIRV, geometryShaderModule));
+                shaderModules.add(geometryShaderModule);
                 shaderStageIndex++;
             }
 
-            SPIRV fragShaderSPIRV = material.getFragmentShader().compile(ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
-            long fragShaderModule = createShaderModule(application, fragShaderSPIRV.bytecode());
+            long fragShaderModule = createShaderModule(material.getFragmentShader(), ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
             createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule, stack);
-            shaderCleanups.add(new ShaderCleanup(fragShaderSPIRV, fragShaderModule));
+            shaderModules.add(fragShaderModule);
             shaderStageIndex++;
 
             // ===> VERTEX STAGE <===
@@ -224,17 +216,9 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 
             // ===> RELEASE RESOURCES <===
 
-            for (ShaderCleanup shaderCleanup : shaderCleanups) {
-                vkDestroyShaderModule(application.getLogicalDevice(), shaderCleanup.getShaderModule(), null);
-                shaderCleanup.getSpirv().free();
+            for (long shaderModule : shaderModules) {
+                vkDestroyShaderModule(application.getLogicalDevice(), shaderModule, null);
             }
         }
-    }
-
-    @AllArgsConstructor
-    @Getter
-    private static class ShaderCleanup {
-        private SPIRV spirv;
-        private long shaderModule;
     }
 }

@@ -3,7 +3,6 @@ package com.destrostudios.icetea.core.render.fullscreen;
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
-import com.destrostudios.icetea.core.shader.SPIRV;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
@@ -27,11 +26,8 @@ public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadR
             MaterialDescriptorSet materialDescriptorSet = renderJob.getMaterialDescriptorSet();
             Shader vertShader = new Shader("shaders/fullScreenQuad.vert");
             Shader fragShader = renderJob.getFragmentShader();
-            SPIRV vertShaderSPIRV = vertShader.compile(ShaderType.VERTEX_SHADER, materialDescriptorSet);
-            SPIRV fragShaderSPIRV = fragShader.compile(ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
-
-            long vertShaderModule = createShaderModule(application, vertShaderSPIRV.bytecode());
-            long fragShaderModule = createShaderModule(application, fragShaderSPIRV.bytecode());
+            long vertShaderModule = createShaderModule(vertShader, ShaderType.VERTEX_SHADER, materialDescriptorSet);
+            long fragShaderModule = createShaderModule(fragShader, ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
 
             VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(2, stack);
             ByteBuffer entryPoint = stack.UTF8("main");
@@ -163,9 +159,6 @@ public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadR
 
             vkDestroyShaderModule(application.getLogicalDevice(), vertShaderModule, null);
             vkDestroyShaderModule(application.getLogicalDevice(), fragShaderModule, null);
-
-            vertShaderSPIRV.free();
-            fragShaderSPIRV.free();
         }
     }
 }
