@@ -1,5 +1,6 @@
-package com.destrostudios.icetea.core;
+package com.destrostudios.icetea.core.texture;
 
+import com.destrostudios.icetea.core.Application;
 import lombok.Getter;
 
 import static org.lwjgl.vulkan.VK10.*;

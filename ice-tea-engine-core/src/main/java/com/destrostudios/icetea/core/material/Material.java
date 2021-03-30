@@ -2,7 +2,7 @@ package com.destrostudios.icetea.core.material;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.shader.Shader;
-import com.destrostudios.icetea.core.Texture;
+import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.data.UniformData;
 import lombok.Getter;
 import lombok.Setter;

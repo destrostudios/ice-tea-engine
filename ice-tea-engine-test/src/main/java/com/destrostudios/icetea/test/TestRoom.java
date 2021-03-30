@@ -1,11 +1,11 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.Application;
-import com.destrostudios.icetea.core.model.GltfModelLoader;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.filter.RadialBlurFilter;
 import com.destrostudios.icetea.core.filter.SepiaFilter;
 import com.destrostudios.icetea.core.light.DirectionalLight;
+import com.destrostudios.icetea.core.scene.Spatial;
 import org.joml.Vector3f;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -31,10 +31,10 @@ public class TestRoom extends Application {
 
         // Room
 
-        Node nodeRoom = new GltfModelLoader("models/room.gltf").load();
+        Spatial room = assetManager.loadModel("models/room.gltf");
 
         Node nodeRoomWrapper = new Node();
-        nodeRoomWrapper.add(nodeRoom);
+        nodeRoomWrapper.add(room);
         nodeRoomWrapper.move(new Vector3f(0, 0, 0));
         nodeRoomWrapper.scale(new Vector3f(2, 2, 2));
         sceneNode.add(nodeRoomWrapper);

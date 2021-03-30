@@ -1,29 +1,31 @@
-package com.destrostudios.icetea.core;
+package com.destrostudios.icetea.core.texture;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
 import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class FileTexture extends Texture {
+public class BufferedTexture extends Texture {
 
-    public FileTexture(String filePath) {
-        this.filePath = filePath;
+    public BufferedTexture(ByteBuffer pixels, int width, int height, int channels) {
+        this.pixels = pixels;
+        this.width = width;
+        this.height = height;
+        this.channels = channels;
     }
-    private String filePath;
+    private ByteBuffer pixels;
+    private int width;
+    private int height;
+    private int channels;
     private int mipLevels;
 
     @Override
@@ -36,28 +38,8 @@ public class FileTexture extends Texture {
 
     private void initImage() {
         try (MemoryStack stack = stackPush()) {
-            IntBuffer pWidth = stack.mallocInt(1);
-            IntBuffer pHeight = stack.mallocInt(1);
-            IntBuffer pChannels = stack.mallocInt(1);
-
-            ByteBuffer pixels = null;
-            try {
-                InputStream inputStream = getSystemClassLoader().getResourceAsStream(filePath);
-                byte[] imageData = inputStream.readAllBytes();
-                ByteBuffer imageBuffer = BufferUtils.createByteBuffer(imageData.length);
-                imageBuffer.put(imageData);
-                imageBuffer.flip();
-                pixels = stbi_load_from_memory(imageBuffer, pWidth, pHeight, pChannels, STBI_rgb_alpha);
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-            if (pixels == null) {
-                throw new RuntimeException("Failed to load texture '" + filePath + "'");
-            }
-
-            long imageSize = pWidth.get(0) * pHeight.get(0) * 4; // pChannels.get(0);
-
-            mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(pWidth.get(0), pHeight.get(0)))) + 1);
+            long imageSize = width * height * 4; // channels
+            mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(width, height))) + 1);
 
             LongBuffer pStagingBuffer = stack.mallocLong(1);
             LongBuffer pStagingBufferMemory = stack.mallocLong(1);
@@ -79,8 +61,8 @@ public class FileTexture extends Texture {
             LongBuffer pTextureImage = stack.mallocLong(1);
             LongBuffer pTextureImageMemory = stack.mallocLong(1);
             application.getImageManager().createImage(
-                pWidth.get(0),
-                pHeight.get(0),
+                width,
+                height,
                 mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
                 VK_FORMAT_R8G8B8A8_SRGB,
@@ -102,13 +84,13 @@ public class FileTexture extends Texture {
                 mipLevels
             );
 
-            application.getImageManager().copyBufferToImage(pStagingBuffer.get(0), image, pWidth.get(0), pHeight.get(0));
+            application.getImageManager().copyBufferToImage(pStagingBuffer.get(0), image, width, height);
 
             application.getImageManager().generateMipmaps(
                 image,
                 VK_FORMAT_R8G8B8A8_SRGB,
-                pWidth.get(0),
-                pHeight.get(0),
+                width,
+                height,
                 mipLevels,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 VK_ACCESS_SHADER_READ_BIT,

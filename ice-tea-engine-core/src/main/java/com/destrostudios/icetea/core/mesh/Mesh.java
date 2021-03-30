@@ -7,8 +7,6 @@ import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.UniformValue;
-import com.destrostudios.icetea.core.model.ObjModel;
-import com.destrostudios.icetea.core.model.ObjLoader;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -18,12 +16,10 @@ import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkFreeMemory;
@@ -54,33 +50,6 @@ public class Mesh {
     @Getter
     private BoundingBox bounds;
     private BIHTree collisionTree;
-
-    public void loadObjModel(String filePath) {
-        InputStream inputStream = getSystemClassLoader().getResourceAsStream(filePath);
-        ObjModel objModel = ObjLoader.loadModel(inputStream);
-
-        int vertexCount = objModel.getPositions().size();
-        vertices = new VertexData[vertexCount];
-        Vector3f color = new Vector3f(1, 1, 1);
-        for (int i = 0; i < vertexCount; i++) {
-            VertexData vertex = new VertexData();
-            vertex.setVector3f("modelSpaceVertexPosition", objModel.getPositions().get(i));
-            vertex.setVector3f("vertexColor", color);
-            if (objModel.getTexCoords() != null) {
-                vertex.setVector2f("vertexTexCoord", objModel.getTexCoords().get(i));
-            }
-            if (objModel.getNormals() != null) {
-                vertex.setVector3f("vertexNormal", objModel.getNormals().get(i));
-            }
-            vertices[i] = vertex;
-        }
-        updateBounds();
-
-        indices = new int[objModel.getIndices().size()];
-        for (int i = 0; i < indices.length; i++) {
-            indices[i] = objModel.getIndices().get(i);
-        }
-    }
 
     public void updateBounds() {
         // TODO: Introduce TempVars

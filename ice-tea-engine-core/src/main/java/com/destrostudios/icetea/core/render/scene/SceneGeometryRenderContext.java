@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.render.scene;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
@@ -9,6 +8,7 @@ import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
 import com.destrostudios.icetea.core.light.Light;
+import com.destrostudios.icetea.core.texture.Texture;
 
 import java.util.List;
 import java.util.Map;

@@ -12,6 +12,7 @@ import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
+import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.joml.Matrix4f;

@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.material.descriptor;
 
-import com.destrostudios.icetea.core.Texture;
+import com.destrostudios.icetea.core.texture.Texture;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 

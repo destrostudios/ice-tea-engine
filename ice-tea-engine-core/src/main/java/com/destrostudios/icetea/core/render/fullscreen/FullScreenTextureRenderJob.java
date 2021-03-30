@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
 import com.destrostudios.icetea.core.shader.Shader;
-import com.destrostudios.icetea.core.Texture;
+import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.material.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.material.descriptor.SimpleTextureDescriptorLayout;
 

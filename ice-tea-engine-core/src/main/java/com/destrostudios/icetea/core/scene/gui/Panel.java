@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.scene.gui;
 
-import com.destrostudios.icetea.core.Texture;
+import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Quad;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;

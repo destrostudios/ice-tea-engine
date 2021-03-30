@@ -1,58 +1,40 @@
-package com.destrostudios.icetea.core.model;
+package com.destrostudios.icetea.core.asset.loader;
 
-import com.destrostudios.icetea.core.FileTexture;
+import com.destrostudios.icetea.core.asset.AssetLoader;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.util.LowEndianUtil;
+import com.destrostudios.icetea.core.scene.Geometry;
+import com.destrostudios.icetea.core.scene.Node;
+import com.destrostudios.icetea.core.scene.Spatial;
 import com.destrostudios.icetea.core.shader.Shader;
-import com.destrostudios.icetea.core.Texture;
-import com.destrostudios.icetea.core.scene.*;
+import com.destrostudios.icetea.core.util.LowEndianUtil;
 import de.javagl.jgltf.model.*;
 import de.javagl.jgltf.model.io.GltfModelReader;
-import org.joml.*;
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 
-import java.io.*;
-import java.util.HashMap;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import static java.lang.ClassLoader.getSystemClassLoader;
 
-public class GltfModelLoader {
+public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
 
-    public GltfModelLoader(String filePath) {
-        this(filePath, new GltfModelLoaderSettings());
-    }
-
-    public GltfModelLoader(String filePath, GltfModelLoaderSettings settings) {
-        this(getSystemClassLoader().getResourceAsStream(filePath), settings);
-    }
-
-    public GltfModelLoader(InputStream inputStream, GltfModelLoaderSettings settings) {
-        this.inputStream = inputStream;
-        this.settings = settings;
-        this.textures = new HashMap<>();
-    }
-    private InputStream inputStream;
-    private GltfModelLoaderSettings settings;
     private GltfModel gltfModel;
-    private Node rootNode;
-    private HashMap<String, Texture> textures;
 
-    public Node load() {
-        try {
-            GltfModelReader gltfModelReader = new GltfModelReader();
-            gltfModel = gltfModelReader.readWithoutReferences(inputStream);
-            loadScenes();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        return rootNode;
+    @Override
+    public Node load(InputStream inputStream) throws IOException {
+        gltfModel = new GltfModelReader().readWithoutReferences(inputStream);
+        return loadScenes();
     }
 
-    private void loadScenes() {
-        rootNode = new Node();
+    private Node loadScenes() {
+        Node rootNode = new Node();
         for (SceneModel sceneModel : gltfModel.getSceneModels()) {
             Node sceneNode = new Node();
             for (NodeModel nodeModel : sceneModel.getNodeModels()) {
@@ -61,6 +43,7 @@ public class GltfModelLoader {
             }
             rootNode.add(sceneNode);
         }
+        return rootNode;
     }
 
     private Node loadNode(NodeModel nodeModel) {
@@ -228,8 +211,7 @@ public class GltfModelLoader {
         int baseColorTextureIndex = (int) materialModel.getValues().get("baseColorTexture");
         TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
         String textureFilePath = "models/" + baseColorTextureModel.getImageModel().getUri();
-        Texture texture = textures.computeIfAbsent(textureFilePath, FileTexture::new);
-        material.setTexture("diffuseMap", texture);
+        material.setTexture("diffuseMap", assetManager.loadTexture(textureFilePath));
         return material;
     }
 }

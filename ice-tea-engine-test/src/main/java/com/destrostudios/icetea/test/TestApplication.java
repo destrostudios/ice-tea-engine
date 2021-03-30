@@ -9,11 +9,11 @@ import com.destrostudios.icetea.core.filter.*;
 import com.destrostudios.icetea.core.light.*;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
-import com.destrostudios.icetea.core.model.GltfModelLoader;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.scene.gui.Panel;
 import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.water.*;
 import org.joml.*;
 
@@ -76,13 +76,13 @@ public class TestApplication extends Application {
         panel1 = new Panel();
         panel1.move(new Vector3f(50, 50, 0));
         panel1.scale(new Vector3f(200, 140, 1));
-        panel1.setBackground(new FileTexture("textures/icetea1.png"));
+        panel1.setBackground(assetManager.loadTexture("textures/icetea1.png"));
         guiNode.add(panel1);
 
         Panel panel2 = new Panel();
         panel2.move(new Vector3f(75, 75, 0));
         panel2.scale(new Vector3f(200, 130, 0));
-        panel2.setBackground(new FileTexture("textures/icetea2.png"));
+        panel2.setBackground(assetManager.loadTexture("textures/icetea2.png"));
         guiNode.add(panel2);
 
         // Water
@@ -109,15 +109,14 @@ public class TestApplication extends Application {
 
         // Chalet
 
-        Mesh meshChalet = new Mesh();
-        meshChalet.loadObjModel("models/chalet.obj");
+        Mesh meshChalet = assetManager.loadMesh("models/chalet.obj");
         meshChalet.generateNormals();
         meshChalet.loadCollisionTree(); // Preload to avoid lag later on
 
         Material materialChalet = new Material();
         materialChalet.setVertexShader(vertexShaderDefault);
         materialChalet.setFragmentShader(fragShaderDefault);
-        Texture textureChalet = new FileTexture("textures/chalet.jpg");
+        Texture textureChalet = assetManager.loadTexture("textures/chalet.jpg");
         materialChalet.setTexture("diffuseMap", textureChalet);
 
         geometryChalet1 = new Geometry();
@@ -148,13 +147,12 @@ public class TestApplication extends Application {
 
         // Trees
 
-        Mesh meshTrees = new Mesh();
-        meshTrees.loadObjModel("models/trees.obj");
+        Mesh meshTrees = assetManager.loadMesh("models/trees.obj");
 
         Material materialTrees = new Material();
         materialTrees.setVertexShader(vertexShaderDefault);
         materialTrees.setFragmentShader(fragShaderDefault);
-        Texture textureTree = new FileTexture("textures/trees.jpg");
+        Texture textureTree = assetManager.loadTexture("textures/trees.jpg");
         materialTrees.setTexture("diffuseMap", textureTree);
         materialTrees.getParameters().setVector4f("color", new Vector4f(0, 0, 1, 1));
 
@@ -167,15 +165,14 @@ public class TestApplication extends Application {
 
         // Dennis
 
-        Mesh meshDennis = new Mesh();
-        meshDennis.loadObjModel("models/dennis.obj");
+        Mesh meshDennis = assetManager.loadMesh("models/dennis.obj");
         meshDennis.init(this); // Preload to avoid lag later on
         meshDennis.loadCollisionTree(); // Preload to avoid lag later on
 
         Material materialDennis = new Material();
         materialDennis.setVertexShader(vertexShaderDefault);
         materialDennis.setFragmentShader(fragShaderDefault);
-        FileTexture textureDennis = new FileTexture("textures/dennis.jpg");
+        Texture textureDennis =assetManager.loadTexture("textures/dennis.jpg");
         textureDennis.init(this); // Preload to avoid lag later on
         materialDennis.setTexture("diffuseMap", textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
@@ -188,7 +185,7 @@ public class TestApplication extends Application {
 
         // Duck
 
-        Node nodeDuck = new GltfModelLoader("models/duck.gltf").load();
+        Node nodeDuck = (Node) assetManager.loadModel("models/duck.gltf");
         nodeDuck.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
         nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1)));
 
@@ -200,8 +197,7 @@ public class TestApplication extends Application {
 
         // Sky
 
-        Mesh meshSky = new Mesh();
-        meshSky.loadObjModel("models/dome.obj");
+        Mesh meshSky = assetManager.loadMesh("models/dome.obj");
         for (int i = 0; i< meshSky.getVertices().length; i++) {
             VertexData vertex = meshSky.getVertices()[i];
             Vector3f position = vertex.getVector3f("modelSpaceVertexPosition");
@@ -226,13 +222,12 @@ public class TestApplication extends Application {
 
         // Knot
 
-        Mesh meshKnot = new Mesh();
-        meshKnot.loadObjModel("models/knot.obj");
+        Mesh meshKnot = assetManager.loadMesh("models/knot.obj");
 
         Material materialKnot = new Material();
         materialKnot.setVertexShader(vertexShaderDefault);
         materialKnot.setFragmentShader(fragShaderDefault);
-        Texture textureKnot = new FileTexture("textures/chalet.jpg");
+        Texture textureKnot = assetManager.loadTexture("textures/chalet.jpg");
         materialKnot.setTexture("diffuseMap", textureKnot);
         materialKnot.getParameters().setVector4f("color", new Vector4f(0, 1, 0, 1));
 

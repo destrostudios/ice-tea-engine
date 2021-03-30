@@ -2,7 +2,7 @@ package com.destrostudios.icetea.core.render;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.Texture;
+import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;

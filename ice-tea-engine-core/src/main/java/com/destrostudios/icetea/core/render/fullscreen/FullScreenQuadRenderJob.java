@@ -7,6 +7,7 @@ import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
