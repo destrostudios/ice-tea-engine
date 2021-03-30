@@ -42,7 +42,7 @@ public class TestRoom extends Application {
         RadialBlurFilter radialBlurFilter = new RadialBlurFilter();
         SepiaFilter sepiaFilter = new SepiaFilter();
 
-        addKeyListener(keyEvent -> {
+        inputManager.addKeyListener(keyEvent -> {
             // Add/Remove filters
             switch (keyEvent.getKey()) {
                 case GLFW_KEY_1:

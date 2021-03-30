@@ -266,7 +266,7 @@ public class TestApplication extends Application {
 
         // Inputs
 
-        addKeyListener(keyEvent -> {
+        inputManager.addKeyListener(keyEvent -> {
             // Add/Remove filters
             switch (keyEvent.getKey()) {
                 case GLFW_KEY_1:
@@ -330,10 +330,10 @@ public class TestApplication extends Application {
                 }
             }
         });
-        addMouseButtonListener(mouseButtonEvent -> {
+        inputManager.addMouseButtonListener(mouseButtonEvent -> {
             if (mouseButtonEvent.getAction() == GLFW_PRESS) {
-                Vector3f worldCoordinatesFront = getWorldCoordinates(sceneCamera, getCursorPosition(), 0);
-                Vector3f worldCoordinatesBack = getWorldCoordinates(sceneCamera, getCursorPosition(), 1);
+                Vector3f worldCoordinatesFront = getWorldCoordinates(sceneCamera, inputManager.getCursorPosition(), 0);
+                Vector3f worldCoordinatesBack = getWorldCoordinates(sceneCamera, inputManager.getCursorPosition(), 1);
                 Vector3f rayDirection = worldCoordinatesBack.sub(worldCoordinatesFront, new Vector3f());
 
                 ArrayList<CollisionResult> collisionResults = new ArrayList<>();

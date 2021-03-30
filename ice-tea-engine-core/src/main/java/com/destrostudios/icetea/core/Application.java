@@ -5,10 +5,7 @@ import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.filter.Filter;
-import com.destrostudios.icetea.core.input.KeyEvent;
-import com.destrostudios.icetea.core.input.KeyListener;
-import com.destrostudios.icetea.core.input.MouseButtonEvent;
-import com.destrostudios.icetea.core.input.MouseButtonListener;
+import com.destrostudios.icetea.core.input.*;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
@@ -21,9 +18,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFWCursorPosCallback;
-import org.lwjgl.glfw.GLFWKeyCallback;
-import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -70,6 +64,8 @@ public abstract class Application {
     @Getter
     private ShaderManager shaderManager;
     @Getter
+    protected InputManager inputManager;
+    @Getter
     protected AssetManager assetManager;
 
     @Getter
@@ -101,13 +97,6 @@ public abstract class Application {
     @Getter
     private SwapChain swapChain;
     private boolean commandBuffersOutdated;
-    private GLFWKeyCallback glfwKeyCallback;
-    private GLFWMouseButtonCallback glfwMouseButtonCallback;
-    private GLFWCursorPosCallback glfwCursorPosCallback;
-    private List<KeyListener> keyListeners;
-    private List<MouseButtonListener> mouseButtonListeners;
-    @Getter
-    private Vector2f cursorPosition;
     protected float time;
 
     @Getter
@@ -139,6 +128,7 @@ public abstract class Application {
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
         shaderManager = new ShaderManager();
+        inputManager = new InputManager(this);
         assetManager = new AssetManager();
         rootNode = new Node();
         sceneNode = new Node();
@@ -153,9 +143,8 @@ public abstract class Application {
         initLogicalDevice();
         initCommandPool();
         initSwapChain();
-        initKeyListeners();
-        initMouseListeners();
         initCameras();
+        inputManager.init();
         initScene();
         initSyncObjects();
     }
@@ -290,41 +279,6 @@ public abstract class Application {
         bucketRenderer.init(this);
     }
 
-    private void initKeyListeners() {
-        keyListeners = new LinkedList<>();
-        glfwKeyCallback = new GLFWKeyCallback() {
-
-            @Override
-            public void invoke(long window, int key, int scanCode, int action, int modifiers) {
-                keyListeners.forEach(keyListener -> keyListener.onKeyEvent(new KeyEvent(key, scanCode, action, modifiers)));
-            }
-        };
-        glfwSetKeyCallback(window, glfwKeyCallback);
-    }
-
-    private void initMouseListeners() {
-        // Buttons
-        mouseButtonListeners = new LinkedList<>();
-        glfwMouseButtonCallback = new GLFWMouseButtonCallback() {
-
-            @Override
-            public void invoke(long window, int button, int action, int mods) {
-                mouseButtonListeners.forEach(mouseButtonListener -> mouseButtonListener.onMouseButtonEvent(new MouseButtonEvent(button, action, mods)));
-            }
-        };
-        glfwSetMouseButtonCallback(window, glfwMouseButtonCallback);
-        // Position
-        cursorPosition = new Vector2f();
-        glfwCursorPosCallback = new GLFWCursorPosCallback() {
-
-            @Override
-            public void invoke(long window, double xpos, double ypos) {
-                cursorPosition.set(xpos, ypos);
-            }
-        };
-        glfwSetCursorPosCallback(window, glfwCursorPosCallback);
-    }
-
     private void initCameras() {
         sceneCamera.init(this);
         sceneCamera.setFieldOfViewY((float) Math.toRadians(45));
@@ -377,22 +331,6 @@ public abstract class Application {
             }
         }
         throw new RuntimeException("Failed to find suitable memory type");
-    }
-
-    public void addKeyListener(KeyListener keyListener) {
-        keyListeners.add(keyListener);
-    }
-
-    public void removeKeyListener(KeyListener keyListener) {
-        keyListeners.remove(keyListener);
-    }
-
-    public void addMouseButtonListener(MouseButtonListener mouseButtonListener) {
-        mouseButtonListeners.add(mouseButtonListener);
-    }
-
-    public void removeMouseButtonListener(MouseButtonListener mouseButtonListener) {
-        mouseButtonListeners.remove(mouseButtonListener);
     }
 
     public void setLight(Light light) {
@@ -549,9 +487,7 @@ public abstract class Application {
     }
 
     private void cleanup() {
-        glfwKeyCallback.free();
-        glfwMouseButtonCallback.free();
-        glfwCursorPosCallback.free();
+        inputManager.cleanup();
 
         shaderManager.cleanup();
 
