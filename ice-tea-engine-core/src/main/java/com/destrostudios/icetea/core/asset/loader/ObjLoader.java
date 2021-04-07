@@ -75,11 +75,9 @@ public class ObjLoader extends AssetLoader<Mesh, Void> {
     private Mesh createMesh() {
         int vertexCount = positionsList.size();
         VertexData[] vertices = new VertexData[vertexCount];
-        Vector3f color = new Vector3f(1, 1, 1);
         for (int i = 0; i < vertexCount; i++) {
             VertexData vertex = new VertexData();
-            vertex.setVector3f("modelSpaceVertexPosition", positionsList.get(i));
-            vertex.setVector3f("vertexColor", color);
+            vertex.setVector3f("vertexPosition", positionsList.get(i));
             if (texCoordsList != null) {
                 vertex.setVector2f("vertexTexCoord", texCoordsList.get(i));
             }

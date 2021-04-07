@@ -198,9 +198,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
 
             float[] positionArray = (float[]) positionIterator.next();
             Vector3f position = new Vector3f(positionArray[0], positionArray[1], positionArray[2]);
-            vertex.setVector3f("modelSpaceVertexPosition", position);
-
-            vertex.setVector3f("vertexColor", new Vector3f(1, 1, 1));
+            vertex.setVector3f("vertexPosition", position);
 
             if (texCoordIterator.hasNext()) {
                 float[] texCoordArray = (float[]) texCoordIterator.next();
@@ -217,9 +215,6 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             if (jointsIterator.hasNext()) {
                 int[] jointsArray = (int[]) jointsIterator.next();
                 Vector4f jointsIndices = new Vector4f(jointsArray[0], jointsArray[1], jointsArray[2], jointsArray[3]);
-                // FIXME: Currently we need to add empty texCoord+normal for the animated testmodel as the locations in the shader are hardcoded - Will and has to be dynamic in the future
-                vertex.setVector2f("vertexTexCoord", new Vector2f());
-                vertex.setVector3f("vertexNormal", new Vector3f());
                 vertex.setVector4f("jointsIndices", jointsIndices);
             }
 

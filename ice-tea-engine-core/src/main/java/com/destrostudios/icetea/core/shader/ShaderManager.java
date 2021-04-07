@@ -1,7 +1,5 @@
 package com.destrostudios.icetea.core.shader;
 
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -22,12 +20,12 @@ public class ShaderManager {
     private LinkedHashMap<String, SPIRV> spirvCache;
     private int maximumCachedSPIRVs;
 
-    public ByteBuffer getCompiledShaderCode(Shader shader, ShaderType shaderType, MaterialDescriptorSet materialDescriptorSet) {
-        String combinedSource = getCombinedShaderSource(shader, materialDescriptorSet);
+    public ByteBuffer getCompiledShaderCode(Shader shader, ShaderType shaderType, String additionalDeclarations) {
+        String combinedSource = getCombinedShaderSource(shader, additionalDeclarations);
         return getOrCompileShaderSource(shader.getFilePath(), combinedSource, shaderType);
     }
 
-    private String getCombinedShaderSource(Shader shader, MaterialDescriptorSet materialDescriptorSet) {
+    private String getCombinedShaderSource(Shader shader, String additionalDeclarations) {
         String combinedSource = "";
         String[] shaderSourceLines = getShaderSource(shader.getFilePath()).split("\n");
         boolean addDeclarations = true;
@@ -37,7 +35,7 @@ public class ShaderManager {
                 for (String shaderNode : shader.getRequiredShaderNodes()) {
                     combinedSource += getShaderSource("shaders/nodes/" + shaderNode + ".glsllib") + "\n\n";
                 }
-                combinedSource += materialDescriptorSet.getShaderDeclaration();
+                combinedSource += additionalDeclarations;
                 addDeclarations = false;
             }
             combinedSource += shaderSourceLine + "\n";

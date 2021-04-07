@@ -34,6 +34,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             Material material = geometry.getMaterial();
 
             MaterialDescriptorSet materialDescriptorSet = sceneGeometryRenderContext.getMaterialDescriptorSet();
+            String materialDescriptorSetShaderDeclaration = materialDescriptorSet.getShaderDeclaration();
 
             int shaderStagesCount = 2;
             if (material.getTesselationControlShader() != null) {
@@ -51,33 +52,33 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             int shaderStageIndex = 0;
             LinkedList<Long> shaderModules = new LinkedList<>();
 
-            long vertShaderModule = createShaderModule(material.getVertexShader(), ShaderType.VERTEX_SHADER, materialDescriptorSet);
+            long vertShaderModule = createShaderModule_Vertex(material.getVertexShader(), materialDescriptorSetShaderDeclaration, mesh);
             createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
             shaderModules.add(vertShaderModule);
             shaderStageIndex++;
 
             if (material.getTesselationControlShader() != null) {
-                long tesselationControlShaderModule = createShaderModule(material.getTesselationControlShader(), ShaderType.TESSELATION_CONTROL_SHADER, materialDescriptorSet);
+                long tesselationControlShaderModule = createShaderModule(material.getTesselationControlShader(), ShaderType.TESSELATION_CONTROL_SHADER, materialDescriptorSetShaderDeclaration);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tesselationControlShaderModule, stack);
                 shaderModules.add(tesselationControlShaderModule);
                 shaderStageIndex++;
             }
 
             if (material.getTesselationEvaluationShader() != null) {
-                long tesselationEvaluationShaderModule = createShaderModule(material.getTesselationEvaluationShader(), ShaderType.TESSELATION_EVALUATION_SHADER, materialDescriptorSet);
+                long tesselationEvaluationShaderModule = createShaderModule(material.getTesselationEvaluationShader(), ShaderType.TESSELATION_EVALUATION_SHADER, materialDescriptorSetShaderDeclaration);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tesselationEvaluationShaderModule, stack);
                 shaderModules.add(tesselationEvaluationShaderModule);
                 shaderStageIndex++;
             }
 
             if (material.getGeometryShader() != null) {
-                long geometryShaderModule = createShaderModule(material.getGeometryShader(), ShaderType.GEOMETRY_SHADER, materialDescriptorSet);
+                long geometryShaderModule = createShaderModule(material.getGeometryShader(), ShaderType.GEOMETRY_SHADER, materialDescriptorSetShaderDeclaration);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_GEOMETRY_BIT, geometryShaderModule, stack);
                 shaderModules.add(geometryShaderModule);
                 shaderStageIndex++;
             }
 
-            long fragShaderModule = createShaderModule(material.getFragmentShader(), ShaderType.FRAGMENT_SHADER, materialDescriptorSet);
+            long fragShaderModule = createShaderModule(material.getFragmentShader(), ShaderType.FRAGMENT_SHADER, materialDescriptorSetShaderDeclaration);
             createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule, stack);
             shaderModules.add(fragShaderModule);
             shaderStageIndex++;
@@ -86,8 +87,8 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.callocStack(stack);
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-            vertexInputInfo.pVertexBindingDescriptions(getBindingDescriptions(geometry.getMesh()));
-            vertexInputInfo.pVertexAttributeDescriptions(getAttributeDescriptions(geometry.getMesh()));
+            vertexInputInfo.pVertexBindingDescriptions(getVertexBindingDescriptions(mesh));
+            vertexInputInfo.pVertexAttributeDescriptions(getVertexAttributeDescriptions(mesh));
 
             // ===> ASSEMBLY STAGE <===
 

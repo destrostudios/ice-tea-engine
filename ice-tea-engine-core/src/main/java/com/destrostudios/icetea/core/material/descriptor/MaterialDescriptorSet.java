@@ -116,12 +116,12 @@ public class MaterialDescriptorSet {
     }
 
     public String getShaderDeclaration() {
-        String definition = "";
+        String text = "";
         int bindingIndex = 0;
         for (MaterialDescriptor descriptor : descriptors) {
-            definition += descriptor.getShaderDeclaration(bindingIndex) + "\n\n";
+            text += descriptor.getShaderDeclaration(bindingIndex) + "\n\n";
             bindingIndex++;
         }
-        return definition;
+        return text;
     }
 }

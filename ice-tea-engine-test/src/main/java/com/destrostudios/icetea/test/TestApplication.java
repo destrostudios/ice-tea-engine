@@ -213,7 +213,7 @@ public class TestApplication extends Application {
         Mesh meshSky = assetManager.loadMesh("models/dome.obj");
         for (int i = 0; i< meshSky.getVertices().length; i++) {
             VertexData vertex = meshSky.getVertices()[i];
-            Vector3f position = vertex.getVector3f("modelSpaceVertexPosition");
+            Vector3f position = vertex.getVector3f("vertexPosition");
             vertex.setVector2f("vertexTexCoord", new Vector2f((position.x() + 1) * 0.5f, (position.z() + 1) * 0.5f));
         }
 

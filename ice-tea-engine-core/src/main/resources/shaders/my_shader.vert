@@ -1,27 +1,21 @@
 #version 450
 
-layout(location = 0) in vec3 modelSpaceVertexPosition;
-layout(location = 2) in vec2 modelSpaceVertexTexCoord;
-layout(location = 3) in vec3 modelSpaceVertexNormal;
-layout(location = 4) in vec4 jointsIndices;
-layout(location = 5) in vec4 jointsWeights;
-
-layout(location = 0) out vec2 vertexTexCoord;
+layout(location = 0) out vec2 outVertexTexCoord;
 layout(location = 1) out LightVertexInfo lightVertexInfo;
 layout(location = 4) out vec4 shadowMapPosition;
 
 void main() {
-    vec4 meshPosition = vec4(modelSpaceVertexPosition, 1);
+    vec4 modelSpacePosition = vec4(vertexPosition, 1);
 
     #ifdef SKELETON_JOINTMATRICES
         mat4 skinMatrix = (jointsWeights.x * skeleton.jointMatrices[int(jointsIndices.x)])
                         + (jointsWeights.y * skeleton.jointMatrices[int(jointsIndices.y)])
                         + (jointsWeights.z * skeleton.jointMatrices[int(jointsIndices.z)])
                         + (jointsWeights.w * skeleton.jointMatrices[int(jointsIndices.w)]);
-        meshPosition = skinMatrix * meshPosition;
+        modelSpacePosition = skinMatrix * modelSpacePosition;
     #endif
 
-    vec4 worldPosition = geometry.model * meshPosition;
+    vec4 worldPosition = geometry.model * modelSpacePosition;
     gl_Position = camera.proj * camera.view * worldPosition;
 
     #ifdef CAMERA_CLIPPLANE
@@ -30,15 +24,19 @@ void main() {
         }
     #endif
 
-    vertexTexCoord = modelSpaceVertexTexCoord;
+    #ifdef VERTEX_VERTEXTEXCOORD
+        outVertexTexCoord = vertexTexCoord;
+    #endif
 
-    #ifdef LIGHT_DIRECTION
-        lightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, modelSpaceVertexPosition, modelSpaceVertexNormal, light.direction);
-    #elif LIGHT_TRANSLATION
-        lightVertexInfo = shaderNode_light_getVertexInfo_SpotLight(camera.view, geometry.model, modelSpaceVertexPosition, modelSpaceVertexNormal, light.translation);
+    #ifdef VERTEX_VERTEXNORMAL
+        #ifdef LIGHT_DIRECTION
+            lightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vertexPosition, vertexNormal, light.direction);
+        #elif LIGHT_TRANSLATION
+            lightVertexInfo = shaderNode_light_getVertexInfo_SpotLight(camera.view, geometry.model, vertexPosition, vertexNormal, light.translation);
+        #endif
     #endif
 
     #ifdef SHADOWMAPLIGHT
-        shadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, geometry.model, modelSpaceVertexPosition);
+        shadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, geometry.model, vertexPosition);
     #endif
 }

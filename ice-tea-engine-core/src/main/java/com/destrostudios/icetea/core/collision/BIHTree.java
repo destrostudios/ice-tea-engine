@@ -37,19 +37,19 @@ public class BIHTree {
         int positionIndex = 0;
         for (int i = 0; i < indicesCount; i += 3) {
             int index = mesh.getIndices()[i];
-            Vector3f position = mesh.getVertices()[index].getVector3f("modelSpaceVertexPosition");
+            Vector3f position = mesh.getVertices()[index].getVector3f("vertexPosition");
             trianglesPositions[positionIndex++] = position.x();
             trianglesPositions[positionIndex++] = position.y();
             trianglesPositions[positionIndex++] = position.z();
 
             index = mesh.getIndices()[i + 1];
-            position = mesh.getVertices()[index].getVector3f("modelSpaceVertexPosition");
+            position = mesh.getVertices()[index].getVector3f("vertexPosition");
             trianglesPositions[positionIndex++] = position.x();
             trianglesPositions[positionIndex++] = position.y();
             trianglesPositions[positionIndex++] = position.z();
 
             index = mesh.getIndices()[i + 2];
-            position = mesh.getVertices()[index].getVector3f("modelSpaceVertexPosition");
+            position = mesh.getVertices()[index].getVector3f("vertexPosition");
             trianglesPositions[positionIndex++] = position.x();
             trianglesPositions[positionIndex++] = position.y();
             trianglesPositions[positionIndex++] = position.z();

@@ -47,7 +47,7 @@ public class Grid extends Mesh {
 
     private VertexData createVertex(Vector3f position) {
         VertexData vertex = new VertexData();
-        vertex.setVector3f("modelSpaceVertexPosition", position);
+        vertex.setVector3f("vertexPosition", position);
         return vertex;
     }
 }

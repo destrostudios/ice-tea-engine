@@ -56,7 +56,7 @@ public class Mesh {
         Vector3f min = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
         Vector3f max = new Vector3f(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
         for (VertexData vertex : vertices) {
-            MathUtil.updateMinMax(min, max, vertex.getVector3f("modelSpaceVertexPosition"));
+            MathUtil.updateMinMax(min, max, vertex.getVector3f("vertexPosition"));
         }
         bounds.setMinMax(min, max);
     }
@@ -68,8 +68,8 @@ public class Mesh {
             VertexData v2 = vertices[indices[i + 1]];
             VertexData v3 = vertices[indices[i + 2]];
 
-            Vector3f edge1 = v2.getVector3f("modelSpaceVertexPosition").sub(v1.getVector3f("modelSpaceVertexPosition"), new Vector3f());
-            Vector3f edge2 = v3.getVector3f("modelSpaceVertexPosition").sub(v1.getVector3f("modelSpaceVertexPosition"), new Vector3f());
+            Vector3f edge1 = v2.getVector3f("vertexPosition").sub(v1.getVector3f("vertexPosition"), new Vector3f());
+            Vector3f edge2 = v3.getVector3f("vertexPosition").sub(v1.getVector3f("vertexPosition"), new Vector3f());
             Vector3f triangleNormal = edge1.cross(edge2, new Vector3f()).normalize();
 
             triangleNormals.computeIfAbsent(v1, v -> new LinkedList<>()).add(triangleNormal);

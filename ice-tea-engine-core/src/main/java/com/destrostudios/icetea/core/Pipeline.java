@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core;
 
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import lombok.Getter;
@@ -35,9 +34,9 @@ public abstract class Pipeline {
         shaderStageCreateInfo.pName(stack.UTF8("main"));
     }
 
-    protected long createShaderModule(Shader shader, ShaderType shaderType, MaterialDescriptorSet materialDescriptorSet) {
+    protected long createShaderModule(Shader shader, ShaderType shaderType, String additionalDeclarations) {
         try (MemoryStack stack = stackPush()) {
-            ByteBuffer compiledShaderCode = application.getShaderManager().getCompiledShaderCode(shader, shaderType, materialDescriptorSet);
+            ByteBuffer compiledShaderCode = application.getShaderManager().getCompiledShaderCode(shader, shaderType, additionalDeclarations);
 
             VkShaderModuleCreateInfo shaderModuleCreateInfo = VkShaderModuleCreateInfo.callocStack(stack);
             shaderModuleCreateInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);

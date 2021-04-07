@@ -27,7 +27,7 @@ public class ComputePipeline extends Pipeline {
         try (MemoryStack stack = stackPush()) {
             ComputeAction referenceComputeAction = computeActionGroup.getComputeActions().get(0);
             Shader compShader = computeActionGroup.getComputeShader();
-            long compShaderModule = createShaderModule(compShader, ShaderType.COMPUTE_SHADER, referenceComputeAction.getMaterialDescriptorSet());
+            long compShaderModule = createShaderModule(compShader, ShaderType.COMPUTE_SHADER, referenceComputeAction.getMaterialDescriptorSet().getShaderDeclaration());
 
             VkPipelineShaderStageCreateInfo compShaderStageInfo = VkPipelineShaderStageCreateInfo.callocStack(stack);
             compShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);

@@ -6,7 +6,6 @@ import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -32,18 +31,19 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             Material material = geometry.getMaterial();
 
             MaterialDescriptorSet materialDescriptorSet = shadowMapGeometryRenderContext.getMaterialDescriptorSet();
+            String materialDescriptorSetShaderDeclaration = materialDescriptorSet.getShaderDeclaration();
 
             VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(1, stack);
 
-            long vertShaderModule = createShaderModule(material.getVertexShader(), ShaderType.VERTEX_SHADER, shadowMapGeometryRenderContext.getMaterialDescriptorSet());
+            long vertShaderModule = createShaderModule_Vertex(material.getVertexShader(), materialDescriptorSetShaderDeclaration, mesh);
             createShaderStage(shaderStages, 0, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
 
             // ===> VERTEX STAGE <===
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.callocStack(stack);
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-            vertexInputInfo.pVertexBindingDescriptions(getBindingDescriptions(mesh));
-            vertexInputInfo.pVertexAttributeDescriptions(getAttributeDescriptions(mesh));
+            vertexInputInfo.pVertexBindingDescriptions(getVertexBindingDescriptions(mesh));
+            vertexInputInfo.pVertexAttributeDescriptions(getVertexAttributeDescriptions(mesh));
 
             // ===> ASSEMBLY STAGE <===
 
