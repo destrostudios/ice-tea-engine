@@ -2,15 +2,14 @@ package com.destrostudios.icetea.core.render.shadow;
 
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.material.Material;
+import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -32,17 +31,12 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             Mesh mesh = geometry.getMesh();
             Material material = geometry.getMaterial();
 
-            Shader vertexShader = new Shader("shaders/shadow.vert");
-            long vertShaderModule = createShaderModule(vertexShader, ShaderType.VERTEX_SHADER, shadowMapGeometryRenderContext.getMaterialDescriptorSet());
+            MaterialDescriptorSet materialDescriptorSet = shadowMapGeometryRenderContext.getMaterialDescriptorSet();
 
             VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(1, stack);
-            ByteBuffer entryPoint = stack.UTF8("main");
 
-            VkPipelineShaderStageCreateInfo vertShaderStageInfo = shaderStages.get(0);
-            vertShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            vertShaderStageInfo.stage(VK_SHADER_STAGE_VERTEX_BIT);
-            vertShaderStageInfo.module(vertShaderModule);
-            vertShaderStageInfo.pName(entryPoint);
+            long vertShaderModule = createShaderModule(material.getVertexShader(), ShaderType.VERTEX_SHADER, shadowMapGeometryRenderContext.getMaterialDescriptorSet());
+            createShaderStage(shaderStages, 0, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
 
             // ===> VERTEX STAGE <===
 
@@ -113,7 +107,7 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-            pipelineLayoutInfo.pSetLayouts(stack.longs(renderJob.getMaterialDescriptorSetLayout().getDescriptorSetLayout()));
+            pipelineLayoutInfo.pSetLayouts(stack.longs(materialDescriptorSet.getSetLayout().getDescriptorSetLayout()));
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
             if (vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {

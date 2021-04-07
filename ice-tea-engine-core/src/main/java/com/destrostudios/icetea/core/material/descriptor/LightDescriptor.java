@@ -2,9 +2,9 @@ package com.destrostudios.icetea.core.material.descriptor;
 
 import com.destrostudios.icetea.core.light.Light;
 
-public class LightDescriptor extends UniformDescriptor<LightDescriptorLayout> {
+public class LightDescriptor extends UniformDescriptor {
 
-    public LightDescriptor(String name, LightDescriptorLayout layout, Light light) {
-        super(name, layout, light.getUniformData());
+    public LightDescriptor(String name, Light light) {
+        super(name, light.getUniformData());
     }
 }

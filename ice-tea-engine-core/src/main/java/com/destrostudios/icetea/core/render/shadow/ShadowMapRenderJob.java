@@ -4,9 +4,6 @@ import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.light.SpotLight;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
-import com.destrostudios.icetea.core.material.descriptor.GeometryTransformDescriptorLayout;
-import com.destrostudios.icetea.core.material.descriptor.ShadowMapLightTransformDescriptorLayout;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderPipeline;
@@ -41,8 +38,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Getter
     private Texture shadowMapTexture;
     @Getter
-    private MaterialDescriptorSetLayout materialDescriptorSetLayout;
-    @Getter
     private UniformData lightTransformUniformData;
 
     @Override
@@ -51,7 +46,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         initRenderPass();
         initShadowMapTexture();
         initFrameBuffer();
-        initDescriptorSetLayout();
         initLightTransform();
     }
 
@@ -201,13 +195,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         });
     }
 
-    private void initDescriptorSetLayout() {
-        materialDescriptorSetLayout = new MaterialDescriptorSetLayout(application);
-        materialDescriptorSetLayout.addDescriptorLayout(new ShadowMapLightTransformDescriptorLayout());
-        materialDescriptorSetLayout.addDescriptorLayout(new GeometryTransformDescriptorLayout());
-        materialDescriptorSetLayout.initDescriptorSetLayout();
-    }
-
     private void initLightTransform() {
         lightTransformUniformData = new UniformData();
         lightTransformUniformData.setApplication(application);
@@ -217,8 +204,8 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public boolean isRendering(Geometry geoemetry) {
-        return true;
+    public boolean isRendering(Geometry geometry) {
+        return geometry.hasParent(application.getSceneNode());
     }
 
     @Override
@@ -237,19 +224,21 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     public void render(VkCommandBuffer commandBuffer, int commandBufferIndex, MemoryStack stack) {
         application.getRootNode().forEachGeometry(geometry -> {
             GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
-            RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
-            LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
-            LongBuffer offsets = stack.longs(0);
-            vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-            if (geometry.getMesh().getIndexBuffer() != null) {
-                vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-            }
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
-            if (geometry.getMesh().getIndices() != null) {
-                vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
-            } else {
-                vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
+            if (geometryRenderContext != null) {
+                RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
+                LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
+                LongBuffer offsets = stack.longs(0);
+                vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                if (geometry.getMesh().getIndexBuffer() != null) {
+                    vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                }
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
+                if (geometry.getMesh().getIndices() != null) {
+                    vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+                } else {
+                    vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
+                }
             }
         });
     }
@@ -258,7 +247,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     public void cleanup() {
         if (isInitialized()) {
             shadowMapTexture.cleanup();
-            materialDescriptorSetLayout.cleanupDescriptorSetLayout();
             lightTransformUniformData.cleanupBuffer();
         }
         super.cleanup();

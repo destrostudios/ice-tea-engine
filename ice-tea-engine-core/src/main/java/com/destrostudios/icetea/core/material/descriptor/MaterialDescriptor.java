@@ -7,20 +7,18 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class MaterialDescriptor<LayoutType extends MaterialDescriptorLayout> {
+public abstract class MaterialDescriptor {
 
-    public MaterialDescriptor(String name, LayoutType layout) {
+    public MaterialDescriptor(String name) {
         this.name = name;
-        this.layout = layout;
     }
     protected String name;
-    private LayoutType layout;
 
-    public void initPoolSize(VkDescriptorPoolSize descriptorPoolSize) {
+    public void initPoolSize(VkDescriptorPoolSize descriptorPoolSize, MaterialDescriptorLayout layout) {
         descriptorPoolSize.type(layout.getDescriptorType());
     }
 
-    public void initReferenceDescriptorWrite(VkWriteDescriptorSet descriptorWrite, MemoryStack stack) {
+    public void initReferenceDescriptorWrite(VkWriteDescriptorSet descriptorWrite, MaterialDescriptorLayout layout, MemoryStack stack) {
         descriptorWrite.descriptorType(layout.getDescriptorType());
     }
 

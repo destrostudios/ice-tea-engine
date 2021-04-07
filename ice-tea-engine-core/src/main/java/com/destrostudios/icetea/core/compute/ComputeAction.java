@@ -1,12 +1,10 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.Application;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorLayout;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import lombok.Getter;
 
 import java.util.List;
-import java.util.function.Function;
 
 public abstract class ComputeAction {
 
@@ -28,12 +26,12 @@ public abstract class ComputeAction {
 
     private void initMaterialDescriptorSet() {
         materialDescriptorSet = new MaterialDescriptorSet(application, computeActionGroup.getMaterialDescriptorSetLayout(), 1);
-        fillMaterialDescriptorSet(index -> computeActionGroup.getMaterialDescriptorSetLayout().getDescriptorLayout(index));
+        fillMaterialDescriptorSet();
         descriptorPool = materialDescriptorSet.createDescriptorPool();
         descriptorSets = materialDescriptorSet.createDescriptorSets(descriptorPool);
     }
 
-    protected abstract void fillMaterialDescriptorSet(Function<Integer, MaterialDescriptorLayout> getDescriptorLayout);
+    protected abstract void fillMaterialDescriptorSet();
 
     public void cleanup() {
         materialDescriptorSet.cleanupDescriptorSets(descriptorPool, descriptorSets);

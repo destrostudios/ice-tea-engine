@@ -1,20 +1,16 @@
 package com.destrostudios.icetea.core.render.scene;
 
 import com.destrostudios.icetea.core.camera.Camera;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
+import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.material.descriptor.*;
-import com.destrostudios.icetea.core.render.GeometryRenderContext;
+import com.destrostudios.icetea.core.render.EssentialGeometryRenderContext;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
-import com.destrostudios.icetea.core.light.Light;
-import com.destrostudios.icetea.core.texture.Texture;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
-public class SceneGeometryRenderContext extends GeometryRenderContext<SceneRenderJob> {
+public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<SceneRenderJob> {
 
     public SceneGeometryRenderContext(Supplier<Camera> defaultCameraSupplier, BucketRenderer bucketRenderer) {
         this.defaultCameraSupplier = defaultCameraSupplier;
@@ -25,60 +21,28 @@ public class SceneGeometryRenderContext extends GeometryRenderContext<SceneRende
     private SceneRenderPipeline sceneRenderPipeline;
 
     @Override
-    protected MaterialDescriptorSet createMaterialDescriptorSet() {
-        MaterialDescriptorSetLayout descriptorSetLayout = new MaterialDescriptorSetLayout(application);
-        MaterialDescriptorSet descriptorSet = new MaterialDescriptorSet(application, descriptorSetLayout, application.getSwapChain().getImages().size());
+    protected void fillMaterialDescriptorSet(MaterialDescriptorSetLayout descriptorSetLayout, MaterialDescriptorSet descriptorSet) {
+        super.fillMaterialDescriptorSet(descriptorSetLayout,descriptorSet);
 
         Camera forcedCamera = bucketRenderer.getBucket(geometry).getForcedCamera();
         Camera camera = ((forcedCamera != null) ? forcedCamera : defaultCameraSupplier.get());
-        CameraTransformDescriptorLayout cameraTransformDescriptorLayout = new CameraTransformDescriptorLayout();
-        CameraTransformDescriptor cameraTransformDescriptor = new CameraTransformDescriptor("camera", cameraTransformDescriptorLayout, camera);
-        descriptorSetLayout.addDescriptorLayout(cameraTransformDescriptorLayout);
-        descriptorSet.addDescriptor(cameraTransformDescriptor);
-
-        GeometryTransformDescriptorLayout geometryTransformDescriptorLayout = new GeometryTransformDescriptorLayout();
-        GeometryTransformDescriptor geometryTransformDescriptor = new GeometryTransformDescriptor("geometry", geometryTransformDescriptorLayout, geometry);
-        descriptorSetLayout.addDescriptorLayout(geometryTransformDescriptorLayout);
-        descriptorSet.addDescriptor(geometryTransformDescriptor);
-
-        if (geometry.getMaterial().getParameters().getSize() > 0) {
-            MaterialParamsDescriptorLayout materialParamsDescriptorLayout = new MaterialParamsDescriptorLayout();
-            MaterialParamsDescriptor materialParamsDescriptor = new MaterialParamsDescriptor("params", materialParamsDescriptorLayout, geometry.getMaterial());
-            descriptorSetLayout.addDescriptorLayout(materialParamsDescriptorLayout);
-            descriptorSet.addDescriptor(materialParamsDescriptor);
-        }
-
-        for (Map.Entry<String, Supplier<Texture>> entry : geometry.getMaterial().getTextureSuppliers().entrySet()) {
-            SimpleTextureDescriptorLayout simpleTextureDescriptorLayout = new SimpleTextureDescriptorLayout();
-            SimpleTextureDescriptor simpleTextureDescriptor = new SimpleTextureDescriptor(entry.getKey(), simpleTextureDescriptorLayout, entry.getValue().get());
-            descriptorSetLayout.addDescriptorLayout(simpleTextureDescriptorLayout);
-            descriptorSet.addDescriptor(simpleTextureDescriptor);
-        }
+        descriptorSetLayout.addDescriptorLayout(new CameraTransformDescriptorLayout());
+        descriptorSet.addDescriptor(new CameraTransformDescriptor("camera", camera));
 
         // TODO: Handle multiple lights + shadows (use a descriptor binding array)
         List<Light> affectingLights = geometry.getAffectingLights();
         for (Light light : affectingLights) {
-            LightDescriptorLayout lightDescriptorLayout = new LightDescriptorLayout();
-            LightDescriptor lightDescriptor = new LightDescriptor("light", lightDescriptorLayout, light);
-            descriptorSetLayout.addDescriptorLayout(lightDescriptorLayout);
-            descriptorSet.addDescriptor(lightDescriptor);
+            descriptorSetLayout.addDescriptorLayout(new LightDescriptorLayout());
+            descriptorSet.addDescriptor(new LightDescriptor("light", light));
 
             for (ShadowMapRenderJob shadowMapRenderJob : light.getShadowMapRenderJobs()) {
-                ShadowMapLightTransformDescriptorLayout shadowMapLightTransformDescriptorLayout = new ShadowMapLightTransformDescriptorLayout();
-                ShadowMapLightTransformDescriptor shadowMapLightTransformDescriptor = new ShadowMapLightTransformDescriptor("shadowMapLight", shadowMapLightTransformDescriptorLayout, shadowMapRenderJob);
-                descriptorSetLayout.addDescriptorLayout(shadowMapLightTransformDescriptorLayout);
-                descriptorSet.addDescriptor(shadowMapLightTransformDescriptor);
+                descriptorSetLayout.addDescriptorLayout(new ShadowMapLightTransformDescriptorLayout());
+                descriptorSet.addDescriptor(new ShadowMapLightTransformDescriptor("shadowMapLight", shadowMapRenderJob));
 
-                ShadowMapTextureDescriptorLayout shadowMapTextureDescriptorLayout = new ShadowMapTextureDescriptorLayout();
-                ShadowMapTextureDescriptor shadowMapTextureDescriptor = new ShadowMapTextureDescriptor("shadowMapTexture", shadowMapTextureDescriptorLayout, shadowMapRenderJob);
-                descriptorSetLayout.addDescriptorLayout(shadowMapTextureDescriptorLayout);
-                descriptorSet.addDescriptor(shadowMapTextureDescriptor);
+                descriptorSetLayout.addDescriptorLayout(new ShadowMapTextureDescriptorLayout());
+                descriptorSet.addDescriptor(new ShadowMapTextureDescriptor("shadowMapTexture", shadowMapRenderJob));
             }
         }
-
-        descriptorSetLayout.initDescriptorSetLayout();
-
-        return descriptorSet;
     }
 
     @Override

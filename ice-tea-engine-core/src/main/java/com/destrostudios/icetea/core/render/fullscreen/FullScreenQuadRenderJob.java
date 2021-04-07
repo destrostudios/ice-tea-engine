@@ -21,7 +21,6 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
-    @Getter
     protected MaterialDescriptorSetLayout materialDescriptorSetLayout;
     @Getter
     protected MaterialDescriptorSet materialDescriptorSet;

@@ -32,6 +32,7 @@ public abstract class Spatial {
     protected BoundingBox worldBounds;
     private boolean isWorldTransformOutdated;
     private boolean isWorldBoundsOutdated;
+    @Getter
     private Set<Control> controls;
     @Setter
     @Getter
@@ -92,13 +93,7 @@ public abstract class Spatial {
 
     protected void updateWorldTransform() {
         if (parent != null) {
-            Transform parentWorldTransform = parent.getWorldTransform();
-            Vector3f worldTranslation = parentWorldTransform.getTranslation().add(parentWorldTransform.getRotation().transform(localTransform.getTranslation(), new Vector3f()), new Vector3f());
-            Quaternionf worldRotation = parentWorldTransform.getRotation().mul(localTransform.getRotation(), new Quaternionf());
-            Vector3fc worldScale = parentWorldTransform.getScale().mul(localTransform.getScale(), new Vector3f());
-            worldTransform.setTranslation(worldTranslation);
-            worldTransform.setRotation(worldRotation);
-            worldTransform.setScale(worldScale);
+            worldTransform.setChildWorldTransform(parent.getWorldTransform(), localTransform);
             worldTransform.updateMatrixIfNecessary();
         } else {
             worldTransform.set(localTransform);
@@ -149,6 +144,12 @@ public abstract class Spatial {
             affectingLights.add(light);
         }
         return affectingLights;
+    }
+
+    public void updateUniformBuffers(int currentImage) {
+        for (Control control : controls) {
+            control.updateUniformBuffers(currentImage);
+        }
     }
 
     public abstract void collide(Ray ray, ArrayList<CollisionResult> collisionResults);

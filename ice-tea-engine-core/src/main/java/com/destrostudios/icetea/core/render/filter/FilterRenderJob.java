@@ -34,23 +34,17 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
 
     @Override
     protected void fillMaterialDescriptorLayoutAndSet() {
-        UniformDescriptorLayout uniformDescriptorLayout = new UniformDescriptorLayout(VK_SHADER_STAGE_FRAGMENT_BIT);
-        UniformDescriptor<UniformDescriptorLayout> uniformDescriptor = new UniformDescriptor<>("config", uniformDescriptorLayout, filter.getUniformData());
-        materialDescriptorSetLayout.addDescriptorLayout(uniformDescriptorLayout);
-        materialDescriptorSet.addDescriptor(uniformDescriptor);
+        materialDescriptorSetLayout.addDescriptorLayout(new UniformDescriptorLayout(VK_SHADER_STAGE_FRAGMENT_BIT));
+        materialDescriptorSet.addDescriptor(new UniformDescriptor("config", filter.getUniformData()));
 
         RenderJob<?> previousRenderJob = application.getSwapChain().getRenderJobManager().getPreviousRenderJob(this);
         SceneRenderJob sceneRenderJob = application.getSwapChain().getRenderJobManager().getSceneRenderJob();
 
-        SimpleTextureDescriptorLayout colorTextureDescriptorLayout = new SimpleTextureDescriptorLayout();
-        SimpleTextureDescriptor colorTextureDescriptor = new SimpleTextureDescriptor("colorMap", colorTextureDescriptorLayout, previousRenderJob.getResolvedColorTexture());
-        materialDescriptorSetLayout.addDescriptorLayout(colorTextureDescriptorLayout);
-        materialDescriptorSet.addDescriptor(colorTextureDescriptor);
+        materialDescriptorSetLayout.addDescriptorLayout(new SimpleTextureDescriptorLayout());
+        materialDescriptorSet.addDescriptor(new SimpleTextureDescriptor("colorMap", previousRenderJob.getResolvedColorTexture()));
 
-        SimpleTextureDescriptorLayout depthTextureDescriptorLayout = new SimpleTextureDescriptorLayout();
-        SimpleTextureDescriptor depthTextureDescriptor = new SimpleTextureDescriptor("depthMap", depthTextureDescriptorLayout, sceneRenderJob.getResolvedDepthTexture());
-        materialDescriptorSetLayout.addDescriptorLayout(depthTextureDescriptorLayout);
-        materialDescriptorSet.addDescriptor(depthTextureDescriptor);
+        materialDescriptorSetLayout.addDescriptorLayout(new SimpleTextureDescriptorLayout());
+        materialDescriptorSet.addDescriptor(new SimpleTextureDescriptor("depthMap", sceneRenderJob.getResolvedDepthTexture()));
     }
 
     @Override

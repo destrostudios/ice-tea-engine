@@ -11,16 +11,16 @@ import java.util.Map;
 
 import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
-public class StorageBufferDescriptor extends MaterialDescriptor<StorageBufferDescriptorLayout> {
+public class StorageBufferDescriptor extends MaterialDescriptor {
 
-    public StorageBufferDescriptor(String name, StorageBufferDescriptorLayout layout, StorageBufferData storageBufferData) {
-        super(name, layout);
+    public StorageBufferDescriptor(String name, StorageBufferData storageBufferData) {
+        super(name);
         this.storageBufferData = storageBufferData;
     }
     private StorageBufferData storageBufferData;
 
     @Override
-    public void initReferenceDescriptorWrite(VkWriteDescriptorSet descriptorWrite, MemoryStack stack) {
+    public void initReferenceDescriptorWrite(VkWriteDescriptorSet descriptorWrite, MaterialDescriptorLayout layout, MemoryStack stack) {
         descriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
         VkDescriptorBufferInfo.Buffer descriptorBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
         descriptorBufferInfo.offset(0);

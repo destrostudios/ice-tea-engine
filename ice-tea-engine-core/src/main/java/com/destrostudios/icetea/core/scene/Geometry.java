@@ -4,6 +4,7 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.material.Material;
+import com.destrostudios.icetea.core.material.descriptor.*;
 import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.data.UniformData;
@@ -16,6 +17,7 @@ public class Geometry extends Spatial {
 
     public Geometry() {
         transformUniformData = new UniformData();
+        additionalMaterialDescriptors = new LinkedList<>();
         renderContexts = new HashMap<>();
     }
     @Getter
@@ -24,6 +26,8 @@ public class Geometry extends Spatial {
     private Material material;
     @Getter
     private UniformData transformUniformData;
+    @Getter
+    private LinkedList<MaterialDescriptorWithLayout> additionalMaterialDescriptors;
     @Getter
     private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts;
 
@@ -94,11 +98,21 @@ public class Geometry extends Spatial {
         material.increaseUsingGeometriesCount();
     }
 
+    public void addAdditionalMaterialDescriptor(MaterialDescriptorWithLayout descriptorWithLayout) {
+        additionalMaterialDescriptors.add(descriptorWithLayout);
+    }
+
+    public void removeAdditionalMaterialDescriptor(MaterialDescriptorWithLayout descriptorWithLayout) {
+        additionalMaterialDescriptors.remove(descriptorWithLayout);
+    }
+
     public GeometryRenderContext<?> getRenderContext(RenderJob<?> renderJob) {
         return renderContexts.get(renderJob);
     }
 
+    @Override
     public void updateUniformBuffers(int currentImage) {
+        super.updateUniformBuffers(currentImage);
         transformUniformData.updateBufferIfNecessary(currentImage);
         material.getParameters().updateBufferIfNecessary(currentImage);
     }

@@ -55,8 +55,8 @@ public class WaterControl extends Control {
     }
 
     @Override
-    protected void onSpatialChanged() {
-        super.onSpatialChanged();
+    protected void onAdd() {
+        super.onAdd();
         Geometry geometry = (Geometry) spatial;
         geometry.setMaterial(createMaterial());
 

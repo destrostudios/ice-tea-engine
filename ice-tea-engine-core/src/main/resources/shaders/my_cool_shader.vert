@@ -9,9 +9,11 @@ void main() {
     vec4 worldPosition = geometry.model * vec4(modelSpaceVertexPosition, 1);
     gl_Position = camera.proj * camera.view * worldPosition;
 
-    if (camera.clipPlane.length() > 0) {
-        gl_ClipDistance[0] = dot(worldPosition, camera.clipPlane);
-    }
+    #ifdef CAMERA_CLIPPLANE
+        if (camera.clipPlane.length() > 0) {
+            gl_ClipDistance[0] = dot(worldPosition, camera.clipPlane);
+        }
+    #endif
 
     vertexTexCoord = modelSpaceVertexTexCoord;
 }

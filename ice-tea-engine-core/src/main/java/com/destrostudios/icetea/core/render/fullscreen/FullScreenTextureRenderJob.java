@@ -20,10 +20,8 @@ public class FullScreenTextureRenderJob extends FullScreenQuadRenderJob {
 
     @Override
     protected void fillMaterialDescriptorLayoutAndSet() {
-        SimpleTextureDescriptorLayout colorTextureDescriptorLayout = new SimpleTextureDescriptorLayout();
-        SimpleTextureDescriptor colorTextureDescriptor = new SimpleTextureDescriptor("colorMap", colorTextureDescriptorLayout, textureSupplier.get());
-        materialDescriptorSetLayout.addDescriptorLayout(colorTextureDescriptorLayout);
-        materialDescriptorSet.addDescriptor(colorTextureDescriptor);
+        materialDescriptorSetLayout.addDescriptorLayout(new SimpleTextureDescriptorLayout());
+        materialDescriptorSet.addDescriptor(new SimpleTextureDescriptor("colorMap", textureSupplier.get()));
     }
 
     @Override

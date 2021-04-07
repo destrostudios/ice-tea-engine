@@ -483,7 +483,7 @@ public abstract class Application {
         if (light != null) {
             light.updateUniformBuffers(currentImage);
         }
-        rootNode.forEachGeometry(geometry -> geometry.updateUniformBuffers(currentImage));
+        rootNode.updateUniformBuffers(currentImage);
     }
 
     private void cleanup() {

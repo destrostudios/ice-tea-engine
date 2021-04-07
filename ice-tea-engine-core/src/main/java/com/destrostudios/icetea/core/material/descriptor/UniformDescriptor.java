@@ -11,16 +11,16 @@ import java.util.Map;
 
 import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-public class UniformDescriptor<LayoutType extends UniformDescriptorLayout> extends MaterialDescriptor<LayoutType> {
+public class UniformDescriptor extends MaterialDescriptor {
 
-    public UniformDescriptor(String name, LayoutType layout, UniformData uniformData) {
-        super(name, layout);
+    public UniformDescriptor(String name, UniformData uniformData) {
+        super(name);
         this.uniformData = uniformData;
     }
     private UniformData uniformData;
 
     @Override
-    public void initReferenceDescriptorWrite(VkWriteDescriptorSet descriptorWrite, MemoryStack stack) {
+    public void initReferenceDescriptorWrite(VkWriteDescriptorSet descriptorWrite, MaterialDescriptorLayout layout, MemoryStack stack) {
         descriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         VkDescriptorBufferInfo.Buffer descriptorBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
         descriptorBufferInfo.offset(0);

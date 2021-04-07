@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.animation.AnimationsControl;
+import com.destrostudios.icetea.core.animation.PlayingAnimationControl;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
@@ -35,6 +37,7 @@ public class TestApplication extends Application {
     private Geometry geometryGround;
     private Geometry geometryChalet1;
     private Geometry geometryDennis;
+    private Spatial animatedObject;
     private Node nodeSkyWrapper;;
     private Geometry geometryBounds;
     private Node nodeCollisions;
@@ -48,7 +51,7 @@ public class TestApplication extends Application {
         sceneCamera.setRotation(new Vector3f(-88, 0, 0));
 
         DirectionalLight directionalLight = new DirectionalLight();
-        directionalLight.setDirection(new Vector3f(1, 0, -0.25f).normalize());
+        directionalLight.setDirection(new Vector3f(1, 1, -0.25f).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
         directionalLight.addShadows(2048);
         setLight(directionalLight);
@@ -75,12 +78,12 @@ public class TestApplication extends Application {
 
         panel1 = new Panel();
         panel1.move(new Vector3f(50, 50, 0));
-        panel1.scale(new Vector3f(200, 140, 1));
+        panel1.scale(new Vector3f(200, 140, 0));
         panel1.setBackground(assetManager.loadTexture("textures/icetea1.png"));
         guiNode.add(panel1);
 
         Panel panel2 = new Panel();
-        panel2.move(new Vector3f(75, 75, 0));
+        panel2.move(new Vector3f(75, 75, 1));
         panel2.scale(new Vector3f(200, 130, 0));
         panel2.setBackground(assetManager.loadTexture("textures/icetea2.png"));
         guiNode.add(panel2);
@@ -194,6 +197,16 @@ public class TestApplication extends Application {
         nodeDuckWrapper.move(new Vector3f(1, -1.5f, -0.25f));
         nodeDuckWrapper.scale(new Vector3f(0.25f, 0.25f, 0.25f));
         sceneNode.add(nodeDuckWrapper);
+
+        // Animated object
+
+        animatedObject = assetManager.loadModel("models/simple_skin.gltf");
+        animatedObject.move(new Vector3f(0, -2, 0.6f));
+        animatedObject.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+        animatedObject.scale(new Vector3f(0.5f, 0.5f, 0.5f));
+        AnimationsControl animationsControl = (AnimationsControl) animatedObject.getControls().iterator().next();
+        animatedObject.addControl(new PlayingAnimationControl(animationsControl.getAnimations()[0]));
+        sceneNode.add(animatedObject);
 
         // Sky
 
@@ -368,7 +381,7 @@ public class TestApplication extends Application {
             hasRemovedDennis = true;
         }
         for (Spatial spatial : sceneNode.getChildren()) {
-            if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
+            if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != animatedObject) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
                 updateTimeBasedRotation(spatial);
             }
         }

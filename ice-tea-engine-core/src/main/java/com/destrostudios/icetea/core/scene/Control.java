@@ -19,16 +19,20 @@ public class Control {
     public void setSpatial(Spatial spatial) {
         if (spatial != this.spatial) {
             this.spatial = spatial;
-            onSpatialChanged();
+            onAdd();
         }
         setActive(true);
     }
 
-    protected void onSpatialChanged() {
+    protected void onAdd() {
 
     }
 
     public void update(float tpf) {
+
+    }
+
+    public void updateUniformBuffers(int currentImage) {
 
     }
 

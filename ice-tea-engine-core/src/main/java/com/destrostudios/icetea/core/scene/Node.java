@@ -58,6 +58,14 @@ public class Node extends Spatial {
     }
 
     @Override
+    public void updateUniformBuffers(int currentImage) {
+        super.updateUniformBuffers(currentImage);
+        for (Spatial child : children) {
+            child.updateUniformBuffers(currentImage);
+        }
+    }
+
+    @Override
     public void collide(Ray ray, ArrayList<CollisionResult> collisionResults) {
         for (Spatial child : children) {
             child.collide(ray, collisionResults);

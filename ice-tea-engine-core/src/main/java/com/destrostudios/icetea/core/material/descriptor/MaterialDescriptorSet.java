@@ -25,9 +25,9 @@ public class MaterialDescriptorSet {
     @Getter
     private MaterialDescriptorSetLayout setLayout;
     private int descriptorSetsCount;
-    private List<MaterialDescriptor<?>> descriptors;
+    private List<MaterialDescriptor> descriptors;
 
-    public void addDescriptor(MaterialDescriptor<?> descriptor) {
+    public void addDescriptor(MaterialDescriptor descriptor) {
         descriptors.add(descriptor);
     }
 
@@ -36,10 +36,10 @@ public class MaterialDescriptorSet {
             VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.callocStack(setLayout.getDescriptorsCount(), stack);
 
             int descriptorIndex = 0;
-            for (MaterialDescriptor<?> descriptor : descriptors) {
+            for (MaterialDescriptor descriptor : descriptors) {
                 VkDescriptorPoolSize descriptorsPoolSize = poolSizes.get(descriptorIndex);
                 descriptorsPoolSize.descriptorCount(descriptorSetsCount);
-                descriptor.initPoolSize(descriptorsPoolSize);
+                descriptor.initPoolSize(descriptorsPoolSize, setLayout.getDescriptorLayout(descriptorIndex));
                 descriptorIndex++;
             }
 
@@ -80,13 +80,13 @@ public class MaterialDescriptorSet {
             VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.callocStack(setLayout.getDescriptorsCount(), stack);
 
             int descriptorIndex = 0;
-            for (MaterialDescriptor<?> descriptor : descriptors) {
+            for (MaterialDescriptor descriptor : descriptors) {
                 VkWriteDescriptorSet descriptorWrite = descriptorWrites.get(descriptorIndex);
                 descriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
                 descriptorWrite.dstBinding(descriptorIndex);
                 descriptorWrite.dstArrayElement(0);
                 descriptorWrite.descriptorCount(1);
-                descriptor.initReferenceDescriptorWrite(descriptorWrite, stack);
+                descriptor.initReferenceDescriptorWrite(descriptorWrite, setLayout.getDescriptorLayout(descriptorIndex), stack);
                 descriptorIndex++;
             }
 
@@ -95,7 +95,7 @@ public class MaterialDescriptorSet {
                 long descriptorSet = pDescriptorSets.get(i);
 
                 descriptorIndex = 0;
-                for (MaterialDescriptor<?> descriptor : descriptors) {
+                for (MaterialDescriptor descriptor : descriptors) {
                     VkWriteDescriptorSet descriptorWrite = descriptorWrites.get(descriptorIndex);
                     descriptorWrite.dstSet(descriptorSet);
                     descriptor.updateReferenceDescriptorWrite(descriptorWrite, i);
@@ -118,7 +118,7 @@ public class MaterialDescriptorSet {
     public String getShaderDeclaration() {
         String definition = "";
         int bindingIndex = 0;
-        for (MaterialDescriptor<?> descriptor : descriptors) {
+        for (MaterialDescriptor descriptor : descriptors) {
             definition += descriptor.getShaderDeclaration(bindingIndex) + "\n\n";
             bindingIndex++;
         }

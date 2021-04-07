@@ -52,6 +52,10 @@ public abstract class FieldsData {
         set(name, value, Matrix4fUniformValue::new);
     }
 
+    public void setMatrix4fArray(String name, Matrix4f[] value) {
+        set(name, value, Matrix4fArrayUniformValue::new);
+    }
+
     private <T> void set(String name, T value, Supplier<UniformValue<T>> uniformDataSupplier) {
         UniformValue<T> uniformValue = (UniformValue<T>) fields.get(name);
         if (uniformValue == null) {
@@ -108,6 +112,10 @@ public abstract class FieldsData {
     }
 
     public Matrix4f getMatrix4f(String name) {
+        return get(name);
+    }
+
+    public Matrix4f[] getMatrix4fArray(String name) {
         return get(name);
     }
 
