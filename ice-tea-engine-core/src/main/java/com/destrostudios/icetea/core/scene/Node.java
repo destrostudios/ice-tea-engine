@@ -38,10 +38,11 @@ public class Node extends Spatial {
     }
 
     @Override
-    protected void updateWorldTransform() {
-        super.updateWorldTransform();
+    protected void setWorldTransformOutdated() {
+        super.setWorldTransformOutdated();
         for (Spatial child : children) {
             child.setWorldTransformOutdated();
+            child.setWorldBoundsOutdated();
         }
     }
 

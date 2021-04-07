@@ -36,9 +36,13 @@ public class TestApplication extends Application {
     private Geometry geometryWater;
     private Geometry geometryGround;
     private Geometry geometryChalet1;
+    private Geometry geometryChalet2;
+    private Geometry geometryChalet3;
     private Geometry geometryDennis;
     private Spatial animatedObject;
-    private Node nodeSkyWrapper;;
+    private Node nodeSkyWrapper;
+    private Node nodeDuck;
+    private Geometry geometryKnot;
     private Geometry geometryBounds;
     private Node nodeCollisions;
     private boolean hasAddedDennis;
@@ -127,7 +131,7 @@ public class TestApplication extends Application {
         geometryChalet1.setMaterial(materialChalet);
         sceneNode.add(geometryChalet1);
 
-        Geometry geometryChalet2 = new Geometry();
+        geometryChalet2 = new Geometry();
         geometryChalet2.setMesh(meshChalet);
         geometryChalet2.setMaterial(materialChalet);
         geometryChalet2.move(new Vector3f(1.5f, 1, 0.25f));
@@ -135,7 +139,7 @@ public class TestApplication extends Application {
         geometryChalet2.scale(new Vector3f(0.5f, 0.5f, 1));
         sceneNode.add(geometryChalet2);
 
-        Geometry geometryChalet3 = new Geometry();
+        geometryChalet3 = new Geometry();
         geometryChalet3.setMesh(meshChalet);
         geometryChalet3.setMaterial(materialCool);
         geometryChalet3.move(new Vector3f(-0.3f, 0.3f, 0.25f));
@@ -175,7 +179,7 @@ public class TestApplication extends Application {
         Material materialDennis = new Material();
         materialDennis.setVertexShader(vertexShaderDefault);
         materialDennis.setFragmentShader(fragShaderDefault);
-        Texture textureDennis =assetManager.loadTexture("textures/dennis.jpg");
+        Texture textureDennis = assetManager.loadTexture("textures/dennis.jpg");
         textureDennis.init(this); // Preload to avoid lag later on
         materialDennis.setTexture("diffuseMap", textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
@@ -188,7 +192,7 @@ public class TestApplication extends Application {
 
         // Duck
 
-        Node nodeDuck = (Node) assetManager.loadModel("models/duck.gltf");
+        nodeDuck = (Node) assetManager.loadModel("models/duck.gltf");
         nodeDuck.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
         nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1)));
 
@@ -244,7 +248,7 @@ public class TestApplication extends Application {
         materialKnot.setTexture("diffuseMap", textureKnot);
         materialKnot.getParameters().setVector4f("color", new Vector4f(0, 1, 0, 1));
 
-        Geometry geometryKnot = new Geometry();
+        geometryKnot = new Geometry();
         geometryKnot.setMesh(meshKnot);
         geometryKnot.setMaterial(materialKnot);
         geometryKnot.move(new Vector3f(-1.5f, -0.2f, 0.75f));
@@ -387,9 +391,9 @@ public class TestApplication extends Application {
         }
         updateTimeBasedRotation(panel1);
 
-        BoundingBox worldBoundsChalet1 = geometryChalet1.getWorldBounds();
-        geometryBounds.setLocalTranslation(worldBoundsChalet1.getCenter().sub(worldBoundsChalet1.getExtent(), new Vector3f()));
-        geometryBounds.setLocalScale(worldBoundsChalet1.getExtent().mul(2, new Vector3f()));
+        BoundingBox debugWorldBounds = geometryChalet3.getWorldBounds();
+        geometryBounds.setLocalTranslation(debugWorldBounds.getCenter().sub(debugWorldBounds.getExtent(), new Vector3f()));
+        geometryBounds.setLocalScale(debugWorldBounds.getExtent().mul(2, new Vector3f()));
 
         materialCool.getParameters().setFloat("time", time);
         sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 3, new Vector3f())));

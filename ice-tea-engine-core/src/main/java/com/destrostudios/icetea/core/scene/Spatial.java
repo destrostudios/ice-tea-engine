@@ -63,9 +63,6 @@ public abstract class Spatial {
 
     protected void setWorldTransformOutdated() {
         isWorldTransformOutdated = true;
-        if (parent != null) {
-            parent.setWorldTransformOutdated();
-        }
     }
 
     protected void setWorldBoundsOutdated() {

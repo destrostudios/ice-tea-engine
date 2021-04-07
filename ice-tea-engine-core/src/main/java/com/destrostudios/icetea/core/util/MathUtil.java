@@ -51,7 +51,7 @@ public class MathUtil {
     public static void absoluteLocal(Matrix3f matrix3f) {
         matrix3f.set(
             Math.abs(matrix3f.m00()), Math.abs(matrix3f.m01()), Math.abs(matrix3f.m02()),
-            Math.abs(matrix3f.m10()), Math.abs(matrix3f.m11()), Math.abs(matrix3f.m21()),
+            Math.abs(matrix3f.m10()), Math.abs(matrix3f.m11()), Math.abs(matrix3f.m12()),
             Math.abs(matrix3f.m20()), Math.abs(matrix3f.m21()), Math.abs(matrix3f.m22())
         );
     }
