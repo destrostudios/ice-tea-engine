@@ -68,6 +68,14 @@ public class MathUtil {
         );
     }
 
+    public static Vector3f mulNormal(Vector3f v, Matrix4f m, Vector3f dest) {
+        return dest.set(
+            (m.m00() * v.x()) + (m.m10() * v.y()) + (m.m20() * v.z()),
+            (m.m01() * v.x()) + (m.m11() * v.y()) + (m.m21() * v.z()),
+            (m.m02() * v.x()) + (m.m12() * v.y()) + (m.m22() * v.z())
+        );
+    }
+
     public static float mulW(Vector3f v, Matrix4f m) {
         return (m.m03() * v.x()) + (m.m13() * v.y()) + (m.m23() * v.z()) + m.m33();
     }

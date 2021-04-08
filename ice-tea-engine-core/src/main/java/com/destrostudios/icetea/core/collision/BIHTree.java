@@ -11,12 +11,12 @@ import java.util.List;
 public class BIHTree {
 
     public BIHTree(Mesh mesh) {
-        maxTrisPerNode = 21;
+        maxTrisPerLeaf = 21;
         maxDepth = 100;
         tmpTrianglePositions = new float[9];
         loadMesh(mesh);
     }
-    private int maxTrisPerNode;
+    private int maxTrisPerLeaf;
     private int maxDepth;
     private int[] trianglesIndices;
     private float[] trianglesPositions;
@@ -60,7 +60,7 @@ public class BIHTree {
     }
 
     private BIHTreeItem createTreeItem(int leftTriangleIndex, int rightTriangleIndex, BoundingBox sceneGridBoundingBox, int depth) {
-        if (((rightTriangleIndex - leftTriangleIndex) < maxTrisPerNode) || (depth > maxDepth)) {
+        if (((rightTriangleIndex - leftTriangleIndex) < maxTrisPerLeaf) || (depth > maxDepth)) {
             return new BIHLeaf(leftTriangleIndex, rightTriangleIndex);
         }
 
@@ -82,7 +82,7 @@ public class BIHTree {
         float split = sceneGridBoundingBox.getCenter().get(axis);
         int pivot = sortTriangles(leftTriangleIndex, rightTriangleIndex, split, axis);
 
-        if (pivot < leftTriangleIndex) {
+        if (pivot == leftTriangleIndex) {
             BoundingBox rightSceneGridBoundingBox = new BoundingBox(sceneGridBoundingBox);
             rightSceneGridBoundingBox.setMin(axis, split);
             return createTreeItem(leftTriangleIndex, rightTriangleIndex, rightSceneGridBoundingBox, depth + 1);
@@ -92,11 +92,11 @@ public class BIHTree {
             return createTreeItem(leftTriangleIndex, rightTriangleIndex, leftSceneGridBoundingBox, depth + 1);
         } else {
             // Left child
-            BoundingBox leftBoundingBox = createBox(leftTriangleIndex, Math.max(leftTriangleIndex, pivot - 1));
+            BoundingBox leftBoundingBox = createBox(leftTriangleIndex, (pivot - 1));
             float leftPlane = leftBoundingBox.getMax().get(axis);
             BoundingBox leftSceneGridBoundingBox = new BoundingBox(sceneGridBoundingBox);
             leftSceneGridBoundingBox.setMax(axis, split);
-            BIHTreeItem leftChild = createTreeItem(leftTriangleIndex, Math.max(leftTriangleIndex, pivot - 1), leftSceneGridBoundingBox, depth + 1);
+            BIHTreeItem leftChild = createTreeItem(leftTriangleIndex, (pivot - 1), leftSceneGridBoundingBox, depth + 1);
 
             // Right child
             BoundingBox rightBoundingBox = createBox(pivot, rightTriangleIndex);
@@ -124,12 +124,14 @@ public class BIHTree {
             MathUtil.updateMinMax(min, max, vertex3);
         }
 
-        return new BoundingBox(min, max);
+        BoundingBox boundingBox = new BoundingBox();
+        boundingBox.setMinMax(min, max);
+        return boundingBox;
     }
 
-    private int sortTriangles(int leftTriangleIndex, int redTriangleIndex, float split, int axis) {
+    private int sortTriangles(int leftTriangleIndex, int rightTriangleIndex, float split, int axis) {
         int pivot = leftTriangleIndex;
-        int uncheckedMostLeft = redTriangleIndex;
+        int uncheckedMostLeft = rightTriangleIndex;
 
         // TODO: Introduce TempVars
         Vector3f vertex1 = new Vector3f();
@@ -142,15 +144,10 @@ public class BIHTree {
             vertex1.add(vertex2, triangleCenter).add(vertex3).mul(1 / 3f);
             if (triangleCenter.get(axis) > split) {
                 swapTriangles(pivot, uncheckedMostLeft);
-                --uncheckedMostLeft;
+                uncheckedMostLeft--;
             } else {
-                ++pivot;
+                pivot++;
             }
-        }
-
-        // If all triangles are to the right side of the split, pivot will still be leftTriangleIndex here, so we have to subtract 1
-        if (pivot == leftTriangleIndex) {
-            pivot--;
         }
 
         return pivot;
@@ -189,7 +186,7 @@ public class BIHTree {
         // TODO: Introduce TempVars
         Matrix4f inverseWorldMatrix = worldMatrix.invert(new Matrix4f());
         Vector3f modelRayOrigin = MathUtil.mul(worldRay.getOrigin(), inverseWorldMatrix, new Vector3f());
-        Vector3f modelRayDirection = MathUtil.mul(worldRay.getDirection(), inverseWorldMatrix, new Vector3f());
+        Vector3f modelRayDirection = MathUtil.mulNormal(worldRay.getDirection(), inverseWorldMatrix, new Vector3f());
         float[] modelRayOriginAxes = new float[] { modelRayOrigin.x(), modelRayOrigin.y(), modelRayOrigin.z() };
         float[] modelRayDirectionAxesInverse = new float[] { 1 / modelRayDirection.x(), 1 / modelRayDirection.y(), 1 / modelRayDirection.z()};
 
