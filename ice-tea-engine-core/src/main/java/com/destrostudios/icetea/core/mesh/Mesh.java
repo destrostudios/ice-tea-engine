@@ -1,10 +1,7 @@
 package com.destrostudios.icetea.core.mesh;
 
 import com.destrostudios.icetea.core.*;
-import com.destrostudios.icetea.core.collision.BIHTree;
-import com.destrostudios.icetea.core.collision.BoundingBox;
-import com.destrostudios.icetea.core.collision.CollisionResult;
-import com.destrostudios.icetea.core.collision.Ray;
+import com.destrostudios.icetea.core.collision.*;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.UniformValue;
 import com.destrostudios.icetea.core.util.BufferUtil;
@@ -213,13 +210,13 @@ public class Mesh {
         }
     }
 
-    public int collide(Ray ray, Matrix4f worldMatrix, BoundingBox worldBounds, ArrayList<CollisionResult> collisionResults) {
+    public int collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
         // TODO: Reset collision tree when mesh changed - For now, we just assume the mesh never changes after creating a tree
         if (collisionTree == null) {
             loadCollisionTree();
         }
         if (collisionTree != null) {
-            return collisionTree.collide(ray, worldMatrix, worldBounds, collisionResults);
+            return collisionTree.collide(ray, worldMatrix, worldBoundsTMin, worldBoundsTMax, collisionResults);
         }
         return 0;
     }
@@ -231,6 +228,33 @@ public class Mesh {
         } else {
             collisionTree = null;
         }
+    }
+
+    public int collideDynamic(Ray ray, Matrix4f worldMatrix, ArrayList<CollisionResult> collisionResults) {
+        // Only triangle collisions are supported currently
+        if (topology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) {
+            int collisions = 0;
+            // TODO: Introduce TempVars
+            Vector3f worldVertex1 = new Vector3f();
+            Vector3f worldVertex2 = new Vector3f();
+            Vector3f worldVertex3 = new Vector3f();
+            for (int i = 0; i < indices.length; i += 3) {
+                Vector3f vertex1 = vertices[indices[i]].getVector3f("vertexPosition");
+                Vector3f vertex2 = vertices[indices[i + 1]].getVector3f("vertexPosition");
+                Vector3f vertex3 = vertices[indices[i + 2]].getVector3f("vertexPosition");
+                MathUtil.mul(vertex1, worldMatrix, worldVertex1);
+                MathUtil.mul(vertex2, worldMatrix, worldVertex2);
+                MathUtil.mul(vertex3, worldMatrix, worldVertex3);
+                CollisionResult collisionResult = ray.collideWithTriangle(worldVertex1, worldVertex2, worldVertex3);
+                if (collisionResult != null) {
+                    collisionResult.setTriangleIndex(i);
+                    collisionResults.add(collisionResult);
+                    collisions++;
+                }
+            }
+            return collisions;
+        }
+        return 0;
     }
 
     public void increaseUsingGeometriesCount() {

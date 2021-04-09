@@ -172,17 +172,7 @@ public class BIHTree {
         trianglesIndices[triangleIndex2] = tmpIndex;
     }
 
-    public int collide(Ray worldRay, Matrix4f worldMatrix, BoundingBox worldBounds, List<CollisionResult> collisionResults) {
-        CollisionResult_AABB_Ray worldBoundCollision = worldBounds.collide(worldRay);
-        if (worldBoundCollision != null) {
-            float tMin = worldBoundCollision.getTMin();
-            float tMax = worldBoundCollision.getTMax();
-            return collide(worldRay, worldMatrix, tMin, tMax, collisionResults);
-        }
-        return 0;
-    }
-
-    private int collide(Ray worldRay, Matrix4f worldMatrix, float sceneMin, float sceneMax, List<CollisionResult> collisionResults) {
+    public int collide(Ray worldRay, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, List<CollisionResult> collisionResults) {
         // TODO: Introduce TempVars
         Matrix4f inverseWorldMatrix = worldMatrix.invert(new Matrix4f());
         Vector3f modelRayOrigin = MathUtil.mul(worldRay.getOrigin(), inverseWorldMatrix, new Vector3f());
@@ -198,7 +188,7 @@ public class BIHTree {
 
         int collisions = 0;
 
-        stack.add(new BIHStackData(root, sceneMin, sceneMax));
+        stack.add(new BIHStackData(root, worldBoundsTMin, worldBoundsTMax));
         stackLoop:
         while (stack.size() > 0) {
             BIHStackData stackData = stack.remove(stack.size() - 1);
@@ -255,12 +245,10 @@ public class BIHTree {
                     MathUtil.mul(vertex1, worldMatrix);
                     MathUtil.mul(vertex2, worldMatrix);
                     MathUtil.mul(vertex3, worldMatrix);
-                    Float tWorld = worldRay.intersectsTriangle(vertex1, vertex2, vertex3);
-                    if (tWorld != null) {
-                        Vector3f position = worldRay.getDirection().mul(tWorld, new Vector3f()).add(worldRay.getOrigin());
-                        Vector3f normal = MathUtil.getTriangleNormal(vertex1, vertex2, vertex3);
-                        float worldDistance = worldRay.getOrigin().distance(position);
-                        collisionResults.add(new CollisionResult(position, normal, worldDistance, trianglesIndices[i]));
+                    CollisionResult collisionResult = worldRay.collideWithTriangle(vertex1, vertex2, vertex3);
+                    if (collisionResult != null) {
+                        collisionResult.setTriangleIndex(trianglesIndices[i]);
+                        collisionResults.add(collisionResult);
                         collisions++;
                     }
                 }

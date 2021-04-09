@@ -12,6 +12,17 @@ public class Ray {
     private Vector3f origin;
     private Vector3f direction;
 
+    public CollisionResult collideWithTriangle(Vector3f v1, Vector3f v2, Vector3f v3) {
+        Float t = intersectsTriangle(v1, v2, v3);
+        if (t != null) {
+            Vector3f position = direction.mul(t, new Vector3f()).add(origin);
+            Vector3f normal = MathUtil.getTriangleNormal(v1, v2, v3);
+            float distance = origin.distance(position);
+            return new CollisionResult(position, normal, distance);
+        }
+        return null;
+    }
+
     public Float intersectsTriangle(Vector3f v1, Vector3f v2, Vector3f v3) {
         float edge1X = (v2.x() - v1.x());
         float edge1Y = (v2.y() - v1.y());

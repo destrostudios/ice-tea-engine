@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -67,9 +68,16 @@ public class Node extends Spatial {
     }
 
     @Override
-    public void collide(Ray ray, ArrayList<CollisionResult> collisionResults) {
+    protected void collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
         for (Spatial child : children) {
-            child.collide(ray, collisionResults);
+            child.collideStatic(ray, collisionResults);
+        }
+    }
+
+    @Override
+    protected void collideDynamic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
+        for (Spatial child : children) {
+            child.collideDynamic(ray, collisionResults);
         }
     }
 

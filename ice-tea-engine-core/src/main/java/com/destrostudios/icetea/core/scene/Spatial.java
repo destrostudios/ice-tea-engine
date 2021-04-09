@@ -4,6 +4,7 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Transform;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
+import com.destrostudios.icetea.core.collision.CollisionResult_AABB_Ray;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
@@ -12,6 +13,7 @@ import lombok.Setter;
 import org.joml.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class Spatial {
 
@@ -149,7 +151,24 @@ public abstract class Spatial {
         }
     }
 
-    public abstract void collide(Ray ray, ArrayList<CollisionResult> collisionResults);
+    public void collideStatic(Ray ray, ArrayList<CollisionResult> collisionResults) {
+        collide(ray, worldBoundCollision -> collideStatic(ray, worldTransform.getMatrix(), worldBoundCollision.getTMin(), worldBoundCollision.getTMax(), collisionResults), collisionResults);
+    }
+
+    public void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults) {
+        collide(ray, worldBoundCollision -> collideDynamic(ray, worldTransform.getMatrix(), worldBoundCollision.getTMin(), worldBoundCollision.getTMax(), collisionResults), collisionResults);
+    }
+
+    private void collide(Ray ray, Consumer<CollisionResult_AABB_Ray> collideWithWorldBoundInfo, ArrayList<CollisionResult> collisionResults) {
+        CollisionResult_AABB_Ray worldBoundCollision = worldBounds.collide(ray);
+        if (worldBoundCollision != null) {
+            collideWithWorldBoundInfo.accept(worldBoundCollision);
+        }
+    }
+
+    protected abstract void collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults);
+
+    protected abstract void collideDynamic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults);
 
     public void addControl(Control control) {
         controls.add(control);

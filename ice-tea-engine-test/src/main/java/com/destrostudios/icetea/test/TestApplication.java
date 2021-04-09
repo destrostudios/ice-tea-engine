@@ -21,6 +21,7 @@ import org.joml.*;
 
 import java.lang.Math;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.vulkan.VK10.*;
@@ -352,24 +353,36 @@ public class TestApplication extends Application {
                 Vector3f worldCoordinatesFront = getWorldCoordinates(sceneCamera, inputManager.getCursorPosition(), 0);
                 Vector3f worldCoordinatesBack = getWorldCoordinates(sceneCamera, inputManager.getCursorPosition(), 1);
                 Vector3f rayDirection = worldCoordinatesBack.sub(worldCoordinatesFront, new Vector3f());
+                Ray ray = new Ray(worldCoordinatesFront, rayDirection);
 
                 ArrayList<CollisionResult> collisionResults = new ArrayList<>();
-                sceneNode.collide(new Ray(worldCoordinatesFront, rayDirection), collisionResults);
+                if (mouseButtonEvent.getButton() == GLFW_MOUSE_BUTTON_LEFT) {
+                    sceneNode.collideStatic(ray, collisionResults);
+                } else {
+                    sceneNode.collideDynamic(ray, collisionResults);
+                }
+
+                LinkedList<Geometry> displayedCollisions = new LinkedList<>();
+                for (CollisionResult collisionResult : collisionResults) {
+                    if (collisionResult.getGeometry().getParent() != nodeCollisions) {
+                        Geometry geometryBox = new Geometry();
+                        geometryBox.setMesh(meshBox);
+
+                        Material materialBox = new Material();
+                        materialBox.setVertexShader(vertexShaderDefault);
+                        materialBox.setFragmentShader(fragShaderDefault);
+                        geometryBox.setMaterial(materialBox);
+
+                        float boxSize = 0.05f;
+                        geometryBox.setLocalTranslation(collisionResult.getPosition().sub((boxSize / 2), (boxSize / 2), (boxSize / 2), new Vector3f()));
+                        geometryBox.setLocalScale(new Vector3f(boxSize, boxSize, boxSize));
+                        displayedCollisions.add(geometryBox);
+                    }
+                }
 
                 nodeCollisions.removeAll();
-                for (CollisionResult collisionResult : collisionResults) {
-                    Geometry geometryBox = new Geometry();
-                    geometryBox.setMesh(meshBox);
-
-                    Material materialBox = new Material();
-                    materialBox.setVertexShader(vertexShaderDefault);
-                    materialBox.setFragmentShader(fragShaderDefault);
-                    geometryBox.setMaterial(materialBox);
-
-                    float boxSize = 0.05f;
-                    geometryBox.setLocalTranslation(collisionResult.getPosition().sub((boxSize / 2), (boxSize / 2), (boxSize / 2), new Vector3f()));
-                    geometryBox.setLocalScale(new Vector3f(boxSize, boxSize, boxSize));
-                    nodeCollisions.add(geometryBox);
+                for (Geometry displayedCollision : displayedCollisions) {
+                    nodeCollisions.add(displayedCollision);
                 }
             }
         });

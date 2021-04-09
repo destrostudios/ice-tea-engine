@@ -10,6 +10,7 @@ import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.render.RenderJob;
 import lombok.Getter;
+import org.joml.Matrix4f;
 
 import java.util.*;
 
@@ -118,9 +119,19 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    public void collide(Ray ray, ArrayList<CollisionResult> collisionResults) {
-        int newCollisions = mesh.collide(ray, worldTransform.getMatrix(), worldBounds, collisionResults);
-        for (int i = collisionResults.size() - newCollisions; i < collisionResults.size(); i++) {
+    protected void collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
+        collide(collisionResults, () -> mesh.collideStatic(ray, worldTransform.getMatrix(), worldBoundsTMin, worldBoundsTMax, collisionResults));
+    }
+
+    @Override
+    protected void collideDynamic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
+        collide(collisionResults, () -> mesh.collideDynamic(ray, worldTransform.getMatrix(), collisionResults));
+    }
+
+    private void collide(ArrayList<CollisionResult> collisionResults, Runnable addCollisionResults) {
+        int previousCollisionsCount = collisionResults.size();
+        addCollisionResults.run();
+        for (int i = previousCollisionsCount; i < collisionResults.size(); i++) {
             collisionResults.get(i).setGeometry(this);
         }
     }
