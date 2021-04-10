@@ -35,8 +35,16 @@ public class Skeleton {
 
     public void update() {
         boolean jointMatricesUpdated = false;
+        for (Joint joint : joints) {
+            joint.update();
+        }
+        // Check the joints after all were updated because a child might be in the array before its parent and would otherwise have a wrong world transform
         for (int i = 0; i < joints.length; i++) {
-            jointMatricesUpdated |= joints[i].update(jointMatrices[i]);
+            Matrix4f jointMatrix = joints[i].getJointMatrix();
+            if (!jointMatrices[i].equals(jointMatrix)) {
+                jointMatrices[i].set(jointMatrix);
+                jointMatricesUpdated = true;
+            }
         }
         if (jointMatricesUpdated) {
             updateUniformData();

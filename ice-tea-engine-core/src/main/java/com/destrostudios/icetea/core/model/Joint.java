@@ -15,6 +15,7 @@ public class Joint {
         localPoseTransform = new Transform();
         worldPoseTransform = new Transform();
         isWorldTransformOutdated = true;
+        jointMatrix = new Matrix4f();
         resetPose();
     }
     private Joint parent;
@@ -26,6 +27,8 @@ public class Joint {
     @Getter
     private Transform worldPoseTransform;
     private boolean isWorldTransformOutdated;
+    @Getter
+    private Matrix4f jointMatrix;
 
     public void setChild(int index, Joint child) {
         children[index] = child;
@@ -48,25 +51,31 @@ public class Joint {
         localPoseTransform.setScale(scale);
     }
 
-    public boolean update(Matrix4f jointMatrix) {
+    public void update() {
         if (localPoseTransform.updateMatrixIfNecessary()) {
             setWorldTransformOutdated();
         }
         if (isWorldTransformOutdated) {
-            if (parent != null) {
-                worldPoseTransform.setChildWorldTransform(parent.getWorldPoseTransform(), localPoseTransform);
-                worldPoseTransform.updateMatrixIfNecessary();
-            } else {
-                worldPoseTransform.set(localPoseTransform);
+            updateWorldTransform();
+            // We have to make sure that the children are (at least once) updated after the parent, so they have the correct world transform
+            for (Joint child : children) {
+                child.update();
             }
-            worldPoseTransform.getMatrix().mul(inverseBindMatrix, jointMatrix);
-            isWorldTransformOutdated = false;
-            return true;
         }
-        return false;
     }
 
-    protected void setWorldTransformOutdated() {
+    private void updateWorldTransform() {
+        if (parent != null) {
+            worldPoseTransform.setChildWorldTransform(parent.getWorldPoseTransform(), localPoseTransform);
+            worldPoseTransform.updateMatrixIfNecessary();
+        } else {
+            worldPoseTransform.set(localPoseTransform);
+        }
+        worldPoseTransform.getMatrix().mul(inverseBindMatrix, jointMatrix);
+        isWorldTransformOutdated = false;
+    }
+
+    private void setWorldTransformOutdated() {
         isWorldTransformOutdated = true;
         for (Joint child : children) {
             child.setWorldTransformOutdated();

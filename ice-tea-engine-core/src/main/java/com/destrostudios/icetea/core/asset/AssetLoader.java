@@ -6,10 +6,12 @@ import java.io.InputStream;
 public abstract class AssetLoader<T, S> {
 
     protected AssetManager assetManager;
+    protected String key;
     protected S settings;
 
-    public void setContext(AssetManager assetManager, S settings) {
+    public void setContext(AssetManager assetManager, String key, S settings) {
         this.assetManager = assetManager;
+        this.key = key;
         this.settings = settings;
     }
 

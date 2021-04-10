@@ -21,7 +21,11 @@ public class AssetManager {
     }
 
     public Spatial loadModel(String key) {
-        return load(key, new GltfLoader(), new GltfLoaderSettings());
+        return loadModel(key, GltfLoaderSettings.builder().build());
+    }
+
+    public Spatial loadModel(String key, GltfLoaderSettings settings) {
+        return load(key, new GltfLoader(), settings);
     }
 
     public Texture loadTexture(String key) {
@@ -29,7 +33,7 @@ public class AssetManager {
     }
 
     private <T, S> T load(String key, AssetLoader<T, S> assetLoader, S settings) {
-        assetLoader.setContext(this, settings);
+        assetLoader.setContext(this, key, settings);
         InputStream inputStream = getInputStream(key);
         try {
             return assetLoader.load(inputStream);

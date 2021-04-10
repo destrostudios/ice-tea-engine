@@ -4,6 +4,7 @@ import com.destrostudios.icetea.core.Transform;
 import com.destrostudios.icetea.core.animation.*;
 import com.destrostudios.icetea.core.animation.sampled.*;
 import com.destrostudios.icetea.core.asset.AssetLoader;
+import com.destrostudios.icetea.core.asset.AssetManager;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
@@ -40,11 +41,23 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
         tmpMatrix4f = new float[16];
     }
     private GltfModel gltfModel;
+    private String keyDirectory;
     private HashMap<NodeModel, Node> nodesMap;
     private HashMap<NodeModel, Joint> jointsMap;
     private HashMap<AnimationModel.Sampler, AnimationSamplerData<?>> samplersDataMap;
     private HashMap<MaterialModel, Material> materialsMap;
     private float[] tmpMatrix4f;
+
+    @Override
+    public void setContext(AssetManager assetManager, String key, GltfLoaderSettings settings) {
+        super.setContext(assetManager, key, settings);
+        int slashIndex = key.lastIndexOf("/");
+        if (slashIndex != -1) {
+            keyDirectory = key.substring(0, slashIndex + 1);
+        } else {
+            keyDirectory = "";
+        }
+    }
 
     @Override
     public Node load(InputStream inputStream) throws IOException {
@@ -298,7 +311,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             return values;
         }
         BufferViewModel bufferViewModel = accessorModel.getBufferViewModel();
-        InputStream inputStream = getSystemClassLoader().getResourceAsStream("models/" + bufferViewModel.getBufferModel().getUri());
+        InputStream inputStream = getSystemClassLoader().getResourceAsStream(keyDirectory + bufferViewModel.getBufferModel().getUri());
         try {
             DataInputStream dataInputStream = new DataInputStream(inputStream);
             dataInputStream.skip(bufferViewModel.getByteOffset() + accessorModel.getByteOffset());
@@ -406,7 +419,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             if (baseColorTextureValue != null) {
                 int baseColorTextureIndex = (int) baseColorTextureValue;
                 TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
-                String textureFilePath = "models/" + baseColorTextureModel.getImageModel().getUri();
+                String textureFilePath = keyDirectory + baseColorTextureModel.getImageModel().getUri();
                 material.setTexture("diffuseMap", assetManager.loadTexture(textureFilePath));
             }
             return material;

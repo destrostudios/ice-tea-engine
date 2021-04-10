@@ -3,6 +3,7 @@ package com.destrostudios.icetea.test;
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.animation.AnimationsControl;
 import com.destrostudios.icetea.core.animation.PlayingAnimationControl;
+import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
@@ -40,7 +41,8 @@ public class TestApplication extends Application {
     private Geometry geometryChalet2;
     private Geometry geometryChalet3;
     private Geometry geometryDennis;
-    private Spatial animatedObject;
+    private Spatial animatedObject1;
+    private Spatial animatedObject2;
     private Node nodeSkyWrapper;
     private Node nodeDuck;
     private Geometry geometryKnot;
@@ -56,7 +58,7 @@ public class TestApplication extends Application {
         sceneCamera.setRotation(new Vector3f(-88, 0, 0));
 
         DirectionalLight directionalLight = new DirectionalLight();
-        directionalLight.setDirection(new Vector3f(1, 1, -0.25f).normalize());
+        directionalLight.setDirection(new Vector3f(1, 1, -1).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
         directionalLight.addShadows(2048);
         setLight(directionalLight);
@@ -193,7 +195,7 @@ public class TestApplication extends Application {
 
         // Duck
 
-        nodeDuck = (Node) assetManager.loadModel("models/duck.gltf");
+        nodeDuck = (Node) assetManager.loadModel("models/duck/Duck.gltf");
         nodeDuck.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
         nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1)));
 
@@ -203,15 +205,24 @@ public class TestApplication extends Application {
         nodeDuckWrapper.scale(new Vector3f(0.25f, 0.25f, 0.25f));
         sceneNode.add(nodeDuckWrapper);
 
-        // Animated object
+        // Animated objects
 
-        animatedObject = assetManager.loadModel("models/simple_skin.gltf");
-        animatedObject.move(new Vector3f(0, -2, 0.6f));
-        animatedObject.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
-        animatedObject.scale(new Vector3f(0.5f, 0.5f, 0.5f));
-        AnimationsControl animationsControl = (AnimationsControl) animatedObject.getControls().iterator().next();
-        animatedObject.addControl(new PlayingAnimationControl(animationsControl.getAnimations()[0]));
-        sceneNode.add(animatedObject);
+        animatedObject1 = assetManager.loadModel("models/simple_skin/SimpleSkin.gltf", GltfLoaderSettings.builder().generateNormals(true).build());
+        animatedObject1.move(new Vector3f(-2.5f, 0, 0.6f));
+        animatedObject1.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+        animatedObject1.scale(new Vector3f(0.5f, 0.5f, 0.5f));
+        AnimationsControl animationsControl1 = (AnimationsControl) animatedObject1.getControls().iterator().next();
+        animatedObject1.addControl(new PlayingAnimationControl(animationsControl1.getAnimations()[0]));
+        sceneNode.add(animatedObject1);
+
+        animatedObject2 = assetManager.loadModel("models/footman/scene.gltf");
+        animatedObject2.move(new Vector3f(2.5f, 0, 0));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(180), 1, 0, 0)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
+        animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
+        AnimationsControl animationsControl2 = (AnimationsControl) animatedObject2.getControls().iterator().next();
+        animatedObject2.addControl(new PlayingAnimationControl(animationsControl2.getAnimations()[0]));
+        sceneNode.add(animatedObject2);
 
         // Sky
 
@@ -398,7 +409,7 @@ public class TestApplication extends Application {
             hasRemovedDennis = true;
         }
         for (Spatial spatial : sceneNode.getChildren()) {
-            if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != animatedObject) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
+            if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != animatedObject1) && (spatial != animatedObject2) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
                 updateTimeBasedRotation(spatial);
             }
         }
