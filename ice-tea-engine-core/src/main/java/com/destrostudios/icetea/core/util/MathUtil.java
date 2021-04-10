@@ -50,17 +50,23 @@ public class MathUtil {
 
     public static void absoluteLocal(Matrix3f matrix3f) {
         matrix3f.set(
-            Math.abs(matrix3f.m00()), Math.abs(matrix3f.m01()), Math.abs(matrix3f.m02()),
-            Math.abs(matrix3f.m10()), Math.abs(matrix3f.m11()), Math.abs(matrix3f.m12()),
-            Math.abs(matrix3f.m20()), Math.abs(matrix3f.m21()), Math.abs(matrix3f.m22())
+            Math.abs(matrix3f.m00()),
+            Math.abs(matrix3f.m01()),
+            Math.abs(matrix3f.m02()),
+            Math.abs(matrix3f.m10()),
+            Math.abs(matrix3f.m11()),
+            Math.abs(matrix3f.m12()),
+            Math.abs(matrix3f.m20()),
+            Math.abs(matrix3f.m21()),
+            Math.abs(matrix3f.m22())
         );
     }
 
-    public static Vector3f mul(Vector3f vector3f, Matrix4f matrix4f) {
-        return mul(vector3f, matrix4f, vector3f);
+    public static Vector3f mulPosition(Vector3f vector3f, Matrix4f matrix4f) {
+        return mulPosition(vector3f, matrix4f, vector3f);
     }
 
-    public static Vector3f mul(Vector3f v, Matrix4f m, Vector3f dest) {
+    public static Vector3f mulPosition(Vector3f v, Matrix4f m, Vector3f dest) {
         return dest.set(
             (m.m00() * v.x()) + (m.m10() * v.y()) + (m.m20() * v.z()) + m.m30(),
             (m.m01() * v.x()) + (m.m11() * v.y()) + (m.m21() * v.z()) + m.m31(),
@@ -68,7 +74,7 @@ public class MathUtil {
         );
     }
 
-    public static Vector3f mulNormal(Vector3f v, Matrix4f m, Vector3f dest) {
+    public static Vector3f mulDirection(Vector3f v, Matrix4f m, Vector3f dest) {
         return dest.set(
             (m.m00() * v.x()) + (m.m10() * v.y()) + (m.m20() * v.z()),
             (m.m01() * v.x()) + (m.m11() * v.y()) + (m.m21() * v.z()),
@@ -78,6 +84,31 @@ public class MathUtil {
 
     public static float mulW(Vector3f v, Matrix4f m) {
         return (m.m03() * v.x()) + (m.m13() * v.y()) + (m.m23() * v.z()) + m.m33();
+    }
+
+    public static Matrix4f mul(Matrix4f matrix4f, float factor) {
+        return mul(matrix4f, factor, matrix4f);
+    }
+
+    public static Matrix4f mul(Matrix4f matrix4f, float factor, Matrix4f dest) {
+        return dest.set(
+            matrix4f.m00() * factor,
+            matrix4f.m01() * factor,
+            matrix4f.m02() * factor,
+            matrix4f.m03() * factor,
+            matrix4f.m10() * factor,
+            matrix4f.m11() * factor,
+            matrix4f.m12() * factor,
+            matrix4f.m13() * factor,
+            matrix4f.m20() * factor,
+            matrix4f.m21() * factor,
+            matrix4f.m22() * factor,
+            matrix4f.m23() * factor,
+            matrix4f.m30() * factor,
+            matrix4f.m31() * factor,
+            matrix4f.m32() * factor,
+            matrix4f.m33() * factor
+        );
     }
 
     public static Vector3f getTriangleNormal(Vector3f v1, Vector3f v2, Vector3f v3) {

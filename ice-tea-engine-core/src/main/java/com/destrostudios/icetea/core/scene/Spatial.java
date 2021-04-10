@@ -13,7 +13,6 @@ import lombok.Setter;
 import org.joml.*;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 public abstract class Spatial {
 
@@ -35,7 +34,7 @@ public abstract class Spatial {
     private boolean isWorldTransformOutdated;
     private boolean isWorldBoundsOutdated;
     @Getter
-    private Set<Control> controls;
+    protected Set<Control> controls;
     @Setter
     @Getter
     private RenderBucketType renderBucket;
@@ -152,23 +151,15 @@ public abstract class Spatial {
     }
 
     public void collideStatic(Ray ray, ArrayList<CollisionResult> collisionResults) {
-        collide(ray, worldBoundCollision -> collideStatic(ray, worldTransform.getMatrix(), worldBoundCollision.getTMin(), worldBoundCollision.getTMax(), collisionResults), collisionResults);
-    }
-
-    public void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults) {
-        collide(ray, worldBoundCollision -> collideDynamic(ray, worldTransform.getMatrix(), worldBoundCollision.getTMin(), worldBoundCollision.getTMax(), collisionResults), collisionResults);
-    }
-
-    private void collide(Ray ray, Consumer<CollisionResult_AABB_Ray> collideWithWorldBoundInfo, ArrayList<CollisionResult> collisionResults) {
         CollisionResult_AABB_Ray worldBoundCollision = worldBounds.collide(ray);
         if (worldBoundCollision != null) {
-            collideWithWorldBoundInfo.accept(worldBoundCollision);
+           collideStatic(ray, worldTransform.getMatrix(), worldBoundCollision.getTMin(), worldBoundCollision.getTMax(), collisionResults);
         }
     }
 
     protected abstract void collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults);
 
-    protected abstract void collideDynamic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults);
+    public abstract void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults);
 
     public void addControl(Control control) {
         controls.add(control);

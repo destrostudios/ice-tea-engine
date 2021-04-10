@@ -364,8 +364,8 @@ public abstract class Application {
             viewSpaceZ
         );
         float w = MathUtil.mulW(dest, viewProjectionMatrix);
-        MathUtil.mul(dest, viewProjectionMatrix);
-        dest.mul(1f / w);
+        MathUtil.mulPosition(dest, viewProjectionMatrix);
+        dest.mul(1 / w);
         return dest;
     }
 

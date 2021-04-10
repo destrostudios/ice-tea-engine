@@ -230,22 +230,31 @@ public class Mesh {
         }
     }
 
-    public int collideDynamic(Ray ray, Matrix4f worldMatrix, ArrayList<CollisionResult> collisionResults) {
+    public int collideDynamic(Ray ray, List<VertexPositionModifier> vertexPositionModifiers, Matrix4f worldMatrix, ArrayList<CollisionResult> collisionResults) {
         // Only triangle collisions are supported currently
         if (topology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) {
             int collisions = 0;
             // TODO: Introduce TempVars
-            Vector3f worldVertex1 = new Vector3f();
-            Vector3f worldVertex2 = new Vector3f();
-            Vector3f worldVertex3 = new Vector3f();
+            Vector3f vertexPosition1 = new Vector3f();
+            Vector3f vertexPosition2 = new Vector3f();
+            Vector3f vertexPosition3 = new Vector3f();
             for (int i = 0; i < indices.length; i += 3) {
-                Vector3f vertex1 = vertices[indices[i]].getVector3f("vertexPosition");
-                Vector3f vertex2 = vertices[indices[i + 1]].getVector3f("vertexPosition");
-                Vector3f vertex3 = vertices[indices[i + 2]].getVector3f("vertexPosition");
-                MathUtil.mul(vertex1, worldMatrix, worldVertex1);
-                MathUtil.mul(vertex2, worldMatrix, worldVertex2);
-                MathUtil.mul(vertex3, worldMatrix, worldVertex3);
-                CollisionResult collisionResult = ray.collideWithTriangle(worldVertex1, worldVertex2, worldVertex3);
+                VertexData vertex1 = vertices[indices[i]];
+                VertexData vertex2 = vertices[indices[i + 1]];
+                VertexData vertex3 = vertices[indices[i + 2]];
+                vertexPosition1.set(vertex1.getVector3f("vertexPosition"));
+                vertexPosition2.set(vertex2.getVector3f("vertexPosition"));
+                vertexPosition3.set(vertex3.getVector3f("vertexPosition"));
+                // TODO: These can be cached during the calculation to make it faster, but one has to care about the memory and gc - Maybe something with TempVars
+                for (VertexPositionModifier vertexPositionModifier : vertexPositionModifiers) {
+                    vertexPositionModifier.modifyVertexPosition(vertex1, vertexPosition1);
+                    vertexPositionModifier.modifyVertexPosition(vertex2, vertexPosition2);
+                    vertexPositionModifier.modifyVertexPosition(vertex3, vertexPosition3);
+                }
+                MathUtil.mulPosition(vertexPosition1, worldMatrix);
+                MathUtil.mulPosition(vertexPosition2, worldMatrix);
+                MathUtil.mulPosition(vertexPosition3, worldMatrix);
+                CollisionResult collisionResult = ray.collideWithTriangle(vertexPosition1, vertexPosition2, vertexPosition3);
                 if (collisionResult != null) {
                     collisionResult.setTriangleIndex(i);
                     collisionResults.add(collisionResult);

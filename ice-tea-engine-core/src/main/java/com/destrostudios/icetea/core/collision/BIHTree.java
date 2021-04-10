@@ -175,8 +175,8 @@ public class BIHTree {
     public int collide(Ray worldRay, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, List<CollisionResult> collisionResults) {
         // TODO: Introduce TempVars
         Matrix4f inverseWorldMatrix = worldMatrix.invert(new Matrix4f());
-        Vector3f modelRayOrigin = MathUtil.mul(worldRay.getOrigin(), inverseWorldMatrix, new Vector3f());
-        Vector3f modelRayDirection = MathUtil.mulNormal(worldRay.getDirection(), inverseWorldMatrix, new Vector3f());
+        Vector3f modelRayOrigin = MathUtil.mulPosition(worldRay.getOrigin(), inverseWorldMatrix, new Vector3f());
+        Vector3f modelRayDirection = MathUtil.mulDirection(worldRay.getDirection(), inverseWorldMatrix, new Vector3f());
         float[] modelRayOriginAxes = new float[] { modelRayOrigin.x(), modelRayOrigin.y(), modelRayOrigin.z() };
         float[] modelRayDirectionAxesInverse = new float[] { 1 / modelRayDirection.x(), 1 / modelRayDirection.y(), 1 / modelRayDirection.z()};
 
@@ -242,9 +242,9 @@ public class BIHTree {
                 BIHLeaf leaf = (BIHLeaf) treeItem;
                 for (int i = leaf.getLeftTriangleIndex(); i <= leaf.getRightTriangleIndex(); i++) {
                     getTriangle(i, vertex1, vertex2, vertex3);
-                    MathUtil.mul(vertex1, worldMatrix);
-                    MathUtil.mul(vertex2, worldMatrix);
-                    MathUtil.mul(vertex3, worldMatrix);
+                    MathUtil.mulPosition(vertex1, worldMatrix);
+                    MathUtil.mulPosition(vertex2, worldMatrix);
+                    MathUtil.mulPosition(vertex3, worldMatrix);
                     CollisionResult collisionResult = worldRay.collideWithTriangle(vertex1, vertex2, vertex3);
                     if (collisionResult != null) {
                         collisionResult.setTriangleIndex(trianglesIndices[i]);

@@ -75,7 +75,7 @@ public class Node extends Spatial {
     }
 
     @Override
-    protected void collideDynamic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
+    public void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults) {
         for (Spatial child : children) {
             child.collideDynamic(ray, collisionResults);
         }

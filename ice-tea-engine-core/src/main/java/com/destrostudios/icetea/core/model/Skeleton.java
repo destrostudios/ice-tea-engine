@@ -16,6 +16,7 @@ public class Skeleton {
         uniformData = new UniformData();
     }
     private Joint[] joints;
+    @Getter
     private Matrix4f[] jointMatrices;
     @Getter
     private UniformData uniformData;

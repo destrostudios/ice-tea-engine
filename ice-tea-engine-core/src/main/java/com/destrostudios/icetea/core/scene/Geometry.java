@@ -6,6 +6,7 @@ import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.material.descriptor.*;
 import com.destrostudios.icetea.core.mesh.Mesh;
+import com.destrostudios.icetea.core.mesh.VertexPositionModifier;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.render.RenderJob;
@@ -13,6 +14,7 @@ import lombok.Getter;
 import org.joml.Matrix4f;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Geometry extends Spatial {
 
@@ -124,8 +126,14 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    protected void collideDynamic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
-        collide(collisionResults, () -> mesh.collideDynamic(ray, worldTransform.getMatrix(), collisionResults));
+    public void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults) {
+        collide(collisionResults, () -> {
+            List<VertexPositionModifier> vertexPositionModifiers = controls.stream()
+                    .filter(control -> control instanceof VertexPositionModifier)
+                    .map(control -> (VertexPositionModifier) control)
+                    .collect(Collectors.toList());
+            mesh.collideDynamic(ray, vertexPositionModifiers, worldTransform.getMatrix(), collisionResults);
+        });
     }
 
     private void collide(ArrayList<CollisionResult> collisionResults, Runnable addCollisionResults) {
