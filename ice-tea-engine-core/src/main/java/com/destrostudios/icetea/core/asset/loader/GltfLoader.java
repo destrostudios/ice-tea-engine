@@ -76,7 +76,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             rootNode.add(sceneNode);
         }
         CombinedAnimation[] animations = loadAnimations(gltfModel.getAnimationModels());
-        rootNode.addControl(new AnimationsControl(animations));
+        rootNode.addControl(new AnimationControl(animations));
         return rootNode;
     }
 

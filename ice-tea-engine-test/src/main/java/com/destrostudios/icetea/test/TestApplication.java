@@ -1,8 +1,7 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
-import com.destrostudios.icetea.core.animation.AnimationsControl;
-import com.destrostudios.icetea.core.animation.PlayingAnimationControl;
+import com.destrostudios.icetea.core.animation.AnimationControl;
 import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
@@ -43,6 +42,7 @@ public class TestApplication extends Application {
     private Geometry geometryDennis;
     private Spatial animatedObject1;
     private Spatial animatedObject2;
+    private int animatedObject2AnimationIndex;
     private Node nodeSkyWrapper;
     private Node nodeDuck;
     private Geometry geometryKnot;
@@ -211,8 +211,8 @@ public class TestApplication extends Application {
         animatedObject1.move(new Vector3f(-2.5f, 0, 0.6f));
         animatedObject1.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
         animatedObject1.scale(new Vector3f(0.5f, 0.5f, 0.5f));
-        AnimationsControl animationsControl1 = (AnimationsControl) animatedObject1.getControls().iterator().next();
-        animatedObject1.addControl(new PlayingAnimationControl(animationsControl1.getAnimations()[0]));
+        AnimationControl animationControl1 = (AnimationControl) animatedObject1.getControls().iterator().next();
+        animationControl1.play(0);
         sceneNode.add(animatedObject1);
 
         animatedObject2 = assetManager.loadModel("models/footman/scene.gltf");
@@ -220,8 +220,8 @@ public class TestApplication extends Application {
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(180), 1, 0, 0)));
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
-        AnimationsControl animationsControl2 = (AnimationsControl) animatedObject2.getControls().iterator().next();
-        animatedObject2.addControl(new PlayingAnimationControl(animationsControl2.getAnimations()[0]));
+        AnimationControl animationControl2 = (AnimationControl) animatedObject2.getControls().iterator().next();
+        animationControl2.play(animatedObject2AnimationIndex);
         sceneNode.add(animatedObject2);
 
         // Sky
@@ -328,6 +328,12 @@ public class TestApplication extends Application {
                         } else {
                             sceneNode.add(geometryGround);
                         }
+                    }
+                    break;
+                case GLFW_KEY_5:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        animatedObject2AnimationIndex = ((animatedObject2AnimationIndex + 1) % animationControl2.getAnimations().length);
+                        animationControl2.play(animatedObject2AnimationIndex);
                     }
                     break;
             }

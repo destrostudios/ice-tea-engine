@@ -8,10 +8,9 @@ public class CombinedAnimation extends Animation {
     private Animation[] animations;
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void update(float time) {
         for (Animation animation : animations) {
-            animation.update(tpf);
+            animation.update(time);
         }
     }
 }
