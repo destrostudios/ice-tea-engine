@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.render.shadow;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.light.SpotLight;
@@ -56,13 +57,31 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         Matrix4f viewMatrix = new Matrix4f();
         if (light instanceof DirectionalLight) {
             DirectionalLight directionalLight = (DirectionalLight) light;
-            projectionMatrix.ortho(-6, 6, -2, 2, -6, 6, true);
+            BoundingBox sceneWorldBounds = application.getSceneNode().getShadowReceiveWorldBounds();
+
+            // BoundingBox -> BoundingSphere
+            Vector3f sceneWorldBoundsCenter = sceneWorldBounds.getCenter();
+            float sceneWorldBoundsRadius = (float) Math.sqrt(
+                (sceneWorldBounds.getExtent().x() * sceneWorldBounds.getExtent().x()) +
+                (sceneWorldBounds.getExtent().y() * sceneWorldBounds.getExtent().y()) +
+                (sceneWorldBounds.getExtent().z() * sceneWorldBounds.getExtent().z())
+            );
+
+            projectionMatrix.ortho(
+                -1 * sceneWorldBoundsRadius,
+                sceneWorldBoundsRadius,
+                -1 * sceneWorldBoundsRadius,
+                sceneWorldBoundsRadius,
+                -1 * sceneWorldBoundsRadius,
+                sceneWorldBoundsRadius,
+                true
+            );
             projectionMatrix.m11(projectionMatrix.m11() * -1);
 
-            viewMatrix.lookAt(directionalLight.getDirection().negate(new Vector3f()), new Vector3f(0, 0, 0), new Vector3f(0, 0, 1));
+            viewMatrix.lookAt(sceneWorldBoundsCenter, sceneWorldBoundsCenter.add(directionalLight.getDirection(), new Vector3f()), new Vector3f(0, 0, 1));
         } else if (light instanceof SpotLight) {
             SpotLight spotLight = (SpotLight) light;
-            projectionMatrix.perspective((float) Math.toDegrees(45), ((float) shadowMapWidth) / shadowMapHeight, 0.1f, 100, true);
+            projectionMatrix.perspective((float) Math.toRadians(45), ((float) shadowMapWidth) / shadowMapHeight, 0.1f, 100, true);
             projectionMatrix.m11(projectionMatrix.m11() * -1);
 
             MathUtil.setViewMatrix(viewMatrix, spotLight.getTranslation(), spotLight.getRotation());
@@ -205,7 +224,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
 
     @Override
     public boolean isRendering(Geometry geometry) {
-        return geometry.hasParent(application.getSceneNode());
+        return geometry.isCastingShadows();
     }
 
     @Override

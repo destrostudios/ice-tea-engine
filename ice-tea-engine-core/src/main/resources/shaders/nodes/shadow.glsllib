@@ -12,7 +12,7 @@ float shaderNode_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2D shadow
     vec4 projectedShadowMapPosition = shadowMapPosition / shadowMapPosition.w;
     if ((projectedShadowMapPosition.z > -1) && (projectedShadowMapPosition.z < 1)) {
         float dist = texture(shadowMap, projectedShadowMapPosition.st).r;
-        if ((projectedShadowMapPosition.w > 0) && (dist < projectedShadowMapPosition.z)) {
+        if ((projectedShadowMapPosition.w > 0) && ((projectedShadowMapPosition.z - dist) > 0.01)) {
             return 0.1;
         }
     }

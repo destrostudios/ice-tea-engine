@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.util.MathUtil;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class Node extends Spatial {
 
@@ -26,11 +28,10 @@ public class Node extends Spatial {
     public boolean update(Application application, float tpf) {
         boolean commandBufferOutdated = super.update(application, tpf);
         for (Spatial child : children) {
-            if (child.update(application, tpf)) {
-                commandBufferOutdated = true;
-            }
+            commandBufferOutdated |= child.update(application, tpf);
         }
         updateWorldBoundsIfNecessary();
+        updateShadowReceiveWorldBoundsIfNecessary();
         if (modified) {
             commandBufferOutdated = true;
             modified = false;
@@ -48,15 +49,23 @@ public class Node extends Spatial {
     }
 
     @Override
-    protected void updateWorldBounds() {
+    protected void updateWorldBounds(BoundingBox destinationWorldBounds, Predicate<Spatial> isSpatialConsidered) {
         // TODO: Introduce TempVars
-        Vector3f min = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
-        Vector3f max = new Vector3f(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+        Vector3f min = new Vector3f();
+        Vector3f max = new Vector3f();
+        boolean wasChildConsidered = false;
         for (Spatial child : children) {
-            MathUtil.updateMinMax(min, max, child.getWorldBounds().getMin());
-            MathUtil.updateMinMax(min, max, child.getWorldBounds().getMax());
+            if (isSpatialConsidered.test(child)) {
+                if (!wasChildConsidered) {
+                    min.set(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+                    max.set(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+                }
+                wasChildConsidered = true;
+                MathUtil.updateMinMax(min, max, child.getWorldBounds().getMin());
+                MathUtil.updateMinMax(min, max, child.getWorldBounds().getMax());
+            }
         }
-        worldBounds.setMinMax(min, max);
+        destinationWorldBounds.setMinMax(min, max);
     }
 
     @Override

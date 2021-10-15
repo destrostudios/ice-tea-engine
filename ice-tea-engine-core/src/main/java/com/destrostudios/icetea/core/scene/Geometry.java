@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.material.Material;
@@ -12,8 +13,11 @@ import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.render.RenderJob;
 import lombok.Getter;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Geometry extends Spatial {
@@ -36,16 +40,23 @@ public class Geometry extends Spatial {
 
     @Override
     public boolean update(Application application, float tpf) {
-        boolean commandBufferOutdated = super.update(application, tpf);
+        AtomicBoolean commandBufferOutdated = new AtomicBoolean(super.update(application, tpf));
         updateWorldBoundsIfNecessary();
-
+        updateShadowReceiveWorldBoundsIfNecessary();
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
         application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {
-            if (renderJob.isRendering(this) && (!renderContexts.containsKey(renderJob))) {
-                GeometryRenderContext renderContext = renderJob.createGeometryRenderContext();
-                renderContext.init(application, renderJob, this);
-                renderContexts.put(renderJob, renderContext);
-                outdatedRenderContexts.add(renderContext);
+            GeometryRenderContext renderContext = renderContexts.get(renderJob);
+            if (renderJob.isRendering(this)) {
+                if (renderContext == null) {
+                    renderContext = renderJob.createGeometryRenderContext();
+                    renderContext.init(application, renderJob, this);
+                    renderContexts.put(renderJob, renderContext);
+                    outdatedRenderContexts.add(renderContext);
+                }
+            } else if (renderContext != null) {
+                renderContext.cleanup();
+                renderContexts.remove(renderJob);
+                commandBufferOutdated.set(true);
             }
         });
         if (transformUniformData.recreateBuffersIfNecessary(application.getSwapChain().getImages().size()) | material.getParameters().recreateBuffersIfNecessary(application.getSwapChain().getImages().size())) {
@@ -55,9 +66,9 @@ public class Geometry extends Spatial {
             for (GeometryRenderContext<?> renderContext : outdatedRenderContexts) {
                 renderContext.recreateDescriptorDependencies();
             }
-            commandBufferOutdated = true;
+            commandBufferOutdated.set(true);
         }
-        return commandBufferOutdated;
+        return commandBufferOutdated.get();
     }
 
     @Override
@@ -80,9 +91,13 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    protected void updateWorldBounds() {
-        worldBounds.set(mesh.getBounds());
-        worldBounds.transform(worldTransform);
+    protected void updateWorldBounds(BoundingBox destinationWorldBounds, Predicate<Spatial> isSpatialConsidered) {
+        if (isSpatialConsidered.test(this)) {
+            destinationWorldBounds.set(mesh.getBounds());
+            destinationWorldBounds.transform(worldTransform);
+        } else {
+            destinationWorldBounds.setMinMax(new Vector3f(), new Vector3f());
+        }
     }
 
     private void updateWorldTransformUniform() {
@@ -144,12 +159,16 @@ public class Geometry extends Spatial {
         }
     }
 
+    @Override
+    protected void onRemoveFromRoot() {
+        super.onRemoveFromRoot();
+        cleanupRenderContexts();
+    }
+
     public void cleanup() {
         tryUnregisterMesh();
         tryUnregisterMaterial();
-        for (GeometryRenderContext<?> renderContext : renderContexts.values()) {
-            renderContext.cleanup();
-        }
+        cleanupRenderContexts();
     }
 
     private void tryUnregisterMesh() {
@@ -168,5 +187,12 @@ public class Geometry extends Spatial {
                 material.cleanup();
             }
         }
+    }
+
+    private void cleanupRenderContexts() {
+        for (GeometryRenderContext<?> renderContext : renderContexts.values()) {
+            renderContext.cleanup();
+        }
+        renderContexts.clear();
     }
 }

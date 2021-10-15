@@ -82,10 +82,9 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
             rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
             rasterizer.depthBiasEnable(true);
+            // TODO: Make these configurable
             rasterizer.depthBiasConstantFactor(4.0f);
             rasterizer.depthBiasSlopeFactor(1.5f);
-            rasterizer.depthBiasConstantFactor(1.25f);
-            rasterizer.depthBiasSlopeFactor(1.75f);
 
             // ===> MULTISAMPLING <===
 

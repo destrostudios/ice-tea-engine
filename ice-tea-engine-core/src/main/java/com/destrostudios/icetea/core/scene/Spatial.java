@@ -8,11 +8,13 @@ import com.destrostudios.icetea.core.collision.CollisionResult_AABB_Ray;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
+import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.*;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public abstract class Spatial {
 
@@ -20,6 +22,8 @@ public abstract class Spatial {
         localTransform  = new Transform();
         worldTransform = new Transform();
         worldBounds = new BoundingBox();
+        shadowMode = ShadowMode.INHERIT;
+        shadowReceiveWorldBounds = new BoundingBox();
         controls = new HashSet<>();
     }
     protected Application application;
@@ -33,6 +37,11 @@ public abstract class Spatial {
     protected BoundingBox worldBounds;
     private boolean isWorldTransformOutdated;
     private boolean isWorldBoundsOutdated;
+    @Getter
+    private ShadowMode shadowMode;
+    @Getter
+    private BoundingBox shadowReceiveWorldBounds;
+    private boolean isShadowReceiveWorldBoundsOutdated;
     @Getter
     protected Set<Control> controls;
     @Setter
@@ -71,6 +80,7 @@ public abstract class Spatial {
         if (parent != null) {
             parent.setWorldBoundsOutdated();
         }
+        setShadowReceiveWorldBoundsOutdated();
     }
 
     private void ensureControlsState() {
@@ -100,12 +110,12 @@ public abstract class Spatial {
 
     protected void updateWorldBoundsIfNecessary() {
         if (isWorldBoundsOutdated) {
-            updateWorldBounds();
+            updateWorldBounds(worldBounds, spatial -> true);
             isWorldBoundsOutdated = false;
         }
     }
 
-    protected abstract void updateWorldBounds();
+    protected abstract void updateWorldBounds(BoundingBox destinationWorldBounds, Predicate<Spatial> isSpatialConsidered);
 
     public void setLocalTransform(Matrix4fc transform) {
         localTransform.set(transform);
@@ -161,6 +171,44 @@ public abstract class Spatial {
 
     public abstract void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults);
 
+    // TODO: Changing shadow mode on parent nodes should outdate the children - Before implementing, decide if to continue with the INHERIT approach
+    public void setShadowMode(ShadowMode shadowMode) {
+        boolean wasReceivingShadows = isReceivingShadows();
+        this.shadowMode = shadowMode;
+        boolean isReceivingShadows = isReceivingShadows();
+        if (isReceivingShadows != wasReceivingShadows) {
+            setShadowReceiveWorldBoundsOutdated();
+        }
+    }
+
+    protected void setShadowReceiveWorldBoundsOutdated() {
+        isShadowReceiveWorldBoundsOutdated = true;
+        if (parent != null) {
+            parent.setShadowReceiveWorldBoundsOutdated();
+        }
+    }
+
+    protected boolean updateShadowReceiveWorldBoundsIfNecessary() {
+        if (isShadowReceiveWorldBoundsOutdated) {
+            updateWorldBounds(shadowReceiveWorldBounds, Spatial::isReceivingShadows);
+            isShadowReceiveWorldBoundsOutdated = false;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isReceivingShadows() {
+        return (shadowMode == ShadowMode.RECEIVE)
+            || (shadowMode == ShadowMode.CAST_AND_RECEIVE)
+            || ((shadowMode == ShadowMode.INHERIT) && ((parent != null) && parent.isReceivingShadows()));
+    }
+
+    public boolean isCastingShadows() {
+        return (shadowMode == ShadowMode.CAST)
+            || (shadowMode == ShadowMode.CAST_AND_RECEIVE)
+            || ((shadowMode == ShadowMode.INHERIT) && ((parent != null) && parent.isCastingShadows()));
+    }
+
     public void addControl(Control control) {
         controls.add(control);
     }
@@ -196,7 +244,7 @@ public abstract class Spatial {
         return false;
     }
 
-    private void onRemoveFromRoot() {
+    protected void onRemoveFromRoot() {
         for (Control control : controls) {
             control.onRemoveFromRoot();
         }
