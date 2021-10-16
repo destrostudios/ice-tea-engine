@@ -60,7 +60,7 @@ public class TestApplication extends Application {
         sceneCamera.setRotation(new Vector3f(-88, 0, 0));
 
         DirectionalLight directionalLight = new DirectionalLight();
-        directionalLight.setDirection(new Vector3f(1, 1, -1).normalize());
+        directionalLight.setDirection(new Vector3f(-1, 1, -1).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
         directionalLight.addShadows(4096);
         setLight(directionalLight);
