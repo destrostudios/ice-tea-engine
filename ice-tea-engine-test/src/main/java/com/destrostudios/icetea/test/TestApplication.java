@@ -16,6 +16,7 @@ import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.scene.gui.Panel;
 import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.terrain.GrassFactory;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.water.*;
 import org.joml.*;
@@ -37,6 +38,8 @@ public class TestApplication extends Application {
     private Panel panel1;
     private Geometry geometryWater;
     private Geometry geometryGround;
+    private Geometry geometryGrass;
+    private Material materialGrass;
     private Geometry geometryChalet1;
     private Geometry geometryChalet2;
     private Geometry geometryChalet3;
@@ -119,6 +122,14 @@ public class TestApplication extends Application {
         geometryGround.setMaterial(materialGround);
         geometryGround.move(new Vector3f(-5, -5, -0.25f));
         geometryGround.setShadowMode(ShadowMode.RECEIVE);
+
+        // Grass
+
+        geometryGrass = GrassFactory.createGrass(10, assetManager);
+        materialGrass = geometryGrass.getMaterial();
+        geometryGrass.move(new Vector3f(-5, -5, -0.25f));
+        geometryGrass.scale(new Vector3f(10, 10, 10));
+        geometryGrass.setShadowMode(ShadowMode.RECEIVE);
 
         // Chalet
 
@@ -358,6 +369,15 @@ public class TestApplication extends Application {
                         nodeDuck.setShadowMode((nodeDuck.getShadowMode() == ShadowMode.INHERIT) ? ShadowMode.CAST : ShadowMode.INHERIT);
                     }
                     break;
+                case GLFW_KEY_8:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        if (geometryGrass.getParent() == sceneNode) {
+                            sceneNode.remove(geometryGrass);
+                        } else {
+                            sceneNode.add(geometryGrass);
+                        }
+                    }
+                    break;
             }
             // Set camera move direction
             Integer axis = null;
@@ -439,7 +459,7 @@ public class TestApplication extends Application {
 
         if (rotateObjects) {
             for (Spatial spatial : sceneNode.getChildren()) {
-                if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != animatedObject1) && (spatial != animatedObject2) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
+                if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != geometryGrass) && (spatial != animatedObject1) && (spatial != animatedObject2) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
                     updateTimeBasedRotation(spatial);
                 }
             }
@@ -451,6 +471,8 @@ public class TestApplication extends Application {
         geometryBounds.setLocalScale(debugWorldBounds.getExtent().mul(2, new Vector3f()));
 
         materialCool.getParameters().setFloat("time", time);
+        materialGrass.getParameters().setFloat("time", time);
+
         sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 3, new Vector3f())));
     }
 
