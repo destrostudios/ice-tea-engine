@@ -30,13 +30,13 @@ void main() {
 
     #ifdef VERTEX_VERTEXNORMAL
         #ifdef LIGHT_DIRECTION
-            lightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vertexPosition, vertexNormal, light.direction);
+            lightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition, vertexNormal, light.direction);
         #elif LIGHT_TRANSLATION
-            lightVertexInfo = shaderNode_light_getVertexInfo_SpotLight(camera.view, geometry.model, vertexPosition, vertexNormal, light.translation);
+            lightVertexInfo = shaderNode_light_getVertexInfo_SpotLight(camera.view, geometry.model, worldPosition, vertexNormal, light.translation);
         #endif
     #endif
 
     #ifdef SHADOWMAPLIGHT
-        shadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, geometry.model, vertexPosition);
+        shadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, worldPosition);
     #endif
 }

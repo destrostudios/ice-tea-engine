@@ -38,7 +38,7 @@ public class ReflectionRenderJob extends SceneRenderJob {
         super.updateUniformBuffers(currentImage);
         reflectionCamera.set(application.getSceneCamera());
         Vector3f location = reflectionCamera.getLocation();
-        float waterHeight = 0;
+        float waterHeight = geometryWater.getWorldTransform().getTranslation().z();
         float distance = (2 * (location.z() - waterHeight));
         location.setComponent(2, location.z() - distance);
         reflectionCamera.setLocation(location);
@@ -46,7 +46,8 @@ public class ReflectionRenderJob extends SceneRenderJob {
         // Invert pitch (TODO: Better camera rotation vector)
         rotation.setComponent(0, rotation.x() + (2 * (-90 - rotation.x())));
         reflectionCamera.setRotation(rotation);
-        reflectionCamera.setClipPlane(new Vector4f(0, 0, 1, waterHeight));
+        // Clip plane needs to be inverted (TODO: Verify the assumption that this is because of the inverted camera pitch)
+        reflectionCamera.setClipPlane(new Vector4f(0, 0, 1, -1 * waterHeight));
         reflectionCamera.update();
         reflectionCamera.getTransformUniformData().updateBufferIfNecessary(currentImage);
     }

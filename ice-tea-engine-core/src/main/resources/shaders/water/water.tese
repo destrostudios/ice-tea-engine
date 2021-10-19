@@ -10,7 +10,7 @@ void main() {
     float u = gl_TessCoord.x;
     float v = gl_TessCoord.y;
 
-	vec4 position = (
+	vec4 worldPosition = (
 		(1 - u) * (1 - v) * gl_in[12].gl_Position +
 		u * (1 - v) * gl_in[0].gl_Position +
 		u * v * gl_in[3].gl_Position +
@@ -24,6 +24,6 @@ void main() {
 		(1 - u) * v * inUV[15]
 	);
 
-	gl_Position = position;
+	gl_Position = worldPosition;
 	outUV = uv * params.uvScale;
 }

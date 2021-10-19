@@ -4,7 +4,6 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.filter.RadialBlurFilter;
 import com.destrostudios.icetea.core.filter.SepiaFilter;
-import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.scene.Spatial;
 import org.joml.Vector3f;
 
@@ -22,12 +21,6 @@ public class TestRoom extends Application {
     protected void initScene() {
         sceneCamera.setLocation(new Vector3f(0, 0, 7));
         sceneCamera.setRotation(new Vector3f(-88, 0, 0));
-
-        DirectionalLight directionalLight = new DirectionalLight();
-        directionalLight.setDirection(new Vector3f(1, 0, -0.25f).normalize());
-        directionalLight.addAffectedSpatial(sceneNode);
-        // directionalLight.addShadows(2048);
-        // setLight(directionalLight);
 
         // Room
 

@@ -1,12 +1,11 @@
 package com.destrostudios.icetea.core.material.descriptor;
 
-import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
+import static org.lwjgl.vulkan.VK10.*;
 
 public class ShadowMapTextureDescriptorLayout extends TextureDescriptorLayout {
 
     public ShadowMapTextureDescriptorLayout() {
-        super(VK_SHADER_STAGE_FRAGMENT_BIT);
+        super(VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT);
     }
 
     @Override

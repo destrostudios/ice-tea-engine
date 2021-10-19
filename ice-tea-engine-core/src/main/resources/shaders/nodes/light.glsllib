@@ -4,16 +4,16 @@ struct LightVertexInfo {
   vec3 viewSpaceLightDirection;
 };
 
-LightVertexInfo shaderNode_light_getVertexInfo_SpotLight(mat4 viewMatrix, mat4 modelMatrix, vec3 modelSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightPosition) {
-    vec3 viewSpaceVertexPosition = vec3(viewMatrix * modelMatrix * vec4(modelSpaceVertexPosition, 1));
+LightVertexInfo shaderNode_light_getVertexInfo_SpotLight(mat4 viewMatrix, mat4 modelMatrix, vec4 worldSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightPosition) {
+    vec3 viewSpaceVertexPosition = vec3(viewMatrix * worldSpaceVertexPosition);
     vec3 viewSpaceVertexNormal = normalize(mat3(transpose(inverse(viewMatrix * modelMatrix))) * modelSpaceVertexNormal);
     vec3 viewSpaceLightPosition = vec3(viewMatrix * vec4(worldSpaceLightPosition, 1));
     vec3 viewSpaceLightDirection = normalize(viewSpaceVertexPosition - viewSpaceLightPosition);
     return LightVertexInfo(viewSpaceVertexPosition, viewSpaceVertexNormal, viewSpaceLightDirection);
 }
 
-LightVertexInfo shaderNode_light_getVertexInfo_DirectionalLight(mat4 viewMatrix, mat4 modelMatrix, vec3 modelSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightDirection) {
-    vec3 viewSpaceVertexPosition = vec3(viewMatrix * modelMatrix * vec4(modelSpaceVertexPosition, 1));
+LightVertexInfo shaderNode_light_getVertexInfo_DirectionalLight(mat4 viewMatrix, mat4 modelMatrix, vec4 worldSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightDirection) {
+    vec3 viewSpaceVertexPosition = vec3(viewMatrix * worldSpaceVertexPosition);
     vec3 viewSpaceVertexNormal = normalize(mat3(transpose(inverse(viewMatrix * modelMatrix))) * modelSpaceVertexNormal);
     vec3 viewSpaceLightDirection = vec3(viewMatrix * vec4(worldSpaceLightDirection, 0));
     return LightVertexInfo(viewSpaceVertexPosition, viewSpaceVertexNormal, viewSpaceLightDirection);
