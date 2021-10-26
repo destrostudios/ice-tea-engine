@@ -33,12 +33,18 @@ mat3 angleAxis3x3(float angle, vec3 axis) {
 void emitVertex(vec3 position, vec3 offset, mat3 transformationMatrix, vec2 texCoord) {
 	vec4 vertexPosition = vec4(position + (transformationMatrix * offset), 1);
 	gl_Position = camera.proj * camera.view * vertexPosition;
-	if (camera.clipPlane.length() > 0) {
-		gl_ClipDistance[0] = dot(vertexPosition, camera.clipPlane);
-	}
+	#ifdef CAMERA_CLIPPLANE
+		if (camera.clipPlane.length() > 0) {
+			gl_ClipDistance[0] = dot(vertexPosition, camera.clipPlane);
+		}
+	#endif
 	outTexCoord = texCoord;
-	outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, vertexPosition);
-	outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vertexPosition, vec3(0, 0, 1), light.direction);
+	#ifdef SHADOWMAPLIGHT
+		outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, vertexPosition);
+	#endif
+	#ifdef LIGHT_DIRECTION
+		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vertexPosition, vec3(0, 0, 1), light.direction);
+	#endif
 	EmitVertex();
 }
 

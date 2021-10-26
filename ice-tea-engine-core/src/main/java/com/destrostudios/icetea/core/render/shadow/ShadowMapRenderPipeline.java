@@ -6,10 +6,12 @@ import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
+import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
+import java.util.LinkedList;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -33,10 +35,47 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             MaterialDescriptorSet materialDescriptorSet = shadowMapGeometryRenderContext.getMaterialDescriptorSet();
             String materialDescriptorSetShaderDeclaration = materialDescriptorSet.getShaderDeclaration();
 
-            VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(1, stack);
+            int shaderStagesCount = 1;
+            if (material.getTesselationControlShader() != null) {
+                shaderStagesCount++;
+            }
+            if (material.getTesselationEvaluationShader() != null) {
+                shaderStagesCount++;
+            }
+            if (material.getGeometryShader() != null) {
+                shaderStagesCount++;
+            }
+
+            VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(shaderStagesCount, stack);
+
+            int shaderStageIndex = 0;
+            LinkedList<Long> shaderModules = new LinkedList<>();
 
             long vertShaderModule = createShaderModule_Vertex(material.getVertexShader(), materialDescriptorSetShaderDeclaration, mesh);
-            createShaderStage(shaderStages, 0, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
+            createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
+            shaderModules.add(vertShaderModule);
+            shaderStageIndex++;
+
+            if (material.getTesselationControlShader() != null) {
+                long tesselationControlShaderModule = createShaderModule(material.getTesselationControlShader(), ShaderType.TESSELATION_CONTROL_SHADER, materialDescriptorSetShaderDeclaration);
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tesselationControlShaderModule, stack);
+                shaderModules.add(tesselationControlShaderModule);
+                shaderStageIndex++;
+            }
+
+            if (material.getTesselationEvaluationShader() != null) {
+                long tesselationEvaluationShaderModule = createShaderModule(material.getTesselationEvaluationShader(), ShaderType.TESSELATION_EVALUATION_SHADER, materialDescriptorSetShaderDeclaration);
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tesselationEvaluationShaderModule, stack);
+                shaderModules.add(tesselationEvaluationShaderModule);
+                shaderStageIndex++;
+            }
+
+            if (material.getGeometryShader() != null) {
+                long geometryShaderModule = createShaderModule(material.getGeometryShader(), ShaderType.GEOMETRY_SHADER, materialDescriptorSetShaderDeclaration);
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_GEOMETRY_BIT, geometryShaderModule, stack);
+                shaderModules.add(geometryShaderModule);
+                shaderStageIndex++;
+            }
 
             // ===> VERTEX STAGE <===
 
@@ -102,6 +141,15 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             depthStencil.depthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
             depthStencil.back().compareOp(VK_COMPARE_OP_ALWAYS);
 
+            // ===> TESSELATION <===
+
+            VkPipelineTessellationStateCreateInfo tesselation = null;
+            if (material.getTesselationPatchSize() > 0) {
+                tesselation = VkPipelineTessellationStateCreateInfo.callocStack(stack);
+                tesselation.sType(VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO);
+                tesselation.patchControlPoints(material.getTesselationPatchSize());
+            }
+
             // ===> PIPELINE LAYOUT CREATION <===
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
@@ -123,6 +171,7 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             pipelineInfo.pRasterizationState(rasterizer);
             pipelineInfo.pMultisampleState(multisampling);
             pipelineInfo.pDepthStencilState(depthStencil);
+            pipelineInfo.pTessellationState(tesselation);
             pipelineInfo.layout(pipelineLayout);
             pipelineInfo.renderPass(renderJob.getRenderPass());
             pipelineInfo.subpass(0);
@@ -137,7 +186,9 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
 
             // ===> RELEASE RESOURCES <===
 
-            vkDestroyShaderModule(application.getLogicalDevice(), vertShaderModule, null);
+            for (long shaderModule : shaderModules) {
+                vkDestroyShaderModule(application.getLogicalDevice(), shaderModule, null);
+            }
         }
     }
 }
