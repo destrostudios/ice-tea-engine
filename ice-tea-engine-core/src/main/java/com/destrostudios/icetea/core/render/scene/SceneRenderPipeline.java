@@ -37,10 +37,10 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             String materialDescriptorSetShaderDeclaration = materialDescriptorSet.getShaderDeclaration();
 
             int shaderStagesCount = 2;
-            if (material.getTesselationControlShader() != null) {
+            if (material.getTessellationControlShader() != null) {
                 shaderStagesCount++;
             }
-            if (material.getTesselationEvaluationShader() != null) {
+            if (material.getTessellationEvaluationShader() != null) {
                 shaderStagesCount++;
             }
             if (material.getGeometryShader() != null) {
@@ -57,17 +57,17 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             shaderModules.add(vertShaderModule);
             shaderStageIndex++;
 
-            if (material.getTesselationControlShader() != null) {
-                long tesselationControlShaderModule = createShaderModule(material.getTesselationControlShader(), ShaderType.TESSELATION_CONTROL_SHADER, materialDescriptorSetShaderDeclaration);
-                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tesselationControlShaderModule, stack);
-                shaderModules.add(tesselationControlShaderModule);
+            if (material.getTessellationControlShader() != null) {
+                long tessellationControlShaderModule = createShaderModule(material.getTessellationControlShader(), ShaderType.TESSELLATION_CONTROL_SHADER, materialDescriptorSetShaderDeclaration);
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tessellationControlShaderModule, stack);
+                shaderModules.add(tessellationControlShaderModule);
                 shaderStageIndex++;
             }
 
-            if (material.getTesselationEvaluationShader() != null) {
-                long tesselationEvaluationShaderModule = createShaderModule(material.getTesselationEvaluationShader(), ShaderType.TESSELATION_EVALUATION_SHADER, materialDescriptorSetShaderDeclaration);
-                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tesselationEvaluationShaderModule, stack);
-                shaderModules.add(tesselationEvaluationShaderModule);
+            if (material.getTessellationEvaluationShader() != null) {
+                long tessellationEvaluationShaderModule = createShaderModule(material.getTessellationEvaluationShader(), ShaderType.TESSELLATION_EVALUATION_SHADER, materialDescriptorSetShaderDeclaration);
+                createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tessellationEvaluationShaderModule, stack);
+                shaderModules.add(tessellationEvaluationShaderModule);
                 shaderStageIndex++;
             }
 
@@ -171,13 +171,13 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             colorBlending.pAttachments(colorBlendAttachment);
             colorBlending.blendConstants(stack.floats(0, 0, 0, 0));
 
-            // ===> TESSELATION <===
+            // ===> TESSELLATION <===
 
-            VkPipelineTessellationStateCreateInfo tesselation = null;
-            if (material.getTesselationPatchSize() > 0) {
-                tesselation = VkPipelineTessellationStateCreateInfo.callocStack(stack);
-                tesselation.sType(VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO);
-                tesselation.patchControlPoints(material.getTesselationPatchSize());
+            VkPipelineTessellationStateCreateInfo tessellation = null;
+            if (material.getTessellationPatchSize() > 0) {
+                tessellation = VkPipelineTessellationStateCreateInfo.callocStack(stack);
+                tessellation.sType(VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO);
+                tessellation.patchControlPoints(material.getTessellationPatchSize());
             }
 
             // ===> PIPELINE LAYOUT CREATION <===
@@ -202,7 +202,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             pipelineInfo.pMultisampleState(multisampling);
             pipelineInfo.pDepthStencilState(depthStencil);
             pipelineInfo.pColorBlendState(colorBlending);
-            pipelineInfo.pTessellationState(tesselation);
+            pipelineInfo.pTessellationState(tessellation);
             pipelineInfo.layout(pipelineLayout);
             pipelineInfo.renderPass(renderJob.getRenderPass());
             pipelineInfo.subpass(0);

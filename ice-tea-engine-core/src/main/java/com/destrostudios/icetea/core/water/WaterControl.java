@@ -69,14 +69,14 @@ public class WaterControl extends Control {
         Material material = new Material();
         material.setVertexShader(new Shader("shaders/water/water.vert"));
         material.setFragmentShader(new Shader("shaders/water/water.frag"));
-        material.setTesselationPatchSize(16);
-        material.setTesselationControlShader(new Shader("shaders/water/water.tesc"));
-        material.setTesselationEvaluationShader(new Shader("shaders/water/water.tese"));
+        material.setTessellationPatchSize(16);
+        material.setTessellationControlShader(new Shader("shaders/water/water.tesc"));
+        material.setTessellationEvaluationShader(new Shader("shaders/water/water.tese"));
         material.setGeometryShader(new Shader("shaders/water/water.geom"));
         // FIXME: Vectors have to be defined first or somehow the memory alignment is messed up
         material.getParameters().setVector3f("waterColor", waterConfig.getWaterColor());
         material.getParameters().setVector2f("windDirection", waterConfig.getWindDirection());
-        // Tesselation
+        // Tessellation
         material.getParameters().setFloat("tessellationFactor", waterConfig.getTessellationFactor());
         material.getParameters().setFloat("tessellationSlope", waterConfig.getTessellationSlope());
         material.getParameters().setFloat("tessellationShift", waterConfig.getTessellationShift());

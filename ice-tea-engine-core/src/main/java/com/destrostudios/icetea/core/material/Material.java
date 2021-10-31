@@ -28,13 +28,13 @@ public class Material {
     private Shader fragmentShader;
     @Setter
     @Getter
-    private int tesselationPatchSize;
+    private int tessellationPatchSize;
     @Getter
     @Setter
-    private Shader tesselationControlShader;
+    private Shader tessellationControlShader;
     @Getter
     @Setter
-    private Shader tesselationEvaluationShader;
+    private Shader tessellationEvaluationShader;
     @Getter
     @Setter
     private Shader geometryShader;

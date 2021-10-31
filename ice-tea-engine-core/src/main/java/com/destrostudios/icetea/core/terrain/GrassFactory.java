@@ -21,9 +21,9 @@ public class GrassFactory {
         Material material = new Material();
         material.setVertexShader(new Shader("shaders/grass/grass.vert"));
         material.setFragmentShader(new Shader("shaders/grass/grass.frag", new String[] { "light", "shadow" }));
-        material.setTesselationPatchSize(16);
-        material.setTesselationControlShader(new Shader("shaders/grass/grass.tesc"));
-        material.setTesselationEvaluationShader(new Shader("shaders/grass/grass.tese"));
+        material.setTessellationPatchSize(16);
+        material.setTessellationControlShader(new Shader("shaders/grass/grass.tesc"));
+        material.setTessellationEvaluationShader(new Shader("shaders/grass/grass.tese"));
         material.setGeometryShader(new Shader("shaders/grass/grass.geom", new String[] { "light", "shadow" }));
         // FIXME: Vectors have to be defined first in this order or somehow the memory alignment is messed up
         material.getParameters().setVector4f("baseColor", grassConfig.getBaseColor());

@@ -86,7 +86,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
 
             MathUtil.setViewMatrix(viewMatrix, spotLight.getTranslation(), spotLight.getRotation());
         }
-        // We set the actual cameras location to get the same vertex results (i.e. tesselation based on camera distance), but we use the tweaked shadow render matrices for proj+view
+        // We set the actual cameras location to get the same vertex results (i.e. tessellation based on camera distance), but we use the tweaked shadow render matrices for proj+view
         lightTransformUniformData.setVector3f("location", application.getSceneCamera().getLocation());
         lightTransformUniformData.setMatrix4f("proj", projectionMatrix);
         lightTransformUniformData.setMatrix4f("view", viewMatrix);

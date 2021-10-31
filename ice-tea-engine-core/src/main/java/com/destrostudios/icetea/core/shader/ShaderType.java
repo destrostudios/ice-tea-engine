@@ -7,8 +7,8 @@ public enum ShaderType {
     COMPUTE_SHADER(shaderc_glsl_compute_shader),
     FRAGMENT_SHADER(shaderc_glsl_fragment_shader),
     GEOMETRY_SHADER(shaderc_glsl_geometry_shader),
-    TESSELATION_EVALUATION_SHADER(shaderc_glsl_tess_evaluation_shader),
-    TESSELATION_CONTROL_SHADER(shaderc_glsl_tess_control_shader),
+    TESSELLATION_EVALUATION_SHADER(shaderc_glsl_tess_evaluation_shader),
+    TESSELLATION_CONTROL_SHADER(shaderc_glsl_tess_control_shader),
     VERTEX_SHADER(shaderc_glsl_vertex_shader);
 
     ShaderType(int kind) {

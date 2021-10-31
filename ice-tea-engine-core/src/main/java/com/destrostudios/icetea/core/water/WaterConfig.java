@@ -17,7 +17,7 @@ public class WaterConfig {
 	private float capillarSuppressFactor = 0.1f;
 	// Normal computations
 	private float normalStrength = 0.2f;
-	// Tesselation
+	// Tessellation
 	private float tessellationFactor = 10;
 	private float tessellationSlope = 2;
 	private float tessellationShift = 0;
