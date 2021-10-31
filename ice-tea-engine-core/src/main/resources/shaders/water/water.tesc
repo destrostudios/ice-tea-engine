@@ -12,7 +12,7 @@ const int AB = 2;
 const int BD = 3;
 
 float getLodFactor(float cameraDistance) {
-	return max(0, (params.tesselationFactor / pow(cameraDistance, params.tesselationSlope)) - params.tesselationShift);
+	return max(0, (params.tessellationFactor / pow(cameraDistance, params.tessellationSlope)) - params.tessellationShift);
 }
 
 void main() {

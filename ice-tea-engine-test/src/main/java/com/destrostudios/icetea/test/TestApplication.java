@@ -16,6 +16,7 @@ import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.scene.gui.Panel;
 import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.terrain.GrassConfig;
 import com.destrostudios.icetea.core.terrain.GrassFactory;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.water.*;
@@ -125,7 +126,7 @@ public class TestApplication extends Application {
 
         // Grass
 
-        geometryGrass = GrassFactory.createGrass(10, assetManager);
+        geometryGrass = GrassFactory.createGrass(new GrassConfig(), assetManager);
         materialGrass = geometryGrass.getMaterial();
         geometryGrass.move(new Vector3f(-5, -5, -0.25f));
         geometryGrass.scale(new Vector3f(10, 10, 10));

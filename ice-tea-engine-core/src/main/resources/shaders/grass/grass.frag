@@ -7,7 +7,7 @@ layout(location = 2) in LightVertexInfo lightVertexInfo;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    vec4 grassColor = texture(bladeMap, vec2(inTexCoord.x, 1 - inTexCoord.y)) * mix(params.baseColor, params.tipColor, inTexCoord.y);
+    vec4 grassColor = mix(params.baseColor, params.tipColor, inTexCoord.y) * texture(bladeMap, vec2(inTexCoord.x, 1 - inTexCoord.y));
 
     float shininess = 32;
     float shadowFactor = shaderNode_shadow_getShadowFactor(inShadowMapPosition, shadowMapTexture);

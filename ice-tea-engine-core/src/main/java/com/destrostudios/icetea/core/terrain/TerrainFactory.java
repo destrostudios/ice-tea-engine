@@ -17,9 +17,9 @@ public class TerrainFactory {
         material.setTesselationControlShader(new Shader("shaders/terrain/terrain.tesc"));
         material.setTesselationEvaluationShader(new Shader("shaders/terrain/terrain.tese", new String[] { "noise" }));
         material.setGeometryShader(new Shader("shaders/terrain/terrain.geom", new String[] { "light", "shadow" }));
-        material.getParameters().setFloat("tesselationFactor", 0.1f);
-        material.getParameters().setFloat("tesselationSlope", 0.5f);
-        material.getParameters().setFloat("tesselationShift", 0.1f);
+        material.getParameters().setFloat("tessellationFactor", 0.1f);
+        material.getParameters().setFloat("tessellationSlope", 0.5f);
+        material.getParameters().setFloat("tessellationShift", 0.1f);
         geometry.setMaterial(material);
         return geometry;
     }

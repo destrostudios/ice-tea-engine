@@ -77,9 +77,9 @@ public class WaterControl extends Control {
         material.getParameters().setVector3f("waterColor", waterConfig.getWaterColor());
         material.getParameters().setVector2f("windDirection", waterConfig.getWindDirection());
         // Tesselation
-        material.getParameters().setFloat("tesselationFactor", waterConfig.getTessellationFactor());
-        material.getParameters().setFloat("tesselationSlope", waterConfig.getTessellationSlope());
-        material.getParameters().setFloat("tesselationShift", waterConfig.getTessellationShift());
+        material.getParameters().setFloat("tessellationFactor", waterConfig.getTessellationFactor());
+        material.getParameters().setFloat("tessellationSlope", waterConfig.getTessellationSlope());
+        material.getParameters().setFloat("tessellationShift", waterConfig.getTessellationShift());
         material.getParameters().setFloat("uvScale", waterConfig.getUvScale());
         // Geometry
         material.getParameters().setFloat("displacementRange", waterConfig.getDisplacementRange());
