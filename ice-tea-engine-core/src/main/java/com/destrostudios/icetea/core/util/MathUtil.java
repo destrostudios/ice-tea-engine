@@ -1,9 +1,8 @@
 package com.destrostudios.icetea.core.util;
 
-import org.joml.AxisAngle4f;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import org.joml.*;
+
+import java.lang.Math;
 
 public class MathUtil {
 
@@ -19,11 +18,10 @@ public class MathUtil {
         return Math.log(n) / Math.log(2);
     }
 
-    public static void setViewMatrix(Matrix4f viewMatrix, Vector3f translation, Vector3f rotation) {
+    public static void setViewMatrix(Matrix4f viewMatrix, Vector3f translation, Quaternionf rotation) {
         viewMatrix.identity();
-        viewMatrix.rotate(new AxisAngle4f((float) Math.toRadians(rotation.x()), new Vector3f(1, 0, 0)));
-        viewMatrix.rotate(new AxisAngle4f((float) Math.toRadians(rotation.y()), new Vector3f(0, 1, 0)));
-        viewMatrix.rotate(new AxisAngle4f((float) Math.toRadians(rotation.z()), new Vector3f(0, 0, 1)));
+        viewMatrix.rotate(rotation);
+        // TODO: Introduce TempVars
         viewMatrix.translate(translation.negate(new Vector3f()));
     }
 

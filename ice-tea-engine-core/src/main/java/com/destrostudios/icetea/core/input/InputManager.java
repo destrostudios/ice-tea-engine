@@ -23,6 +23,7 @@ public class InputManager {
     private GLFWCursorPosCallback glfwCursorPosCallback;
     private List<KeyListener> keyListeners;
     private List<MouseButtonListener> mouseButtonListeners;
+    private List<MousePositionListener> mousePositionListeners;
     @Getter
     private Vector2f cursorPosition;
 
@@ -56,14 +57,22 @@ public class InputManager {
         glfwSetMouseButtonCallback(application.getWindow(), glfwMouseButtonCallback);
         // Position
         cursorPosition = new Vector2f();
+        mousePositionListeners = new LinkedList<>();
         glfwCursorPosCallback = new GLFWCursorPosCallback() {
 
             @Override
-            public void invoke(long window, double xpos, double ypos) {
-                cursorPosition.set(xpos, ypos);
+            public void invoke(long window, double x, double y) {
+                double deltaX = (x - cursorPosition.x());
+                double deltaY = (y - cursorPosition.y());
+                cursorPosition.set(x, y);
+                mousePositionListeners.forEach(mousePositionListener -> mousePositionListener.onMousePositionEvent(new MousePositionEvent(x, y, deltaX, deltaY)));
             }
         };
         glfwSetCursorPosCallback(application.getWindow(), glfwCursorPosCallback);
+    }
+
+    public void setCursorMode(int cursorMode) {
+        glfwSetInputMode(application.getWindow(), GLFW_CURSOR, cursorMode);
     }
 
     public void addKeyListener(KeyListener keyListener) {
@@ -80,6 +89,14 @@ public class InputManager {
 
     public void removeMouseButtonListener(MouseButtonListener mouseButtonListener) {
         mouseButtonListeners.remove(mouseButtonListener);
+    }
+
+    public void addMousePositionListener(MousePositionListener mousePositionListener) {
+        mousePositionListeners.add(mousePositionListener);
+    }
+
+    public void removeMousePositionListener(MousePositionListener mousePositionListener) {
+        mousePositionListeners.remove(mousePositionListener);
     }
 
     public void cleanup() {

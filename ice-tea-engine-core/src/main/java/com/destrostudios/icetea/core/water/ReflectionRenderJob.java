@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
 import com.destrostudios.icetea.core.render.scene.SceneRenderJob;
 import com.destrostudios.icetea.core.scene.Geometry;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -42,9 +43,11 @@ public class ReflectionRenderJob extends SceneRenderJob {
         float distance = (2 * (location.z() - waterHeight));
         location.setComponent(2, location.z() - distance);
         reflectionCamera.setLocation(location);
-        Vector3f rotation = reflectionCamera.getRotation();
-        // Invert pitch (TODO: Better camera rotation vector)
-        rotation.setComponent(0, rotation.x() + (2 * (-90 - rotation.x())));
+        Quaternionf rotation = new Quaternionf(reflectionCamera.getRotation());
+        // Invert pitch
+        // TODO: Introduce TempVars
+        Vector3f eulerAngles = rotation.getEulerAnglesXYZ(new Vector3f());
+        rotation.rotateLocalX(2 * ((float) (-0.5f * Math.PI) - eulerAngles.x()));
         reflectionCamera.setRotation(rotation);
         // Clip plane needs to be inverted (TODO: Verify the assumption that this is because of the inverted camera pitch)
         reflectionCamera.setClipPlane(new Vector4f(0, 0, 1, -1 * waterHeight));

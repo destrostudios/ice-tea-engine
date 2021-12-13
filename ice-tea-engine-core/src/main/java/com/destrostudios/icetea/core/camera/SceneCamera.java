@@ -2,17 +2,18 @@ package com.destrostudios.icetea.core.camera;
 
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
+import org.joml.Matrix3f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.joml.Vector4f;
 
 public class SceneCamera extends Camera {
 
     public SceneCamera() {
-        rotation = new Vector3f();
+        rotation = new Quaternionf();
     }
     @Getter
-    private Vector3f rotation;
+    private Quaternionf rotation;
     @Getter
     private float fieldOfViewY;
     @Getter
@@ -65,7 +66,7 @@ public class SceneCamera extends Camera {
         isOutdated_View = true;
     }
 
-    public void setRotation(Vector3fc rotation) {
+    public void setRotation(Quaternionf rotation) {
         this.rotation.set(rotation);
         isOutdated_View = true;
     }
@@ -106,5 +107,20 @@ public class SceneCamera extends Camera {
     private void updateViewMatrix() {
         MathUtil.setViewMatrix(viewMatrix, location, rotation);
         updateViewMatrixUniform();
+    }
+
+    public Vector3f getRight() {
+        // TODO: Introduce TempVars
+        return rotation.get(new Matrix3f()).getRow(0, new Vector3f());
+    }
+
+    public Vector3f getUp() {
+        // TODO: Introduce TempVars
+        return rotation.get(new Matrix3f()).getRow(1, new Vector3f());
+    }
+
+    public Vector3f getBack() {
+        // TODO: Introduce TempVars
+        return rotation.get(new Matrix3f()).getRow(2, new Vector3f());
     }
 }

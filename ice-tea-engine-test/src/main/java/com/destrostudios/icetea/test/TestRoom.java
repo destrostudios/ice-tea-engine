@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.filter.RadialBlurFilter;
 import com.destrostudios.icetea.core.filter.SepiaFilter;
 import com.destrostudios.icetea.core.scene.Spatial;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -20,7 +21,7 @@ public class TestRoom extends Application {
     @Override
     protected void initScene() {
         sceneCamera.setLocation(new Vector3f(0, 0, 7));
-        sceneCamera.setRotation(new Vector3f(-88, 0, 0));
+        sceneCamera.setRotation(new Quaternionf().rotateLocalX((float) (-0.49f * Math.PI)));
 
         // Room
 
@@ -86,6 +87,6 @@ public class TestRoom extends Application {
     @Override
     protected void update(float tpf) {
         sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 10, new Vector3f())));
-        sceneCamera.setRotation(sceneCamera.getRotation().add(new Vector3f(0, 0, tpf * 30)));
+        sceneCamera.setRotation(sceneCamera.getRotation().rotateLocalY(tpf * (float) (0.1666f * Math.PI)));
     }
 }

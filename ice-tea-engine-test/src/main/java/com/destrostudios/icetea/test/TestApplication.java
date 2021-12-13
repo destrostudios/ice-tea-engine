@@ -3,6 +3,7 @@ package com.destrostudios.icetea.test;
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.animation.AnimationControl;
 import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
+import com.destrostudios.icetea.core.camera.FreeCamera;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
@@ -57,11 +58,12 @@ public class TestApplication extends Application {
     private boolean hasRemovedDennis;
     private boolean rotateObjects = true;
     private Vector3f cameraMoveDirection = new Vector3f();
+    private FreeCamera freeCamera;
 
     @Override
     protected void initScene() {
         sceneCamera.setLocation(new Vector3f(0, -5, 0.3f));
-        sceneCamera.setRotation(new Vector3f(-88, 0, 0));
+        sceneCamera.setRotation(new Quaternionf().rotateLocalX((float) (-0.5 * Math.PI)));
 
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, 1, -1).normalize());
@@ -71,7 +73,7 @@ public class TestApplication extends Application {
 
         SpotLight spotLight = new SpotLight();
         spotLight.setTranslation(new Vector3f(-2, -2.5f, 3.25f));
-        spotLight.setRotation(new Vector3f(-60, 0, 0));
+        spotLight.setRotation(new Quaternionf().rotateLocalX((float) (-0.3333f * Math.PI)));
         spotLight.addAffectedSpatial(sceneNode);
         spotLight.addShadows(4096);
         // setLight(spotLight);
@@ -379,6 +381,17 @@ public class TestApplication extends Application {
                         }
                     }
                     break;
+                case GLFW_KEY_9:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        if (freeCamera == null) {
+                            freeCamera = new FreeCamera(sceneCamera);
+                            freeCamera.add(inputManager);
+                        } else {
+                            freeCamera.remove(inputManager);
+                            freeCamera = null;
+                        }
+                    }
+                    break;
             }
             // Set camera move direction
             Integer axis = null;
@@ -474,7 +487,10 @@ public class TestApplication extends Application {
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
 
-        sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 3, new Vector3f())));
+        float cameraSpeed = 3;
+        Vector3f deltaX = sceneCamera.getRight().mul(tpf * cameraSpeed * cameraMoveDirection.x());
+        Vector3f deltaY = sceneCamera.getBack().mul(-1 * tpf * cameraSpeed * cameraMoveDirection.y());
+        sceneCamera.setLocation(sceneCamera.getLocation().add(deltaX).add(deltaY));
     }
 
     private void updateTimeBasedRotation(Spatial spatial) {

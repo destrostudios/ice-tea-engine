@@ -32,7 +32,7 @@ public class TestTerrain extends Application {
     @Override
     protected void initScene() {
         sceneCamera.setLocation(new Vector3f(0, -50, 6));
-        sceneCamera.setRotation(new Vector3f(-88, 0, 0));
+        sceneCamera.setRotation(new Quaternionf().rotateLocalX((float) (-0.49f * Math.PI)));
         sceneCamera.setZFar(200);
 
         DirectionalLight directionalLight = new DirectionalLight();
