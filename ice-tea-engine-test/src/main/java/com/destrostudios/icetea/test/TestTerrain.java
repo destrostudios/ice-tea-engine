@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
+import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.material.Material;
@@ -18,7 +20,6 @@ import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_FRONT_BIT;
 
 public class TestTerrain extends Application {
@@ -26,8 +27,6 @@ public class TestTerrain extends Application {
     public static void main(String[] args) {
         new TestTerrain().start();
     }
-
-    private Vector3f cameraMoveDirection = new Vector3f();
 
     @Override
     protected void initScene() {
@@ -82,41 +81,10 @@ public class TestTerrain extends Application {
         nodeSkyWrapper.scale(new Vector3f(0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar()));
         sceneNode.add(nodeSkyWrapper);
 
-        // Inputs
+        addSystem(new CameraMouseRotateSystem(sceneCamera));
 
-        inputManager.addKeyListener(keyEvent -> {
-            // Set camera move direction
-            Integer axis = null;
-            Integer value = null;
-            if (keyEvent.getKey() == GLFW_KEY_W) {
-                axis = 1;
-                value = 1;
-            } else if (keyEvent.getKey() == GLFW_KEY_D) {
-                axis = 0;
-                value = 1;
-            } else if (keyEvent.getKey() == GLFW_KEY_S) {
-                axis = 1;
-                value = -1;
-            } else if (keyEvent.getKey() == GLFW_KEY_A) {
-                axis = 0;
-                value = -1;
-            }
-            if (axis != null) {
-                Integer factor = null;
-                if (keyEvent.getAction() == GLFW_PRESS) {
-                    factor = 1;
-                } else if (keyEvent.getAction() == GLFW_RELEASE) {
-                    factor = 0;
-                }
-                if (factor != null) {
-                    cameraMoveDirection.setComponent(axis, factor * value);
-                }
-            }
-        });
-    }
-
-    @Override
-    protected void update(float tpf) {
-        sceneCamera.setLocation(sceneCamera.getLocation().add(cameraMoveDirection.mul(tpf * 30, new Vector3f())));
+        CameraKeyMoveSystem cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
+        cameraKeyMoveSystem.setMoveSpeed(30);
+        addSystem(cameraKeyMoveSystem);
     }
 }

@@ -3,7 +3,8 @@ package com.destrostudios.icetea.test;
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.animation.AnimationControl;
 import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
-import com.destrostudios.icetea.core.camera.FreeCamera;
+import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
+import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
@@ -57,8 +58,8 @@ public class TestApplication extends Application {
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
     private boolean rotateObjects = true;
-    private Vector3f cameraMoveDirection = new Vector3f();
-    private FreeCamera freeCamera;
+    private CameraMouseRotateSystem cameraMouseRotateSystem;
+    private CameraKeyMoveSystem cameraKeyMoveSystem;
 
     @Override
     protected void initScene() {
@@ -383,42 +384,19 @@ public class TestApplication extends Application {
                     break;
                 case GLFW_KEY_9:
                     if (keyEvent.getAction() == GLFW_PRESS) {
-                        if (freeCamera == null) {
-                            freeCamera = new FreeCamera(sceneCamera);
-                            freeCamera.add(inputManager);
+                        if (cameraMouseRotateSystem == null) {
+                            cameraMouseRotateSystem = new CameraMouseRotateSystem(sceneCamera);
+                            cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
+                            addSystem(cameraMouseRotateSystem);
+                            addSystem(cameraKeyMoveSystem);
                         } else {
-                            freeCamera.remove(inputManager);
-                            freeCamera = null;
+                            removeSystem(cameraMouseRotateSystem);
+                            removeSystem(cameraKeyMoveSystem);
+                            cameraMouseRotateSystem = null;
+                            cameraKeyMoveSystem = null;
                         }
                     }
                     break;
-            }
-            // Set camera move direction
-            Integer axis = null;
-            Integer value = null;
-            if (keyEvent.getKey() == GLFW_KEY_W) {
-                axis = 1;
-                value = 1;
-            } else if (keyEvent.getKey() == GLFW_KEY_D) {
-                axis = 0;
-                value = 1;
-            } else if (keyEvent.getKey() == GLFW_KEY_S) {
-                axis = 1;
-                value = -1;
-            } else if (keyEvent.getKey() == GLFW_KEY_A) {
-                axis = 0;
-                value = -1;
-            }
-            if (axis != null) {
-                Integer factor = null;
-                if (keyEvent.getAction() == GLFW_PRESS) {
-                    factor = 1;
-                } else if (keyEvent.getAction() == GLFW_RELEASE) {
-                    factor = 0;
-                }
-                if (factor != null) {
-                    cameraMoveDirection.setComponent(axis, factor * value);
-                }
             }
         });
         inputManager.addMouseButtonListener(mouseButtonEvent -> {
@@ -486,11 +464,6 @@ public class TestApplication extends Application {
 
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
-
-        float cameraSpeed = 3;
-        Vector3f deltaX = sceneCamera.getRight().mul(tpf * cameraSpeed * cameraMoveDirection.x());
-        Vector3f deltaY = sceneCamera.getBack().mul(-1 * tpf * cameraSpeed * cameraMoveDirection.y());
-        sceneCamera.setLocation(sceneCamera.getLocation().add(deltaX).add(deltaY));
     }
 
     private void updateTimeBasedRotation(Spatial spatial) {

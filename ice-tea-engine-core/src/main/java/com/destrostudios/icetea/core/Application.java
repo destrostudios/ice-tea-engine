@@ -11,6 +11,7 @@ import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.shader.ShaderManager;
+import com.destrostudios.icetea.core.system.AppSystem;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -111,7 +112,10 @@ public abstract class Application {
     protected Node guiNode;
     @Getter
     private Light light;
+    @Getter
     private List<Filter> filters;
+    @Getter
+    private LinkedList<AppSystem> systems;
 
     private List<Frame> inFlightFrames;
     private Map<Integer, Frame> imagesInFlight;
@@ -136,6 +140,7 @@ public abstract class Application {
         guiNode = new Node();
         rootNode.add(guiNode);
         filters = new LinkedList<>();
+        systems = new LinkedList<>();
         initWindow();
         createInstance();
         initSurface();
@@ -351,6 +356,16 @@ public abstract class Application {
         recreateRenderJobs();
     }
 
+    public void addSystem(AppSystem system) {
+        system.initialize(this);
+        systems.add(system);
+    }
+
+    public void removeSystem(AppSystem system) {
+        systems.remove(system);
+        system.cleanup();
+    }
+
     public Vector3f getWorldCoordinates(Camera camera, Vector2f screenPosition, float projectionZPos) {
         return getWorldCoordinates(camera, screenPosition, projectionZPos, new Vector3f());
     }
@@ -380,6 +395,8 @@ public abstract class Application {
 
     private void updateState() {
         float tpf = calculateNextTpf();
+        inputManager.processPendingEvents();
+        systems.forEach(system -> system.update(tpf));
         update(tpf);
         sceneCamera.update();
         updateLights();
@@ -397,7 +414,9 @@ public abstract class Application {
         return tpf;
     }
 
-    protected abstract void update(float tpf);
+    protected void update(float tpf) {
+
+    }
 
     private void updateLights() {
         if (light != null) {

@@ -8,7 +8,6 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 
 import java.util.LinkedList;
-import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -21,9 +20,12 @@ public class InputManager {
     private GLFWKeyCallback glfwKeyCallback;
     private GLFWMouseButtonCallback glfwMouseButtonCallback;
     private GLFWCursorPosCallback glfwCursorPosCallback;
-    private List<KeyListener> keyListeners;
-    private List<MouseButtonListener> mouseButtonListeners;
-    private List<MousePositionListener> mousePositionListeners;
+    private LinkedList<KeyListener> keyListeners;
+    private LinkedList<KeyEvent> pendingKeyEvents;
+    private LinkedList<MouseButtonListener> mouseButtonListeners;
+    private LinkedList<MousePositionEvent> pendingMousePositionEvents;
+    private LinkedList<MousePositionListener> mousePositionListeners;
+    private LinkedList<MouseButtonEvent> pendingMouseButtonEvents;
     @Getter
     private Vector2f cursorPosition;
 
@@ -34,11 +36,12 @@ public class InputManager {
 
     private void initKeyListeners() {
         keyListeners = new LinkedList<>();
+        pendingKeyEvents = new LinkedList<>();
         glfwKeyCallback = new GLFWKeyCallback() {
 
             @Override
             public void invoke(long window, int key, int scanCode, int action, int modifiers) {
-                keyListeners.forEach(keyListener -> keyListener.onKeyEvent(new KeyEvent(key, scanCode, action, modifiers)));
+                pendingKeyEvents.add(new KeyEvent(key, scanCode, action, modifiers));
             }
         };
         glfwSetKeyCallback(application.getWindow(), glfwKeyCallback);
@@ -47,17 +50,19 @@ public class InputManager {
     private void initMouseListeners() {
         // Buttons
         mouseButtonListeners = new LinkedList<>();
+        pendingMouseButtonEvents = new LinkedList<>();
         glfwMouseButtonCallback = new GLFWMouseButtonCallback() {
 
             @Override
             public void invoke(long window, int button, int action, int mods) {
-                mouseButtonListeners.forEach(mouseButtonListener -> mouseButtonListener.onMouseButtonEvent(new MouseButtonEvent(button, action, mods)));
+                pendingMouseButtonEvents.add(new MouseButtonEvent(button, action, mods));
             }
         };
         glfwSetMouseButtonCallback(application.getWindow(), glfwMouseButtonCallback);
         // Position
         cursorPosition = new Vector2f();
         mousePositionListeners = new LinkedList<>();
+        pendingMousePositionEvents = new LinkedList<>();
         glfwCursorPosCallback = new GLFWCursorPosCallback() {
 
             @Override
@@ -65,10 +70,34 @@ public class InputManager {
                 double deltaX = (x - cursorPosition.x());
                 double deltaY = (y - cursorPosition.y());
                 cursorPosition.set(x, y);
-                mousePositionListeners.forEach(mousePositionListener -> mousePositionListener.onMousePositionEvent(new MousePositionEvent(x, y, deltaX, deltaY)));
+                pendingMousePositionEvents.add(new MousePositionEvent(x, y, deltaX, deltaY));
             }
         };
         glfwSetCursorPosCallback(application.getWindow(), glfwCursorPosCallback);
+    }
+
+    public void processPendingEvents() {
+        // Keys
+        for (KeyEvent keyEvent : pendingKeyEvents) {
+            for (KeyListener keyListener : keyListeners.toArray(new KeyListener[0])) {
+                keyListener.onKeyEvent(keyEvent);
+            }
+        }
+        pendingKeyEvents.clear();
+        // Mouse buttons
+        for (MouseButtonEvent mouseButtonEvent : pendingMouseButtonEvents.toArray(new MouseButtonEvent[0])) {
+            for (MouseButtonListener mouseButtonListener : mouseButtonListeners.toArray(new MouseButtonListener[0])) {
+                mouseButtonListener.onMouseButtonEvent(mouseButtonEvent);
+            }
+        }
+        pendingMouseButtonEvents.clear();
+        // Mouse positions
+        for (MousePositionEvent mousePositionEvent : pendingMousePositionEvents.toArray(new MousePositionEvent[0])) {
+            for (MousePositionListener mousePositionListener : mousePositionListeners.toArray(new MousePositionListener[0])) {
+                mousePositionListener.onMousePositionEvent(mousePositionEvent);
+            }
+        }
+        pendingMousePositionEvents.clear();
     }
 
     public void setCursorMode(int cursorMode) {
