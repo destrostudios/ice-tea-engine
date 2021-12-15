@@ -79,9 +79,9 @@ public class CameraKeyMoveSystem extends AppSystem implements KeyListener {
         super.update(tpf);
         // Avoid unnecessary vector and matrix recalculations
         if (moveDirection.lengthSquared() > 0) {
-            Vector3f deltaX = sceneCamera.getRight().mul(tpf * moveSpeed * moveDirection.x());
-            Vector3f deltaY = sceneCamera.getBack().mul(-1 * tpf * moveSpeed * moveDirection.y());
-            sceneCamera.setLocation(sceneCamera.getLocation().add(deltaX).add(deltaY));
+            Vector3f deltaRight = sceneCamera.getRight().mul(tpf * moveSpeed * moveDirection.x());
+            Vector3f deltaForward = sceneCamera.getBack().mul(-1 * tpf * moveSpeed * moveDirection.y());
+            sceneCamera.setLocation(sceneCamera.getLocation().add(deltaRight).add(deltaForward));
         }
     }
 }

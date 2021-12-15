@@ -33,7 +33,7 @@ void calcTangent() {
     t.x = f * (dV2 * e1.x - dV1 * e2.x);
     t.y = f * (dV2 * e1.y - dV1 * e2.y);
     t.z = f * (dV2 * e1.z - dV1 * e2.z);
-	
+
 	tangent = normalize(t);
 }
 
@@ -60,9 +60,9 @@ void main() {
 		dz = texture(dzMap, inUV[0] + (params.windDirection * params.motion)).r
 			* max(0, (-distance(gl_in[0].gl_Position.xyz, camera.location) / params.displacementRange + 1)) * params.choppiness;
 
-		position0.z += dy;
+		position0.y += dy;
 		position0.x -= dx;
-		position0.y -= dz;
+		position0.z -= dz;
 
 		dy = texture(dyMap, inUV[1] + (params.windDirection * params.motion)).r
 			* max(0, (-distance(gl_in[1].gl_Position.xyz, camera.location) / params.displacementRange + 1)) * params.displacementScale;
@@ -71,9 +71,9 @@ void main() {
 		dz = texture(dzMap, inUV[1] + (params.windDirection * params.motion)).r
 			* max(0, (-distance(gl_in[1].gl_Position.xyz, camera.location) / params.displacementRange + 1)) * params.choppiness;
 
-		position1.z += dy;
+		position1.y += dy;
 		position1.x -= dx;
-		position1.y -= dz;
+		position1.z -= dz;
 
 		dy = texture(dyMap, inUV[2] + (params.windDirection * params.motion)).r
 			* max(0, (-distance(gl_in[2].gl_Position.xyz, camera.location) / params.displacementRange + 1)) * params.displacementScale;
@@ -82,20 +82,22 @@ void main() {
 		dz = texture(dzMap, inUV[2] + (params.windDirection * params.motion)).r
 			* max(0, (-distance(gl_in[2].gl_Position.xyz, camera.location) / params.displacementRange + 1)) * params.choppiness;
 
-		position2.z += dy;
+		position2.y += dy;
 		position2.x -= dx;
-		position2.y -= dz;
+		position2.z -= dz;
 	}
 
-    gl_Position = camera.proj * camera.view * position0;
+	// Adding the vertices in reverse order so the triangles point upwards
+
+	gl_Position = camera.proj * camera.view * position2;
 	if (camera.clipPlane.length() > 0) {
-		gl_ClipDistance[0] = dot(position0, camera.clipPlane);
+		gl_ClipDistance[0] = dot(position2, camera.clipPlane);
 	}
-	outUV = inUV[0];
-	outPosition = position0.xyz;
+	outUV = inUV[2];
+	outPosition = position2.xyz;
 	outTangent = tangent;
 	outProjectionPosition = gl_Position;
-    EmitVertex();
+	EmitVertex();
 
 	gl_Position = camera.proj * camera.view * position1;
 	if (camera.clipPlane.length() > 0) {
@@ -105,14 +107,14 @@ void main() {
 	outPosition = position1.xyz;
 	outTangent = tangent;
 	outProjectionPosition = gl_Position;
-    EmitVertex();
+	EmitVertex();
 
-	gl_Position = camera.proj * camera.view * position2;
+    gl_Position = camera.proj * camera.view * position0;
 	if (camera.clipPlane.length() > 0) {
-		gl_ClipDistance[0] = dot(position2, camera.clipPlane);
+		gl_ClipDistance[0] = dot(position0, camera.clipPlane);
 	}
-	outUV = inUV[2];
-	outPosition = position2.xyz;
+	outUV = inUV[0];
+	outPosition = position0.xyz;
 	outTangent = tangent;
 	outProjectionPosition = gl_Position;
     EmitVertex();

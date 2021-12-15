@@ -11,45 +11,45 @@ public class Grid extends Mesh {
         this(patches, patches);
     }
 
-    public Grid(int amountX, int amountY) {
-        this(amountX, amountY, new float[amountX + 1][amountY + 1]);
+    public Grid(int amountX, int amountZ) {
+        this(amountX, amountZ, new float[amountX + 1][amountZ + 1]);
     }
 
-    public Grid(int amountX, int amountY, float[][] height) {
+    public Grid(int amountX, int amountZ, float[][] height) {
         topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
-        vertices = new VertexData[amountX * amountY * 16];
+        vertices = new VertexData[amountX * amountZ * 16];
 
         int index = 0;
         float dx = 1f / amountX;
-        float dy = 1f / amountY;
+        float dz = 1f / amountZ;
 
         float x;
-        float y;
+        float z;
 
         for (int i = 0; i < amountX; i++) {
-            for (int j = 0; j < amountY; j++) {
+            for (int j = 0; j < amountZ; j++) {
                 x = (i * dx);
-                y = (j * dy);
+                z = (j * dz);
 
-                vertices[index++] = createVertex(new Vector3f(x, y, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, y, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f, y, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx, y, height[i + 1][j]));
+                vertices[index++] = createVertex(new Vector3f(x, height[i][j], z));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, height[i][j], z));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f, height[i][j], z));
+                vertices[index++] = createVertex(new Vector3f(x + dx, height[i + 1][j], z));
 
-                vertices[index++] = createVertex(new Vector3f(x, y + dy * 0.33f, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, y + dy * 0.33f, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f, y + dy * 0.33f, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx, y + dy * 0.33f, height[i + 1][j]));
+                vertices[index++] = createVertex(new Vector3f(x, height[i][j], z + dz * 0.33f));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, height[i][j], z + dz * 0.33f));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f, height[i][j], z + dz * 0.33f));
+                vertices[index++] = createVertex(new Vector3f(x + dx, height[i + 1][j], z + dz * 0.33f));
 
-                vertices[index++] = createVertex(new Vector3f(x, y + dy * 0.66f, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, y + dy * 0.66f, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f , y + dy * 0.66f, height[i][j]));
-                vertices[index++] = createVertex(new Vector3f(x + dx, y + dy * 0.66f, height[i + 1][j]));
+                vertices[index++] = createVertex(new Vector3f(x, height[i][j], z + dz * 0.66f));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, height[i][j], z + dz * 0.66f));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f, height[i][j], z + dz * 0.66f));
+                vertices[index++] = createVertex(new Vector3f(x + dx, height[i + 1][j], z + dz * 0.66f));
 
-                vertices[index++] = createVertex(new Vector3f(x, y + dy, height[i][j + 1]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, y + dy, height[i][j + 1]));
-                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f, y + dy, height[i][j + 1]));
-                vertices[index++] = createVertex(new Vector3f(x + dx, y + dy, height[i + 1][j + 1]));
+                vertices[index++] = createVertex(new Vector3f(x, height[i][j + 1], z + dz));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.33f, height[i][j + 1], z + dz));
+                vertices[index++] = createVertex(new Vector3f(x + dx * 0.66f, height[i][j + 1], z + dz));
+                vertices[index++] = createVertex(new Vector3f(x + dx, height[i + 1][j + 1], z + dz));
             }
         }
         updateBounds();

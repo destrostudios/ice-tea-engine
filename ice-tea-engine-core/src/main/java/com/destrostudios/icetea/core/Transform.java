@@ -78,13 +78,10 @@ public class Transform {
     }
 
     public void setChildWorldTransform(Transform parentWorldTransform, Transform childLocalTransform) {
-        // TODO: Introduce TempVars
-        Vector3f worldTranslation = parentWorldTransform.getTranslation().add(parentWorldTransform.getRotation().transform(childLocalTransform.getTranslation(), new Vector3f()), new Vector3f());
-        Quaternionf worldRotation = parentWorldTransform.getRotation().mul(childLocalTransform.getRotation(), new Quaternionf());
-        Vector3fc worldScale = parentWorldTransform.getScale().mul(childLocalTransform.getScale(), new Vector3f());
-        translation.set(worldTranslation);
-        rotation.set(worldRotation);
-        scale.set(worldScale);
+        scale.set(childLocalTransform.getScale()).mul(parentWorldTransform.getScale());
+        parentWorldTransform.getRotation().mul(childLocalTransform.getRotation(), rotation);
+        translation.set(childLocalTransform.getTranslation()).mul(parentWorldTransform.getScale());
+        translation.rotate(parentWorldTransform.getRotation()).add(parentWorldTransform.getTranslation());
         modified = true;
         matrixOutdated = true;
     }
@@ -93,8 +90,8 @@ public class Transform {
         if (modified) {
             if (matrixOutdated) {
                 matrix.identity();
-                matrix.translate(translation);
                 matrix.rotate(rotation);
+                matrix.setTranslation(translation);
                 matrix.scale(scale);
                 matrixOutdated = false;
             }

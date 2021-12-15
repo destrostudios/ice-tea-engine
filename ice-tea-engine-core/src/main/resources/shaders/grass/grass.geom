@@ -43,7 +43,7 @@ void emitVertex(vec3 position, vec3 offset, mat3 transformationMatrix, vec2 texC
 		outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, vertexPosition);
 	#endif
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vertexPosition, vec3(0, 0, 1), light.direction);
+		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vertexPosition, vec3(0, 1, 0), light.direction);
 	#endif
 	EmitVertex();
 }
@@ -55,17 +55,17 @@ void emitBlade(vec3 worldPosition) {
 	vec3 windAxis = normalize(vec3(windSample.xy, 0));
 	mat3 windMatrix = angleAxis3x3(windAngle, windAxis);
 
-	mat3 randRotMatrix = angleAxis3x3(rand(worldPosition.xyz) * 2 * PI, vec3(0, 0, 1));
+	mat3 randRotMatrix = angleAxis3x3(rand(worldPosition.xyz) * 2 * PI, vec3(0, 1, 0));
 	mat3 tipTransformationMatrix = windMatrix * randRotMatrix;
 
 	for (int i = 0; i < params.bladeSegments; i++) {
 		float progress = (i / float(params.bladeSegments));
-		vec3 offset = vec3((1 - progress) * 0.5 * params.bladeWidth, pow(progress, params.bladeBend) * params.bladeForward, progress * params.bladeHeight);
+		vec3 offset = vec3((1 - progress) * 0.5 * params.bladeWidth, progress * params.bladeHeight, pow(progress, params.bladeBend) * params.bladeForward);
 		mat3 transformationMatrix = (i == 0) ? randRotMatrix : tipTransformationMatrix;
 		emitVertex(worldPosition, vec3(offset.x, offset.y, offset.z), transformationMatrix, vec2(0, progress));
 		emitVertex(worldPosition, vec3(-1 * offset.x, offset.y, offset.z), transformationMatrix, vec2(1, progress));
 	}
-	emitVertex(worldPosition, vec3(0, params.bladeForward, params.bladeHeight), tipTransformationMatrix, vec2(0.5, 1));
+	emitVertex(worldPosition, vec3(0, params.bladeHeight, params.bladeForward), tipTransformationMatrix, vec2(0.5, 1));
 	EndPrimitive();
 }
 

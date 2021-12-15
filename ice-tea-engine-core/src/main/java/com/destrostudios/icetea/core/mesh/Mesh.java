@@ -65,6 +65,7 @@ public class Mesh {
             VertexData v2 = vertices[indices[i + 1]];
             VertexData v3 = vertices[indices[i + 2]];
 
+            // TODO: Introduce TempVars
             Vector3f edge1 = v2.getVector3f("vertexPosition").sub(v1.getVector3f("vertexPosition"), new Vector3f());
             Vector3f edge2 = v3.getVector3f("vertexPosition").sub(v1.getVector3f("vertexPosition"), new Vector3f());
             Vector3f triangleNormal = edge1.cross(edge2, new Vector3f()).normalize();

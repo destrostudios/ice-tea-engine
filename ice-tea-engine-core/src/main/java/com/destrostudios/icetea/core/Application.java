@@ -361,6 +361,10 @@ public abstract class Application {
         systems.add(system);
     }
 
+    public boolean hasSystem(AppSystem system) {
+        return systems.contains(system);
+    }
+
     public void removeSystem(AppSystem system) {
         systems.remove(system);
         system.cleanup();

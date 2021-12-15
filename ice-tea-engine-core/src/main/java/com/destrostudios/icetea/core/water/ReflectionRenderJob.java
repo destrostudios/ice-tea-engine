@@ -39,18 +39,16 @@ public class ReflectionRenderJob extends SceneRenderJob {
         super.updateUniformBuffers(currentImage);
         reflectionCamera.set(application.getSceneCamera());
         Vector3f location = reflectionCamera.getLocation();
-        float waterHeight = geometryWater.getWorldTransform().getTranslation().z();
-        float distance = (2 * (location.z() - waterHeight));
-        location.setComponent(2, location.z() - distance);
+        float waterHeight = geometryWater.getWorldTransform().getTranslation().y();
+        float distanceY = (2 * (location.y() - waterHeight));
+        location.setComponent(1, location.y() - distanceY);
         reflectionCamera.setLocation(location);
         Quaternionf rotation = new Quaternionf(reflectionCamera.getRotation());
-        // Invert pitch
         // TODO: Introduce TempVars
-        Vector3f eulerAngles = rotation.getEulerAnglesXYZ(new Vector3f());
-        rotation.rotateLocalX(2 * ((float) (-0.5f * Math.PI) - eulerAngles.x()));
+        Vector3f flatWaterLine = new Vector3f(application.getSceneCamera().getBack()).negate().setComponent(1, 0);
+        rotation.rotateAxis((float) Math.PI, flatWaterLine);
         reflectionCamera.setRotation(rotation);
-        // Clip plane needs to be inverted (TODO: Verify the assumption that this is because of the inverted camera pitch)
-        reflectionCamera.setClipPlane(new Vector4f(0, 0, 1, -1 * waterHeight));
+        reflectionCamera.setClipPlane(new Vector4f(0, 1, 0, waterHeight));
         reflectionCamera.update();
         reflectionCamera.getTransformUniformData().updateBufferIfNecessary(currentImage);
     }

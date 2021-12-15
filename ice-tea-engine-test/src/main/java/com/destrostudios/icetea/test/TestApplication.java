@@ -8,7 +8,6 @@ import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
-import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.filter.*;
 import com.destrostudios.icetea.core.light.*;
 import com.destrostudios.icetea.core.material.Material;
@@ -39,45 +38,40 @@ public class TestApplication extends Application {
 
     private Material materialCool;
     private Panel panel1;
+    private Node nodeRotating;
     private Geometry geometryWater;
     private Geometry geometryGround;
     private Geometry geometryGrass;
     private Material materialGrass;
-    private Geometry geometryChalet1;
-    private Geometry geometryChalet2;
     private Geometry geometryChalet3;
-    private Geometry geometryDennis;
-    private Spatial animatedObject1;
-    private Spatial animatedObject2;
+    private Node nodeDennis;
     private int animatedObject2AnimationIndex;
-    private Node nodeSkyWrapper;
     private Node nodeDuck;
-    private Geometry geometryKnot;
     private Geometry geometryBounds;
     private Node nodeCollisions;
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
     private boolean rotateObjects = true;
-    private CameraMouseRotateSystem cameraMouseRotateSystem;
-    private CameraKeyMoveSystem cameraKeyMoveSystem;
 
     @Override
     protected void initScene() {
-        sceneCamera.setLocation(new Vector3f(0, -5, 0.3f));
-        sceneCamera.setRotation(new Quaternionf().rotateLocalX((float) (-0.5 * Math.PI)));
+        sceneCamera.setLocation(new Vector3f(0, 0.3f, 5));
 
         DirectionalLight directionalLight = new DirectionalLight();
-        directionalLight.setDirection(new Vector3f(-1, 1, -1).normalize());
+        directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
         directionalLight.addShadows(4096);
         setLight(directionalLight);
 
         SpotLight spotLight = new SpotLight();
-        spotLight.setTranslation(new Vector3f(-2, -2.5f, 3.25f));
+        spotLight.setTranslation(new Vector3f(-2, 3.25f, 2.5f));
         spotLight.setRotation(new Quaternionf().rotateLocalX((float) (-0.3333f * Math.PI)));
         spotLight.addAffectedSpatial(sceneNode);
         spotLight.addShadows(4096);
         // setLight(spotLight);
+
+        nodeRotating = new Node();
+        sceneNode.add(nodeRotating);
 
         Shader vertexShaderDefault = new Shader("shaders/my_shader.vert", new String[] { "light", "shadow" });
         Shader fragShaderDefault = new Shader("shaders/my_shader.frag", new String[] { "light", "shadow" });
@@ -108,8 +102,8 @@ public class TestApplication extends Application {
 
         float waterSize = 100;
         geometryWater = WaterFactory.createWater(new WaterConfig());
-        geometryWater.move(new Vector3f(waterSize / -2, waterSize / -2, 0));
-        geometryWater.scale(new Vector3f(waterSize, waterSize, 1));
+        geometryWater.move(new Vector3f(waterSize / -2, 0, waterSize / -2));
+        geometryWater.scale(new Vector3f(waterSize, 1, waterSize));
         sceneNode.add(geometryWater);
 
         // Ground
@@ -124,14 +118,15 @@ public class TestApplication extends Application {
         geometryGround = new Geometry();
         geometryGround.setMesh(meshGround);
         geometryGround.setMaterial(materialGround);
-        geometryGround.move(new Vector3f(-5, -5, -0.25f));
+        geometryGround.move(new Vector3f(-5, -0.25f, 5));
+        geometryGround.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         geometryGround.setShadowMode(ShadowMode.RECEIVE);
 
         // Grass
 
         geometryGrass = GrassFactory.createGrass(new GrassConfig(), assetManager);
         materialGrass = geometryGrass.getMaterial();
-        geometryGrass.move(new Vector3f(-5, -5, -0.25f));
+        geometryGrass.move(new Vector3f(-5, -0.25f, -5));
         geometryGrass.scale(new Vector3f(10, 10, 10));
         geometryGrass.setShadowMode(ShadowMode.RECEIVE);
 
@@ -147,34 +142,42 @@ public class TestApplication extends Application {
         Texture textureChalet = assetManager.loadTexture("textures/chalet.jpg");
         materialChalet.setTexture("diffuseMap", textureChalet);
 
-        geometryChalet1 = new Geometry();
+        Geometry geometryChalet1 = new Geometry();
         geometryChalet1.setMesh(meshChalet);
         geometryChalet1.setMaterial(materialChalet);
         geometryChalet1.setShadowMode(ShadowMode.CAST);
+        geometryChalet1.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         sceneNode.add(geometryChalet1);
 
-        geometryChalet2 = new Geometry();
+        Node nodeChalet1 = new Node();
+        nodeChalet1.add(geometryChalet1);
+        nodeRotating.add(nodeChalet1);
+
+        Geometry geometryChalet2 = new Geometry();
         geometryChalet2.setMesh(meshChalet);
         geometryChalet2.setMaterial(materialChalet);
-        geometryChalet2.move(new Vector3f(1.5f, 1, 0.25f));
-        geometryChalet2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
         geometryChalet2.scale(new Vector3f(0.5f, 0.5f, 1));
+        geometryChalet2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         geometryChalet2.setShadowMode(ShadowMode.CAST);
         sceneNode.add(geometryChalet2);
+
+        Node nodeChalet2 = new Node();
+        nodeChalet2.add(geometryChalet2);
+        nodeChalet2.move(new Vector3f(1.5f, 0.25f, -1));
+        nodeRotating.add(nodeChalet2);
 
         geometryChalet3 = new Geometry();
         geometryChalet3.setMesh(meshChalet);
         geometryChalet3.setMaterial(materialCool);
-        geometryChalet3.move(new Vector3f(-0.3f, 0.3f, 0.25f));
         geometryChalet3.scale(new Vector3f(0.5f, 0.5f, 1));
+        geometryChalet3.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         geometryChalet3.setRenderBucket(RenderBucketType.TRANSPARENT);
         geometryChalet3.setShadowMode(ShadowMode.CAST);
 
         Node nodeChalet3 = new Node();
         nodeChalet3.add(geometryChalet3);
-        nodeChalet3.move(new Vector3f(-1.2f, 0.8f, 0.25f));
-        nodeChalet3.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-45), 0, 1, 0)));
-        sceneNode.add(nodeChalet3);
+        nodeChalet3.move(new Vector3f(-1.5f, 0.5f, -1.1f));
+        nodeRotating.add(nodeChalet3);
 
         // Trees
 
@@ -190,10 +193,15 @@ public class TestApplication extends Application {
         Geometry geometryTrees = new Geometry();
         geometryTrees.setMesh(meshTrees);
         geometryTrees.setMaterial(materialTrees);
-        geometryTrees.move(new Vector3f(0, -1, 0.25f));
+        geometryTrees.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         geometryTrees.scale(new Vector3f(0.01f, 0.01f, 0.01f));
         geometryTrees.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         sceneNode.add(geometryTrees);
+
+        Node nodeTrees = new Node();
+        nodeTrees.add(geometryTrees);
+        nodeTrees.move(new Vector3f(0, 0.25f, 1));
+        nodeRotating.add(nodeTrees);
 
         // Dennis
 
@@ -209,42 +217,46 @@ public class TestApplication extends Application {
         materialDennis.setTexture("diffuseMap", textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
-        geometryDennis = new Geometry();
+        Geometry geometryDennis = new Geometry();
         geometryDennis.setMesh(meshDennis);
         geometryDennis.setMaterial(materialDennis);
-        geometryDennis.move(new Vector3f(0, -1, 0.25f));
+        geometryDennis.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         geometryDennis.scale(new Vector3f(0.005f, 0.005f, 0.005f));
         geometryDennis.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
+
+        nodeDennis = new Node();
+        nodeDennis.add(geometryDennis);
+        nodeDennis.move(new Vector3f(0, 0.25f, 1));
 
         // Duck
 
         nodeDuck = (Node) assetManager.loadModel("models/duck/Duck.gltf");
-        nodeDuck.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
+        nodeDuck.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
+        nodeDuck.scale(new Vector3f(0.25f, 0.25f, 0.25f));
         nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1)));
         nodeDuck.setShadowMode(ShadowMode.CAST);
 
         Node nodeDuckWrapper = new Node();
         nodeDuckWrapper.add(nodeDuck);
-        nodeDuckWrapper.move(new Vector3f(1, -1.5f, -0.25f));
-        nodeDuckWrapper.scale(new Vector3f(0.25f, 0.25f, 0.25f));
-        sceneNode.add(nodeDuckWrapper);
+        nodeDuckWrapper.move(new Vector3f(1, -0.25f, 1.5f));
+        nodeRotating.add(nodeDuckWrapper);
 
         // Animated objects
 
-        animatedObject1 = assetManager.loadModel("models/simple_skin/SimpleSkin.gltf", GltfLoaderSettings.builder().generateNormals(true).build());
-        animatedObject1.move(new Vector3f(-2.5f, 0, 0.6f));
-        animatedObject1.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+        Spatial animatedObject1 = assetManager.loadModel("models/simple_skin/SimpleSkin.gltf", GltfLoaderSettings.builder().generateNormals(true).build());
+        animatedObject1.move(new Vector3f(-2.5f, 0.6f, 0));
         animatedObject1.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject1.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl1 = (AnimationControl) animatedObject1.getControls().iterator().next();
         animationControl1.play(0);
         sceneNode.add(animatedObject1);
 
-        animatedObject2 = assetManager.loadModel("models/footman/scene.gltf");
+        Node animatedObject2 = (Node) assetManager.loadModel("models/footman/scene.gltf");
         animatedObject2.move(new Vector3f(2.5f, 0, 0));
-        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(180), 1, 0, 0)));
-        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(45), 0, 0, 1)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 0, 0, 1)));
         animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
+        animatedObject2.forEachGeometry(geometry -> geometry.getMaterial().setCullMode(VK_CULL_MODE_NONE));
         animatedObject2.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl2 = (AnimationControl) animatedObject2.getControls().iterator().next();
         animationControl2.play(animatedObject2AnimationIndex);
@@ -253,11 +265,6 @@ public class TestApplication extends Application {
         // Sky
 
         Mesh meshSky = assetManager.loadMesh("models/dome.obj");
-        for (int i = 0; i< meshSky.getVertices().length; i++) {
-            VertexData vertex = meshSky.getVertices()[i];
-            Vector3f position = vertex.getVector3f("vertexPosition");
-            vertex.setVector2f("vertexTexCoord", new Vector2f((position.x() + 1) * 0.5f, (position.z() + 1) * 0.5f));
-        }
 
         Material materialSky = new Material();
         materialSky.setVertexShader(new Shader("shaders/atmosphere.vert"));
@@ -267,13 +274,9 @@ public class TestApplication extends Application {
         Geometry geometrySky = new Geometry();
         geometrySky.setMesh(meshSky);
         geometrySky.setMaterial(materialSky);
-        geometrySky.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+        geometrySky.scale(new Vector3f(0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar()));
         geometrySky.setRenderBucket(RenderBucketType.BACKGROUND);
-
-        nodeSkyWrapper = new Node();
-        nodeSkyWrapper.add(geometrySky);
-        nodeSkyWrapper.scale(new Vector3f(0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar()));
-        sceneNode.add(nodeSkyWrapper);
+        sceneNode.add(geometrySky);
 
         // Knot
 
@@ -286,13 +289,17 @@ public class TestApplication extends Application {
         materialKnot.setTexture("diffuseMap", textureKnot);
         materialKnot.getParameters().setVector4f("color", new Vector4f(0, 1, 0, 1));
 
-        geometryKnot = new Geometry();
+        Geometry geometryKnot = new Geometry();
         geometryKnot.setMesh(meshKnot);
         geometryKnot.setMaterial(materialKnot);
-        geometryKnot.move(new Vector3f(-1.5f, -0.2f, 0.75f));
+        geometryKnot.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         geometryKnot.scale(new Vector3f(0.01f, 0.01f, 0.01f));
         geometryKnot.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
-        sceneNode.add(geometryKnot);
+
+        Node nodeKnot = new Node();
+        nodeKnot.move(new Vector3f(-1.5f, 0.75f, 0.2f));
+        nodeKnot.add(geometryKnot);
+        nodeRotating.add(nodeKnot);
 
         // Bounds
 
@@ -322,6 +329,8 @@ public class TestApplication extends Application {
 
         // Inputs
 
+        CameraMouseRotateSystem cameraMouseRotateSystem = new CameraMouseRotateSystem(sceneCamera);
+        CameraKeyMoveSystem cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
         inputManager.addKeyListener(keyEvent -> {
             // Add/Remove filters
             switch (keyEvent.getKey()) {
@@ -384,16 +393,12 @@ public class TestApplication extends Application {
                     break;
                 case GLFW_KEY_9:
                     if (keyEvent.getAction() == GLFW_PRESS) {
-                        if (cameraMouseRotateSystem == null) {
-                            cameraMouseRotateSystem = new CameraMouseRotateSystem(sceneCamera);
-                            cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
-                            addSystem(cameraMouseRotateSystem);
-                            addSystem(cameraKeyMoveSystem);
-                        } else {
+                        if (hasSystem(cameraMouseRotateSystem)) {
                             removeSystem(cameraMouseRotateSystem);
                             removeSystem(cameraKeyMoveSystem);
-                            cameraMouseRotateSystem = null;
-                            cameraKeyMoveSystem = null;
+                        } else {
+                            addSystem(cameraMouseRotateSystem);
+                            addSystem(cameraKeyMoveSystem);
                         }
                     }
                     break;
@@ -442,20 +447,18 @@ public class TestApplication extends Application {
     @Override
     protected void update(float tpf) {
         if ((time > 8) && (!hasAddedDennis)) {
-            sceneNode.add(geometryDennis);
+            nodeRotating.add(nodeDennis);
             hasAddedDennis = true;
         } else if ((time > 12) && (!hasRemovedDennis)) {
-            sceneNode.remove(geometryDennis);
+            nodeRotating.remove(nodeDennis);
             hasRemovedDennis = true;
         }
 
         if (rotateObjects) {
-            for (Spatial spatial : sceneNode.getChildren()) {
-                if ((spatial != geometryWater) && (spatial != geometryGround) && (spatial != geometryGrass) && (spatial != animatedObject1) && (spatial != animatedObject2) && (spatial != nodeSkyWrapper) && (spatial != geometryBounds) && (spatial != nodeCollisions)) {
-                    updateTimeBasedRotation(spatial);
-                }
+            for (Spatial spatial : nodeRotating.getChildren()) {
+                spatial.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * (Math.PI / 2)), 0, 1, 0)));
             }
-            updateTimeBasedRotation(panel1);
+            panel1.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * (Math.PI / 2)), 0, 0, 1)));
         }
 
         BoundingBox debugWorldBounds = geometryChalet3.getWorldBounds();
@@ -464,9 +467,5 @@ public class TestApplication extends Application {
 
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
-    }
-
-    private void updateTimeBasedRotation(Spatial spatial) {
-        spatial.setLocalRotation(new Quaternionf(new AxisAngle4f((float) (time * Math.toRadians(90)), 0.0f, 0.0f, 1.0f)));
     }
 }

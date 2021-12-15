@@ -1,7 +1,7 @@
 struct LightVertexInfo {
-  vec3 viewSpaceVertexPosition;
-  vec3 viewSpaceVertexNormal;
-  vec3 viewSpaceLightDirection;
+    vec3 viewSpaceVertexPosition;
+    vec3 viewSpaceVertexNormal;
+    vec3 viewSpaceLightDirection;
 };
 
 LightVertexInfo shaderNode_light_getVertexInfo_SpotLight(mat4 viewMatrix, mat4 modelMatrix, vec4 worldSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightPosition) {

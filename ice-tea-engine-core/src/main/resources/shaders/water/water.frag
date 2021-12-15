@@ -33,15 +33,17 @@ void main() {
 
         normal = normalize(TBN * bumpNormal);
     }
+    // For the high detail matrix multiplication above, we need z to point upwards (also in the normal map) - We correct/flip it here afterwards
+    normal = normal.xzy;
 
     vec3 dudvCoord = normalize((2 * texture(dudvMap, inUV * params.dudvDownsampling + params.distortion).rbg) - 1);
     vec2 projectionCoord = (inProjectionPosition.xy / inProjectionPosition.w) / 2 + 0.5;
-    vec2 projectionCoordInverted = vec2(projectionCoord.x, 1 - projectionCoord.y);
+    vec2 projectionCoordInvertedX = vec2(1 - projectionCoord.x, projectionCoord.y);
 
-    float fresnel = getApproximatedFresnel(normal.xyz, vertexToEye);
+    float fresnel = getApproximatedFresnel(normal, vertexToEye);
 
     // Reflection
-    vec2 reflectionCoords = projectionCoordInverted.xy + dudvCoord.rb * params.kReflection;
+    vec2 reflectionCoords = projectionCoordInvertedX.xy + dudvCoord.rb * params.kReflection;
     reflectionCoords = clamp(reflectionCoords, params.kReflection, 1 - params.kReflection);
     float reflectionDistanceBlending = params.reflectionBlendMinFactor + (params.reflectionBlendMaxFactor - params.reflectionBlendMinFactor) * smoothstep(0, 1, cameraDistance / params.reflectionBlendMaxDistance);
     vec3 reflection = mix(texture(reflectionMap, reflectionCoords).rgb, params.waterColor, reflectionDistanceBlending);
