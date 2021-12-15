@@ -18,7 +18,6 @@ public class CameraMouseRotateSystem extends AppSystem implements MousePositionL
 
     public CameraMouseRotateSystem(SceneCamera sceneCamera) {
         this.sceneCamera = sceneCamera;
-        initialUp = sceneCamera.getUp();
     }
     @Getter
     private SceneCamera sceneCamera;
@@ -43,10 +42,15 @@ public class CameraMouseRotateSystem extends AppSystem implements MousePositionL
 
     @Override
     public void onMousePositionEvent(MousePositionEvent mousePositionEvent) {
-        float angleX = (float) (mousePositionEvent.getDeltaX() * rotationSpeed);
-        float angleY = (float) (mousePositionEvent.getDeltaY() * rotationSpeed);
-        rotateCamera(angleX, initialUp);
-        rotateCamera(angleY, sceneCamera.getRight());
+        // Ignore the very first event, since the delta will be too huge - Instead use the timing to get the initial up vector
+        if (initialUp == null) {
+            initialUp = sceneCamera.getUp();
+        } else {
+            float angleX = (float) (mousePositionEvent.getDeltaX() * rotationSpeed);
+            float angleY = (float) (mousePositionEvent.getDeltaY() * rotationSpeed);
+            rotateCamera(angleX, initialUp);
+            rotateCamera(angleY, sceneCamera.getRight());
+        }
     }
 
     private void rotateCamera(float angle, Vector3f axis){

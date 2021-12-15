@@ -16,21 +16,23 @@ void main() {
 	vec4 worldPosition1 = gl_in[1].gl_Position;
 	vec4 worldPosition2 = gl_in[2].gl_Position;
 
-    gl_Position = camera.proj * camera.view * worldPosition0;
+	// TODO: Currently adding the vertices in reverse order so the triangles point upwards - Should be fixed/changed in Grid class?
+
+	gl_Position = camera.proj * camera.view * worldPosition2;
 	#ifdef CAMERA_CLIPPLANE
 		if (camera.clipPlane.length() > 0) {
-			gl_ClipDistance[0] = dot(worldPosition0, camera.clipPlane);
+			gl_ClipDistance[0] = dot(worldPosition2, camera.clipPlane);
 		}
 	#endif
-	outBiomeColor = inBiomeColor[0];
+	outBiomeColor = inBiomeColor[2];
 	#ifdef SHADOWMAPLIGHT
-		outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, worldPosition0);
+		outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, worldPosition2);
 	#endif
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition0, inNormal[0], light.direction);
+		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition2, inNormal[2], light.direction);
 	#endif
 
-    EmitVertex();
+	EmitVertex();
 
 	gl_Position = camera.proj * camera.view * worldPosition1;
 	#ifdef CAMERA_CLIPPLANE
@@ -48,21 +50,21 @@ void main() {
 
     EmitVertex();
 
-	gl_Position = camera.proj * camera.view * worldPosition2;
+	gl_Position = camera.proj * camera.view * worldPosition0;
 	#ifdef CAMERA_CLIPPLANE
 		if (camera.clipPlane.length() > 0) {
-			gl_ClipDistance[0] = dot(worldPosition2, camera.clipPlane);
+			gl_ClipDistance[0] = dot(worldPosition0, camera.clipPlane);
 		}
 	#endif
-	outBiomeColor = inBiomeColor[2];
+	outBiomeColor = inBiomeColor[0];
 	#ifdef SHADOWMAPLIGHT
-		outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, worldPosition2);
+		outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, worldPosition0);
 	#endif
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition2, inNormal[2], light.direction);
+		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition0, inNormal[0], light.direction);
 	#endif
 
-    EmitVertex();
+	EmitVertex();
 
     EndPrimitive();
 }

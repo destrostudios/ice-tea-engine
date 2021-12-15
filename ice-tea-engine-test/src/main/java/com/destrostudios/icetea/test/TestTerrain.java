@@ -10,13 +10,10 @@ import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.terrain.TerrainFactory;
 import com.destrostudios.icetea.core.water.WaterConfig;
 import com.destrostudios.icetea.core.water.WaterFactory;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -30,12 +27,11 @@ public class TestTerrain extends Application {
 
     @Override
     protected void initScene() {
-        sceneCamera.setLocation(new Vector3f(0, -50, 6));
-        sceneCamera.setRotation(new Quaternionf().rotateLocalX((float) (-0.49f * Math.PI)));
+        sceneCamera.setLocation(new Vector3f(0, 6, 50));
         sceneCamera.setZFar(200);
 
         DirectionalLight directionalLight = new DirectionalLight();
-        directionalLight.setDirection(new Vector3f(-1, 1, -1).normalize());
+        directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
         directionalLight.addShadows(4096);
         setLight(directionalLight);
@@ -44,16 +40,16 @@ public class TestTerrain extends Application {
 
         float terrainSize = 200;
         Geometry geometryTerrain = TerrainFactory.createTerrain(150);
-        geometryTerrain.move(new Vector3f((terrainSize / -2), (terrainSize / -2), -0.2f));
-        geometryTerrain.scale(new Vector3f(terrainSize, terrainSize, 40));
+        geometryTerrain.move(new Vector3f((terrainSize / -2), -0.2f, (terrainSize / -2)));
+        geometryTerrain.scale(new Vector3f(terrainSize, 40, terrainSize));
         geometryTerrain.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         sceneNode.add(geometryTerrain);
 
         // Water
 
         Geometry geometryWater = WaterFactory.createWater(new WaterConfig());
-        geometryWater.move(new Vector3f(terrainSize / -2, terrainSize / -2, 4));
-        geometryWater.scale(new Vector3f(terrainSize, terrainSize, 1));
+        geometryWater.move(new Vector3f(terrainSize / -2, 4, terrainSize / -2));
+        geometryWater.scale(new Vector3f(terrainSize, 1, terrainSize));
         sceneNode.add(geometryWater);
 
         // Sky
@@ -73,13 +69,9 @@ public class TestTerrain extends Application {
         Geometry geometrySky = new Geometry();
         geometrySky.setMesh(meshSky);
         geometrySky.setMaterial(materialSky);
-        geometrySky.setLocalRotation(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+        geometrySky.scale(new Vector3f(0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar()));
         geometrySky.setRenderBucket(RenderBucketType.BACKGROUND);
-
-        Node nodeSkyWrapper = new Node();
-        nodeSkyWrapper.add(geometrySky);
-        nodeSkyWrapper.scale(new Vector3f(0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar()));
-        sceneNode.add(nodeSkyWrapper);
+        sceneNode.add(geometrySky);
 
         addSystem(new CameraMouseRotateSystem(sceneCamera));
 

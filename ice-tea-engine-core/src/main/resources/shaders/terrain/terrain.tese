@@ -5,13 +5,13 @@ layout(quads, fractional_odd_spacing, cw) in;
 layout(location = 0) out vec3 outNormal;
 layout(location = 1) out vec4 outBiomeColor;
 
-float getElevation(float nx, float ny) {
-	float e = (pow(1.00 * shaderNode_noise_noise(1 * 3 * nx, 1 * 3 * ny), 4)
-		+ pow(1.00 * shaderNode_noise_noise(2 * 0.5 * nx,  2 * 0.5 * ny), 1.5)
-		+ 0.25 * shaderNode_noise_noise(4 * 1 * nx,  4 * 1 * ny)
-		+ 0.13 * shaderNode_noise_noise(8 * 1 * nx,  8 * 1 * ny)
-		+ 0.06 * shaderNode_noise_noise(16 * 1 * nx, 16 * 1 * ny)
-		+ 0.03 * shaderNode_noise_noise(32 * 1 * nx, 32 * 1 * ny));
+float getElevation(float nx, float nz) {
+	float e = (pow(1.00 * shaderNode_noise_noise(1 * 3 * nx, 1 * 3 * nz), 4)
+		+ pow(1.00 * shaderNode_noise_noise(2 * 0.5 * nx,  2 * 0.5 * nz), 1.5)
+		+ 0.25 * shaderNode_noise_noise(4 * 1 * nx,  4 * 1 * nz)
+		+ 0.13 * shaderNode_noise_noise(8 * 1 * nx,  8 * 1 * nz)
+		+ 0.06 * shaderNode_noise_noise(16 * 1 * nx, 16 * 1 * nz)
+		+ 0.03 * shaderNode_noise_noise(32 * 1 * nx, 32 * 1 * nz));
 	e = e / (1.00 + 1.00 + 0.25 + 0.13 + 0.06 + 0.03);
 	e = pow(e, 2);
 	return e;
@@ -21,14 +21,14 @@ float getElevation(vec2 p) {
 	return getElevation(p.x, p.y);
 }
 
-float getMoisture(float nx, float ny) {
+float getMoisture(float nx, float nz) {
 	float frequency = 3;
-	float m = (1.00 * shaderNode_noise_noise(1 * frequency * nx, 1 * frequency * ny)
-		+ 0.75 * shaderNode_noise_noise(2 * frequency * nx, 2 * frequency * ny)
-		+ 0.33 * shaderNode_noise_noise(4 * frequency * nx, 4 * frequency * ny)
-		+ 0.33 * shaderNode_noise_noise(8 * frequency * nx, 8 * frequency * ny)
-		+ 0.33 * shaderNode_noise_noise(16 * frequency * nx, 16 * frequency * ny)
-		+ 0.50 * shaderNode_noise_noise(32 * frequency * nx, 32 * frequency * ny));
+	float m = (1.00 * shaderNode_noise_noise(1 * frequency * nx, 1 * frequency * nz)
+		+ 0.75 * shaderNode_noise_noise(2 * frequency * nx, 2 * frequency * nz)
+		+ 0.33 * shaderNode_noise_noise(4 * frequency * nx, 4 * frequency * nz)
+		+ 0.33 * shaderNode_noise_noise(8 * frequency * nx, 8 * frequency * nz)
+		+ 0.33 * shaderNode_noise_noise(16 * frequency * nx, 16 * frequency * nz)
+		+ 0.50 * shaderNode_noise_noise(32 * frequency * nx, 32 * frequency * nz));
 	m = m / (1.00 + 0.75 + 0.33 + 0.33 + 0.33 + 0.50);
 	return m;
 }
@@ -106,8 +106,8 @@ vec3 getNormal(vec2 P) {
 	// Calculate normal
 	vec3 normal = vec3(0);
 	normal.x = elevationLeft - elevationRight;
-	normal.y = elevationDown - elevationUp;
-	normal.z = 2 * offset;
+	normal.y = 2 * offset;
+	normal.z = elevationDown - elevationUp;
 	normal = normalize(normal);
 	return normal;
 }
@@ -123,13 +123,13 @@ void main() {
 		(1 - u) * v * gl_in[15].gl_Position
 	);
 
-	float elevation = getElevation(modelPosition.x, modelPosition.y);
-	float moisture = getMoisture(modelPosition.x, modelPosition.y);
-	modelPosition.z = elevation;
+	float elevation = getElevation(modelPosition.x, modelPosition.z);
+	float moisture = getMoisture(modelPosition.x, modelPosition.z);
+	modelPosition.y = elevation;
 
 	vec4 worldPosition = geometry.model * modelPosition;
 
 	gl_Position = worldPosition;
-	outNormal = getNormal(modelPosition.xy);
+	outNormal = getNormal(modelPosition.xz);
 	outBiomeColor = getBiomeColor(getBiome(elevation, moisture));
 }

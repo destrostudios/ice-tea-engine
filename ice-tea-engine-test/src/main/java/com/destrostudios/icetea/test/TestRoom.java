@@ -17,7 +17,7 @@ public class TestRoom extends Application {
     @Override
     protected void initScene() {
         sceneCamera.setLocation(new Vector3f(0, 0, 7));
-        sceneCamera.setRotation(new Quaternionf().rotateLocalX((float) (-0.49f * Math.PI)));
+        sceneCamera.setRotation(new Quaternionf(0.6836f, -0.09070f, -0.09527f, -0.7179f));
 
         Spatial room = assetManager.loadModel("models/room.gltf");
 

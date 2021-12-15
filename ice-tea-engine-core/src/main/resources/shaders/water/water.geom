@@ -87,7 +87,7 @@ void main() {
 		position2.z -= dz;
 	}
 
-	// Adding the vertices in reverse order so the triangles point upwards
+	// TODO: Currently adding the vertices in reverse order so the triangles point upwards - Should be fixed/changed in Grid class?
 
 	gl_Position = camera.proj * camera.view * position2;
 	if (camera.clipPlane.length() > 0) {
