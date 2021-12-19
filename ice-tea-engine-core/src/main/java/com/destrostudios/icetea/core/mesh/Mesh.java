@@ -43,6 +43,7 @@ public class Mesh {
     private Long indexBuffer;
     @Getter
     private Long indexBufferMemory;
+    private boolean buffersOutdated;
     private int usingGeometriesCount;
     @Getter
     private BoundingBox bounds;
@@ -90,8 +91,21 @@ public class Mesh {
 
     public void init(Application application) {
         this.application = application;
-        recreateVertexBuffer();
-        recreateIndexBuffer();
+        setBuffersOutdated();
+    }
+
+    protected void setBuffersOutdated() {
+        buffersOutdated = true;
+    }
+
+    public boolean recreateBuffersIfNecessary() {
+        if (buffersOutdated) {
+            recreateVertexBuffer();
+            recreateIndexBuffer();
+            buffersOutdated = false;
+            return true;
+        }
+        return false;
     }
 
     private void recreateVertexBuffer() {

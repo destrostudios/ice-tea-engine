@@ -224,7 +224,7 @@ public abstract class Application {
         try (MemoryStack stack = stackPush()) {
             VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.callocStack(stack);
             deviceCreateInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
-            deviceCreateInfo.ppEnabledExtensionNames(BufferUtil.asPointerBuffer(DEVICE_EXTENSIONS_NAMES));
+            deviceCreateInfo.ppEnabledExtensionNames(BufferUtil.asPointerBuffer(DEVICE_EXTENSIONS_NAMES, stack));
 
             int[] uniqueQueueFamilyIndices = physicalDeviceInformation.getUniqueQueueFamilyIndices();
             VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.callocStack(uniqueQueueFamilyIndices.length, stack);
@@ -468,19 +468,20 @@ public abstract class Application {
             VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.waitSemaphoreCount(1);
-            submitInfo.pWaitSemaphores(thisFrame.getPImageAvailableSemaphore());
+            submitInfo.pWaitSemaphores(stack.longs(thisFrame.getImageAvailableSemaphore()));
             submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-            submitInfo.pSignalSemaphores(thisFrame.getPRenderFinishedSemaphore());
+            LongBuffer pRenderFinishedSemaphore = stack.longs(thisFrame.getRenderFinishedSemaphore());
+            submitInfo.pSignalSemaphores();
             submitInfo.pCommandBuffers(stack.pointers(swapChain.getCommandBuffers().get(imageIndex)));
-            vkResetFences(logicalDevice, thisFrame.getPFence());
+            LongBuffer pFence = stack.longs(thisFrame.getFence());
+            vkResetFences(logicalDevice, pFence);
             if ((vkResult = vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.getFence())) != VK_SUCCESS) {
-                vkResetFences(logicalDevice, thisFrame.getPFence());
                 throw new RuntimeException("Failed to submit draw command buffer: " + vkResult);
             }
 
             VkPresentInfoKHR presentInfo = VkPresentInfoKHR.callocStack(stack);
             presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
-            presentInfo.pWaitSemaphores(thisFrame.getPRenderFinishedSemaphore());
+            presentInfo.pWaitSemaphores(pRenderFinishedSemaphore);
             presentInfo.swapchainCount(1);
             presentInfo.pSwapchains(stack.longs(swapChain.getSwapChain()));
             presentInfo.pImageIndices(pImageIndex);
@@ -495,7 +496,7 @@ public abstract class Application {
             currentFrame = ((currentFrame + 1) % MAX_FRAMES_IN_FLIGHT);
 
             // Wait for GPU to be finished, so we can safely access memory in our logic again (e.g. freeing memory of removed objects)
-            vkWaitForFences(logicalDevice, thisFrame.getPFence(), true, MathUtil.UINT64_MAX);
+            vkWaitForFences(logicalDevice, pFence, true, MathUtil.UINT64_MAX);
         }
     }
 

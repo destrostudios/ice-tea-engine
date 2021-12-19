@@ -51,6 +51,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
     @Override
     public void setContext(AssetManager assetManager, String key, GltfLoaderSettings settings) {
         super.setContext(assetManager, key, settings);
+        // TODO: Share code between different loaders that need the directory for references
         int slashIndex = key.lastIndexOf("/");
         if (slashIndex != -1) {
             keyDirectory = key.substring(0, slashIndex + 1);

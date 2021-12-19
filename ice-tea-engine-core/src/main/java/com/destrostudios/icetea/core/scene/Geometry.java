@@ -28,9 +28,9 @@ public class Geometry extends Spatial {
         renderContexts = new HashMap<>();
     }
     @Getter
-    private Mesh mesh;
+    protected Mesh mesh;
     @Getter
-    private Material material;
+    protected Material material;
     @Getter
     private UniformData transformUniformData;
     @Getter
@@ -41,6 +41,9 @@ public class Geometry extends Spatial {
     @Override
     public boolean update(Application application, float tpf) {
         AtomicBoolean commandBufferOutdated = new AtomicBoolean(super.update(application, tpf));
+        if (mesh.recreateBuffersIfNecessary()) {
+            commandBufferOutdated.set(true);
+        }
         updateWorldBoundsIfNecessary();
         updateShadowReceiveWorldBoundsIfNecessary();
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();

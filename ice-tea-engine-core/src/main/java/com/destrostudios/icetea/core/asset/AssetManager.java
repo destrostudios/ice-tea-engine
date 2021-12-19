@@ -1,9 +1,7 @@
 package com.destrostudios.icetea.core.asset;
 
-import com.destrostudios.icetea.core.asset.loader.GltfLoader;
-import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
-import com.destrostudios.icetea.core.asset.loader.ObjLoader;
-import com.destrostudios.icetea.core.asset.loader.TextureLoader;
+import com.destrostudios.icetea.core.asset.loader.*;
+import com.destrostudios.icetea.core.font.BitmapFont;
 import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.scene.Spatial;
 import com.destrostudios.icetea.core.texture.Texture;
@@ -30,6 +28,10 @@ public class AssetManager {
 
     public Texture loadTexture(String key) {
         return load(key, new TextureLoader(), null);
+    }
+
+    public BitmapFont loadBitmapFont(String key) {
+        return load(key, new BitmapFontLoader(), null);
     }
 
     private <T, S> T load(String key, AssetLoader<T, S> assetLoader, S settings) {

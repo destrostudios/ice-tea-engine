@@ -17,7 +17,6 @@ import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwWaitEvents;
-import static org.lwjgl.system.MemoryStack.stackGet;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_FIFO_KHR;
@@ -74,7 +73,7 @@ public class SwapChain {
             PhysicalDeviceInformation physicalDeviceInformation = application.getPhysicalDeviceInformation();
             VkSurfaceCapabilitiesKHR surfaceCapabilities = application.getPhysicalDeviceManager().getSurfaceCapabilities(stack);
 
-            VkExtent2D extent = chooseSwapExtent(surfaceCapabilities, application.getWindow());
+            VkExtent2D extent = chooseSwapExtent(surfaceCapabilities, application.getWindow(), stack);
             this.extent = VkExtent2D.create().set(extent);
 
             VkSwapchainCreateInfoKHR swapchainCreateInfo = VkSwapchainCreateInfoKHR.callocStack(stack);
@@ -124,12 +123,12 @@ public class SwapChain {
         }
     }
 
-    private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, long window) {
+    private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, long window, MemoryStack stack) {
         if (capabilities.currentExtent().width() != MathUtil.UINT32_MAX) {
             return capabilities.currentExtent();
         }
-        IntBuffer width = stackGet().ints(0);
-        IntBuffer height = stackGet().ints(0);
+        IntBuffer width = stack.ints(0);
+        IntBuffer height = stack.ints(0);
         glfwGetFramebufferSize(window, width, height);
         VkExtent2D actualExtent = VkExtent2D.mallocStack().set(width.get(0), height.get(0));
 
@@ -244,7 +243,9 @@ public class SwapChain {
 
     private void cleanupCommandBuffers() {
         if (commandBuffers != null) {
-            vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers));
+            try (MemoryStack stack = stackPush()) {
+                vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers, stack));
+            }
             commandBuffers = null;
         }
     }

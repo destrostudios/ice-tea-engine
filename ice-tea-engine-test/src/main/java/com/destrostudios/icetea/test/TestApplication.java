@@ -9,6 +9,8 @@ import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.filter.*;
+import com.destrostudios.icetea.core.font.BitmapFont;
+import com.destrostudios.icetea.core.font.BitmapText;
 import com.destrostudios.icetea.core.light.*;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
@@ -49,6 +51,7 @@ public class TestApplication extends Application {
     private Node nodeDuck;
     private Geometry geometryBounds;
     private Node nodeCollisions;
+    private BitmapText bitmapTextDynamic;
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
     private boolean rotateObjects = true;
@@ -97,6 +100,16 @@ public class TestApplication extends Application {
         panel2.scale(new Vector3f(200, 130, 0));
         panel2.setBackground(assetManager.loadTexture("textures/icetea2.png"));
         guiNode.add(panel2);
+
+        BitmapFont bitmapFont = assetManager.loadBitmapFont("fonts/Verdana_18.fnt");
+
+        BitmapText bitmapTextStatic = new BitmapText(bitmapFont, "Hello World.");
+        bitmapTextStatic.move(new Vector3f(375, 50, 1));
+        guiNode.add(bitmapTextStatic);
+
+        bitmapTextDynamic = new BitmapText(bitmapFont);
+        bitmapTextDynamic.move(new Vector3f(375, 75, 1));
+        guiNode.add(bitmapTextDynamic);
 
         // Water
 
@@ -446,10 +459,10 @@ public class TestApplication extends Application {
 
     @Override
     protected void update(float tpf) {
-        if ((time > 8) && (!hasAddedDennis)) {
+        if ((time > 12) && (!hasAddedDennis)) {
             nodeRotating.add(nodeDennis);
             hasAddedDennis = true;
-        } else if ((time > 12) && (!hasRemovedDennis)) {
+        } else if ((time > 16) && (!hasRemovedDennis)) {
             nodeRotating.remove(nodeDennis);
             hasRemovedDennis = true;
         }
@@ -467,5 +480,6 @@ public class TestApplication extends Application {
 
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
+        bitmapTextDynamic.setText("Time: " + time);
     }
 }

@@ -13,7 +13,6 @@ import org.lwjgl.vulkan.*;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import static org.lwjgl.system.MemoryStack.stackGet;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRCreateRenderpass2.vkCreateRenderPass2KHR;
 import static org.lwjgl.vulkan.KHRDepthStencilResolve.*;
@@ -50,7 +49,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             VkAttachmentReference2KHR.Buffer attachmentRefs = VkAttachmentReference2KHR.callocStack(4, stack);
 
             int colorFormat = getSwapChainImageFormat();
-            int depthFormat = findDepthFormat();
+            int depthFormat = findDepthFormat(stack);
 
             // Color attachment (Multisampled)
 
@@ -155,9 +154,9 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
         }
     }
 
-    private int findDepthFormat() {
+    private int findDepthFormat(MemoryStack stack) {
         return findSupportedFormat(
-            stackGet().ints(VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT),
+            stack.ints(VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT),
             VK_IMAGE_TILING_OPTIMAL,
             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
@@ -185,7 +184,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
     private void initMultisampledDepthTexture() {
         try (MemoryStack stack = stackPush()) {
-            int depthFormat = findDepthFormat();
+            int depthFormat = findDepthFormat(stack);
 
             LongBuffer pDepthImage = stack.mallocLong(1);
             LongBuffer pDepthImageMemory = stack.mallocLong(1);
@@ -216,7 +215,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
     private void initResolvedDepthTexture() {
         try (MemoryStack stack = stackPush()) {
-            int depthFormat = findDepthFormat();
+            int depthFormat = findDepthFormat(stack);
 
             LongBuffer pDepthImage = stack.mallocLong(1);
             LongBuffer pDepthImageMemory = stack.mallocLong(1);
