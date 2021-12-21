@@ -49,7 +49,7 @@ void emitVertex(vec3 position, vec3 offset, mat3 transformationMatrix, vec2 texC
 }
 
 void emitBlade(vec3 worldPosition) {
-	vec2 windTexCoord = fract((worldPosition.xy + (params.time * params.windVelocity) / params.windFrequency));
+	vec2 windTexCoord = fract((worldPosition.xz + (params.time * params.windVelocity) / params.windFrequency));
 	vec3 windSample = ((texture(windMap, windTexCoord).rgb * 2) - 1);
 	float windAngle = params.windMaxAngle * windSample.z;
 	vec3 windAxis = normalize(vec3(windSample.xy, 0));
