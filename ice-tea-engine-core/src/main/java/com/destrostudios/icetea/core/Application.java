@@ -471,7 +471,7 @@ public abstract class Application {
             submitInfo.pWaitSemaphores(stack.longs(thisFrame.getImageAvailableSemaphore()));
             submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
             LongBuffer pRenderFinishedSemaphore = stack.longs(thisFrame.getRenderFinishedSemaphore());
-            submitInfo.pSignalSemaphores();
+            submitInfo.pSignalSemaphores(pRenderFinishedSemaphore);
             submitInfo.pCommandBuffers(stack.pointers(swapChain.getCommandBuffers().get(imageIndex)));
             LongBuffer pFence = stack.longs(thisFrame.getFence());
             vkResetFences(logicalDevice, pFence);
