@@ -49,7 +49,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>libs/</classpathPrefix>
-                            <mainClass>com.destrostudios.icetea.test.Main</mainClass>
+                            <mainClass>com.destrostudios.icetea.test.TestApplication</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
