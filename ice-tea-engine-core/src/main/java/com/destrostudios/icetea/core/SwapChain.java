@@ -107,8 +107,9 @@ public class SwapChain {
             swapchainCreateInfo.oldSwapchain(VK_NULL_HANDLE);
 
             LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
-            if (vkCreateSwapchainKHR(application.getLogicalDevice(), swapchainCreateInfo, null, pSwapChain) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create swap chain");
+            int result = vkCreateSwapchainKHR(application.getLogicalDevice(), swapchainCreateInfo, null, pSwapChain);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create swap chain (result = " + result + ")");
             }
             swapChain = pSwapChain.get(0);
 
@@ -196,8 +197,9 @@ public class SwapChain {
             allocInfo.commandBufferCount(commandBuffersCount);
 
             PointerBuffer pCommandBuffers = stack.mallocPointer(commandBuffersCount);
-            if (vkAllocateCommandBuffers(application.getLogicalDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate command buffers");
+            int result = vkAllocateCommandBuffers(application.getLogicalDevice(), allocInfo, pCommandBuffers);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to allocate command buffers (result = " + result + ")");
             }
 
             for (int i = 0; i < commandBuffersCount; i++) {
@@ -210,14 +212,16 @@ public class SwapChain {
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.callocStack(stack);
             for(int i = 0; i < commandBuffersCount;i++) {
                 VkCommandBuffer commandBuffer = commandBuffers.get(i);
-                if (vkBeginCommandBuffer(commandBuffer, bufferBeginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to begin recording command buffer");
+                result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
                 }
                 render(renderJobManager.getQueuePreScene(), commandBuffer, i, renderPassBeginInfo, stack);
                 render(renderJobManager.getSceneRenderJob(), commandBuffer, i, renderPassBeginInfo, stack);
                 render(renderJobManager.getQueuePostScene(), commandBuffer, i, renderPassBeginInfo, stack);
-                if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to record command buffer");
+                result = vkEndCommandBuffer(commandBuffer);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to record command buffer (result = " + result + ")");
                 }
             }
         }

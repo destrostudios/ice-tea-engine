@@ -119,8 +119,9 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
             samplerCreateInfo.mipLodBias(0); // Optional
 
             LongBuffer pImageSampler = stack.mallocLong(1);
-            if (vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image sampler");
+            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create image sampler (result = " + result + ")");
             }
             long imageSampler = pImageSampler.get(0);
 
@@ -145,8 +146,9 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
                 framebufferCreateInfo.pAttachments(stack.longs(getAttachmentsByFrameBufferIndex.apply(i)));
 
                 LongBuffer pFrameBuffer = stack.mallocLong(1);
-                if (vkCreateFramebuffer(application.getLogicalDevice(), framebufferCreateInfo, null, pFrameBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create framebuffer");
+                int result = vkCreateFramebuffer(application.getLogicalDevice(), framebufferCreateInfo, null, pFrameBuffer);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create framebuffer (result = " + result + ")");
                 }
                 frameBuffers.add(pFrameBuffer.get(0));
             }

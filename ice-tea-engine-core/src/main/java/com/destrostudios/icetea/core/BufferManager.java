@@ -24,8 +24,9 @@ public class BufferManager {
             bufferCreateInfo.usage(usage);
             bufferCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
-            if (vkCreateBuffer(application.getLogicalDevice(), bufferCreateInfo, null, pBuffer) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create buffer");
+            int result = vkCreateBuffer(application.getLogicalDevice(), bufferCreateInfo, null, pBuffer);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create buffer (result = " + result + ")");
             }
 
             VkMemoryAllocateInfo allocInfo = VkMemoryAllocateInfo.callocStack(stack);
@@ -35,8 +36,9 @@ public class BufferManager {
             allocInfo.allocationSize(memRequirements.size());
             allocInfo.memoryTypeIndex(application.findMemoryType(memRequirements.memoryTypeBits(), properties));
 
-            if (vkAllocateMemory(application.getLogicalDevice(), allocInfo, null, pBufferMemory) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate buffer memory");
+            result = vkAllocateMemory(application.getLogicalDevice(), allocInfo, null, pBufferMemory);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to allocate buffer memory (result = " + result + ")");
             }
             vkBindBufferMemory(application.getLogicalDevice(), pBuffer.get(0), pBufferMemory.get(0), 0);
         }

@@ -49,8 +49,9 @@ public class ComputePipeline extends Pipeline {
             }
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
-            if (vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create pipeline layout");
+            int result = vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create pipeline layout (result = " + result + ")");
             }
             pipelineLayout = pPipelineLayout.get(0);
 
@@ -62,8 +63,9 @@ public class ComputePipeline extends Pipeline {
                     .layout(pipelineLayout);
 
             LongBuffer pComputePipeline = stack.mallocLong(1);
-            if (vkCreateComputePipelines(application.getLogicalDevice(), VK_NULL_HANDLE, computePipelineCreateInfo, null, pComputePipeline) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create graphics pipeline");
+            result = vkCreateComputePipelines(application.getLogicalDevice(), VK_NULL_HANDLE, computePipelineCreateInfo, null, pComputePipeline);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create graphics pipeline (result = " + result + ")");
             }
             pipeline = pComputePipeline.get(0);
 

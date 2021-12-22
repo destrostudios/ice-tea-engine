@@ -49,8 +49,9 @@ public class MaterialDescriptorSet {
             poolCreateInfo.maxSets(descriptorSetsCount);
 
             LongBuffer pDescriptorPool = stack.mallocLong(1);
-            if (vkCreateDescriptorPool(application.getLogicalDevice(), poolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create descriptor pool");
+            int result = vkCreateDescriptorPool(application.getLogicalDevice(), poolCreateInfo, null, pDescriptorPool);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create descriptor pool (result = " + result + ")");
             }
             return pDescriptorPool.get(0);
         }
@@ -73,8 +74,9 @@ public class MaterialDescriptorSet {
             allocateInfo.pSetLayouts(layouts);
 
             LongBuffer pDescriptorSets = stack.mallocLong(descriptorSetsCount);
-            if (vkAllocateDescriptorSets(application.getLogicalDevice(), allocateInfo, pDescriptorSets) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate descriptor sets");
+            int result = vkAllocateDescriptorSets(application.getLogicalDevice(), allocateInfo, pDescriptorSets);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to allocate descriptor sets (result = " + result + ")");
             }
 
             VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.callocStack(setLayout.getDescriptorsCount(), stack);

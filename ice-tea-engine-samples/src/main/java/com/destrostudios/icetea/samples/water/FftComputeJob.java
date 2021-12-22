@@ -102,8 +102,9 @@ public class FftComputeJob extends ComputeJob {
             samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);
 
             LongBuffer pImageSampler = stack.mallocLong(1);
-            if (vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image sampler");
+            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create image sampler (result = " + result + ")");
             }
             long imageSampler = pImageSampler.get(0);
 

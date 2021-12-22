@@ -190,8 +190,9 @@ public abstract class Application {
             instanceCreateInfo.ppEnabledExtensionNames(getRequiredExtensions(stack));
 
             PointerBuffer instancePointer = stack.mallocPointer(1);
-            if (vkCreateInstance(instanceCreateInfo, null, instancePointer) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create instance");
+            int result = vkCreateInstance(instanceCreateInfo, null, instancePointer);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create instance (result = " + result + ")");
             }
             instance = new VkInstance(instancePointer.get(0), instanceCreateInfo);
         }
@@ -209,8 +210,9 @@ public abstract class Application {
     private void initSurface() {
         try (MemoryStack stack = stackPush()) {
             LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
-            if (glfwCreateWindowSurface(instance, window, null, pSurface) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create window surface");
+            int result = glfwCreateWindowSurface(instance, window, null, pSurface);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create window surface (result = " + result + ")");
             }
             surface = pSurface.get(0);
         }
@@ -248,8 +250,9 @@ public abstract class Application {
             deviceCreateInfo.pEnabledFeatures(enabledDeviceFeatures);
 
             PointerBuffer pDevice = stack.pointers(VK_NULL_HANDLE);
-            if (vkCreateDevice(physicalDevice, deviceCreateInfo, null, pDevice) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create logical device");
+            int result = vkCreateDevice(physicalDevice, deviceCreateInfo, null, pDevice);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create logical device (result = " + result + ")");
             }
             logicalDevice = new VkDevice(pDevice.get(0), physicalDevice, deviceCreateInfo);
 
@@ -270,8 +273,9 @@ public abstract class Application {
             poolCreateInfo.queueFamilyIndex(physicalDeviceInformation.getQueueFamilyIndexGraphics());
 
             LongBuffer pCommandPool = stack.mallocLong(1);
-            if (vkCreateCommandPool(logicalDevice, poolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create command pool");
+            int result = vkCreateCommandPool(logicalDevice, poolCreateInfo, null, pCommandPool);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create command pool (result = " + result + ")");
             }
             commandPool = pCommandPool.get(0);
         }
@@ -319,10 +323,17 @@ public abstract class Application {
             LongBuffer pFence = stack.mallocLong(1);
 
             for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                if ((vkCreateSemaphore(logicalDevice, semaphoreInfo, null, pImageAvailableSemaphore) != VK_SUCCESS)
-                 || (vkCreateSemaphore(logicalDevice, semaphoreInfo, null, pRenderFinishedSemaphore) != VK_SUCCESS)
-                 || (vkCreateFence(logicalDevice, fenceInfo, null, pFence) != VK_SUCCESS)) {
-                    throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
+                int result = vkCreateSemaphore(logicalDevice, semaphoreInfo, null, pImageAvailableSemaphore);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create image available semaphore for the frame " + i + " (result = " + result + ")");
+                }
+                result = vkCreateSemaphore(logicalDevice, semaphoreInfo, null, pRenderFinishedSemaphore);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create render finished semaphore for the frame " + i + " (result = " + result + ")");
+                }
+                result = vkCreateFence(logicalDevice, fenceInfo, null, pFence);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create fence for the frame " + i + " (result = " + result + ")");
                 }
                 inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
             }
@@ -445,7 +456,7 @@ public abstract class Application {
             Frame thisFrame = inFlightFrames.get(currentFrame);
 
             IntBuffer pImageIndex = stack.mallocInt(1);
-            int vkResult = vkAcquireNextImageKHR(
+            int result = vkAcquireNextImageKHR(
                 logicalDevice,
                 swapChain.getSwapChain(),
                 MathUtil.UINT64_MAX,
@@ -453,11 +464,11 @@ public abstract class Application {
                 VK_NULL_HANDLE,
                 pImageIndex
             );
-            if (vkResult == VK_ERROR_OUT_OF_DATE_KHR) {
+            if (result == VK_ERROR_OUT_OF_DATE_KHR) {
                 swapChain.recreate();
                 return;
-            } else if (vkResult != VK_SUCCESS) {
-                throw new RuntimeException("Cannot get image");
+            } else if (result != VK_SUCCESS) {
+                throw new RuntimeException("Cannot get image (result = " + result + ")");
             }
             int imageIndex = pImageIndex.get(0);
             updateUniformBuffers(imageIndex);
@@ -477,8 +488,9 @@ public abstract class Application {
             submitInfo.pCommandBuffers(stack.pointers(swapChain.getCommandBuffers().get(imageIndex)));
             LongBuffer pFence = stack.longs(thisFrame.getFence());
             vkResetFences(logicalDevice, pFence);
-            if ((vkResult = vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.getFence())) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to submit draw command buffer: " + vkResult);
+            result = vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.getFence());
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to submit draw command buffer (result = " + result + ")");
             }
 
             VkPresentInfoKHR presentInfo = VkPresentInfoKHR.callocStack(stack);
@@ -487,12 +499,12 @@ public abstract class Application {
             presentInfo.swapchainCount(1);
             presentInfo.pSwapchains(stack.longs(swapChain.getSwapChain()));
             presentInfo.pImageIndices(pImageIndex);
-            vkResult = vkQueuePresentKHR(presentQueue, presentInfo);
-            if ((vkResult == VK_ERROR_OUT_OF_DATE_KHR) || (vkResult == VK_SUBOPTIMAL_KHR) || wasResized) {
+            result = vkQueuePresentKHR(presentQueue, presentInfo);
+            if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR) || wasResized) {
                 wasResized = false;
                 swapChain.recreate();
-            } else if (vkResult != VK_SUCCESS) {
-                throw new RuntimeException("Failed to present swap chain image");
+            } else if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to present swap chain image (result = " + result + ")");
             }
 
             currentFrame = ((currentFrame + 1) % MAX_FRAMES_IN_FLIGHT);

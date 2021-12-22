@@ -43,8 +43,9 @@ public abstract class Pipeline {
             shaderModuleCreateInfo.pCode(compiledShaderCode);
 
             LongBuffer pShaderModule = stack.mallocLong(1);
-            if (vkCreateShaderModule(application.getLogicalDevice(), shaderModuleCreateInfo, null, pShaderModule) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create shader module");
+            int result = vkCreateShaderModule(application.getLogicalDevice(), shaderModuleCreateInfo, null, pShaderModule);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create shader module (result = " + result + ")");
             }
             return pShaderModule.get(0);
         }

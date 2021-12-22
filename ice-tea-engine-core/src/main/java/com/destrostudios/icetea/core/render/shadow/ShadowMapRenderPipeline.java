@@ -157,8 +157,9 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             pipelineLayoutInfo.pSetLayouts(stack.longs(materialDescriptorSet.getSetLayout().getDescriptorSetLayout()));
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
-            if (vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create pipeline layout");
+            int result = vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create pipeline layout (result = " + result + ")");
             }
             pipelineLayout = pPipelineLayout.get(0);
 
@@ -179,8 +180,9 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             pipelineInfo.basePipelineIndex(-1);
 
             LongBuffer pGraphicsPipeline = stack.mallocLong(1);
-            if (vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create graphics pipeline");
+            result = vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create graphics pipeline (result = " + result + ")");
             }
             pipeline = pGraphicsPipeline.get(0);
 

@@ -127,8 +127,9 @@ public class BufferedTexture extends Texture {
             samplerCreateInfo.mipLodBias(0); // Optional
 
             LongBuffer pImageSampler = stack.mallocLong(1);
-            if (vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create texture sampler");
+            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create texture sampler (result = " + result + ")");
             }
             imageSampler = pImageSampler.get(0);
         }

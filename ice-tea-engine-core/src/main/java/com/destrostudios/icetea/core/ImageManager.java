@@ -43,8 +43,9 @@ public class ImageManager {
             imageCreateInfo.samples(numSamples);
             imageCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
-            if (vkCreateImage(application.getLogicalDevice(), imageCreateInfo, null, pTextureImage) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image");
+            int result = vkCreateImage(application.getLogicalDevice(), imageCreateInfo, null, pTextureImage);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create image (result = " + result + ")");
             }
 
             VkMemoryAllocateInfo allocateInfo = VkMemoryAllocateInfo.callocStack(stack);
@@ -54,8 +55,9 @@ public class ImageManager {
             allocateInfo.allocationSize(memoryRequirements.size());
             allocateInfo.memoryTypeIndex(application.findMemoryType(memoryRequirements.memoryTypeBits(), memProperties));
 
-            if (vkAllocateMemory(application.getLogicalDevice(), allocateInfo, null, pTextureImageMemory) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate image memory");
+            result = vkAllocateMemory(application.getLogicalDevice(), allocateInfo, null, pTextureImageMemory);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to allocate image memory (result = " + result + ")");
             }
             vkBindImageMemory(application.getLogicalDevice(), pTextureImage.get(0), pTextureImageMemory.get(0), 0);
         }
@@ -75,8 +77,9 @@ public class ImageManager {
             viewInfo.subresourceRange().layerCount(1);
 
             LongBuffer pImageView = stack.mallocLong(1);
-            if (vkCreateImageView(application.getLogicalDevice(), viewInfo, null, pImageView) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create texture image view");
+            int result = vkCreateImageView(application.getLogicalDevice(), viewInfo, null, pImageView);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create texture image view (result = " + result + ")");
             }
             return pImageView.get(0);
         }

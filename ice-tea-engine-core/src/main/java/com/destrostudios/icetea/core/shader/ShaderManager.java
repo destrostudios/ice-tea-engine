@@ -82,10 +82,11 @@ public class ShaderManager {
         }
         long result = shaderc_compile_into_spv(compiler, source, shaderType.getKind(), filename, "main", NULL);
         if (result == NULL) {
-            throw new RuntimeException("Failed to compile shader " + filename + " into SPIR-V");
+            throw new RuntimeException("Failed to compile shader " + filename + " into SPIR-V (result = " + result + ")");
         }
-        if (shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success) {
-            throw new RuntimeException("Failed to compile shader " + filename + "into SPIR-V:\n " + shaderc_result_get_error_message(result) + "\n" + source);
+        int status = shaderc_result_get_compilation_status(result);
+        if (status != shaderc_compilation_status_success) {
+            throw new RuntimeException("Failed to compile shader " + filename + "into SPIR-V (status = " + status + "):\n " + shaderc_result_get_error_message(result) + "\n" + source);
         }
         shaderc_compiler_release(compiler);
         return new SPIRV(result, shaderc_result_get_bytes(result));

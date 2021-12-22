@@ -147,8 +147,9 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             renderPassCreateInfo.pDependencies(dependency);
 
             LongBuffer pRenderPass = stack.mallocLong(1);
-            if (vkCreateRenderPass2KHR(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create render pass");
+            int result = vkCreateRenderPass2KHR(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create render pass (result = " + result + ")");
             }
             renderPass = pRenderPass.get(0);
         }
@@ -254,8 +255,9 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             samplerCreateInfo.mipLodBias(0); // Optional
 
             LongBuffer pImageSampler = stack.mallocLong(1);
-            if (vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image sampler");
+            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create image sampler (result = " + result + ")");
             }
             long imageSampler = pImageSampler.get(0);
 

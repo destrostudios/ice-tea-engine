@@ -130,8 +130,9 @@ public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadR
             pipelineLayoutInfo.pSetLayouts(stack.longs(materialDescriptorSet.getSetLayout().getDescriptorSetLayout()));
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
-            if (vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create pipeline layout");
+            int result = vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create pipeline layout (result = " + result + ")");
             }
             pipelineLayout = pPipelineLayout.get(0);
 
@@ -152,8 +153,9 @@ public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadR
             pipelineInfo.basePipelineIndex(-1);
 
             LongBuffer pGraphicsPipeline = stack.mallocLong(1);
-            if (vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create graphics pipeline");
+            result = vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create graphics pipeline (result = " + result + ")");
             }
             pipeline = pGraphicsPipeline.get(0);
 

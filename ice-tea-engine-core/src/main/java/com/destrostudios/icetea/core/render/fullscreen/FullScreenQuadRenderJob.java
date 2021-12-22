@@ -95,8 +95,9 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
             renderPassCreateInfo.pSubpasses(subpass);
 
             LongBuffer pRenderPass = stack.mallocLong(1);
-            if (vkCreateRenderPass(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create render pass");
+            int result = vkCreateRenderPass(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create render pass (result = " + result + ")");
             }
             renderPass = pRenderPass.get(0);
         }

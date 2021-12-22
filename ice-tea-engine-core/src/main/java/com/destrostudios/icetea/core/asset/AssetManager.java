@@ -52,8 +52,7 @@ public class AssetManager {
         try {
             return assetLoader.load(inputStream);
         } catch (IOException ex) {
-            ex.printStackTrace();
-            throw new RuntimeException("Error while loading asset");
+            throw new RuntimeException("Error while loading asset", ex);
         }
     }
 

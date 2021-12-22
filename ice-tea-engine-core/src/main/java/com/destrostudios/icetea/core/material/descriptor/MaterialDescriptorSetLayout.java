@@ -46,8 +46,9 @@ public class MaterialDescriptorSetLayout {
             layoutCreateInfo.pBindings(bindings);
 
             LongBuffer pDescriptorSetLayout = stack.mallocLong(1);
-            if (vkCreateDescriptorSetLayout(application.getLogicalDevice(), layoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create descriptor set layout");
+            int result = vkCreateDescriptorSetLayout(application.getLogicalDevice(), layoutCreateInfo, null, pDescriptorSetLayout);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create descriptor set layout (" + result + ")");
             }
             descriptorSetLayout = pDescriptorSetLayout.get(0);
         }
