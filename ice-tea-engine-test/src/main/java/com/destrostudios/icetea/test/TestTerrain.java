@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.asset.locator.FileLocator;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.data.VertexData;
@@ -27,6 +28,8 @@ public class TestTerrain extends Application {
 
     @Override
     protected void initScene() {
+        assetManager.addLocator(new FileLocator("./assets"));
+
         sceneCamera.setLocation(new Vector3f(0, 6, 50));
         sceneCamera.setZFar(200);
 

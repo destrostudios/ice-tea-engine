@@ -29,8 +29,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
-
 public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
 
     public GltfLoader() {
@@ -312,7 +310,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             return values;
         }
         BufferViewModel bufferViewModel = accessorModel.getBufferViewModel();
-        InputStream inputStream = getSystemClassLoader().getResourceAsStream(keyDirectory + bufferViewModel.getBufferModel().getUri());
+        InputStream inputStream = assetManager.load(keyDirectory + bufferViewModel.getBufferModel().getUri());
         try {
             DataInputStream dataInputStream = new DataInputStream(inputStream);
             dataInputStream.skip(bufferViewModel.getByteOffset() + accessorModel.getByteOffset());

@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.asset.locator.FileLocator;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.scene.Node;
@@ -16,6 +17,8 @@ public class TestRoom extends Application {
 
     @Override
     protected void initScene() {
+        assetManager.addLocator(new FileLocator("./assets"));
+
         sceneCamera.setLocation(new Vector3f(0, 0, 7));
         sceneCamera.setRotation(new Quaternionf(0.6836f, -0.09070f, -0.09527f, -0.7179f));
 

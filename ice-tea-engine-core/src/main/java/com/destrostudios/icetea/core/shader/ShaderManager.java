@@ -1,21 +1,24 @@
 package com.destrostudios.icetea.core.shader;
 
+import com.destrostudios.icetea.core.asset.AssetManager;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
 public class ShaderManager {
 
-    public ShaderManager() {
+    public ShaderManager(AssetManager assetManager) {
+        this.assetManager = assetManager;
         filesCache = new HashMap<>();
         spirvCache = new LinkedHashMap<>();
         maximumCachedSPIRVs = 100;
     }
+    private AssetManager assetManager;
     private HashMap<String, String> filesCache;
     private LinkedHashMap<String, SPIRV> spirvCache;
     private int maximumCachedSPIRVs;
@@ -46,7 +49,7 @@ public class ShaderManager {
     private String getShaderSource(String shaderFile) {
         return filesCache.computeIfAbsent(shaderFile, sf -> {
             try {
-                return new String(getSystemClassLoader().getResourceAsStream(shaderFile).readAllBytes());
+                return new String(assetManager.load(shaderFile).readAllBytes());
             } catch (IOException ex) {
                 ex.printStackTrace();
             }

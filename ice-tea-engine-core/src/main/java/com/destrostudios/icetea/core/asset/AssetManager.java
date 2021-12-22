@@ -8,11 +8,23 @@ import com.destrostudios.icetea.core.texture.Texture;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedList;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
-
-// TODO: Map extensions to loaders and cache assets
+// TODO: Map extensions to loaders and cache assets (combinable with cache in ShaderManager)
 public class AssetManager {
+
+    public AssetManager() {
+        locators = new LinkedList<>();
+    }
+    private LinkedList<AssetLocator> locators;
+
+    public void addLocator(AssetLocator locator) {
+        locators.add(locator);
+    }
+
+    public void removeLocator(AssetLocator locator) {
+        locators.remove(locator);
+    }
 
     public Mesh loadMesh(String key) {
         return load(key, new ObjLoader(), null);
@@ -36,7 +48,7 @@ public class AssetManager {
 
     private <T, S> T load(String key, AssetLoader<T, S> assetLoader, S settings) {
         assetLoader.setContext(this, key, settings);
-        InputStream inputStream = getInputStream(key);
+        InputStream inputStream = load(key);
         try {
             return assetLoader.load(inputStream);
         } catch (IOException ex) {
@@ -45,7 +57,13 @@ public class AssetManager {
         }
     }
 
-    private InputStream getInputStream(String key) {
-        return getSystemClassLoader().getResourceAsStream(key);
+    public InputStream load(String key) {
+        for (AssetLocator locator : locators) {
+            InputStream inputStream = locator.getInputStream(key);
+            if (inputStream != null) {
+                return inputStream;
+            }
+        }
+        throw new AssetNotFoundException(key);
     }
 }

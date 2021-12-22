@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.asset.AssetManager;
+import com.destrostudios.icetea.core.asset.locator.ClasspathLocator;
 import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
@@ -63,11 +64,11 @@ public abstract class Application {
     @Getter
     private ImageManager imageManager;
     @Getter
-    private ShaderManager shaderManager;
-    @Getter
     protected InputManager inputManager;
     @Getter
     protected AssetManager assetManager;
+    @Getter
+    private ShaderManager shaderManager;
 
     @Getter
     private VkInstance instance;
@@ -131,9 +132,10 @@ public abstract class Application {
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
-        shaderManager = new ShaderManager();
         inputManager = new InputManager(this);
         assetManager = new AssetManager();
+        assetManager.addLocator(new ClasspathLocator());
+        shaderManager = new ShaderManager(assetManager);
         rootNode = new Node();
         sceneNode = new Node();
         rootNode.add(sceneNode);

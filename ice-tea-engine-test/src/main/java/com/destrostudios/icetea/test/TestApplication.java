@@ -3,6 +3,7 @@ package com.destrostudios.icetea.test;
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.animation.AnimationControl;
 import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
+import com.destrostudios.icetea.core.asset.locator.FileLocator;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.collision.BoundingBox;
@@ -59,6 +60,8 @@ public class TestApplication extends Application {
 
     @Override
     protected void initScene() {
+        assetManager.addLocator(new FileLocator("./assets"));
+
         sceneCamera.setLocation(new Vector3f(0, 0.3f, 5));
 
         DirectionalLight directionalLight = new DirectionalLight();
