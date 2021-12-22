@@ -414,8 +414,8 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
     private Material loadMaterial(MaterialModel materialModel) {
         return materialsMap.computeIfAbsent(materialModel, mm -> {
             Material material = new Material();
-            material.setVertexShader(new Shader("shaders/my_shader.vert", new String[] { "light", "shadow" }));
-            material.setFragmentShader(new Shader("shaders/my_shader.frag", new String[] { "light", "shadow" }));
+            material.setVertexShader(new Shader("shaders/default.vert", new String[] { "light", "shadow" }));
+            material.setFragmentShader(new Shader("shaders/default.frag", new String[] { "light", "shadow" }));
             Object baseColorTextureValue = materialModel.getValues().get("baseColorTexture");
             if (baseColorTextureValue != null) {
                 int baseColorTextureIndex = (int) baseColorTextureValue;

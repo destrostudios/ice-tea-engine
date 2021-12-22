@@ -11,9 +11,9 @@ import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
-import com.destrostudios.icetea.core.terrain.TerrainFactory;
-import com.destrostudios.icetea.core.water.WaterConfig;
-import com.destrostudios.icetea.core.water.WaterFactory;
+import com.destrostudios.icetea.samples.terrain.TerrainFactory;
+import com.destrostudios.icetea.samples.water.WaterConfig;
+import com.destrostudios.icetea.samples.water.WaterFactory;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 

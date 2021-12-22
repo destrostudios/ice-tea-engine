@@ -8,7 +8,6 @@ import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
-import com.destrostudios.icetea.core.filter.*;
 import com.destrostudios.icetea.core.font.BitmapFont;
 import com.destrostudios.icetea.core.font.BitmapText;
 import com.destrostudios.icetea.core.light.*;
@@ -19,10 +18,12 @@ import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.scene.gui.Panel;
 import com.destrostudios.icetea.core.shader.Shader;
-import com.destrostudios.icetea.core.terrain.GrassConfig;
-import com.destrostudios.icetea.core.terrain.GrassFactory;
 import com.destrostudios.icetea.core.texture.Texture;
-import com.destrostudios.icetea.core.water.*;
+import com.destrostudios.icetea.samples.filter.RadialBlurFilter;
+import com.destrostudios.icetea.samples.filter.SepiaFilter;
+import com.destrostudios.icetea.samples.terrain.GrassConfig;
+import com.destrostudios.icetea.samples.terrain.GrassFactory;
+import com.destrostudios.icetea.samples.water.*;
 import org.joml.*;
 
 import java.lang.Math;
@@ -76,11 +77,11 @@ public class TestApplication extends Application {
         nodeRotating = new Node();
         sceneNode.add(nodeRotating);
 
-        Shader vertexShaderDefault = new Shader("shaders/my_shader.vert", new String[] { "light", "shadow" });
-        Shader fragShaderDefault = new Shader("shaders/my_shader.frag", new String[] { "light", "shadow" });
+        Shader vertexShaderDefault = new Shader("shaders/default.vert", new String[] { "light", "shadow" });
+        Shader fragShaderDefault = new Shader("shaders/default.frag", new String[] { "light", "shadow" });
 
-        Shader vertexShaderCool = new Shader("shaders/my_cool_shader.vert");
-        Shader fragShaderCool = new Shader("shaders/my_cool_shader.frag", new String[] { "texCoordColor", "alphaPulsate" });
+        Shader vertexShaderCool = new Shader("shaders/veryCool.vert");
+        Shader fragShaderCool = new Shader("shaders/veryCool.frag", new String[] { "texCoordColor", "alphaPulsate" });
 
         materialCool = new Material();
         materialCool.setVertexShader(vertexShaderCool);

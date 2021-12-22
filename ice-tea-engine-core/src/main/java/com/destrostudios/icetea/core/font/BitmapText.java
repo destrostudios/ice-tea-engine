@@ -17,8 +17,8 @@ public class BitmapText extends Geometry {
         setMesh(new BitmapTextMesh(font, text));
 
         Material material = new Material();
-        material.setVertexShader(new Shader("shaders/my_shader.vert", new String[] { "light", "shadow" }));
-        material.setFragmentShader(new Shader("shaders/my_shader.frag", new String[] { "light", "shadow" }));
+        material.setVertexShader(new Shader("shaders/default.vert", new String[] { "light", "shadow" }));
+        material.setFragmentShader(new Shader("shaders/default.frag", new String[] { "light", "shadow" }));
         material.setCullMode(VK_CULL_MODE_FRONT_BIT);
         material.setDepthTest(false);
         material.setDepthWrite(false);
