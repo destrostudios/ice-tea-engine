@@ -302,8 +302,7 @@ public class TestApplication extends Application {
         Material materialKnot = new Material();
         materialKnot.setVertexShader(vertexShaderDefault);
         materialKnot.setFragmentShader(fragShaderDefault);
-        Texture textureKnot = assetManager.loadTexture("textures/chalet.jpg");
-        materialKnot.setTexture("diffuseMap", textureKnot);
+        materialKnot.setTexture("diffuseMap", textureChalet);
         materialKnot.getParameters().setVector4f("color", new Vector4f(0, 1, 0, 1));
 
         Geometry geometryKnot = new Geometry();
@@ -463,10 +462,10 @@ public class TestApplication extends Application {
 
     @Override
     protected void update(float tpf) {
-        if ((time > 12) && (!hasAddedDennis)) {
+        if ((time > 20) && (!hasAddedDennis)) {
             nodeRotating.add(nodeDennis);
             hasAddedDennis = true;
-        } else if ((time > 16) && (!hasRemovedDennis)) {
+        } else if ((time > 24) && (!hasRemovedDennis)) {
             nodeRotating.remove(nodeDennis);
             hasRemovedDennis = true;
         }

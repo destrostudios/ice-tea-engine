@@ -16,6 +16,7 @@ import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.scene.Spatial;
 import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.LowEndianUtil;
 import de.javagl.jgltf.model.*;
 import de.javagl.jgltf.model.io.GltfModelReader;
@@ -36,6 +37,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
         jointsMap = new HashMap<>();
         samplersDataMap = new HashMap<>();
         materialsMap = new HashMap<>();
+        texturesMap = new HashMap<>();
         tmpMatrix4f = new float[16];
     }
     private GltfModel gltfModel;
@@ -44,6 +46,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
     private HashMap<NodeModel, Joint> jointsMap;
     private HashMap<AnimationModel.Sampler, AnimationSamplerData<?>> samplersDataMap;
     private HashMap<MaterialModel, Material> materialsMap;
+    private HashMap<String, Texture> texturesMap;
     private float[] tmpMatrix4f;
 
     @Override
@@ -419,7 +422,9 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                 int baseColorTextureIndex = (int) baseColorTextureValue;
                 TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
                 String textureFilePath = keyDirectory + baseColorTextureModel.getImageModel().getUri();
-                material.setTexture("diffuseMap", assetManager.loadTexture(textureFilePath));
+                // TODO: Will be done via the internal asset manager cache
+                Texture texture = texturesMap.computeIfAbsent(textureFilePath, tfp -> assetManager.loadTexture(tfp));
+                material.setTexture("diffuseMap", texture);
             }
             return material;
         });
