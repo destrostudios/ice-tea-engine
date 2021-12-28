@@ -319,13 +319,44 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             dataInputStream.skip(bufferViewModel.getByteOffset() + accessorModel.getByteOffset());
             int readBytes;
             for (int i = 0; i < accessorModel.getCount(); i++) {
+                // TODO: Do all this in a generic way
                 switch (accessorModel.getComponentType()) {
+                    case GltfConstants.GL_UNSIGNED_BYTE:
+                        switch (accessorModel.getElementType()) {
+                            case VEC4: {
+                                int x = dataInputStream.read();
+                                int y = dataInputStream.read();
+                                int z = dataInputStream.read();
+                                int w = dataInputStream.read();
+                                values.add(new int[]{ x, y, z, w });
+                                readBytes = 4;
+                                break;
+                            }
+                            default:
+                                throw new UnsupportedOperationException("GLTF GL_UNSIGNED_BYTE element type " + accessorModel.getElementType());
+                        }
+                        break;
                     case GltfConstants.GL_UNSIGNED_SHORT:
                         switch (accessorModel.getElementType()) {
                             case SCALAR: {
                                 int value = LowEndianUtil.readUnsignedShort(dataInputStream);
                                 values.add(value);
                                 readBytes = 2;
+                                break;
+                            }
+                            case VEC2: {
+                                int x = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                int y = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                values.add(new int[]{ x, y });
+                                readBytes = 4;
+                                break;
+                            }
+                            case VEC3: {
+                                int x = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                int y = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                int z = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                values.add(new int[]{ x, y, z });
+                                readBytes = 6;
                                 break;
                             }
                             case VEC4: {
@@ -347,6 +378,30 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                                 int value = LowEndianUtil.readUnsignedInt(dataInputStream);
                                 values.add(value);
                                 readBytes = 2;
+                                break;
+                            }
+                            case VEC2: {
+                                int x = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int y = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                values.add(new int[]{ x, y });
+                                readBytes = 4;
+                                break;
+                            }
+                            case VEC3: {
+                                int x = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int y = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int z = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                values.add(new int[]{ x, y, z });
+                                readBytes = 6;
+                                break;
+                            }
+                            case VEC4: {
+                                int x = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int y = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int z = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int w = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                values.add(new int[]{ x, y, z, w });
+                                readBytes = 8;
                                 break;
                             }
                             default:
