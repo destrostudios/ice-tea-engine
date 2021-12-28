@@ -80,11 +80,20 @@ public class TestApplication extends Application {
         nodeRotating = new Node();
         sceneNode.add(nodeRotating);
 
-        Shader vertexShaderDefault = new Shader("shaders/default.vert", new String[] { "light", "shadow" });
-        Shader fragShaderDefault = new Shader("shaders/default.frag", new String[] { "light", "shadow" });
+        Shader vertexShaderDefault = new Shader("com/destrostudios/icetea/core/shaders/default.vert", new String[] {
+            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
+            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
+        });
+        Shader fragShaderDefault = new Shader("com/destrostudios/icetea/core/shaders/default.frag", new String[] {
+            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
+            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
+        });
 
         Shader vertexShaderCool = new Shader("shaders/veryCool.vert");
-        Shader fragShaderCool = new Shader("shaders/veryCool.frag", new String[] { "texCoordColor", "alphaPulsate" });
+        Shader fragShaderCool = new Shader("shaders/veryCool.frag", new String[] {
+            "shaders/nodes/texCoordColor.glsllib",
+            "shaders/nodes/alphaPulsate.glsllib"
+        });
 
         materialCool = new Material();
         materialCool.setVertexShader(vertexShaderCool);
@@ -105,7 +114,7 @@ public class TestApplication extends Application {
         panel2.setBackground(assetManager.loadTexture("textures/icetea2.png"));
         guiNode.add(panel2);
 
-        BitmapFont bitmapFont = assetManager.loadBitmapFont("fonts/Verdana_18.fnt");
+        BitmapFont bitmapFont = assetManager.loadBitmapFont("com/destrostudios/icetea/samples/fonts/Verdana_18.fnt");
 
         BitmapText bitmapTextStatic = new BitmapText(bitmapFont, "Hello World.");
         bitmapTextStatic.move(new Vector3f(375, 50, 1));

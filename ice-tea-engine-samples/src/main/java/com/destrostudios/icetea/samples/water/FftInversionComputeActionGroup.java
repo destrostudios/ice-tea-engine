@@ -28,7 +28,7 @@ public class FftInversionComputeActionGroup extends ComputeActionGroup {
 
     @Override
     public Shader getComputeShader() {
-        return new Shader("shaders/water/inversion.comp");
+        return new Shader("com/destrostudios/icetea/samples/shaders/water/inversion.comp");
     }
 
     @Override

@@ -28,7 +28,7 @@ public class HktComputeActionGroup extends ComputeActionGroup {
 
     @Override
     public Shader getComputeShader() {
-        return new Shader("shaders/water/hkt.comp");
+        return new Shader("com/destrostudios/icetea/samples/shaders/water/hkt.comp");
     }
 
     @Override

@@ -26,7 +26,7 @@ public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadR
             MaterialDescriptorSet materialDescriptorSet = renderJob.getMaterialDescriptorSet();
             String materialDescriptorSetShaderDeclaration = materialDescriptorSet.getShaderDeclaration();
 
-            Shader vertShader = new Shader("shaders/fullScreenQuad.vert");
+            Shader vertShader = new Shader("com/destrostudios/icetea/core/shaders/fullScreenQuad.vert");
             Shader fragShader = renderJob.getFragmentShader();
             long vertShaderModule = createShaderModule(vertShader, ShaderType.VERTEX_SHADER, materialDescriptorSetShaderDeclaration);
             long fragShaderModule = createShaderModule(fragShader, ShaderType.FRAGMENT_SHADER, materialDescriptorSetShaderDeclaration);

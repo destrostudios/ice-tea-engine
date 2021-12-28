@@ -15,8 +15,14 @@ public class Panel extends Geometry {
         setMesh(new Quad(1, 1));
 
         Material material = new Material();
-        material.setVertexShader(new Shader("shaders/default.vert", new String[] { "light", "shadow" }));
-        material.setFragmentShader(new Shader("shaders/default.frag", new String[] { "light", "shadow" }));
+        material.setVertexShader(new Shader("com/destrostudios/icetea/core/shaders/default.vert", new String[] {
+            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
+            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
+        }));
+        material.setFragmentShader(new Shader("com/destrostudios/icetea/core/shaders/default.frag", new String[] {
+            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
+            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
+        }));
         material.setCullMode(VK_CULL_MODE_FRONT_BIT);
         material.setDepthTest(false);
         material.setDepthWrite(false);

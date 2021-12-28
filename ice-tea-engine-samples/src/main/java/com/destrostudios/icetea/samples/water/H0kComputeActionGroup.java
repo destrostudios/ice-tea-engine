@@ -29,7 +29,7 @@ public class H0kComputeActionGroup extends ComputeActionGroup {
 
     @Override
     public Shader getComputeShader() {
-        return new Shader("shaders/water/h0k.comp");
+        return new Shader("com/destrostudios/icetea/samples/shaders/water/h0k.comp");
     }
 
     @Override

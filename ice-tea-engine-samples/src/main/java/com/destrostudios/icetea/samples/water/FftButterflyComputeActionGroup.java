@@ -31,7 +31,7 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
 
     @Override
     public Shader getComputeShader() {
-        return new Shader("shaders/water/butterfly.comp");
+        return new Shader("com/destrostudios/icetea/samples/shaders/water/butterfly.comp");
     }
 
     @Override

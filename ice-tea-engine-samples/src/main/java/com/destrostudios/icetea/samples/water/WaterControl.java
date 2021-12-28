@@ -67,12 +67,12 @@ public class WaterControl extends Control {
 
     private Material createMaterial() {
         Material material = new Material();
-        material.setVertexShader(new Shader("shaders/water/water.vert"));
-        material.setFragmentShader(new Shader("shaders/water/water.frag"));
+        material.setVertexShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.vert"));
+        material.setFragmentShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.frag"));
         material.setTessellationPatchSize(16);
-        material.setTessellationControlShader(new Shader("shaders/water/water.tesc"));
-        material.setTessellationEvaluationShader(new Shader("shaders/water/water.tese"));
-        material.setGeometryShader(new Shader("shaders/water/water.geom"));
+        material.setTessellationControlShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.tesc"));
+        material.setTessellationEvaluationShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.tese"));
+        material.setGeometryShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.geom"));
         // FIXME: Vectors have to be defined first or somehow the memory alignment is messed up
         material.getParameters().setVector3f("waterColor", waterConfig.getWaterColor());
         material.getParameters().setVector2f("windDirection", waterConfig.getWindDirection());

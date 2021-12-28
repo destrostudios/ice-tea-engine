@@ -36,7 +36,7 @@ public class ShaderManager {
             if (addDeclarations && (!shaderSourceLine.startsWith("#"))) {
                 combinedSource += "\n";
                 for (String shaderNode : shader.getRequiredShaderNodes()) {
-                    combinedSource += getShaderSource("shaders/nodes/" + shaderNode + ".glsllib") + "\n\n";
+                    combinedSource += getShaderSource(shaderNode) + "\n\n";
                 }
                 combinedSource += additionalDeclarations;
                 addDeclarations = false;

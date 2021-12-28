@@ -37,13 +37,13 @@ public class H0kComputeJob extends ComputeJob {
         this.application = application;
         h0kTexture = createTargetTexture();
         h0minuskTexture = createTargetTexture();
-        noiseTexture1 = application.getAssetManager().loadTexture("textures/water/noise_" + waterConfig.getN() + "_0.jpg");
+        noiseTexture1 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_0.jpg");
         noiseTexture1.init(application);
-        noiseTexture2 = application.getAssetManager().loadTexture("textures/water/noise_" + waterConfig.getN() + "_1.jpg");
+        noiseTexture2 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_1.jpg");
         noiseTexture2.init(application);
-        noiseTexture3 = application.getAssetManager().loadTexture("textures/water/noise_" + waterConfig.getN() + "_2.jpg");
+        noiseTexture3 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_2.jpg");
         noiseTexture3.init(application);
-        noiseTexture4 = application.getAssetManager().loadTexture("textures/water/noise_" + waterConfig.getN() + "_3.jpg");
+        noiseTexture4 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_3.jpg");
         noiseTexture4.init(application);
         initUniformData();
         super.init(application);

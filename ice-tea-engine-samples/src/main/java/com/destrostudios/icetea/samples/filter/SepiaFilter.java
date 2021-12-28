@@ -17,7 +17,7 @@ public class SepiaFilter extends Filter {
     @Override
     public void init(Application application) {
         super.init(application);
-        fragmentShader = new Shader("shaders/filters/sepia.frag");
+        fragmentShader = new Shader("com/destrostudios/icetea/samples/shaders/filters/sepia.frag");
     }
 
     @Override
