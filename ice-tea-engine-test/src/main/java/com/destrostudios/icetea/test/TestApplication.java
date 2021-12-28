@@ -288,7 +288,7 @@ public class TestApplication extends Application {
         animationControl2.play(animatedObject2AnimationIndex);
         sceneNode.add(animatedObject2);
 
-        Node animatedObject3 = (Node) assetManager.loadModel("models/fallacia35.gltf");
+        Spatial animatedObject3 = assetManager.loadModel("models/fallacia35.gltf");
         animatedObject3.move(new Vector3f(3, 0, 0));
         animatedObject3.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0)));
         animatedObject3.scale(new Vector3f(0.0023f, 0.0023f, 0.0023f));
