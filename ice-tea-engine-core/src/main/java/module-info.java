@@ -1,15 +1,10 @@
 module com.destrostudios.icetea.core {
     requires transitive org.lwjgl;
     requires transitive org.lwjgl.assimp;
-    requires transitive org.lwjgl.assimp.natives;
     requires transitive org.lwjgl.glfw;
-    requires transitive org.lwjgl.glfw.natives;
     requires transitive org.lwjgl.openal;
-    requires transitive org.lwjgl.openal.natives;
     requires transitive org.lwjgl.shaderc;
-    requires transitive org.lwjgl.shaderc.natives;
     requires transitive org.lwjgl.stb;
-    requires transitive org.lwjgl.stb.natives;
     requires transitive org.lwjgl.vulkan;
     requires transitive org.joml;
     requires obj;

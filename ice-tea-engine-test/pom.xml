@@ -5,7 +5,6 @@
         <groupId>com.destrostudios.icetea</groupId>
         <artifactId>ice-tea-engine</artifactId>
         <version>0.0.1</version>
-        <relativePath>../</relativePath>
     </parent>
     <artifactId>ice-tea-engine-test</artifactId>
     <packaging>jar</packaging>

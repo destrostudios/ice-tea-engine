@@ -53,7 +53,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
             // Color attachment (Multisampled)
 
-            VkAttachmentDescription2KHR multisampledColorAttachment = attachments.get(0);
+            VkAttachmentDescription2 multisampledColorAttachment = attachments.get(0);
             multisampledColorAttachment.format(colorFormat);
             multisampledColorAttachment.samples(application.getMsaaSamples());
             multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -63,13 +63,13 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             multisampledColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
             multisampledColorAttachment.finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentReference2KHR multisampledColorAttachmentRef = attachmentRefs.get(0);
+            VkAttachmentReference2 multisampledColorAttachmentRef = attachmentRefs.get(0);
             multisampledColorAttachmentRef.attachment(0);
             multisampledColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             // Depth-Stencil attachment (Multisampled)
 
-            VkAttachmentDescription2KHR multisampledDepthAttachment = attachments.get(1);
+            VkAttachmentDescription2 multisampledDepthAttachment = attachments.get(1);
             multisampledDepthAttachment.format(depthFormat);
             multisampledDepthAttachment.samples(application.getMsaaSamples());
             multisampledDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -79,13 +79,13 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             multisampledDepthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
             multisampledDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentReference2KHR multisampledDepthAttachmentRef = attachmentRefs.get(1);
+            VkAttachmentReference2 multisampledDepthAttachmentRef = attachmentRefs.get(1);
             multisampledDepthAttachmentRef.attachment(1);
             multisampledDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             // Color attachment (Resolved)
 
-            VkAttachmentDescription2KHR resolvedColorAttachment = attachments.get(2);
+            VkAttachmentDescription2 resolvedColorAttachment = attachments.get(2);
             resolvedColorAttachment.format(colorFormat);
             resolvedColorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
             resolvedColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
@@ -95,13 +95,13 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             resolvedColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
             resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentReference2KHR resolvedColorAttachmentRef = attachmentRefs.get(2);
+            VkAttachmentReference2 resolvedColorAttachmentRef = attachmentRefs.get(2);
             resolvedColorAttachmentRef.attachment(2);
             resolvedColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             // Depth-Stencil attachment (Resolved)
 
-            VkAttachmentDescription2KHR resolvedDepthAttachment = attachments.get(3);
+            VkAttachmentDescription2 resolvedDepthAttachment = attachments.get(3);
             resolvedDepthAttachment.format(depthFormat);
             resolvedDepthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
             resolvedDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
@@ -111,7 +111,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             resolvedDepthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
             resolvedDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentReference2KHR resolvedDepthAttachmentRef = attachmentRefs.get(3);
+            VkAttachmentReference2 resolvedDepthAttachmentRef = attachmentRefs.get(3);
             resolvedDepthAttachmentRef.attachment(3);
             resolvedDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
