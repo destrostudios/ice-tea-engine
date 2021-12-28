@@ -431,6 +431,13 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                 // TODO: Will be done via the internal asset manager cache
                 Texture texture = texturesMap.computeIfAbsent(textureFilePath, tfp -> assetManager.loadTexture(tfp));
                 material.setTexture("diffuseMap", texture);
+            } else {
+                // TODO: For now, only color OR texture is supported
+                Object baseColorFactorValue = materialModel.getValues().get("baseColorFactor");
+                if (baseColorFactorValue != null) {
+                    float[] baseColorFactor = (float[]) baseColorFactorValue;
+                    material.getParameters().setVector4f("color", new Vector4f(baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]));
+                }
             }
             return material;
         });
