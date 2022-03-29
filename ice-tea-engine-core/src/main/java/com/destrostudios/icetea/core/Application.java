@@ -16,6 +16,7 @@ import com.destrostudios.icetea.core.system.AppSystem;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
+import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -39,6 +40,7 @@ import static org.lwjgl.vulkan.KHRDepthStencilResolve.VK_KHR_DEPTH_STENCIL_RESOL
 import static org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRMaintenance2.VK_KHR_MAINTENANCE2_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRMultiview.VK_KHR_MULTIVIEW_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_MAILBOX_KHR;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
@@ -72,6 +74,9 @@ public abstract class Application {
 
     @Getter
     private VkInstance instance;
+    @Getter
+    @Setter
+    private int preferredPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
     @Getter
     private int width = 1280;
     @Getter

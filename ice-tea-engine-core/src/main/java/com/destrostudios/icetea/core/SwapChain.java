@@ -101,7 +101,7 @@ public class SwapChain {
 
             swapchainCreateInfo.preTransform(surfaceCapabilities.currentTransform());
             swapchainCreateInfo.compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
-            int presentMode = chooseSwapPresentMode(physicalDeviceInformation.getSurfacePresentModes());
+            int presentMode = chooseSwapPresentMode(physicalDeviceInformation.getSurfacePresentModes(), application.getPreferredPresentMode());
             swapchainCreateInfo.presentMode(presentMode);
             swapchainCreateInfo.clipped(true);
             swapchainCreateInfo.oldSwapchain(VK_NULL_HANDLE);
@@ -150,10 +150,11 @@ public class SwapChain {
                 .orElse(availableFormats.get(0));
     }
 
-    private int chooseSwapPresentMode(IntBuffer availablePresentModes) {
-        for (int i = 0;i < availablePresentModes.capacity();i++) {
-            if (availablePresentModes.get(i) == VK_PRESENT_MODE_MAILBOX_KHR) {
-                return availablePresentModes.get(i);
+    private int chooseSwapPresentMode(IntBuffer availablePresentModes, int preferredPresentMode) {
+        for (int i = 0; i < availablePresentModes.capacity(); i++) {
+            int presentMode = availablePresentModes.get(i);
+            if (presentMode == preferredPresentMode) {
+                return presentMode;
             }
         }
         return VK_PRESENT_MODE_FIFO_KHR;
