@@ -10,11 +10,15 @@ void main() {
     #ifdef DIFFUSEMAP
         outColor = texture(diffuseMap, vertexTexCoord);
     #else
-        outColor = vec4(1);
+        #ifdef PARAMS_COLOR
+            outColor = params.color;
+        #else
+            outColor = vec4(1);
+        #endif
     #endif
 
-    #ifdef PARAMS_COLOR
-        outColor = mix(outColor, params.color, 0.33);
+    #ifdef PARAMS_MIXCOLOR
+        outColor = mix(outColor, params.mixColor, 0.33);
     #endif
 
     #ifdef LIGHT
