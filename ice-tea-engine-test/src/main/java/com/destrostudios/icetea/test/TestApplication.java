@@ -117,11 +117,14 @@ public class TestApplication extends Application {
         BitmapFont bitmapFont = assetManager.loadBitmapFont("com/destrostudios/icetea/samples/fonts/Verdana_18.fnt");
 
         BitmapText bitmapTextStatic = new BitmapText(bitmapFont, "Hello World.");
-        bitmapTextStatic.move(new Vector3f(375, 50, 1));
-        guiNode.add(bitmapTextStatic);
+        bitmapTextStatic.move(new Vector3f(-0.5f, 0.1f, 3));
+        bitmapTextStatic.scale(new Vector3f(0.005f, -0.005f, 0.005f));
+        bitmapTextStatic.setRenderBucket(RenderBucketType.TRANSPARENT);
+        bitmapTextStatic.getMaterial().setCullMode(VK_CULL_MODE_NONE);
+        sceneNode.add(bitmapTextStatic);
 
         bitmapTextDynamic = new BitmapText(bitmapFont);
-        bitmapTextDynamic.move(new Vector3f(375, 75, 1));
+        bitmapTextDynamic.move(new Vector3f(325, 75, 1));
         guiNode.add(bitmapTextDynamic);
 
         // Water
@@ -294,7 +297,7 @@ public class TestApplication extends Application {
         animatedObject3.scale(new Vector3f(0.0023f, 0.0023f, 0.0023f));
         animatedObject3.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl3 = (AnimationControl) animatedObject3.getControls().iterator().next();
-        animationControl3.play(0);
+        animationControl3.play("Armature|mixamo.com|Layer0");
         sceneNode.add(animatedObject3);
 
         // Sky
@@ -402,7 +405,7 @@ public class TestApplication extends Application {
                     break;
                 case GLFW_KEY_5:
                     if (keyEvent.getAction() == GLFW_PRESS) {
-                        animatedObject2AnimationIndex = ((animatedObject2AnimationIndex + 1) % animationControl2.getAnimations().length);
+                        animatedObject2AnimationIndex = ((animatedObject2AnimationIndex + 1) % animationControl2.getAnimations().size());
                         animationControl2.play(animatedObject2AnimationIndex);
                     }
                     break;

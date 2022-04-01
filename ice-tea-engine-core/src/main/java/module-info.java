@@ -9,6 +9,8 @@ module com.destrostudios.icetea.core {
     requires transitive org.joml;
     requires obj;
     requires jgltf.model;
+    requires jgltf.impl.v1;
+    requires jgltf.impl.v2;
     requires static lombok;
 
     exports com.destrostudios.icetea.core;

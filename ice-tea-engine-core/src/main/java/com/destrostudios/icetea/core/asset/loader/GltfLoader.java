@@ -20,13 +20,12 @@ import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.LowEndianUtil;
 import de.javagl.jgltf.model.*;
 import de.javagl.jgltf.model.io.GltfModelReader;
+import de.javagl.jgltf.model.v1.GltfModelV1;
+import de.javagl.jgltf.model.v2.GltfModelV2;
 import org.joml.*;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
 
@@ -77,28 +76,43 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             }
             rootNode.add(sceneNode);
         }
-        CombinedAnimation[] animations = loadAnimations(gltfModel.getAnimationModels());
+        ArrayList<CombinedAnimation> animations = loadAnimations(gltfModel.getAnimationModels());
         rootNode.addControl(new AnimationControl(animations));
         return rootNode;
     }
 
-    private CombinedAnimation[] loadAnimations(List<AnimationModel> animationModels) {
-        CombinedAnimation[] animations = new CombinedAnimation[animationModels.size()];
+    private ArrayList<CombinedAnimation> loadAnimations(List<AnimationModel> animationModels) {
+        ArrayList<CombinedAnimation> animations = new ArrayList<>(animationModels.size());
         int animationIndex = 0;
         for (AnimationModel animationModel : animationModels) {
-            animations[animationIndex++] = loadCombinedAnimation(animationModel);
+            String name = getAnimationName(gltfModel, animationIndex);
+            animations.add(loadCombinedAnimation(animationModel, name));
+            animationIndex++;
         }
         return animations;
     }
 
-    private CombinedAnimation loadCombinedAnimation(AnimationModel animationModel) {
+    // TODO: Workaround until new de.javagl.jgltf-model version is released that properly fills animationModel.getName()
+    private String getAnimationName(GltfModel gltfModel, int animationIndex) {
+        if (gltfModel instanceof GltfModelV2) {
+            GltfModelV2 gltfModelV2 = (GltfModelV2) gltfModel;
+            return gltfModelV2.getGltf().getAnimations().get(animationIndex).getName();
+        } else {
+            GltfModelV1 gltfModelV1 = (GltfModelV1) gltfModel;
+            return gltfModelV1.getGltf().getAnimations().get(animationIndex).getName();
+        }
+    }
+
+    private CombinedAnimation loadCombinedAnimation(AnimationModel animationModel, String name) {
         List<AnimationModel.Channel> channels = animationModel.getChannels();
         Animation[] animations = new Animation[channels.size()];
         int animationIndex = 0;
         for (AnimationModel.Channel channel : channels) {
             animations[animationIndex++] = loadAnimation(channel);
         }
-        return new CombinedAnimation(animations);
+        CombinedAnimation combinedAnimation = new CombinedAnimation(animations);
+        combinedAnimation.setName(name);
+        return combinedAnimation;
     }
 
     private SampledAnimation<?> loadAnimation(AnimationModel.Channel channel) {

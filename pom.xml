@@ -13,7 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.ice-tea-engine>0.0.1</version.ice-tea-engine>
-        <version.jgltf>2.0.0</version.jgltf>
+        <version.jgltf>2.0.1</version.jgltf>
         <version.joml>1.9.20</version.joml>
         <version.lwjgl>3.3.0</version.lwjgl>
         <version.lombok>1.18.12</version.lombok>
