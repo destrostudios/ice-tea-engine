@@ -22,9 +22,7 @@ import de.javagl.jgltf.model.*;
 import de.javagl.jgltf.model.io.GltfModelReader;
 import org.joml.*;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -39,6 +37,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
         materialsMap = new HashMap<>();
         texturesMap = new HashMap<>();
         tmpMatrix4f = new float[16];
+        buffers = new HashMap<>();
     }
     private GltfModel gltfModel;
     private String keyDirectory;
@@ -47,6 +46,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
     private HashMap<AnimationModel.Sampler, AnimationSamplerData<?>> samplersDataMap;
     private HashMap<MaterialModel, Material> materialsMap;
     private HashMap<String, Texture> texturesMap;
+    private HashMap<BufferModel, byte[]> buffers;
     private float[] tmpMatrix4f;
 
     @Override
@@ -313,10 +313,15 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             return values;
         }
         BufferViewModel bufferViewModel = accessorModel.getBufferViewModel();
-        InputStream inputStream = assetManager.load(keyDirectory + bufferViewModel.getBufferModel().getUri());
+        byte[] buffer = buffers.get(bufferViewModel.getBufferModel());
         try {
-            DataInputStream dataInputStream = new DataInputStream(inputStream);
-            dataInputStream.skip(bufferViewModel.getByteOffset() + accessorModel.getByteOffset());
+            if (buffer == null) {
+                InputStream inputStream = assetManager.load(keyDirectory + bufferViewModel.getBufferModel().getUri());
+                buffer = inputStream.readAllBytes();
+                buffers.put(bufferViewModel.getBufferModel(), buffer);
+            }
+            ByteArrayInputStream bufferInputStream = new ByteArrayInputStream(buffer);
+            bufferInputStream.skip(bufferViewModel.getByteOffset() + accessorModel.getByteOffset());
             int readBytes;
             for (int i = 0; i < accessorModel.getCount(); i++) {
                 // TODO: Do all this in a generic way
@@ -324,10 +329,10 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                     case GltfConstants.GL_UNSIGNED_BYTE:
                         switch (accessorModel.getElementType()) {
                             case VEC4: {
-                                int x = dataInputStream.read();
-                                int y = dataInputStream.read();
-                                int z = dataInputStream.read();
-                                int w = dataInputStream.read();
+                                int x = bufferInputStream.read();
+                                int y = bufferInputStream.read();
+                                int z = bufferInputStream.read();
+                                int w = bufferInputStream.read();
                                 values.add(new int[]{ x, y, z, w });
                                 readBytes = 4;
                                 break;
@@ -339,31 +344,31 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                     case GltfConstants.GL_UNSIGNED_SHORT:
                         switch (accessorModel.getElementType()) {
                             case SCALAR: {
-                                int value = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                int value = LowEndianUtil.readUnsignedShort(bufferInputStream);
                                 values.add(value);
                                 readBytes = 2;
                                 break;
                             }
                             case VEC2: {
-                                int x = LowEndianUtil.readUnsignedShort(dataInputStream);
-                                int y = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                int x = LowEndianUtil.readUnsignedShort(bufferInputStream);
+                                int y = LowEndianUtil.readUnsignedShort(bufferInputStream);
                                 values.add(new int[]{ x, y });
                                 readBytes = 4;
                                 break;
                             }
                             case VEC3: {
-                                int x = LowEndianUtil.readUnsignedShort(dataInputStream);
-                                int y = LowEndianUtil.readUnsignedShort(dataInputStream);
-                                int z = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                int x = LowEndianUtil.readUnsignedShort(bufferInputStream);
+                                int y = LowEndianUtil.readUnsignedShort(bufferInputStream);
+                                int z = LowEndianUtil.readUnsignedShort(bufferInputStream);
                                 values.add(new int[]{ x, y, z });
                                 readBytes = 6;
                                 break;
                             }
                             case VEC4: {
-                                int x = LowEndianUtil.readUnsignedShort(dataInputStream);
-                                int y = LowEndianUtil.readUnsignedShort(dataInputStream);
-                                int z = LowEndianUtil.readUnsignedShort(dataInputStream);
-                                int w = LowEndianUtil.readUnsignedShort(dataInputStream);
+                                int x = LowEndianUtil.readUnsignedShort(bufferInputStream);
+                                int y = LowEndianUtil.readUnsignedShort(bufferInputStream);
+                                int z = LowEndianUtil.readUnsignedShort(bufferInputStream);
+                                int w = LowEndianUtil.readUnsignedShort(bufferInputStream);
                                 values.add(new int[]{ x, y, z, w });
                                 readBytes = 8;
                                 break;
@@ -375,31 +380,31 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                     case GltfConstants.GL_UNSIGNED_INT:
                         switch (accessorModel.getElementType()) {
                             case SCALAR: {
-                                int value = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int value = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(value);
                                 readBytes = 2;
                                 break;
                             }
                             case VEC2: {
-                                int x = LowEndianUtil.readUnsignedInt(dataInputStream);
-                                int y = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int x = LowEndianUtil.readUnsignedInt(bufferInputStream);
+                                int y = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(new int[]{ x, y });
                                 readBytes = 4;
                                 break;
                             }
                             case VEC3: {
-                                int x = LowEndianUtil.readUnsignedInt(dataInputStream);
-                                int y = LowEndianUtil.readUnsignedInt(dataInputStream);
-                                int z = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int x = LowEndianUtil.readUnsignedInt(bufferInputStream);
+                                int y = LowEndianUtil.readUnsignedInt(bufferInputStream);
+                                int z = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(new int[]{ x, y, z });
                                 readBytes = 6;
                                 break;
                             }
                             case VEC4: {
-                                int x = LowEndianUtil.readUnsignedInt(dataInputStream);
-                                int y = LowEndianUtil.readUnsignedInt(dataInputStream);
-                                int z = LowEndianUtil.readUnsignedInt(dataInputStream);
-                                int w = LowEndianUtil.readUnsignedInt(dataInputStream);
+                                int x = LowEndianUtil.readUnsignedInt(bufferInputStream);
+                                int y = LowEndianUtil.readUnsignedInt(bufferInputStream);
+                                int z = LowEndianUtil.readUnsignedInt(bufferInputStream);
+                                int w = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(new int[]{ x, y, z, w });
                                 readBytes = 8;
                                 break;
@@ -411,38 +416,38 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                     case GltfConstants.GL_FLOAT:
                         switch (accessorModel.getElementType()) {
                             case SCALAR: {
-                                float value = LowEndianUtil.readFloat(dataInputStream);
+                                float value = LowEndianUtil.readFloat(bufferInputStream);
                                 values.add(value);
                                 readBytes = 4;
                                 break;
                             }
                             case VEC2: {
-                                float x = LowEndianUtil.readFloat(dataInputStream);
-                                float y = LowEndianUtil.readFloat(dataInputStream);
+                                float x = LowEndianUtil.readFloat(bufferInputStream);
+                                float y = LowEndianUtil.readFloat(bufferInputStream);
                                 values.add(new float[] { x, y });
                                 readBytes = 8;
                                 break;
                             }
                             case VEC3: {
-                                float x = LowEndianUtil.readFloat(dataInputStream);
-                                float y = LowEndianUtil.readFloat(dataInputStream);
-                                float z = LowEndianUtil.readFloat(dataInputStream);
+                                float x = LowEndianUtil.readFloat(bufferInputStream);
+                                float y = LowEndianUtil.readFloat(bufferInputStream);
+                                float z = LowEndianUtil.readFloat(bufferInputStream);
                                 values.add(new float[] { x, y, z });
                                 readBytes = 12;
                                 break;
                             }
                             case VEC4: {
-                                float x = LowEndianUtil.readFloat(dataInputStream);
-                                float y = LowEndianUtil.readFloat(dataInputStream);
-                                float z = LowEndianUtil.readFloat(dataInputStream);
-                                float w = LowEndianUtil.readFloat(dataInputStream);
+                                float x = LowEndianUtil.readFloat(bufferInputStream);
+                                float y = LowEndianUtil.readFloat(bufferInputStream);
+                                float z = LowEndianUtil.readFloat(bufferInputStream);
+                                float w = LowEndianUtil.readFloat(bufferInputStream);
                                 values.add(new float[] { x, y, z, w });
                                 readBytes = 16;
                                 break;
                             }
                             case MAT4: {
                                 for (int r = 0; r < tmpMatrix4f.length; r++) {
-                                    tmpMatrix4f[r] = LowEndianUtil.readFloat(dataInputStream);
+                                    tmpMatrix4f[r] = LowEndianUtil.readFloat(bufferInputStream);
                                 }
                                 values.add(loadMatrix(tmpMatrix4f));
                                 readBytes = 64;
@@ -457,10 +462,10 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                 }
                 Integer byteStride = bufferViewModel.getByteStride();
                 if (byteStride != null) {
-                    dataInputStream.skipBytes(byteStride - readBytes);
+                    bufferInputStream.skip(byteStride - readBytes);
                 }
             }
-            dataInputStream.close();
+            bufferInputStream.close();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
