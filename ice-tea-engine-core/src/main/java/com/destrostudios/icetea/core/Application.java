@@ -20,6 +20,7 @@ import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -403,6 +404,20 @@ public abstract class Application {
         float w = MathUtil.mulW(dest, viewProjectionMatrix);
         MathUtil.mulPosition(dest, viewProjectionMatrix);
         dest.mul(1 / w);
+        return dest;
+    }
+
+    public Vector3f getScreenCoordinates(Vector3f worldPosition) {
+        return getScreenCoordinates(worldPosition, new Vector3f());
+    }
+
+    public Vector3f getScreenCoordinates(Vector3f worldPosition, Vector3f dest) {
+        // TODO: Introduce TempVars
+        Vector4f tmp = new Vector4f(worldPosition, 1);
+        tmp.mul(sceneCamera.getProjectionViewMatrix());
+        dest.x = (((tmp.x() / tmp.w()) + 1) / 2) * getWidth();
+        dest.y = (((tmp.y() / tmp.w()) + 1) / 2) * getHeight();
+        dest.z = (((tmp.z() / tmp.w()) + 1) / 2);
         return dest;
     }
 
