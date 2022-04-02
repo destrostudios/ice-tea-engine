@@ -144,6 +144,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     @Override
     public VkClearValue.Buffer getClearValues(MemoryStack stack) {
         VkClearValue.Buffer clearValues = VkClearValue.callocStack(1, stack);
+        // TODO: Check if this is even needed for all fullscreen quad render jobs
         clearValues.get(0).color().float32(stack.floats(0, 0, 0, 1));
         return clearValues;
     }

@@ -7,6 +7,7 @@ import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import lombok.Getter;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -21,12 +22,18 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
+    public SceneRenderJob() {
+        clearColor = new Vector4f(0, 0, 0, 1);
+    }
     @Getter
     private Texture multisampledColorTexture;
     @Getter
     private Texture multisampledDepthTexture;
     @Getter
     private Texture resolvedDepthTexture;
+    // TODO: Support a setting mechanism that will recreate the command buffer, for now it can be changed in-place before the app starts
+    @Getter
+    private Vector4f clearColor;
 
     @Override
     public void init(Application application) {
@@ -288,7 +295,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     @Override
     public VkClearValue.Buffer getClearValues(MemoryStack stack) {
         VkClearValue.Buffer clearValues = VkClearValue.callocStack(2, stack);
-        clearValues.get(0).color().float32(stack.floats(0, 0, 0, 1));
+        clearValues.get(0).color().float32(stack.floats(clearColor.x(), clearColor.y(), clearColor.z(), clearColor.w()));
         clearValues.get(1).depthStencil().set(1, 0);
         return clearValues;
     }
