@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.core.mesh;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.*;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.UniformValue;
@@ -21,10 +23,22 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 
-public class Mesh {
+public class Mesh implements ContextCloneable {
 
     public Mesh() {
         bounds = new BoundingBox();
+    }
+
+    public Mesh(Mesh mesh, CloneContext context) {
+        topology = mesh.topology;
+        vertices = new VertexData[mesh.vertices.length];
+        for (int i = 0; i < vertices.length; i++) {
+            vertices[i] = mesh.vertices[i].clone(context);
+        }
+        indices = new int[mesh.indices.length];
+        System.arraycopy(mesh.indices, 0, indices, 0, indices.length);
+        bounds = mesh.bounds.clone(context);
+        // TODO: CollisionTree cloning, for now it would be recalculated
     }
     private Application application;
     @Getter
@@ -296,5 +310,10 @@ public class Mesh {
     public void cleanup() {
         cleanupVertexBuffer();
         cleanupIndexBuffer();
+    }
+
+    @Override
+    public Mesh clone(CloneContext context) {
+        return new Mesh(this, context);
     }
 }

@@ -1,5 +1,7 @@
 package com.destrostudios.icetea.core.data;
 
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.data.values.*;
 import lombok.Getter;
 import org.joml.Matrix4f;
@@ -12,13 +14,23 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public abstract class FieldsData {
+public abstract class FieldsData implements ContextCloneable {
 
-    public FieldsData() {
-        fields = new LinkedHashMap<>();
+    public FieldsData() { }
+
+    public FieldsData(FieldsData fieldsData, CloneContext context) {
+        for (Map.Entry<String, UniformValue<?>> entry : fieldsData.fields.entrySet()) {
+            fields.put(entry.getKey(), entry.getValue().clone(context));
+        }
+        size = fieldsData.size;
+        structureModified = true;
+        if (fieldsData.contentModified != null) {
+            contentModified = new ArrayList<>();
+            contentModified.addAll(fieldsData.contentModified);
+        }
     }
     @Getter
-    protected Map<String, UniformValue<?>> fields;
+    protected Map<String, UniformValue<?>> fields = new LinkedHashMap<>();
     @Getter
     protected int size;
     protected boolean structureModified;
@@ -123,4 +135,7 @@ public abstract class FieldsData {
         UniformValue<T> uniformValue = (UniformValue<T>) fields.get(name);
         return ((uniformValue != null) ? uniformValue.getValue() : null);
     }
+
+    @Override
+    public abstract FieldsData clone(CloneContext context);
 }

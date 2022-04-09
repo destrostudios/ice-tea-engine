@@ -11,10 +11,9 @@ import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.model.Joint;
 import com.destrostudios.icetea.core.model.Skeleton;
 import com.destrostudios.icetea.core.model.SkeletonGeometryControl;
-import com.destrostudios.icetea.core.model.SkeletonNodeControl;
+import com.destrostudios.icetea.core.model.SkeletonsNodeControl;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.scene.Node;
-import com.destrostudios.icetea.core.scene.Spatial;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.LowEndianUtil;
@@ -27,30 +26,30 @@ import org.joml.*;
 import java.io.*;
 import java.util.*;
 
-public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
+public class GltfLoader extends AssetLoader<Node> {
 
     public GltfLoader() {
         nodesMap = new HashMap<>();
+        skeletonMap = new HashMap<>();
         jointsMap = new HashMap<>();
         samplersDataMap = new HashMap<>();
         materialsMap = new HashMap<>();
-        texturesMap = new HashMap<>();
         tmpMatrix4f = new float[16];
         buffers = new HashMap<>();
     }
     private GltfModel gltfModel;
     private String keyDirectory;
     private HashMap<NodeModel, Node> nodesMap;
+    private HashMap<SkinModel, Skeleton> skeletonMap;
     private HashMap<NodeModel, Joint> jointsMap;
     private HashMap<AnimationModel.Sampler, AnimationSamplerData<?>> samplersDataMap;
     private HashMap<MaterialModel, Material> materialsMap;
-    private HashMap<String, Texture> texturesMap;
     private HashMap<BufferModel, byte[]> buffers;
     private float[] tmpMatrix4f;
 
     @Override
-    public void setContext(AssetManager assetManager, String key, GltfLoaderSettings settings) {
-        super.setContext(assetManager, key, settings);
+    public void setContext(AssetManager assetManager, String key) {
+        super.setContext(assetManager, key);
         // TODO: Share code between different loaders that need the directory for references
         int slashIndex = key.lastIndexOf("/");
         if (slashIndex != -1) {
@@ -76,8 +75,14 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
             }
             rootNode.add(sceneNode);
         }
+        Collection<Skeleton> skeletons = skeletonMap.values();
+        if (skeletons.size() > 0) {
+            rootNode.addControl(new SkeletonsNodeControl(skeletons));
+        }
         ArrayList<CombinedAnimation> animations = loadAnimations(gltfModel.getAnimationModels());
-        rootNode.addControl(new AnimationControl(animations));
+        if (animations.size() > 0) {
+            rootNode.addControl(new AnimationControl(animations));
+        }
         return rootNode;
     }
 
@@ -158,7 +163,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                 }
                 keyframeIndex++;
             }
-            return new AnimationSamplerData(keyframeTimes, keyframeValues);
+            return new AnimationSamplerData<>(keyframeTimes, keyframeValues);
         });
     }
 
@@ -168,14 +173,13 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
         SkinModel skinModel = nodeModel.getSkinModel();
         if (skinModel != null) {
             skeleton = loadSkeleton(skinModel);
-            node.addControl(new SkeletonNodeControl(skeleton));
         }
         for (MeshModel meshModel : nodeModel.getMeshModels()) {
             Node meshNode = loadNode(meshModel, skeleton);
             node.add(meshNode);
         }
         for (NodeModel childNodeModel : nodeModel.getChildren()) {
-            Spatial child = loadNode(childNodeModel);
+            Node child = loadNode(childNodeModel);
             node.add(child);
         }
         float[] matrix = nodeModel.getMatrix();
@@ -258,10 +262,6 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
         mesh.setVertices(vertices);
         mesh.updateBounds();
 
-        if (settings.isGenerateNormals()) {
-            mesh.generateNormals();
-        }
-
         geometry.setMesh(mesh);
 
         Material material = loadMaterial(meshPrimitiveModel.getMaterialModel());
@@ -271,16 +271,18 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
     }
 
     private Skeleton loadSkeleton(SkinModel skinModel) {
-        Matrix4f[] inverseBindMatrices = loadMatrices(skinModel.getInverseBindMatrices());
-        List<NodeModel> jointNodeModels = skinModel.getJoints();
-        Joint[] joints = new Joint[jointNodeModels.size()];
-        int jointIndex = 0;
-        for (NodeModel nodeModel : jointNodeModels) {
-            Joint joint = getOrCreateJoint(nodeModel);
-            joint.setInverseBindMatrix(inverseBindMatrices[jointIndex]);
-            joints[jointIndex++] = joint;
-        }
-        return new Skeleton(joints);
+        return skeletonMap.computeIfAbsent(skinModel, sm -> {
+            Matrix4f[] inverseBindMatrices = loadMatrices(sm.getInverseBindMatrices());
+            List<NodeModel> jointNodeModels = sm.getJoints();
+            Joint[] joints = new Joint[jointNodeModels.size()];
+            int jointIndex = 0;
+            for (NodeModel nodeModel : jointNodeModels) {
+                Joint joint = getOrCreateJoint(nodeModel);
+                joint.setInverseBindMatrix(inverseBindMatrices[jointIndex]);
+                joints[jointIndex++] = joint;
+            }
+            return new Skeleton(joints);
+        });
     }
 
     private Matrix4f[] loadMatrices(AccessorModel accessorModel) {
@@ -502,8 +504,7 @@ public class GltfLoader extends AssetLoader<Node, GltfLoaderSettings> {
                 int baseColorTextureIndex = (int) baseColorTextureValue;
                 TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
                 String textureFilePath = keyDirectory + baseColorTextureModel.getImageModel().getUri();
-                // TODO: Will be done via the internal asset manager cache
-                Texture texture = texturesMap.computeIfAbsent(textureFilePath, tfp -> assetManager.loadTexture(tfp));
+                Texture texture = assetManager.loadTexture(textureFilePath);
                 material.setTexture("diffuseMap", texture);
             } else {
                 // TODO: For now, only color OR texture is supported

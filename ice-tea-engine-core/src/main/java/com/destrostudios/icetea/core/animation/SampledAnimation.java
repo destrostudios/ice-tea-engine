@@ -1,9 +1,16 @@
 package com.destrostudios.icetea.core.animation;
 
+import com.destrostudios.icetea.core.clone.CloneContext;
+
 public abstract class SampledAnimation<T> extends Animation {
 
     public SampledAnimation(AnimationSampler<T> sampler) {
         this.sampler = sampler;
+    }
+
+    public SampledAnimation(SampledAnimation<T> sampledAnimation) {
+        super(sampledAnimation);
+        this.sampler = sampledAnimation.sampler;
     }
     private AnimationSampler<T> sampler;
 
@@ -19,4 +26,7 @@ public abstract class SampledAnimation<T> extends Animation {
     }
 
     protected abstract void setValue(T value);
+
+    @Override
+    public abstract SampledAnimation<T> clone(CloneContext context);
 }

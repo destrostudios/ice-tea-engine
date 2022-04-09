@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
@@ -17,12 +18,18 @@ import java.util.function.Predicate;
 
 public class Node extends Spatial {
 
-    public Node() {
-        children = new LinkedList<>();
+    public Node() { }
+
+    public Node(Node node, CloneContext context) {
+        super(node, context);
+        for (Spatial child : node.children) {
+            // Set parent-child relationships afterwards to avoid circular cloning
+            add(context.cloneByReference(child));
+        }
     }
     @Getter
-    private List<Spatial> children;
-    private boolean modified;
+    private List<Spatial> children = new LinkedList<>();
+    private boolean childrenModified;
 
     @Override
     public boolean update(Application application, float tpf) {
@@ -32,9 +39,9 @@ public class Node extends Spatial {
         }
         updateWorldBoundsIfNecessary();
         updateShadowReceiveWorldBoundsIfNecessary();
-        if (modified) {
+        if (childrenModified) {
             commandBufferOutdated = true;
-            modified = false;
+            childrenModified = false;
         }
         return commandBufferOutdated;
     }
@@ -93,7 +100,7 @@ public class Node extends Spatial {
     public void add(Spatial spatial) {
         spatial.setParent(this);
         children.add(spatial);
-        modified = true;
+        childrenModified = true;
     }
 
     public void removeAll() {
@@ -101,13 +108,13 @@ public class Node extends Spatial {
             spatial.setParent(null);
         }
         children.clear();
-        modified = true;
+        childrenModified = true;
     }
 
     public void remove(Spatial spatial) {
         spatial.setParent(null);
         children.remove(spatial);
-        modified = true;
+        childrenModified = true;
     }
 
     public void forEachGeometry(Consumer<Geometry> geometryConsumer) {
@@ -120,5 +127,10 @@ public class Node extends Spatial {
                 geometryConsumer.accept(geometry);
             }
         }
+    }
+
+    @Override
+    public Node clone(CloneContext context) {
+        return new Node(this, context);
     }
 }

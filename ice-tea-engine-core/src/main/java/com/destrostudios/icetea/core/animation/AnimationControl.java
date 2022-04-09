@@ -1,14 +1,21 @@
 package com.destrostudios.icetea.core.animation;
 
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.scene.Control;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AnimationControl extends Control {
 
     public AnimationControl(List<? extends Animation> animations) {
         this.animations = animations;
+    }
+
+    public AnimationControl(AnimationControl animationControl, CloneContext context) {
+        super(animationControl);
+        animations = animationControl.animations.stream().map(animation -> animation.clone(context)).collect(Collectors.toList());
     }
     @Getter
     private List<? extends Animation> animations;
@@ -59,5 +66,10 @@ public class AnimationControl extends Control {
             playingAnimation.update(time);
             needsUpdate = false;
         }
+    }
+
+    @Override
+    public AnimationControl clone(CloneContext context) {
+        return new AnimationControl(this, context);
     }
 }

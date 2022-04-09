@@ -1,9 +1,16 @@
 package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 
-public class Control {
+public abstract class Control implements ContextCloneable {
 
+    protected Control() { }
+
+    protected Control(Control control) {
+        active = control.active;
+    }
     protected Application application;
     protected Spatial spatial;
     protected boolean active;
@@ -58,4 +65,7 @@ public class Control {
     public void cleanup() {
 
     }
+
+    @Override
+    public abstract Control clone(CloneContext context);
 }

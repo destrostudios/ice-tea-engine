@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.core.collision;
 
 import com.destrostudios.icetea.core.Transform;
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +11,7 @@ import org.joml.Vector3f;
 
 @AllArgsConstructor
 @Getter
-public class BoundingBox {
+public class BoundingBox implements ContextCloneable {
 
     public BoundingBox() {
         this(new Vector3f(), new Vector3f());
@@ -91,5 +93,10 @@ public class BoundingBox {
             }
         }
         return null;
+    }
+
+    @Override
+    public BoundingBox clone(CloneContext context) {
+        return new BoundingBox(this);
     }
 }

@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.data;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.data.values.UniformValue;
 import lombok.Setter;
 import org.lwjgl.system.MemoryStack;
@@ -12,6 +13,11 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 
 public abstract class BufferData extends FieldsData {
 
+    public BufferData() { }
+
+    public BufferData(BufferData bufferData, CloneContext context) {
+        super(bufferData, context);
+    }
     @Setter
     protected Application application;
 
@@ -63,4 +69,7 @@ public abstract class BufferData extends FieldsData {
     protected abstract void finishUpdatingBuffer(int bufferIndex);
 
     public abstract void cleanupBuffer();
+
+    @Override
+    public abstract BufferData clone(CloneContext context);
 }

@@ -1,11 +1,13 @@
 package com.destrostudios.icetea.core.data.values;
 
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.nio.ByteBuffer;
 
-public abstract class UniformValue<T> {
+public abstract class UniformValue<T> implements ContextCloneable {
 
     @Getter
     @Setter
@@ -23,4 +25,5 @@ public abstract class UniformValue<T> {
 
     public abstract int getFormat();
 
+    public abstract UniformValue<T> clone(CloneContext context);
 }

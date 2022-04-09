@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.*;
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.scene.Control;
@@ -166,5 +167,10 @@ public class WaterControl extends Control {
             refractionRenderJob.cleanup();
             refractionRenderJob = null;
         }
+    }
+
+    @Override
+    public WaterControl clone(CloneContext context) {
+        throw new UnsupportedOperationException();
     }
 }

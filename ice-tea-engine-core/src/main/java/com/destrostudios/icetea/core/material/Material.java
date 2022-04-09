@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.core.material;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.data.UniformData;
@@ -13,11 +15,26 @@ import java.util.function.Supplier;
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
 import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
 
-public class Material {
+public class Material implements ContextCloneable {
 
     public Material() {
         parameters = new UniformData();
-        textureSuppliers = new HashMap<>();
+    }
+
+    public Material(Material material, CloneContext context) {
+        vertexShader = material.vertexShader;
+        fragmentShader = material.fragmentShader;
+        tessellationPatchSize = material.tessellationPatchSize;
+        tessellationControlShader = material.tessellationControlShader;
+        tessellationEvaluationShader = material.tessellationEvaluationShader;
+        geometryShader = material.geometryShader;
+        parameters = material.parameters.clone(context);
+        textureSuppliers.putAll(material.getTextureSuppliers());
+        transparent = material.transparent;
+        cullMode = material.cullMode;
+        depthTest = material.depthTest;
+        depthWrite = material.depthWrite;
+        fillMode = material.fillMode;
     }
     private Application application;
     @Getter
@@ -41,7 +58,7 @@ public class Material {
     @Getter
     private UniformData parameters;
     @Getter
-    private HashMap<String, Supplier<Texture>> textureSuppliers;
+    private HashMap<String, Supplier<Texture>> textureSuppliers = new HashMap<>();
     private int usingGeometriesCount;
     @Setter
     @Getter
@@ -102,5 +119,10 @@ public class Material {
                 texture.cleanup();
             }
         }
+    }
+
+    @Override
+    public Material clone(CloneContext context) {
+        return new Material(this, context);
     }
 }

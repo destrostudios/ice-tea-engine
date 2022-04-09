@@ -2,10 +2,10 @@ package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.animation.AnimationControl;
-import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
 import com.destrostudios.icetea.core.asset.locator.FileLocator;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
@@ -259,7 +259,7 @@ public class TestApplication extends Application {
 
         // Duck
 
-        nodeDuck = (Node) assetManager.loadModel("models/duck/Duck.gltf");
+        nodeDuck = assetManager.loadModel("models/duck/Duck.gltf", CloneContext.reuseAll());
         nodeDuck.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
         nodeDuck.scale(new Vector3f(0.25f, 0.25f, 0.25f));
         nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("mixColor", new Vector4f(1, 0, 0, 1)));
@@ -272,31 +272,32 @@ public class TestApplication extends Application {
 
         // Animated objects
 
-        Spatial animatedObject1 = assetManager.loadModel("models/simple_skin/SimpleSkin.gltf", GltfLoaderSettings.builder().generateNormals(true).build());
+        Node animatedObject1 = assetManager.loadModel("models/simple_skin/SimpleSkin.gltf", CloneContext.reuseAll());
+        animatedObject1.forEachGeometry(geometry -> geometry.getMesh().generateNormals());
         animatedObject1.move(new Vector3f(-2.5f, 0.6f, 0));
         animatedObject1.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject1.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
-        AnimationControl animationControl1 = (AnimationControl) animatedObject1.getControls().iterator().next();
+        AnimationControl animationControl1 = animatedObject1.getFirstControl(AnimationControl.class);
         animationControl1.play(0);
         sceneNode.add(animatedObject1);
 
-        Node animatedObject2 = (Node) assetManager.loadModel("models/footman/scene.gltf");
+        Node animatedObject2 = assetManager.loadModel("models/footman/scene.gltf", CloneContext.reuseAll());
         animatedObject2.move(new Vector3f(2.5f, 0, 0));
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0)));
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 0, 0, 1)));
         animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject2.forEachGeometry(geometry -> geometry.getMaterial().setCullMode(VK_CULL_MODE_NONE));
         animatedObject2.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
-        AnimationControl animationControl2 = (AnimationControl) animatedObject2.getControls().iterator().next();
+        AnimationControl animationControl2 = animatedObject2.getFirstControl(AnimationControl.class);
         animationControl2.play(animatedObject2AnimationIndex);
         sceneNode.add(animatedObject2);
 
-        Spatial animatedObject3 = assetManager.loadModel("models/fallacia35.gltf");
+        Node animatedObject3 = assetManager.loadModel("models/fallacia35.gltf", CloneContext.reuseAll());
         animatedObject3.move(new Vector3f(3, 0, 0));
         animatedObject3.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0)));
         animatedObject3.scale(new Vector3f(0.0023f, 0.0023f, 0.0023f));
         animatedObject3.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
-        AnimationControl animationControl3 = (AnimationControl) animatedObject3.getControls().iterator().next();
+        AnimationControl animationControl3 = animatedObject3.getFirstControl(AnimationControl.class);
         animationControl3.play("Armature|mixamo.com|Layer0");
         sceneNode.add(animatedObject3);
 
@@ -436,6 +437,17 @@ public class TestApplication extends Application {
                         } else {
                             addSystem(cameraMouseRotateSystem);
                             addSystem(cameraKeyMoveSystem);
+                        }
+                    }
+                    break;
+                case GLFW_KEY_0:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        for (int i = 0; i < 10; i++) {
+                            Node clone = nodeDuckWrapper.clone(CloneContext.reuseAll());
+                            float deltaX = (float) ((Math.random() * 2) - 1);
+                            float deltaZ = (float) ((Math.random() * 2) - 1);
+                            clone.getLocalTransform().getTranslation().add(deltaX, 0, deltaZ);
+                            sceneNode.add(clone);
                         }
                     }
                     break;

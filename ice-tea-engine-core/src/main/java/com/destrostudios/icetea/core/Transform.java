@@ -1,16 +1,27 @@
 package com.destrostudios.icetea.core;
 
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import lombok.Getter;
 import org.joml.*;
 
 @Getter
-public class Transform {
+public class Transform implements ContextCloneable {
 
     public Transform() {
         translation = new Vector3f();
         rotation = new Quaternionf();
         scale = new Vector3f(1, 1, 1);
         matrix = new Matrix4f();
+    }
+
+    public Transform(Transform transform) {
+        translation = new Vector3f(transform.translation);
+        rotation = new Quaternionf(transform.rotation);
+        scale = new Vector3f(transform.scale);
+        matrix = new Matrix4f(transform.matrix);
+        modified = transform.modified;
+        matrixOutdated = transform.matrixOutdated;
     }
     @Getter
     private Vector3f translation;
@@ -28,8 +39,8 @@ public class Transform {
         this.rotation.set(transform.getRotation());
         this.scale.set(transform.getScale());
         this.matrix.set(transform.getMatrix());
-        modified = true;
-        matrixOutdated = false;
+        modified = transform.modified;
+        matrixOutdated = transform.matrixOutdated;
     }
 
     public void set(Matrix4fc matrix) {
@@ -99,5 +110,10 @@ public class Transform {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Transform clone(CloneContext context) {
+        return new Transform(this);
     }
 }

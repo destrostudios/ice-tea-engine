@@ -2,7 +2,6 @@ package com.destrostudios.icetea.core.asset.loader;
 
 import com.destrostudios.icetea.core.asset.AssetLoader;
 import com.destrostudios.icetea.core.texture.BufferedTexture;
-import com.destrostudios.icetea.core.texture.Texture;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 
@@ -15,10 +14,10 @@ import static org.lwjgl.stb.STBImage.STBI_rgb_alpha;
 import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
-public class TextureLoader extends AssetLoader<Texture, Void> {
+public class BufferedTextureLoader extends AssetLoader<BufferedTexture> {
 
     @Override
-    public Texture load(InputStream inputStream) throws IOException {
+    public BufferedTexture load(InputStream inputStream) throws IOException {
         try (MemoryStack stack = stackPush()) {
             byte[] imageData = inputStream.readAllBytes();
             ByteBuffer imageBuffer = BufferUtils.createByteBuffer(imageData.length);

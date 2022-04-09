@@ -8,8 +8,11 @@ public abstract class AnimationSampler<T> {
     private AnimationSamplerData<T> data;
 
     public T getValue(float time) {
-        float[] keyframeTimes = data.getKeyframeTimes();
         T[] keyframeValues = data.getKeyframeValues();
+        if (keyframeValues.length == 1) {
+            return keyframeValues[0];
+        }
+        float[] keyframeTimes = data.getKeyframeTimes();
         time %= keyframeTimes[keyframeTimes.length - 1];
         int keyframeIndex1 = -1;
         int keyframeIndex2 = -1;

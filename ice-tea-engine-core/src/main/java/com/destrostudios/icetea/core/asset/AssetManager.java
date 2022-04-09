@@ -1,21 +1,31 @@
 package com.destrostudios.icetea.core.asset;
 
 import com.destrostudios.icetea.core.asset.loader.*;
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.font.BitmapFont;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.scene.Spatial;
-import com.destrostudios.icetea.core.texture.Texture;
+import com.destrostudios.icetea.core.scene.Node;
+import com.destrostudios.icetea.core.texture.BufferedTexture;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 
-// TODO: Map extensions to loaders and cache assets (combinable with cache in ShaderManager)
+// TODO: Map extensions to loaders and maybe combine cache with the one in ShaderManager
 public class AssetManager {
 
     public AssetManager() {
         locators = new LinkedList<>();
+        cachedMeshes = new HashMap<>();
+        cachedModels = new HashMap<>();
+        cachedTextures = new HashMap<>();
+        cachedBitmapFonts = new HashMap<>();
     }
+    private HashMap<String, Mesh> cachedMeshes;
+    private HashMap<String, Node> cachedModels;
+    private HashMap<String, BufferedTexture> cachedTextures;
+    private HashMap<String, BitmapFont> cachedBitmapFonts;
     private LinkedList<AssetLocator> locators;
 
     public void addLocator(AssetLocator locator) {
@@ -27,27 +37,23 @@ public class AssetManager {
     }
 
     public Mesh loadMesh(String key) {
-        return load(key, new ObjLoader(), null);
+        return cachedMeshes.computeIfAbsent(key, k -> load(k, new ObjLoader()));
     }
 
-    public Spatial loadModel(String key) {
-        return loadModel(key, GltfLoaderSettings.builder().build());
+    public Node loadModel(String key, CloneContext cloneContext) {
+        return cachedModels.computeIfAbsent(key, k -> load(k, new GltfLoader())).clone(cloneContext);
     }
 
-    public Spatial loadModel(String key, GltfLoaderSettings settings) {
-        return load(key, new GltfLoader(), settings);
-    }
-
-    public Texture loadTexture(String key) {
-        return load(key, new TextureLoader(), null);
+    public BufferedTexture loadTexture(String key) {
+        return cachedTextures.computeIfAbsent(key, k -> load(k, new BufferedTextureLoader()));
     }
 
     public BitmapFont loadBitmapFont(String key) {
-        return load(key, new BitmapFontLoader(), null);
+        return cachedBitmapFonts.computeIfAbsent(key, k -> load(k, new BitmapFontLoader()));
     }
 
-    private <T, S> T load(String key, AssetLoader<T, S> assetLoader, S settings) {
-        assetLoader.setContext(this, key, settings);
+    private <T> T load(String key, AssetLoader<T> assetLoader) {
+        assetLoader.setContext(this, key);
         InputStream inputStream = load(key);
         try {
             return assetLoader.load(inputStream);

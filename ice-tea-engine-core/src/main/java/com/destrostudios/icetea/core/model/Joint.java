@@ -1,13 +1,15 @@
 package com.destrostudios.icetea.core.model;
 
 import com.destrostudios.icetea.core.Transform;
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-public class Joint {
+public class Joint implements ContextCloneable {
 
     public Joint(int childrenCount, Transform localResetTransform) {
         children = new Joint[childrenCount];
@@ -18,7 +20,19 @@ public class Joint {
         jointMatrix = new Matrix4f();
         resetPose();
     }
+
+    public Joint(Joint joint, CloneContext context) {
+        // Set parent-child relationships afterwards to avoid circular cloning
+        children = new Joint[joint.children.length];
+        inverseBindMatrix = new Matrix4f(joint.inverseBindMatrix);
+        localResetTransform = joint.localResetTransform.clone(context);
+        localPoseTransform = joint.localPoseTransform.clone(context);
+        worldPoseTransform = joint.worldPoseTransform.clone(context);
+        isWorldTransformOutdated = joint.isWorldTransformOutdated;
+        jointMatrix = new Matrix4f(joint.jointMatrix);
+    }
     private Joint parent;
+    @Getter
     private Joint[] children;
     @Setter
     private Matrix4f inverseBindMatrix;
@@ -80,5 +94,10 @@ public class Joint {
         for (Joint child : children) {
             child.setWorldTransformOutdated();
         }
+    }
+
+    @Override
+    public Joint clone(CloneContext context) {
+        return new Joint(this, context);
     }
 }

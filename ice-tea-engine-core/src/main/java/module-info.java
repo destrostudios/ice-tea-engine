@@ -20,6 +20,7 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.asset.locator;
     exports com.destrostudios.icetea.core.camera;
     exports com.destrostudios.icetea.core.camera.systems;
+    exports com.destrostudios.icetea.core.clone;
     exports com.destrostudios.icetea.core.collision;
     exports com.destrostudios.icetea.core.compute;
     exports com.destrostudios.icetea.core.data;

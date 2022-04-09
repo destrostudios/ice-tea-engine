@@ -1,13 +1,13 @@
 package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.material.Material;
-import com.destrostudios.icetea.core.material.descriptor.*;
+import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorWithLayout;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.mesh.VertexPositionModifier;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.render.RenderJob;
@@ -18,14 +18,18 @@ import org.joml.Vector3f;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class Geometry extends Spatial {
 
     public Geometry() {
         transformUniformData = new UniformData();
-        additionalMaterialDescriptors = new LinkedList<>();
-        renderContexts = new HashMap<>();
+    }
+
+    public Geometry(Geometry geometry, CloneContext context) {
+        super(geometry, context);
+        setMesh(context.isCloneMeshes() ? context.cloneByReference(geometry.mesh) : geometry.mesh);
+        setMaterial(context.isCloneMaterials() ? context.cloneByReference(geometry.material) : geometry.material);
+        transformUniformData = geometry.transformUniformData.clone(context);
     }
     @Getter
     protected Mesh mesh;
@@ -34,9 +38,7 @@ public class Geometry extends Spatial {
     @Getter
     private UniformData transformUniformData;
     @Getter
-    private LinkedList<MaterialDescriptorWithLayout> additionalMaterialDescriptors;
-    @Getter
-    private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts;
+    private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts = new HashMap<>();
 
     @Override
     public boolean update(Application application, float tpf) {
@@ -119,14 +121,6 @@ public class Geometry extends Spatial {
         material.increaseUsingGeometriesCount();
     }
 
-    public void addAdditionalMaterialDescriptor(MaterialDescriptorWithLayout descriptorWithLayout) {
-        additionalMaterialDescriptors.add(descriptorWithLayout);
-    }
-
-    public void removeAdditionalMaterialDescriptor(MaterialDescriptorWithLayout descriptorWithLayout) {
-        additionalMaterialDescriptors.remove(descriptorWithLayout);
-    }
-
     public GeometryRenderContext<?> getRenderContext(RenderJob<?> renderJob) {
         return renderContexts.get(renderJob);
     }
@@ -138,6 +132,10 @@ public class Geometry extends Spatial {
         material.getParameters().updateBufferIfNecessary(currentImage);
     }
 
+    public List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors() {
+        return getAdditionalMaterialDescriptors(this);
+    }
+
     @Override
     protected void collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults) {
         collide(collisionResults, () -> mesh.collideStatic(ray, worldTransform.getMatrix(), worldBoundsTMin, worldBoundsTMax, collisionResults));
@@ -146,11 +144,7 @@ public class Geometry extends Spatial {
     @Override
     public void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults) {
         collide(collisionResults, () -> {
-            List<VertexPositionModifier> vertexPositionModifiers = controls.stream()
-                    .filter(control -> control instanceof VertexPositionModifier)
-                    .map(control -> (VertexPositionModifier) control)
-                    .collect(Collectors.toList());
-            mesh.collideDynamic(ray, vertexPositionModifiers, worldTransform.getMatrix(), collisionResults);
+            mesh.collideDynamic(ray, getVertexPositionModifiers(), worldTransform.getMatrix(), collisionResults);
         });
     }
 
@@ -197,5 +191,10 @@ public class Geometry extends Spatial {
             renderContext.cleanup();
         }
         renderContexts.clear();
+    }
+
+    @Override
+    public Geometry clone(CloneContext context) {
+        return new Geometry(this, context);
     }
 }

@@ -2,11 +2,16 @@ package com.destrostudios.icetea.core.scene;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Transform;
+import com.destrostudios.icetea.core.clone.CloneContext;
+import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.CollisionResult_AABB_Ray;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.light.Light;
+import com.destrostudios.icetea.core.material.descriptor.AdditionalMaterialDescriptorProvider;
+import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorWithLayout;
+import com.destrostudios.icetea.core.mesh.VertexPositionModifier;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import lombok.Getter;
@@ -16,15 +21,29 @@ import org.joml.*;
 import java.util.*;
 import java.util.function.Predicate;
 
-public abstract class Spatial {
+public abstract class Spatial implements ContextCloneable {
 
     protected Spatial() {
-        localTransform  = new Transform();
+        localTransform = new Transform();
         worldTransform = new Transform();
         worldBounds = new BoundingBox();
-        shadowMode = ShadowMode.INHERIT;
         shadowReceiveWorldBounds = new BoundingBox();
-        controls = new HashSet<>();
+    }
+
+    protected Spatial(Spatial spatial, CloneContext context) {
+        // Set parent-child relationships afterwards to avoid circular cloning
+        localTransform = spatial.localTransform.clone(context);
+        worldTransform = spatial.worldTransform.clone(context);
+        worldBounds = spatial.worldBounds.clone(context);
+        isWorldTransformOutdated = spatial.isWorldTransformOutdated;
+        isWorldBoundsOutdated = spatial.isWorldBoundsOutdated;
+        shadowMode = spatial.shadowMode;
+        shadowReceiveWorldBounds = spatial.shadowReceiveWorldBounds.clone(context);
+        isShadowReceiveWorldBoundsOutdated = spatial.isShadowReceiveWorldBoundsOutdated;
+        for (Control control : spatial.controls) {
+            controls.add(control.clone(context));
+        }
+        renderBucket = spatial.renderBucket;
     }
     protected Application application;
     @Getter
@@ -38,15 +57,18 @@ public abstract class Spatial {
     private boolean isWorldTransformOutdated;
     private boolean isWorldBoundsOutdated;
     @Getter
-    private ShadowMode shadowMode;
+    private ShadowMode shadowMode = ShadowMode.INHERIT;
     @Getter
     private BoundingBox shadowReceiveWorldBounds;
     private boolean isShadowReceiveWorldBoundsOutdated;
     @Getter
-    protected Set<Control> controls;
+    protected Set<Control> controls = new HashSet<>();
     @Setter
     @Getter
     private RenderBucketType renderBucket;
+    // TODO: Introduce TempVars
+    private LinkedList<MaterialDescriptorWithLayout> tmpAdditionalMaterialDescriptors = new LinkedList<>();
+    private LinkedList<VertexPositionModifier> tmpVertexPositionModifiers = new LinkedList<>();
 
     public boolean update(Application application, float tpf) {
         if (this.application == null) {
@@ -222,6 +244,15 @@ public abstract class Spatial {
         }
     }
 
+    public <T extends Control> T getFirstControl(Class<T> controlClass) {
+        for (Control control : controls) {
+            if (controlClass.isAssignableFrom(control.getClass())) {
+                return (T) control;
+            }
+        }
+        return null;
+    }
+
     public void setParent(Node parent) {
         if ((parent == null) && isAttachedToRoot()) {
             onRemoveFromRoot();
@@ -249,4 +280,35 @@ public abstract class Spatial {
             control.onRemoveFromRoot();
         }
     }
+
+    protected List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors(Geometry geometry) {
+        tmpAdditionalMaterialDescriptors.clear();
+        if (parent != null) {
+            tmpAdditionalMaterialDescriptors.addAll(parent.getAdditionalMaterialDescriptors(geometry));
+        }
+        for (Control control : controls) {
+            if (control instanceof AdditionalMaterialDescriptorProvider) {
+                AdditionalMaterialDescriptorProvider additionalMaterialDescriptorProvider = (AdditionalMaterialDescriptorProvider) control;
+                tmpAdditionalMaterialDescriptors.addAll(additionalMaterialDescriptorProvider.getAdditionalMaterialDescriptors(geometry));
+            }
+        }
+        return tmpAdditionalMaterialDescriptors;
+    }
+
+    protected List<VertexPositionModifier> getVertexPositionModifiers() {
+        tmpVertexPositionModifiers.clear();
+        if (parent != null) {
+            tmpVertexPositionModifiers.addAll(parent.getVertexPositionModifiers());
+        }
+        for (Control control : controls) {
+            if (control instanceof VertexPositionModifier) {
+                VertexPositionModifier vertexPositionModifier = (VertexPositionModifier) control;
+                tmpVertexPositionModifiers.add(vertexPositionModifier);
+            }
+        }
+        return tmpVertexPositionModifiers;
+    }
+
+    @Override
+    public abstract Spatial clone(CloneContext context);
 }

@@ -4,6 +4,7 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.asset.locator.FileLocator;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.scene.Spatial;
 import org.joml.Quaternionf;
@@ -22,7 +23,7 @@ public class TestRoom extends Application {
         sceneCamera.setLocation(new Vector3f(0, 0, 7));
         sceneCamera.setRotation(new Quaternionf(0.6836f, -0.09070f, -0.09527f, -0.7179f));
 
-        Spatial room = assetManager.loadModel("models/room.gltf");
+        Spatial room = assetManager.loadModel("models/room.gltf", CloneContext.reuseAll());
 
         Node nodeRoomWrapper = new Node();
         nodeRoomWrapper.add(room);

@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.data;
 
+import com.destrostudios.icetea.core.clone.CloneContext;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 
@@ -10,6 +11,11 @@ import static org.lwjgl.system.MemoryUtil.memAlloc;
 
 public class ByteBufferData extends BufferData {
 
+    public ByteBufferData() { }
+
+    public ByteBufferData(ByteBufferData byteBufferData, CloneContext context) {
+        super(byteBufferData, context);
+    }
     @Getter
     private ArrayList<ByteBuffer> byteBuffers;
 
@@ -38,5 +44,10 @@ public class ByteBufferData extends BufferData {
             // Nothing to do here
             byteBuffers = null;
         }
+    }
+
+    @Override
+    public ByteBufferData clone(CloneContext context) {
+        return new ByteBufferData(this, context);
     }
 }

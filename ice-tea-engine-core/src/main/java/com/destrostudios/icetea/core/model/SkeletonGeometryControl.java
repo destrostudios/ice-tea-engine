@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.core.model;
 
+import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.data.VertexData;
+import com.destrostudios.icetea.core.material.descriptor.AdditionalMaterialDescriptorProvider;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorWithLayout;
 import com.destrostudios.icetea.core.material.descriptor.SkeletonDescriptor;
 import com.destrostudios.icetea.core.material.descriptor.SkeletonDescriptorLayout;
@@ -13,28 +15,27 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-public class SkeletonGeometryControl extends Control implements VertexPositionModifier {
+import java.util.LinkedList;
+import java.util.List;
+
+public class SkeletonGeometryControl extends Control implements AdditionalMaterialDescriptorProvider, VertexPositionModifier {
+
+    public SkeletonGeometryControl(SkeletonGeometryControl skeletonGeometryControl, CloneContext context) {
+        this(context.cloneByReference(skeletonGeometryControl.skeleton));
+    }
 
     public SkeletonGeometryControl(Skeleton skeleton) {
         this.skeleton = skeleton;
-        skeletonDescriptor = new MaterialDescriptorWithLayout(new SkeletonDescriptorLayout(), new SkeletonDescriptor("skeleton", skeleton));
+        additionalMaterialDescriptors = new LinkedList<>();
+        additionalMaterialDescriptors.add(new MaterialDescriptorWithLayout(new SkeletonDescriptorLayout(), new SkeletonDescriptor("skeleton", skeleton)));
     }
     @Getter
     private Skeleton skeleton;
-    private MaterialDescriptorWithLayout skeletonDescriptor;
+    private LinkedList<MaterialDescriptorWithLayout> additionalMaterialDescriptors;
 
     @Override
-    protected void onAdd() {
-        super.onAdd();
-        Geometry geometry = (Geometry) spatial;
-        geometry.addAdditionalMaterialDescriptor(skeletonDescriptor);
-    }
-
-    @Override
-    public void onRemove() {
-        Geometry geometry = (Geometry) spatial;
-        geometry.removeAdditionalMaterialDescriptor(skeletonDescriptor);
-        super.onRemove();
+    public List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors(Geometry geometry) {
+        return additionalMaterialDescriptors;
     }
 
     @Override
@@ -49,5 +50,10 @@ public class SkeletonGeometryControl extends Control implements VertexPositionMo
         Matrix4f skinMatrixJoint4 = MathUtil.mul(jointMatrices[(int) jointsIndices.w()], jointsWeights.w(), new Matrix4f());
         Matrix4f skinMatrix = skinMatrixJoint1.add(skinMatrixJoint2, new Matrix4f()).add(skinMatrixJoint3).add(skinMatrixJoint4);
         MathUtil.mulPosition(vertexPosition, skinMatrix);
+    }
+
+    @Override
+    public Control clone(CloneContext context) {
+        return new SkeletonGeometryControl(this, context);
     }
 }
