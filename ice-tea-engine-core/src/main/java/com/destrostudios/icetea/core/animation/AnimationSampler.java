@@ -13,10 +13,9 @@ public abstract class AnimationSampler<T> {
             return keyframeValues[0];
         }
         float[] keyframeTimes = data.getKeyframeTimes();
-        time %= keyframeTimes[keyframeTimes.length - 1];
+        time %= getDuration();
         int keyframeIndex1 = -1;
         int keyframeIndex2 = -1;
-        time %= keyframeTimes[keyframeTimes.length - 1];
         for (int i = 1; i < keyframeTimes.length; i++) {
             if (keyframeTimes[i] >= time) {
                 keyframeIndex1 = i - 1;
@@ -37,6 +36,11 @@ public abstract class AnimationSampler<T> {
 
     // TODO: Support loop modes
     public boolean isFinished(float time) {
-        return false; // (time > keyframeTimes[keyframeTimes.length - 1]);
+        return false; // (time > getDuration());
+    }
+
+    public float getDuration() {
+        float[] keyframeTimes = data.getKeyframeTimes();
+        return keyframeTimes[keyframeTimes.length - 1];
     }
 }

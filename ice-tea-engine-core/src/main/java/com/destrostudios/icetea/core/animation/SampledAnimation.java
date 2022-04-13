@@ -28,5 +28,10 @@ public abstract class SampledAnimation<T> extends Animation {
     protected abstract void setValue(T value);
 
     @Override
+    public float getDuration() {
+        return sampler.getDuration();
+    }
+
+    @Override
     public abstract SampledAnimation<T> clone(CloneContext context);
 }

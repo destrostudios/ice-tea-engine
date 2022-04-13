@@ -302,6 +302,7 @@ public class TestApplication extends Application {
         animatedObject3.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl3 = animatedObject3.getFirstControl(AnimationControl.class);
         animationControl3.play("Armature|mixamo.com|Layer0");
+        animationControl3.setSpeed(2);
         sceneNode.add(animatedObject3);
 
         // Sky

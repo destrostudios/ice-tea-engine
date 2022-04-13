@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core.animation;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.scene.Control;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,7 +16,12 @@ public class AnimationControl extends Control {
 
     public AnimationControl(AnimationControl animationControl, CloneContext context) {
         super(animationControl);
-        animations = animationControl.animations.stream().map(animation -> animation.clone(context)).collect(Collectors.toList());
+        animations = animationControl.animations.stream().map(context::cloneByReference).collect(Collectors.toList());
+        playingAnimation = context.cloneByReference(animationControl.playingAnimation);
+        time = animationControl.time;
+        speed = animationControl.speed;
+        playing = animationControl.playing;
+        needsUpdate = animationControl.needsUpdate;
     }
     @Getter
     private List<? extends Animation> animations;
@@ -23,6 +29,9 @@ public class AnimationControl extends Control {
     private Animation playingAnimation;
     @Getter
     private float time;
+    @Getter
+    @Setter
+    private float speed = 1;
     @Getter
     private boolean playing;
     private boolean needsUpdate;
@@ -59,7 +68,7 @@ public class AnimationControl extends Control {
     public void update(float tpf) {
         super.update(tpf);
         if (playing) {
-            time += tpf;
+            time += tpf * speed;
             needsUpdate = true;
         }
         if (needsUpdate) {

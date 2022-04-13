@@ -18,6 +18,8 @@ public abstract class Animation implements ContextCloneable {
 
     public abstract void update(float time);
 
+    public abstract float getDuration();
+
     @Override
     public abstract Animation clone(CloneContext context);
 }

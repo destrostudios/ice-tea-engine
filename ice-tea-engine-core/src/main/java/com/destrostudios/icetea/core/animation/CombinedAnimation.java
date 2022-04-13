@@ -25,6 +25,18 @@ public class CombinedAnimation extends Animation {
     }
 
     @Override
+    public float getDuration() {
+        float maximumDuration = 0;
+        for (Animation animation : animations) {
+            float duration = animation.getDuration();
+            if (duration > maximumDuration) {
+                maximumDuration = duration;
+            }
+        }
+        return maximumDuration;
+    }
+
+    @Override
     public CombinedAnimation clone(CloneContext context) {
         return new CombinedAnimation(this, context);
     }
