@@ -99,7 +99,8 @@ public class H0kComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            Texture texture = new Texture(image, imageMemory, imageView, imageSampler);
+            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
             texture.init(application);
             return texture;
         }

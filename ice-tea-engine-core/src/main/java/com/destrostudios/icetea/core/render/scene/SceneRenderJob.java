@@ -16,24 +16,19 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRCreateRenderpass2.vkCreateRenderPass2KHR;
-import static org.lwjgl.vulkan.KHRDepthStencilResolve.*;
+import static org.lwjgl.vulkan.KHRDepthStencilResolve.VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK12.*;
 
 public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
-    public SceneRenderJob() {
-        clearColor = new Vector4f(0, 0, 0, 1);
-    }
     @Getter
     private Texture multisampledColorTexture;
     @Getter
     private Texture multisampledDepthTexture;
     @Getter
     private Texture resolvedDepthTexture;
-    // TODO: Support a setting mechanism that will recreate the command buffer, for now it can be changed in-place before the app starts
-    @Getter
-    private Vector4f clearColor;
 
     @Override
     public void init(Application application) {
@@ -61,6 +56,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             // Color attachment (Multisampled)
 
             VkAttachmentDescription2 multisampledColorAttachment = attachments.get(0);
+            multisampledColorAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
             multisampledColorAttachment.format(colorFormat);
             multisampledColorAttachment.samples(application.getMsaaSamples());
             multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -71,12 +67,14 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             multisampledColorAttachment.finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             VkAttachmentReference2 multisampledColorAttachmentRef = attachmentRefs.get(0);
+            multisampledColorAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
             multisampledColorAttachmentRef.attachment(0);
             multisampledColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             // Depth-Stencil attachment (Multisampled)
 
             VkAttachmentDescription2 multisampledDepthAttachment = attachments.get(1);
+            multisampledDepthAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
             multisampledDepthAttachment.format(depthFormat);
             multisampledDepthAttachment.samples(application.getMsaaSamples());
             multisampledDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -87,12 +85,14 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             multisampledDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             VkAttachmentReference2 multisampledDepthAttachmentRef = attachmentRefs.get(1);
+            multisampledDepthAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
             multisampledDepthAttachmentRef.attachment(1);
             multisampledDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             // Color attachment (Resolved)
 
             VkAttachmentDescription2 resolvedColorAttachment = attachments.get(2);
+            resolvedColorAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
             resolvedColorAttachment.format(colorFormat);
             resolvedColorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
             resolvedColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
@@ -103,12 +103,14 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             VkAttachmentReference2 resolvedColorAttachmentRef = attachmentRefs.get(2);
+            resolvedColorAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
             resolvedColorAttachmentRef.attachment(2);
             resolvedColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             // Depth-Stencil attachment (Resolved)
 
             VkAttachmentDescription2 resolvedDepthAttachment = attachments.get(3);
+            resolvedDepthAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
             resolvedDepthAttachment.format(depthFormat);
             resolvedDepthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
             resolvedDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
@@ -119,12 +121,14 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             resolvedDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             VkAttachmentReference2 resolvedDepthAttachmentRef = attachmentRefs.get(3);
+            resolvedDepthAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
             resolvedDepthAttachmentRef.attachment(3);
             resolvedDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             // Subpass and dependencies
 
             VkSubpassDescription2KHR.Buffer subpass = VkSubpassDescription2KHR.callocStack(1, stack);
+            subpass.sType(VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2);
             subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
             subpass.colorAttachmentCount(1);
             subpass.pColorAttachments(VkAttachmentReference2KHR.callocStack(1, stack).put(0, multisampledColorAttachmentRef));
@@ -140,6 +144,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             subpass.pNext(subpassDepthStencilResolve.address());
 
             VkSubpassDependency2KHR.Buffer dependency = VkSubpassDependency2KHR.callocStack(1, stack);
+            dependency.sType(VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2);
             dependency.srcSubpass(VK_SUBPASS_EXTERNAL);
             dependency.dstSubpass(0);
             dependency.srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -148,7 +153,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             dependency.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
             VkRenderPassCreateInfo2KHR renderPassCreateInfo = VkRenderPassCreateInfo2KHR.callocStack(stack);
-            renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
+            renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2);
             renderPassCreateInfo.pAttachments(attachments);
             renderPassCreateInfo.pSubpasses(subpass);
             renderPassCreateInfo.pDependencies(dependency);
@@ -212,11 +217,12 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             long image = pDepthImage.get(0);
             long imageMemory = pDepthImageMemory.get(0);
 
-            application.getImageManager().transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            application.getImageManager().transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
 
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
-            multisampledDepthTexture = new Texture(image, imageMemory, imageView);
+            multisampledDepthTexture = new Texture(image, imageMemory, imageView, finalLayout);
             multisampledDepthTexture.init(application);
         }
     }
@@ -243,7 +249,8 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             long image = pDepthImage.get(0);
             long imageMemory = pDepthImageMemory.get(0);
 
-            application.getImageManager().transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            application.getImageManager().transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
 
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
@@ -268,7 +275,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             }
             long imageSampler = pImageSampler.get(0);
 
-            resolvedDepthTexture = new Texture(image, imageMemory, imageView, imageSampler);
+            resolvedDepthTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
             resolvedDepthTexture.init(application);
         }
     }
@@ -295,6 +302,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     @Override
     public VkClearValue.Buffer getClearValues(MemoryStack stack) {
         VkClearValue.Buffer clearValues = VkClearValue.callocStack(2, stack);
+        Vector4f clearColor = application.getConfig().getClearColor();
         clearValues.get(0).color().float32(stack.floats(clearColor.x(), clearColor.y(), clearColor.z(), clearColor.w()));
         clearValues.get(1).depthStencil().set(1, 0);
         return clearValues;

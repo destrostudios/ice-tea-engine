@@ -207,7 +207,8 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             }
             long imageSampler = pImageSampler.get(0);
 
-            shadowMapTexture = new Texture(image, imageMemory, imageView, imageSampler);
+            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+            shadowMapTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
             shadowMapTexture.init(application);
         }
     }

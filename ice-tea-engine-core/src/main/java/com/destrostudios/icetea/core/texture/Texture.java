@@ -11,16 +11,18 @@ public class Texture {
 
     }
 
-    public Texture(long image, long imageMemory, long imageView) {
+    public Texture(long image, long imageMemory, long imageView, int imageViewLayout) {
         this.image = image;
         this.imageMemory = imageMemory;
         this.imageView = imageView;
+        this.imageViewLayout = imageViewLayout;
     }
 
-    public Texture(long image, long imageMemory, long imageView, long imageSampler) {
+    public Texture(long image, long imageMemory, long imageView, int imageViewLayout, long imageSampler) {
         this.image = image;
         this.imageMemory = imageMemory;
         this.imageView = imageView;
+        this.imageViewLayout = imageViewLayout;
         this.imageSampler = imageSampler;
     }
     protected Application application;
@@ -30,6 +32,8 @@ public class Texture {
     protected Long imageMemory;
     @Getter
     protected Long imageView;
+    @Getter
+    protected int imageViewLayout;
     @Getter
     protected Long imageSampler;
 

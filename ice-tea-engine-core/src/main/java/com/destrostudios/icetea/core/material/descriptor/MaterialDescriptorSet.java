@@ -47,6 +47,7 @@ public class MaterialDescriptorSet {
             poolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
             poolCreateInfo.pPoolSizes(poolSizes);
             poolCreateInfo.maxSets(descriptorSetsCount);
+            poolCreateInfo.flags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 
             LongBuffer pDescriptorPool = stack.mallocLong(1);
             int result = vkCreateDescriptorPool(application.getLogicalDevice(), poolCreateInfo, null, pDescriptorPool);

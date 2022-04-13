@@ -16,7 +16,6 @@ import com.destrostudios.icetea.core.system.AppSystem;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -36,12 +35,12 @@ import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
 import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.KHRCreateRenderpass2.VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRDepthStencilResolve.VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRMaintenance2.VK_KHR_MAINTENANCE2_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRMultiview.VK_KHR_MULTIVIEW_EXTENSION_NAME;
-import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_MAILBOX_KHR;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
@@ -58,8 +57,12 @@ public abstract class Application {
         VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
         VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME
     ).collect(toSet());
-    private static final int MAX_FRAMES_IN_FLIGHT = 2;
 
+    public Application() {
+        config = new ApplicationConfig();
+    }
+    @Getter
+    protected ApplicationConfig config;
     @Getter
     private PhysicalDeviceManager physicalDeviceManager;
     @Getter
@@ -75,13 +78,7 @@ public abstract class Application {
 
     @Getter
     private VkInstance instance;
-    @Getter
-    @Setter
-    private int preferredPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-    @Getter
-    private int width = 1280;
-    @Getter
-    private int height = 720;
+    private Long debugMessenger;
     @Getter
     private long window;
     @Getter
@@ -167,7 +164,7 @@ public abstract class Application {
             throw new RuntimeException("Cannot initialize GLFW");
         }
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        window = glfwCreateWindow(width, height, "IceTea Engine", NULL, NULL);
+        window = glfwCreateWindow(config.getWidth(), config.getHeight(), config.getTitle(), NULL, NULL);
         if (window == NULL) {
             throw new RuntimeException("Cannot create window");
         }
@@ -175,8 +172,8 @@ public abstract class Application {
     }
 
     private void onFrameBufferResized(long window, int width, int height) {
-        this.width = width;
-        this.height = height;
+        config.setWidth(width);
+        config.setHeight(height);
         wasResized = true;
         updateGuiCamera();
     }
@@ -195,22 +192,73 @@ public abstract class Application {
             instanceCreateInfo.pApplicationInfo(applicationInfo);
             instanceCreateInfo.ppEnabledExtensionNames(getRequiredExtensions(stack));
 
+            if (config.isEnableValidationLayer()) {
+                HashSet<String> enabledLayerNames = new HashSet<>();
+                enabledLayerNames.add("VK_LAYER_KHRONOS_validation");
+                PointerBuffer enabledLayerNamesBuffer = stack.mallocPointer(enabledLayerNames.size());
+                enabledLayerNames.stream()
+                        .map(stack::UTF8)
+                        .forEach(enabledLayerNamesBuffer::put);
+                enabledLayerNamesBuffer.rewind();
+                instanceCreateInfo.ppEnabledLayerNames(enabledLayerNamesBuffer);
+
+                VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = createDebugMessengerCreateInfo(stack);
+                instanceCreateInfo.pNext(debugMessengerCreateInfo.address());
+            }
+
             PointerBuffer instancePointer = stack.mallocPointer(1);
             int result = vkCreateInstance(instanceCreateInfo, null, instancePointer);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create instance (result = " + result + ")");
             }
             instance = new VkInstance(instancePointer.get(0), instanceCreateInfo);
+
+            if (config.isEnableValidationLayer()) {
+                VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = createDebugMessengerCreateInfo(stack);
+                LongBuffer pDebugMessenger = stack.longs(VK_NULL_HANDLE);
+                result = vkCreateDebugUtilsMessengerEXT(instance, debugMessengerCreateInfo, null, pDebugMessenger);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create debug messenger (result = " + result + ")");
+                }
+                debugMessenger = pDebugMessenger.get(0);
+            }
         }
     }
 
     private PointerBuffer getRequiredExtensions(MemoryStack stack) {
         PointerBuffer glfwExtensions = glfwGetRequiredInstanceExtensions();
-        PointerBuffer allRequiredExtensions = stack.mallocPointer(glfwExtensions.capacity() + 1);
-        allRequiredExtensions.put(glfwExtensions);
+        int additionalExtensions = 1;
+        if (config.isEnableValidationLayer()) {
+            additionalExtensions++;
+        }
+        PointerBuffer requiredExtensions = stack.mallocPointer(glfwExtensions.capacity() + additionalExtensions);
+        requiredExtensions.put(glfwExtensions);
         // Required to use the extension to resolve multisampled depth buffers (for postprocessing)
-        allRequiredExtensions.put(stack.UTF8(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME));
-        return allRequiredExtensions.rewind();
+        requiredExtensions.put(stack.UTF8(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME));
+        if (config.isEnableValidationLayer()) {
+            requiredExtensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+        }
+        return requiredExtensions.rewind();
+    }
+
+    private VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerCreateInfo(MemoryStack stack) {
+        VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.callocStack(stack);
+        debugMessengerCreateInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
+        debugMessengerCreateInfo.messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
+        debugMessengerCreateInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
+        debugMessengerCreateInfo.pfnUserCallback(this::onDebugMessengerCallback);
+        return debugMessengerCreateInfo;
+    }
+
+    protected int onDebugMessengerCallback(int messageSeverity, int messageType, long pCallbackData, long pUserData) {
+        VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
+        String message = callbackData.pMessageString();
+        if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+            System.err.println(message);
+        } else {
+            System.out.println(message);
+        }
+        return VK_FALSE;
     }
 
     private void initSurface() {
@@ -234,7 +282,17 @@ public abstract class Application {
         try (MemoryStack stack = stackPush()) {
             VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.callocStack(stack);
             deviceCreateInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
-            deviceCreateInfo.ppEnabledExtensionNames(BufferUtil.asPointerBuffer(DEVICE_EXTENSIONS_NAMES, stack));
+
+            Set<String> enabledExtensionNames = Stream.of(
+                // Required to use swapchains
+                VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                // Required to resolve multisampled depth buffers (for postprocessing)
+                VK_KHR_MULTIVIEW_EXTENSION_NAME,
+                VK_KHR_MAINTENANCE2_EXTENSION_NAME,
+                VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+                VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME
+            ).collect(toSet());
+            deviceCreateInfo.ppEnabledExtensionNames(BufferUtil.asPointerBuffer(enabledExtensionNames, stack));
 
             int[] uniqueQueueFamilyIndices = physicalDeviceInformation.getUniqueQueueFamilyIndices();
             VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.callocStack(uniqueQueueFamilyIndices.length, stack);
@@ -308,13 +366,13 @@ public abstract class Application {
     }
 
     private void updateGuiCamera() {
-        guiCamera.setApplicationSize(width, height);
+        guiCamera.setWindowSize(config.getWidth(), config.getHeight());
     }
 
     protected abstract void initScene();
 
     private void initSyncObjects() {
-        inFlightFrames = new ArrayList<>(MAX_FRAMES_IN_FLIGHT);
+        inFlightFrames = new ArrayList<>(config.getFramesInFlight());
         imagesInFlight = new HashMap<>(swapChain.getImages().size());
         try (MemoryStack stack = stackPush()) {
             VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.callocStack(stack);
@@ -328,7 +386,7 @@ public abstract class Application {
             LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
             LongBuffer pFence = stack.mallocLong(1);
 
-            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            for (int i = 0; i < config.getFramesInFlight(); i++) {
                 int result = vkCreateSemaphore(logicalDevice, semaphoreInfo, null, pImageAvailableSemaphore);
                 if (result != VK_SUCCESS) {
                     throw new RuntimeException("Failed to create image available semaphore for the frame " + i + " (result = " + result + ")");
@@ -397,8 +455,8 @@ public abstract class Application {
         // TODO: Introduce TempVars
         Matrix4f viewProjectionMatrix = camera.getProjectionViewMatrix().invert(new Matrix4f());
         dest.set(
-            ((screenPosition.x() / getWidth()) * 2) - 1,
-            ((screenPosition.y() / getHeight()) * 2) - 1,
+            ((screenPosition.x() / config.getWidth()) * 2) - 1,
+            ((screenPosition.y() / config.getHeight()) * 2) - 1,
             viewSpaceZ
         );
         float w = MathUtil.mulW(dest, viewProjectionMatrix);
@@ -415,8 +473,8 @@ public abstract class Application {
         // TODO: Introduce TempVars
         Vector4f tmp = new Vector4f(worldPosition, 1);
         tmp.mul(sceneCamera.getProjectionViewMatrix());
-        dest.x = (((tmp.x() / tmp.w()) + 1) / 2) * getWidth();
-        dest.y = (((tmp.y() / tmp.w()) + 1) / 2) * getHeight();
+        dest.x = (((tmp.x() / tmp.w()) + 1) / 2) * config.getWidth();
+        dest.y = (((tmp.y() / tmp.w()) + 1) / 2) * config.getHeight();
         dest.z = (((tmp.z() / tmp.w()) + 1) / 2);
         return dest;
     }
@@ -527,7 +585,7 @@ public abstract class Application {
                 throw new RuntimeException("Failed to present swap chain image (result = " + result + ")");
             }
 
-            currentFrame = ((currentFrame + 1) % MAX_FRAMES_IN_FLIGHT);
+            currentFrame = ((currentFrame + 1) % config.getFramesInFlight());
 
             // Wait for GPU to be finished, so we can safely access memory in our logic again (e.g. freeing memory of removed objects)
             vkWaitForFences(logicalDevice, pFence, true, MathUtil.UINT64_MAX);
@@ -574,6 +632,10 @@ public abstract class Application {
         vkDestroyDevice(logicalDevice, null);
 
         vkDestroySurfaceKHR(instance, surface, null);
+
+        if (debugMessenger != null) {
+            vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
+        }
 
         vkDestroyInstance(instance, null);
 

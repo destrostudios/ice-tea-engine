@@ -6,19 +6,17 @@ import org.lwjgl.vulkan.*;
 
 public abstract class TextureDescriptor extends MaterialDescriptor {
 
-    public TextureDescriptor(String name, Texture texture, int imageLayout) {
+    public TextureDescriptor(String name, Texture texture) {
         super(name);
         this.texture = texture;
-        this.imageLayout = imageLayout;
     }
     private Texture texture;
-    private int imageLayout;
 
     @Override
     public void initReferenceDescriptorWrite(VkWriteDescriptorSet descriptorWrite, MaterialDescriptorLayout layout, MemoryStack stack) {
         super.initReferenceDescriptorWrite(descriptorWrite, layout, stack);
         VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.callocStack(1, stack);
-        imageInfo.imageLayout(imageLayout);
+        imageInfo.imageLayout(texture.getImageViewLayout());
         imageInfo.imageView(texture.getImageView());
         imageInfo.sampler(texture.getImageSampler());
         descriptorWrite.pImageInfo(imageInfo);

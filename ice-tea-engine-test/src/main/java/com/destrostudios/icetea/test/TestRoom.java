@@ -16,6 +16,10 @@ public class TestRoom extends Application {
         new TestRoom().start();
     }
 
+    public TestRoom() {
+        config.setEnableValidationLayer(true);
+    }
+
     @Override
     protected void initScene() {
         assetManager.addLocator(new FileLocator("./assets"));

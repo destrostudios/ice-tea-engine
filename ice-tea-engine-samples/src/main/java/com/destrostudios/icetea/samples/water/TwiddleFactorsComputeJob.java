@@ -86,7 +86,8 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            twiddleFactorsTexture = new Texture(image, imageMemory, imageView, imageSampler);
+            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            twiddleFactorsTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
             twiddleFactorsTexture.init(application);
         }
     }

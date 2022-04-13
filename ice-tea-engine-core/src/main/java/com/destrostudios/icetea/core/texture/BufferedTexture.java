@@ -31,12 +31,13 @@ public class BufferedTexture extends Texture {
     @Override
     public void init(Application application) {
         super.init(application);
-        initImage();
-        initImageView();
+        int format = VK_FORMAT_R8G8B8A8_SRGB;
+        initImage(format);
+        initImageView(format);
         initImageSampler();
     }
 
-    private void initImage() {
+    private void initImage(int format) {
         try (MemoryStack stack = stackPush()) {
             long imageSize = width * height * 4; // channels
             mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(width, height))) + 1);
@@ -65,7 +66,7 @@ public class BufferedTexture extends Texture {
                 height,
                 mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
-                VK_FORMAT_R8G8B8A8_SRGB,
+                format,
                 VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -78,7 +79,7 @@ public class BufferedTexture extends Texture {
 
             application.getImageManager().transitionImageLayout(
                 image,
-                VK_FORMAT_R8G8B8A8_SRGB,
+                format,
                 VK_IMAGE_LAYOUT_UNDEFINED,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 mipLevels
@@ -86,24 +87,26 @@ public class BufferedTexture extends Texture {
 
             application.getImageManager().copyBufferToImage(pStagingBuffer.get(0), image, width, height);
 
+            int finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             application.getImageManager().generateMipmaps(
                 image,
-                VK_FORMAT_R8G8B8A8_SRGB,
+                format,
                 width,
                 height,
                 mipLevels,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                finalLayout,
                 VK_ACCESS_SHADER_READ_BIT,
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
             );
+            imageViewLayout = finalLayout;
 
             vkDestroyBuffer(application.getLogicalDevice(), pStagingBuffer.get(0), null);
             vkFreeMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0), null);
         }
     }
 
-    private void initImageView() {
-        imageView = application.getImageManager().createImageView(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+    private void initImageView(int format) {
+        imageView = application.getImageManager().createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
     }
 
     private void initImageSampler() {

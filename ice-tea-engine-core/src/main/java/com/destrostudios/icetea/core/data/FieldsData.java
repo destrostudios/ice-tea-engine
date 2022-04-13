@@ -26,7 +26,9 @@ public abstract class FieldsData implements ContextCloneable {
         structureModified = true;
         if (fieldsData.contentModified != null) {
             contentModified = new ArrayList<>();
-            contentModified.addAll(fieldsData.contentModified);
+            for (int i = 0; i < fieldsData.contentModified.size(); i++) {
+                contentModified.add(true);
+            }
         }
     }
     @Getter

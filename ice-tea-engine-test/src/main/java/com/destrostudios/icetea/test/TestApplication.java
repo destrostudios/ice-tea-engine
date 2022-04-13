@@ -40,6 +40,9 @@ public class TestApplication extends Application {
         new TestApplication().start();
     }
 
+    public TestApplication() {
+        config.setEnableValidationLayer(true);
+    }
     private Material materialCool;
     private Panel panel1;
     private Node nodeRotating;
@@ -176,7 +179,6 @@ public class TestApplication extends Application {
         geometryChalet1.setMaterial(materialChalet);
         geometryChalet1.setShadowMode(ShadowMode.CAST);
         geometryChalet1.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
-        sceneNode.add(geometryChalet1);
 
         Node nodeChalet1 = new Node();
         nodeChalet1.add(geometryChalet1);
@@ -447,7 +449,7 @@ public class TestApplication extends Application {
                             float deltaX = (float) ((Math.random() * 2) - 1);
                             float deltaZ = (float) ((Math.random() * 2) - 1);
                             clone.getLocalTransform().getTranslation().add(deltaX, 0, deltaZ);
-                            sceneNode.add(clone);
+                            nodeRotating.add(clone);
                         }
                     }
                     break;

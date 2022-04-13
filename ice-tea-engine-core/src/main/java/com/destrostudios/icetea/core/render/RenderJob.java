@@ -58,11 +58,12 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
             long image = pColorImage.get(0);
             long imageMemory = pColorImageMemory.get(0);
 
-            application.getImageManager().transitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1);
+            int finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            application.getImageManager().transitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
 
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-            Texture texture = new Texture(image, imageMemory, imageView);
+            Texture texture = new Texture(image, imageMemory, imageView, finalLayout);
             texture.init(application);
             return texture;
         }
@@ -100,7 +101,8 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
             long image = pColorImage.get(0);
             long imageMemory = pColorImageMemory.get(0);
 
-            application.getImageManager().transitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1);
+            int finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            application.getImageManager().transitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
 
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
@@ -125,7 +127,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
             }
             long imageSampler = pImageSampler.get(0);
 
-            Texture texture = new Texture(image, imageMemory, imageView, imageSampler);
+            Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
             texture.init(application);
             return texture;
         }

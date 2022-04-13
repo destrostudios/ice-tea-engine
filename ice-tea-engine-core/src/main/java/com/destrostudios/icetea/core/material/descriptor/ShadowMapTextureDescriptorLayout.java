@@ -5,7 +5,7 @@ import static org.lwjgl.vulkan.VK10.*;
 public class ShadowMapTextureDescriptorLayout extends TextureDescriptorLayout {
 
     public ShadowMapTextureDescriptorLayout() {
-        super(VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT);
+        super(VK_SHADER_STAGE_FRAGMENT_BIT);
     }
 
     @Override

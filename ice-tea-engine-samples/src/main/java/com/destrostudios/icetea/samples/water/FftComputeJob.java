@@ -108,7 +108,7 @@ public class FftComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            Texture texture = new Texture(image, imageMemory, imageView, imageSampler);
+            Texture texture = new Texture(image, imageMemory, imageView, VK_IMAGE_LAYOUT_GENERAL, imageSampler);
             texture.init(application);
             return texture;
         }

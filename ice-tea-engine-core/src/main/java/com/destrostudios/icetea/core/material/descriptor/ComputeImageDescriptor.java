@@ -5,12 +5,10 @@ import lombok.Getter;
 
 import java.util.List;
 
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_GENERAL;
-
 public class ComputeImageDescriptor extends TextureDescriptor {
 
     public ComputeImageDescriptor(String name,Texture texture, String format, boolean writeOnly) {
-        super(name, texture, VK_IMAGE_LAYOUT_GENERAL);
+        super(name, texture);
         this.format = format;
         this.writeOnly = writeOnly;
     }

@@ -101,7 +101,7 @@ public class SwapChain {
 
             swapchainCreateInfo.preTransform(surfaceCapabilities.currentTransform());
             swapchainCreateInfo.compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
-            int presentMode = chooseSwapPresentMode(physicalDeviceInformation.getSurfacePresentModes(), application.getPreferredPresentMode());
+            int presentMode = chooseSwapPresentMode(physicalDeviceInformation.getSurfacePresentModes(), application.getConfig().getPreferredPresentMode());
             swapchainCreateInfo.presentMode(presentMode);
             swapchainCreateInfo.clipped(true);
             swapchainCreateInfo.oldSwapchain(VK_NULL_HANDLE);

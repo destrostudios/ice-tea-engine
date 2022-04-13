@@ -26,6 +26,10 @@ public class TestTerrain extends Application {
         new TestTerrain().start();
     }
 
+    public TestTerrain() {
+        config.setEnableValidationLayer(true);
+    }
+
     @Override
     protected void initScene() {
         assetManager.addLocator(new FileLocator("./assets"));
