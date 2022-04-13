@@ -447,13 +447,13 @@ public abstract class Application {
         system.cleanup();
     }
 
-    public Vector3f getWorldCoordinates(Camera camera, Vector2f screenPosition, float projectionZPos) {
-        return getWorldCoordinates(camera, screenPosition, projectionZPos, new Vector3f());
+    public Vector3f getWorldCoordinates(Vector2f screenPosition, float projectionZPos) {
+        return getWorldCoordinates(screenPosition, projectionZPos, new Vector3f());
     }
 
-    public Vector3f getWorldCoordinates(Camera camera, Vector2f screenPosition, float viewSpaceZ, Vector3f dest) {
+    public Vector3f getWorldCoordinates(Vector2f screenPosition, float viewSpaceZ, Vector3f dest) {
         // TODO: Introduce TempVars
-        Matrix4f viewProjectionMatrix = camera.getProjectionViewMatrix().invert(new Matrix4f());
+        Matrix4f viewProjectionMatrix = sceneCamera.getProjectionViewMatrix().invert(new Matrix4f());
         dest.set(
             ((screenPosition.x() / config.getWidth()) * 2) - 1,
             ((screenPosition.y() / config.getHeight()) * 2) - 1,
@@ -493,7 +493,6 @@ public abstract class Application {
         inputManager.processPendingEvents();
         systems.forEach(system -> system.update(tpf));
         update(tpf);
-        sceneCamera.update();
         updateLights();
         commandBuffersOutdated |= rootNode.update(this, tpf);
         if (commandBuffersOutdated) {
@@ -594,8 +593,8 @@ public abstract class Application {
 
     private void updateUniformBuffers(int currentImage) {
         swapChain.getRenderJobManager().forEachRenderJob(renderJob -> renderJob.updateUniformBuffers(currentImage));
-        sceneCamera.getTransformUniformData().updateBufferIfNecessary(currentImage);
-        guiCamera.getTransformUniformData().updateBufferIfNecessary(currentImage);
+        sceneCamera.updateUniformBuffers(currentImage);
+        guiCamera.updateUniformBuffers(currentImage);
         if (light != null) {
             light.updateUniformBuffers(currentImage);
         }

@@ -49,8 +49,7 @@ public class ReflectionRenderJob extends SceneRenderJob {
         rotation.rotateAxis((float) Math.PI, flatWaterLine);
         reflectionCamera.setRotation(rotation);
         reflectionCamera.setClipPlane(new Vector4f(0, 1, 0, waterHeight));
-        reflectionCamera.update();
-        reflectionCamera.getTransformUniformData().updateBufferIfNecessary(currentImage);
+        reflectionCamera.updateUniformBuffers(currentImage);
     }
 
     @Override

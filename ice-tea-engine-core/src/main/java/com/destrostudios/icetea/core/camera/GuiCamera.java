@@ -9,7 +9,7 @@ public class GuiCamera extends Camera {
             0, 0, 1, 0,
             -1, -1, 0, 1
         );
-        updateViewMatrixUniform();
         updateProjectionViewMatrix();
+        updateUniform_ViewMatrix();
     }
 }

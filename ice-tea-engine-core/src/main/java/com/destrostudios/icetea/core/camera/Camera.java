@@ -32,10 +32,10 @@ public class Camera {
 
     public void init(Application application) {
         transformUniformData.setApplication(application);
-        updateLocationUniform();
-        updateProjectionMatrixUniform();
-        updateViewMatrixUniform();
-        updateClipPlaneUniform();
+        updateUniform_Location();
+        updateUniform_ProjectionMatrix();
+        updateUniform_ViewMatrix();
+        updateUniform_ClipPlane();
         transformUniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 
@@ -45,30 +45,34 @@ public class Camera {
         viewMatrix.set(camera.getViewMatrix());
         projectionViewMatrix.set(camera.getProjectionViewMatrix());
         clipPlane.set(camera.getClipPlane());
-        updateLocationUniform();
-        updateProjectionMatrixUniform();
-        updateViewMatrixUniform();
-        updateClipPlaneUniform();
+        updateUniform_Location();
+        updateUniform_ProjectionMatrix();
+        updateUniform_ViewMatrix();
+        updateUniform_ClipPlane();
     }
 
     protected void updateProjectionViewMatrix() {
         projectionViewMatrix.set(projectionMatrix).mul(viewMatrix);
     }
 
-    protected void updateLocationUniform() {
+    protected void updateUniform_Location() {
         transformUniformData.setVector3f("location", location);
     }
 
-    protected void updateProjectionMatrixUniform() {
+    protected void updateUniform_ProjectionMatrix() {
         transformUniformData.setMatrix4f("proj", projectionMatrix);
     }
 
-    protected void updateViewMatrixUniform() {
+    protected void updateUniform_ViewMatrix() {
         transformUniformData.setMatrix4f("view", viewMatrix);
     }
 
-    protected void updateClipPlaneUniform() {
+    protected void updateUniform_ClipPlane() {
         transformUniformData.setVector4f("clipPlane", clipPlane);
+    }
+
+    public void updateUniformBuffers(int currentImage) {
+        transformUniformData.updateBufferIfNecessary(currentImage);
     }
 
     public void cleanup() {

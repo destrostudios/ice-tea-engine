@@ -52,6 +52,7 @@ public class TestApplication extends Application {
     private Material materialGrass;
     private Geometry geometryChalet3;
     private Node nodeDennis;
+    private Node animatedObject2;
     private int animatedObject2AnimationIndex;
     private Node nodeDuck;
     private Geometry geometryBounds;
@@ -283,7 +284,7 @@ public class TestApplication extends Application {
         animationControl1.play(0);
         sceneNode.add(animatedObject1);
 
-        Node animatedObject2 = assetManager.loadModel("models/footman/scene.gltf", CloneContext.reuseAll());
+        animatedObject2 = assetManager.loadModel("models/footman/scene.gltf", CloneContext.reuseAll());
         animatedObject2.move(new Vector3f(2.5f, 0, 0));
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0)));
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 0, 0, 1)));
@@ -457,8 +458,8 @@ public class TestApplication extends Application {
         });
         inputManager.addMouseButtonListener(mouseButtonEvent -> {
             if (mouseButtonEvent.getAction() == GLFW_PRESS) {
-                Vector3f worldCoordinatesFront = getWorldCoordinates(sceneCamera, inputManager.getCursorPosition(), 0);
-                Vector3f worldCoordinatesBack = getWorldCoordinates(sceneCamera, inputManager.getCursorPosition(), 1);
+                Vector3f worldCoordinatesFront = getWorldCoordinates(inputManager.getCursorPosition(), 0);
+                Vector3f worldCoordinatesBack = getWorldCoordinates(inputManager.getCursorPosition(), 1);
                 Vector3f rayDirection = worldCoordinatesBack.sub(worldCoordinatesFront, new Vector3f());
                 Ray ray = new Ray(worldCoordinatesFront, rayDirection);
 
@@ -516,8 +517,9 @@ public class TestApplication extends Application {
         geometryBounds.setLocalTranslation(debugWorldBounds.getCenter().sub(debugWorldBounds.getExtent(), new Vector3f()));
         geometryBounds.setLocalScale(debugWorldBounds.getExtent().mul(2, new Vector3f()));
 
+        bitmapTextDynamic.setLocalTranslation(getScreenCoordinates(animatedObject2.getWorldTransform().getTranslation().add(new Vector3f(0, 1, 0), new Vector3f())));
+        bitmapTextDynamic.setText("Time: " + time);
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
-        bitmapTextDynamic.setText("Time: " + time);
     }
 }
