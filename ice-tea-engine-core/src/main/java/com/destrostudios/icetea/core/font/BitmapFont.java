@@ -18,4 +18,28 @@ public class BitmapFont {
     public BitmapFontCharacter getCharacter(char character) {
         return characters.get(character);
     }
+
+    public int getWidth(String text) {
+        int maximumLineWidth = 0;
+        int lineWidth = 0;
+        for (char character : text.toCharArray()) {
+            if (character == '\n') {
+                if (lineWidth > maximumLineWidth) {
+                    maximumLineWidth = lineWidth;
+                }
+                lineWidth = 0;
+            } else {
+                BitmapFontCharacter fontCharacter = getCharacter(character);
+                lineWidth += fontCharacter.getXAdvance();
+            }
+        }
+        if (lineWidth > maximumLineWidth) {
+            maximumLineWidth = lineWidth;
+        }
+        return maximumLineWidth;
+    }
+
+    public int getHeight(String text) {
+        return text.split("\n").length * lineHeight;
+    }
 }

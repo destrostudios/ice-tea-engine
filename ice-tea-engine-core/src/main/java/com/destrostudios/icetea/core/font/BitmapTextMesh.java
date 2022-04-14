@@ -8,24 +8,10 @@ import org.joml.Vector3f;
 public class BitmapTextMesh extends Mesh {
 
     public BitmapTextMesh(BitmapFont font, String text) {
-        this.font = font;
-        this.text = text;
-        update();
-    }
-    private BitmapFont font;
-    private String text;
-
-    public void setFont(BitmapFont font) {
-        this.font = font;
-        update();
+        update(font, text);
     }
 
-    public void setText(String text) {
-        this.text = text;
-        update();
-    }
-
-    public void update() {
+    public void update(BitmapFont font, String text) {
         char[] characters = text.toCharArray();
         int renderedCharactersCount = 0;
         for (char character : characters) {

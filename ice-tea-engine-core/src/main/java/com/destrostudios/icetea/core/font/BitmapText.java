@@ -4,6 +4,7 @@ import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
+import lombok.Getter;
 
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_FRONT_BIT;
 
@@ -14,6 +15,8 @@ public class BitmapText extends Geometry {
     }
 
     public BitmapText(BitmapFont font, String text) {
+        this.font = font;
+        this.text = text;
         setMesh(new BitmapTextMesh(font, text));
 
         Material material = new Material();
@@ -34,10 +37,24 @@ public class BitmapText extends Geometry {
 
         setRenderBucket(RenderBucketType.GUI);
     }
+    @Getter
+    private BitmapFont font;
+    @Getter
+    private String text;
 
     public void setFont(BitmapFont font) {
-        ((BitmapTextMesh) mesh).setFont(font);
+        this.font = font;
+        updateMesh();
         updateMaterial(font);
+    }
+
+    public void setText(String text) {
+        this.text = text;
+        updateMesh();
+    }
+
+    private void updateMesh() {
+        ((BitmapTextMesh) mesh).update(font, text);
     }
 
     private void updateMaterial(BitmapFont font) {
@@ -45,7 +62,11 @@ public class BitmapText extends Geometry {
         material.setTexture("diffuseMap", font.getTextures().get("0"));
     }
 
-    public void setText(String text) {
-        ((BitmapTextMesh) mesh).setText(text);
+    public int getTextWidth() {
+        return font.getWidth(text);
+    }
+
+    public int getTextHeight() {
+        return font.getHeight(text);
     }
 }
