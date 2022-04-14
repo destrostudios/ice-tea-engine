@@ -28,6 +28,7 @@ public class TestTerrain extends Application {
 
     public TestTerrain() {
         config.setEnableValidationLayer(true);
+        config.setDisplayFpsInTitle(true);
     }
 
     @Override

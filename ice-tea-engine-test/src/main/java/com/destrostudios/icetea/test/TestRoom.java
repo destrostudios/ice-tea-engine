@@ -18,6 +18,7 @@ public class TestRoom extends Application {
 
     public TestRoom() {
         config.setEnableValidationLayer(true);
+        config.setDisplayFpsInTitle(true);
     }
 
     @Override

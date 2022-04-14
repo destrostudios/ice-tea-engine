@@ -11,6 +11,7 @@ import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_MAILBOX_KHR;
 public class ApplicationConfig {
 
 	private boolean enableValidationLayer;
+	private boolean displayFpsInTitle;
 	private String title = "IceTea Engine";
 	private int width = 1280;
 	private int height = 720;

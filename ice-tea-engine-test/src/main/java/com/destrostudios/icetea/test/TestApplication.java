@@ -42,6 +42,7 @@ public class TestApplication extends Application {
 
     public TestApplication() {
         config.setEnableValidationLayer(true);
+        config.setDisplayFpsInTitle(true);
     }
     private Material materialCool;
     private Panel panel1;

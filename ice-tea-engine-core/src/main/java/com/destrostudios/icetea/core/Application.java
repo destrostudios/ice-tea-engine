@@ -192,18 +192,22 @@ public abstract class Application {
             instanceCreateInfo.pApplicationInfo(applicationInfo);
             instanceCreateInfo.ppEnabledExtensionNames(getRequiredExtensions(stack));
 
+            HashSet<String> enabledLayerNames = new HashSet<>();
             if (config.isEnableValidationLayer()) {
-                HashSet<String> enabledLayerNames = new HashSet<>();
                 enabledLayerNames.add("VK_LAYER_KHRONOS_validation");
+                VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = createDebugMessengerCreateInfo(stack);
+                instanceCreateInfo.pNext(debugMessengerCreateInfo.address());
+            }
+            if (config.isDisplayFpsInTitle()) {
+                enabledLayerNames.add("VK_LAYER_LUNARG_monitor");
+            }
+            if (enabledLayerNames.size() > 0) {
                 PointerBuffer enabledLayerNamesBuffer = stack.mallocPointer(enabledLayerNames.size());
                 enabledLayerNames.stream()
                         .map(stack::UTF8)
                         .forEach(enabledLayerNamesBuffer::put);
                 enabledLayerNamesBuffer.rewind();
                 instanceCreateInfo.ppEnabledLayerNames(enabledLayerNamesBuffer);
-
-                VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = createDebugMessengerCreateInfo(stack);
-                instanceCreateInfo.pNext(debugMessengerCreateInfo.address());
             }
 
             PointerBuffer instancePointer = stack.mallocPointer(1);
