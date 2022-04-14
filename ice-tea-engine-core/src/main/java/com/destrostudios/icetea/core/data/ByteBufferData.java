@@ -20,7 +20,7 @@ public class ByteBufferData extends BufferData {
     private ArrayList<ByteBuffer> byteBuffers;
 
     @Override
-    protected void initBuffersInternal(int buffersCount, MemoryStack stack) {
+    protected void initBuffersInternal(int buffersCount) {
         byteBuffers = new ArrayList<>(buffersCount);
         for (int i = 0; i < buffersCount; i++) {
             ByteBuffer byteBuffer = memAlloc(size);

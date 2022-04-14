@@ -52,7 +52,7 @@ public abstract class ComputeActionGroup {
         computeActions.add(computeAction);
     }
 
-    public void record(VkCommandBuffer commandBuffer, MemoryStack stack) {
+    public void record(VkCommandBuffer commandBuffer) {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipeline());
     }
 

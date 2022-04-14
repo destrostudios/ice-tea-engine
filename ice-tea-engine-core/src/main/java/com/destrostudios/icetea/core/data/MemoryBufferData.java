@@ -28,21 +28,23 @@ public class MemoryBufferData extends BufferData {
     private ArrayList<Long> buffersMemory;
 
     @Override
-    protected void initBuffersInternal(int buffersCount, MemoryStack stack) {
-        buffers = new ArrayList<>(buffersCount);
-        buffersMemory = new ArrayList<>(buffersCount);
-        LongBuffer pBuffer = stack.mallocLong(1);
-        LongBuffer pBufferMemory = stack.mallocLong(1);
-        for (int i = 0; i < buffersCount; i++) {
-            application.getBufferManager().createBuffer(
-                size,
-                usage,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                pBuffer,
-                pBufferMemory
-            );
-            buffers.add(pBuffer.get(0));
-            buffersMemory.add(pBufferMemory.get(0));
+    protected void initBuffersInternal(int buffersCount) {
+        try (MemoryStack stack = stackPush()) {
+            buffers = new ArrayList<>(buffersCount);
+            buffersMemory = new ArrayList<>(buffersCount);
+            LongBuffer pBuffer = stack.mallocLong(1);
+            LongBuffer pBufferMemory = stack.mallocLong(1);
+            for (int i = 0; i < buffersCount; i++) {
+                application.getBufferManager().createBuffer(
+                        size,
+                        usage,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        pBuffer,
+                        pBufferMemory
+                );
+                buffers.add(pBuffer.get(0));
+                buffersMemory.add(pBufferMemory.get(0));
+            }
         }
     }
 

@@ -8,6 +8,7 @@ import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptorL
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class FftInversionComputeActionGroup extends ComputeActionGroup {
@@ -37,12 +38,14 @@ public class FftInversionComputeActionGroup extends ComputeActionGroup {
     }
 
     @Override
-    public void record(VkCommandBuffer commandBuffer, MemoryStack stack) {
-        super.record(commandBuffer, stack);
-        vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getByteBuffers().get(0));
-        for (ComputeAction computeAction : computeActions) {
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, stack.longs(computeAction.getDescriptorSets().get(0)), null);
-            vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
+    public void record(VkCommandBuffer commandBuffer) {
+        super.record(commandBuffer);
+        try (MemoryStack stack = stackPush()) {
+            vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getByteBuffers().get(0));
+            for (ComputeAction computeAction : computeActions) {
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, stack.longs(computeAction.getDescriptorSets().get(0)), null);
+                vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
+            }
         }
     }
 

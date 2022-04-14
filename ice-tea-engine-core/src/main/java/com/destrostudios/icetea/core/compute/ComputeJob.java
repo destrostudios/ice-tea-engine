@@ -61,7 +61,7 @@ public abstract class ComputeJob {
                 throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
             }
             for (ComputeActionGroup computeActionGroup : computeActionGroups) {
-                computeActionGroup.record(commandBuffer, stack);
+                computeActionGroup.record(commandBuffer);
             }
             result = vkEndCommandBuffer(commandBuffer);
             if (result != VK_SUCCESS) {

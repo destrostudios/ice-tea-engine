@@ -4,12 +4,9 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.data.values.UniformValue;
 import lombok.Setter;
-import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-
-import static org.lwjgl.system.MemoryStack.stackPush;
 
 public abstract class BufferData extends FieldsData {
 
@@ -38,18 +35,16 @@ public abstract class BufferData extends FieldsData {
 
     public void initBuffers(int buffersCount) {
         if (size > 0) {
-            try (MemoryStack stack = stackPush()) {
-                initBuffersInternal(buffersCount, stack);
-                contentModified = new ArrayList<>(buffersCount);
-                for (int i = 0; i < buffersCount; i++) {
-                    contentModified.add(true);
-                }
+            initBuffersInternal(buffersCount);
+            contentModified = new ArrayList<>(buffersCount);
+            for (int i = 0; i < buffersCount; i++) {
+                contentModified.add(true);
             }
         }
         structureModified = false;
     }
 
-    protected abstract void initBuffersInternal(int buffersCount, MemoryStack stack);
+    protected abstract void initBuffersInternal(int buffersCount);
 
     public void updateBufferIfNecessary(int bufferIndex) {
         if ((size > 0) && contentModified.get(bufferIndex)) {

@@ -7,6 +7,7 @@ import com.destrostudios.icetea.core.material.descriptor.UniformDescriptorLayout
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class H0kComputeActionGroup extends ComputeActionGroup {
@@ -33,10 +34,12 @@ public class H0kComputeActionGroup extends ComputeActionGroup {
     }
 
     @Override
-    public void record(VkCommandBuffer commandBuffer, MemoryStack stack) {
-        super.record(commandBuffer, stack);
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, stack.longs(computeActions.get(0).getDescriptorSets().get(0)), null);
-        vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
+    public void record(VkCommandBuffer commandBuffer) {
+        super.record(commandBuffer);
+        try (MemoryStack stack = stackPush()) {
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, stack.longs(computeActions.get(0).getDescriptorSets().get(0)), null);
+            vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
+        }
     }
 
     @Override

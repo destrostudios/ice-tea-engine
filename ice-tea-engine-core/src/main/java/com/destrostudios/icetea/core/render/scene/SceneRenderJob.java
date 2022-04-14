@@ -309,23 +309,25 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    public void render(VkCommandBuffer commandBuffer, int commandBufferIndex, MemoryStack stack) {
+    public void render(VkCommandBuffer commandBuffer, int commandBufferIndex) {
         application.getBucketRenderer().render(application.getRootNode(), geometry -> {
             GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
             if (geometryRenderContext != null) {
-                RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
-                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
-                LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
-                LongBuffer offsets = stack.longs(0);
-                vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                if (geometry.getMesh().getIndexBuffer() != null) {
-                    vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-                }
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
-                if (geometry.getMesh().getIndices() != null) {
-                    vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
-                } else {
-                    vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
+                try (MemoryStack stack = stackPush()) {
+                    RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
+                    LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
+                    LongBuffer offsets = stack.longs(0);
+                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                    if (geometry.getMesh().getIndexBuffer() != null) {
+                        vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                    }
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
+                    if (geometry.getMesh().getIndices() != null) {
+                        vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+                    } else {
+                        vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
+                    }
                 }
             }
         });

@@ -182,7 +182,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
 
     public abstract VkClearValue.Buffer getClearValues(MemoryStack stack);
 
-    public abstract void render(VkCommandBuffer commandBuffer, int commandBufferIndex, MemoryStack stack);
+    public abstract void render(VkCommandBuffer commandBuffer, int commandBufferIndex);
 
     public void cleanup() {
         if (isInitialized()) {
