@@ -520,7 +520,7 @@ public class TestApplication extends Application {
         geometryBounds.setLocalScale(debugWorldBounds.getExtent().mul(2, new Vector3f()));
 
         bitmapTextDynamic.setLocalTranslation(getScreenCoordinates(animatedObject2.getWorldTransform().getTranslation().add(new Vector3f(0, 1, 0), new Vector3f())));
-        bitmapTextDynamic.setText("Time: " + time);
+        bitmapTextDynamic.setText("Time:\n" + time);
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
     }

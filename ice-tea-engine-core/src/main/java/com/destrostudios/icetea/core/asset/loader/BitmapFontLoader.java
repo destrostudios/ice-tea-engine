@@ -30,6 +30,7 @@ public class BitmapFontLoader extends AssetLoader<BitmapFont> {
 
     @Override
     public BitmapFont load(InputStream inputStream) throws IOException {
+        int lineHeight = 0;
         HashMap<Character, BitmapFontCharacter> characters = new HashMap<>();
         HashMap<String, Texture> textures = new HashMap<>();
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -37,6 +38,10 @@ public class BitmapFontLoader extends AssetLoader<BitmapFont> {
         while ((line = bufferedReader.readLine()) != null) {
             String[] parts = line.split("[\\s=]+");
             switch (parts[0]) {
+                case "common": {
+                    lineHeight = Integer.parseInt(parts[2]);
+                    break;
+                }
                 case "page": {
                     String id = parts[2];
                     String file = parts[4];
@@ -60,6 +65,6 @@ public class BitmapFontLoader extends AssetLoader<BitmapFont> {
                 }
             }
         }
-        return new BitmapFont(characters, textures);
+        return new BitmapFont(lineHeight, characters, textures);
     }
 }

@@ -9,6 +9,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class BitmapFont {
 
+    @Getter
+    private int lineHeight;
     private Map<Character, BitmapFontCharacter> characters;
     @Getter
     private Map<String, Texture> textures;

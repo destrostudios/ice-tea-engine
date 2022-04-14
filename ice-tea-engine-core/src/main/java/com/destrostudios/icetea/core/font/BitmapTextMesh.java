@@ -27,13 +27,24 @@ public class BitmapTextMesh extends Mesh {
 
     public void update() {
         char[] characters = text.toCharArray();
-        vertices = new VertexData[characters.length * 4];
-        indices = new int[characters.length * 6];
+        int renderedCharactersCount = 0;
+        for (char character : characters) {
+            if (character != '\n') {
+                renderedCharactersCount++;
+            }
+        }
+        vertices = new VertexData[renderedCharactersCount * 4];
+        indices = new int[renderedCharactersCount * 6];
         int vertexIndex = 0;
         int indexIndex = 0;
         int x = 0;
         int y = 0;
         for (char character : characters) {
+            if (character == '\n') {
+                x = 0;
+                y += font.getLineHeight();
+                continue;
+            }
             BitmapFontCharacter fontCharacter = font.getCharacter(character);
 
             int xLeft = (x + fontCharacter.getXOffset());
