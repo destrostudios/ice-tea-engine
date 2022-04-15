@@ -375,7 +375,6 @@ public class TestApplication extends Application {
         CameraMouseRotateSystem cameraMouseRotateSystem = new CameraMouseRotateSystem(sceneCamera);
         CameraKeyMoveSystem cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
         inputManager.addKeyListener(keyEvent -> {
-            // Add/Remove filters
             switch (keyEvent.getKey()) {
                 case GLFW_KEY_1:
                     if (keyEvent.getAction() == GLFW_PRESS) {

@@ -58,7 +58,7 @@ public class SwapChain {
         vkDeviceWaitIdle(application.getLogicalDevice());
         cleanup();
         init(application);
-        recreateCommandBuffers();
+        recordCommandBuffers();
     }
 
     public void init(Application application) {
@@ -66,6 +66,7 @@ public class SwapChain {
         initSwapChain();
         initImageViews();
         initRenderJobs();
+        initCommandBuffers();
     }
 
     private void initSwapChain() {
@@ -185,12 +186,10 @@ public class SwapChain {
         });
     }
 
-    public void recreateCommandBuffers() {
-        cleanupCommandBuffers();
-
-        int commandBuffersCount = images.size();
-        commandBuffers = new ArrayList<>(commandBuffersCount);
+    private void initCommandBuffers() {
         try (MemoryStack stack = stackPush()) {
+            int commandBuffersCount = images.size();
+            commandBuffers = new ArrayList<>(commandBuffersCount);
             VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.callocStack(stack);
             allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             allocInfo.commandPool(application.getCommandPool());
@@ -206,14 +205,18 @@ public class SwapChain {
             for (int i = 0; i < commandBuffersCount; i++) {
                 commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), application.getLogicalDevice()));
             }
+        }
+    }
 
+    public void recordCommandBuffers() {
+        try (MemoryStack stack = stackPush()) {
             VkCommandBufferBeginInfo bufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
             bufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.callocStack(stack);
-            for(int i = 0; i < commandBuffersCount;i++) {
+            for (int i = 0; i < commandBuffers.size(); i++) {
                 VkCommandBuffer commandBuffer = commandBuffers.get(i);
-                result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
+                int result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
                 if (result != VK_SUCCESS) {
                     throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
                 }
@@ -248,15 +251,6 @@ public class SwapChain {
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    private void cleanupCommandBuffers() {
-        if (commandBuffers != null) {
-            try (MemoryStack stack = stackPush()) {
-                vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers, stack));
-            }
-            commandBuffers = null;
-        }
-    }
-
     public void cleanup() {
         cleanupRenderJobs();
         cleanupCommandBuffers();
@@ -266,5 +260,14 @@ public class SwapChain {
 
     private void cleanupRenderJobs() {
         renderJobManager.forEachRenderJob(RenderJob::cleanup);
+    }
+
+    private void cleanupCommandBuffers() {
+        if (commandBuffers != null) {
+            try (MemoryStack stack = stackPush()) {
+                vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers, stack));
+            }
+            commandBuffers = null;
+        }
     }
 }

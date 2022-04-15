@@ -2,7 +2,6 @@ package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.asset.AssetManager;
 import com.destrostudios.icetea.core.asset.locator.ClasspathLocator;
-import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.filter.Filter;
@@ -338,6 +337,7 @@ public abstract class Application {
         try (MemoryStack stack = stackPush()) {
             VkCommandPoolCreateInfo poolCreateInfo = VkCommandPoolCreateInfo.callocStack(stack);
             poolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
+            poolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
             poolCreateInfo.queueFamilyIndex(physicalDeviceInformation.getQueueFamilyIndexGraphics());
 
             LongBuffer pCommandPool = stack.mallocLong(1);
@@ -500,7 +500,7 @@ public abstract class Application {
         updateLights();
         commandBuffersOutdated |= rootNode.update(this, tpf);
         if (commandBuffersOutdated) {
-            swapChain.recreateCommandBuffers();
+            swapChain.recordCommandBuffers();
             commandBuffersOutdated = false;
         }
     }
