@@ -6,6 +6,7 @@ import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.light.SpotLight;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
+import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
@@ -19,6 +20,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
+import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -246,24 +248,24 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public void render(VkCommandBuffer commandBuffer, int commandBufferIndex) {
+    public void render(Consumer<RenderAction> actions) {
         application.getRootNode().forEachGeometry(geometry -> {
             GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
             if (geometryRenderContext != null) {
                 try (MemoryStack stack = stackPush()) {
                     RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
-                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
+                    actions.accept((cb, cbi) -> vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline()));
                     LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
                     LongBuffer offsets = stack.longs(0);
-                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                    actions.accept((cb, cbi) -> vkCmdBindVertexBuffers(cb, 0, vertexBuffers, offsets));
                     if (geometry.getMesh().getIndexBuffer() != null) {
-                        vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                        actions.accept((cb, cbi) -> vkCmdBindIndexBuffer(cb, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32));
                     }
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(commandBufferIndex)), null);
+                    actions.accept((cb, cbi) -> vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(cbi)), null));
                     if (geometry.getMesh().getIndices() != null) {
-                        vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+                        actions.accept((cb, cbi) -> vkCmdDrawIndexed(cb, geometry.getMesh().getIndices().length, 1, 0, 0, 0));
                     } else {
-                        vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
+                        actions.accept((cb, cbi) -> vkCmdDraw(cb, geometry.getMesh().getVertices().length, 1, 0, 0));
                     }
                 }
             }

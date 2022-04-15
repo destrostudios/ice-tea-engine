@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
+import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderJobManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
@@ -35,13 +36,13 @@ public class SwapChain {
     @Getter
     private long swapChain;
     @Getter
-    private List<Long> images;
+    private ArrayList<Long> images;
     @Getter
     private int imageFormat;
     @Getter
-    private List<Long> imageViews;
+    private ArrayList<Long> imageViews;
     @Getter
-    private List<VkCommandBuffer> commandBuffers;
+    private ArrayList<VkCommandBuffer> commandBuffers;
     @Getter
     private RenderJobManager renderJobManager;
 
@@ -214,16 +215,18 @@ public class SwapChain {
             bufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.callocStack(stack);
-            for (int i = 0; i < commandBuffers.size(); i++) {
-                VkCommandBuffer commandBuffer = commandBuffers.get(i);
+            renderPassBeginInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+            for (VkCommandBuffer commandBuffer : commandBuffers) {
                 int result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
                 if (result != VK_SUCCESS) {
                     throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
                 }
-                render(renderJobManager.getQueuePreScene(), commandBuffer, i, renderPassBeginInfo);
-                render(renderJobManager.getSceneRenderJob(), commandBuffer, i, renderPassBeginInfo);
-                render(renderJobManager.getQueuePostScene(), commandBuffer, i, renderPassBeginInfo);
-                result = vkEndCommandBuffer(commandBuffer);
+            }
+            render(renderJobManager.getQueuePreScene(), renderPassBeginInfo);
+            render(renderJobManager.getSceneRenderJob(), renderPassBeginInfo);
+            render(renderJobManager.getQueuePostScene(), renderPassBeginInfo);
+            for (VkCommandBuffer commandBuffer : commandBuffers) {
+                int result = vkEndCommandBuffer(commandBuffer);
                 if (result != VK_SUCCESS) {
                     throw new RuntimeException("Failed to record command buffer (result = " + result + ")");
                 }
@@ -231,24 +234,32 @@ public class SwapChain {
         }
     }
 
-    private void render(List<RenderJob<?>> renderJobBucket, VkCommandBuffer commandBuffer, int commandBufferIndex, VkRenderPassBeginInfo renderPassBeginInfo) {
+    private void render(List<RenderJob<?>> renderJobBucket, VkRenderPassBeginInfo renderPassBeginInfo) {
         renderJobBucket.forEach(renderJob -> {
-            render(renderJob, commandBuffer, commandBufferIndex, renderPassBeginInfo);
+            render(renderJob, renderPassBeginInfo);
         });
     }
 
-    private void render(RenderJob<?> renderJob, VkCommandBuffer commandBuffer, int commandBufferIndex, VkRenderPassBeginInfo renderPassBeginInfo) {
+    private void render(RenderJob<?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo) {
         try (MemoryStack stack = stackPush()) {
-            renderPassBeginInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
             renderPassBeginInfo.renderPass(renderJob.getRenderPass());
             renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
             renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
-            renderPassBeginInfo.framebuffer(renderJob.getFramebuffer(commandBufferIndex));
-
-            vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+            for (int i = 0; i < commandBuffers.size(); i++) {
+                renderPassBeginInfo.framebuffer(renderJob.getFramebuffer(i));
+                vkCmdBeginRenderPass(commandBuffers.get(i), renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+            }
         }
-        renderJob.render(commandBuffer, commandBufferIndex);
-        vkCmdEndRenderPass(commandBuffer);
+        renderJob.render(this::render);
+        for (VkCommandBuffer commandBuffer : commandBuffers) {
+            vkCmdEndRenderPass(commandBuffer);
+        }
+    }
+
+    private void render(RenderAction renderAction) {
+        for (int i = 0; i < commandBuffers.size(); i++) {
+            renderAction.render(commandBuffers.get(i), i);
+        }
     }
 
     public void cleanup() {
