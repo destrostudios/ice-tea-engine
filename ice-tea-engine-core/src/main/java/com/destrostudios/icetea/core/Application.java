@@ -493,16 +493,11 @@ public abstract class Application {
         vkDeviceWaitIdle(logicalDevice);
     }
 
-    protected void updateState(float tpf) {
+    private void updateState(float tpf) {
         inputManager.processPendingEvents();
         systems.forEach(system -> system.update(tpf));
         update(tpf);
-        updateLights();
-        commandBuffersOutdated |= rootNode.update(this, tpf);
-        if (commandBuffersOutdated) {
-            swapChain.recordCommandBuffers();
-            commandBuffersOutdated = false;
-        }
+        updateRenderDependencies(tpf);
     }
 
     private float calculateNextTpf() {
@@ -514,6 +509,15 @@ public abstract class Application {
 
     protected void update(float tpf) {
 
+    }
+
+    protected void updateRenderDependencies(float tpf) {
+        updateLights();
+        commandBuffersOutdated |= rootNode.update(this, tpf);
+        if (commandBuffersOutdated) {
+            swapChain.recordCommandBuffers();
+            commandBuffersOutdated = false;
+        }
     }
 
     private void updateLights() {
