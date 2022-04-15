@@ -486,14 +486,14 @@ public abstract class Application {
     private void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
-            updateState();
+            float tpf = calculateNextTpf();
+            updateState(tpf);
             drawFrame();
         }
         vkDeviceWaitIdle(logicalDevice);
     }
 
-    private void updateState() {
-        float tpf = calculateNextTpf();
+    protected void updateState(float tpf) {
         inputManager.processPendingEvents();
         systems.forEach(system -> system.update(tpf));
         update(tpf);

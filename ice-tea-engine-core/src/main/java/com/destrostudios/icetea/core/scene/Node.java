@@ -37,22 +37,12 @@ public class Node extends Spatial {
         for (Spatial child : children) {
             commandBufferOutdated |= child.update(application, tpf);
         }
-        updateWorldBoundsIfNecessary();
-        updateShadowReceiveWorldBoundsIfNecessary();
+        updateWorldBounds();
         if (childrenModified) {
             commandBufferOutdated = true;
             childrenModified = false;
         }
         return commandBufferOutdated;
-    }
-
-    @Override
-    protected void setWorldTransformOutdated() {
-        super.setWorldTransformOutdated();
-        for (Spatial child : children) {
-            child.setWorldTransformOutdated();
-            child.setWorldBoundsOutdated();
-        }
     }
 
     @Override

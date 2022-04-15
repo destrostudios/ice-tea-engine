@@ -16,7 +16,7 @@ public class ShaderManager {
         this.assetManager = assetManager;
         filesCache = new HashMap<>();
         spirvCache = new LinkedHashMap<>();
-        maximumCachedSPIRVs = 100;
+        maximumCachedSPIRVs = 1000;
     }
     private AssetManager assetManager;
     private HashMap<String, String> filesCache;

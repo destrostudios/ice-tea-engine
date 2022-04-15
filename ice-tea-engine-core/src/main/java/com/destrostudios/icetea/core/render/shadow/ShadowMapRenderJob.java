@@ -16,6 +16,7 @@ import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -55,32 +56,34 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     public void updateUniformBuffers(int currentImage) {
         super.updateUniformBuffers(currentImage);
+        // TODO: Introduce TempVars
         Matrix4f projectionMatrix = new Matrix4f();
         Matrix4f viewMatrix = new Matrix4f();
+        Vector4f clipPlane = new Vector4f();
         if (light instanceof DirectionalLight) {
             DirectionalLight directionalLight = (DirectionalLight) light;
-            BoundingBox sceneWorldBounds = application.getSceneNode().getShadowReceiveWorldBounds();
+            BoundingBox shadowMapBounds = application.getSceneNode().getWorldBoundsShadowReceive();
 
             // BoundingBox -> BoundingSphere
-            Vector3f sceneWorldBoundsCenter = sceneWorldBounds.getCenter();
-            float sceneWorldBoundsRadius = (float) Math.sqrt(
-                (sceneWorldBounds.getExtent().x() * sceneWorldBounds.getExtent().x()) +
-                (sceneWorldBounds.getExtent().y() * sceneWorldBounds.getExtent().y()) +
-                (sceneWorldBounds.getExtent().z() * sceneWorldBounds.getExtent().z())
+            Vector3f shadowMapBoundsCenter = shadowMapBounds.getCenter();
+            float shadowMapBoundsRadius = (float) Math.sqrt(
+                (shadowMapBounds.getExtent().x() * shadowMapBounds.getExtent().x()) +
+                (shadowMapBounds.getExtent().y() * shadowMapBounds.getExtent().y()) +
+                (shadowMapBounds.getExtent().z() * shadowMapBounds.getExtent().z())
             );
 
             projectionMatrix.ortho(
-                -1 * sceneWorldBoundsRadius,
-                sceneWorldBoundsRadius,
-                -1 * sceneWorldBoundsRadius,
-                sceneWorldBoundsRadius,
-                -1 * sceneWorldBoundsRadius,
-                sceneWorldBoundsRadius,
+                -1 * shadowMapBoundsRadius,
+                shadowMapBoundsRadius,
+                -1 * shadowMapBoundsRadius,
+                shadowMapBoundsRadius,
+                -1 * shadowMapBoundsRadius,
+                shadowMapBoundsRadius,
                 true
             );
             projectionMatrix.m11(projectionMatrix.m11() * -1);
 
-            viewMatrix.lookAt(sceneWorldBoundsCenter, sceneWorldBoundsCenter.add(directionalLight.getDirection(), new Vector3f()), new Vector3f(0, 0, 1));
+            viewMatrix.lookAt(shadowMapBoundsCenter, shadowMapBoundsCenter.add(directionalLight.getDirection(), new Vector3f()), new Vector3f(0, 0, 1));
         } else if (light instanceof SpotLight) {
             SpotLight spotLight = (SpotLight) light;
             projectionMatrix.perspective((float) Math.toRadians(45), ((float) shadowMapWidth) / shadowMapHeight, 0.1f, 100, true);
@@ -92,6 +95,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         lightTransformUniformData.setVector3f("location", application.getSceneCamera().getLocation());
         lightTransformUniformData.setMatrix4f("proj", projectionMatrix);
         lightTransformUniformData.setMatrix4f("view", viewMatrix);
+        lightTransformUniformData.setVector4f("clipPlane", clipPlane);
         lightTransformUniformData.updateBufferIfNecessary(currentImage);
     }
 
@@ -227,6 +231,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         lightTransformUniformData.setVector3f("location", new Vector3f());
         lightTransformUniformData.setMatrix4f("proj", new Matrix4f());
         lightTransformUniformData.setMatrix4f("view", new Matrix4f());
+        lightTransformUniformData.setVector4f("clipPlane", new Vector4f());
         lightTransformUniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 

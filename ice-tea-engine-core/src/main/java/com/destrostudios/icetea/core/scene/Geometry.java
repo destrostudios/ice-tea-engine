@@ -43,11 +43,10 @@ public class Geometry extends Spatial {
     @Override
     public boolean update(Application application, float tpf) {
         AtomicBoolean commandBufferOutdated = new AtomicBoolean(super.update(application, tpf));
+        updateWorldBounds();
         if (mesh.recreateBuffersIfNecessary()) {
             commandBufferOutdated.set(true);
         }
-        updateWorldBoundsIfNecessary();
-        updateShadowReceiveWorldBoundsIfNecessary();
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
         application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {
             GeometryRenderContext renderContext = renderContexts.get(renderJob);
@@ -77,7 +76,7 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    public void init() {
+    protected void init() {
         super.init();
         if (!mesh.isInitialized()) {
             mesh.init(application);

@@ -240,7 +240,6 @@ public class TestApplication extends Application {
         // Dennis
 
         Mesh meshDennis = assetManager.loadMesh("models/dennis.obj");
-        meshDennis.init(this); // Preload to avoid lag later on
         meshDennis.loadCollisionTree(); // Preload to avoid lag later on
 
         Material materialDennis = new Material();

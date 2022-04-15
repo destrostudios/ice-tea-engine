@@ -27,7 +27,8 @@ public abstract class Spatial implements ContextCloneable {
         localTransform = new Transform();
         worldTransform = new Transform();
         worldBounds = new BoundingBox();
-        shadowReceiveWorldBounds = new BoundingBox();
+        shadowMode = ShadowMode.INHERIT;
+        worldBoundsShadowReceive = new BoundingBox();
     }
 
     protected Spatial(Spatial spatial, CloneContext context) {
@@ -35,11 +36,8 @@ public abstract class Spatial implements ContextCloneable {
         localTransform = spatial.localTransform.clone(context);
         worldTransform = spatial.worldTransform.clone(context);
         worldBounds = spatial.worldBounds.clone(context);
-        isWorldTransformOutdated = spatial.isWorldTransformOutdated;
-        isWorldBoundsOutdated = spatial.isWorldBoundsOutdated;
         shadowMode = spatial.shadowMode;
-        shadowReceiveWorldBounds = spatial.shadowReceiveWorldBounds.clone(context);
-        isShadowReceiveWorldBoundsOutdated = spatial.isShadowReceiveWorldBoundsOutdated;
+        worldBoundsShadowReceive = spatial.worldBoundsShadowReceive.clone(context);
         for (Control control : spatial.controls) {
             controls.add(control.clone(context));
         }
@@ -54,17 +52,15 @@ public abstract class Spatial implements ContextCloneable {
     protected Transform worldTransform;
     @Getter
     protected BoundingBox worldBounds;
-    private boolean isWorldTransformOutdated;
-    private boolean isWorldBoundsOutdated;
     @Getter
-    private ShadowMode shadowMode = ShadowMode.INHERIT;
+    @Setter
+    private ShadowMode shadowMode;
     @Getter
-    private BoundingBox shadowReceiveWorldBounds;
-    private boolean isShadowReceiveWorldBoundsOutdated;
+    private BoundingBox worldBoundsShadowReceive;
     @Getter
     protected Set<Control> controls = new HashSet<>();
-    @Setter
     @Getter
+    @Setter
     private RenderBucketType renderBucket;
     // TODO: Introduce TempVars
     private LinkedList<MaterialDescriptorWithLayout> tmpAdditionalMaterialDescriptors = new LinkedList<>();
@@ -79,30 +75,14 @@ public abstract class Spatial implements ContextCloneable {
         for (Control control : controls) {
             control.update(tpf);
         }
-        if (localTransform.updateMatrixIfNecessary()) {
-            setWorldTransformOutdated();
-            setWorldBoundsOutdated();
-        }
-        updateWorldTransformIfNecessary();
+        localTransform.updateMatrixIfNecessary();
+        updateWorldTransform();
         return false;
     }
 
     protected void init() {
-        setWorldTransformOutdated();
-        setWorldBoundsOutdated();
+        // Make sure control-generated materials are available in Geometry.init
         ensureControlsState();
-    }
-
-    protected void setWorldTransformOutdated() {
-        isWorldTransformOutdated = true;
-    }
-
-    protected void setWorldBoundsOutdated() {
-        isWorldBoundsOutdated = true;
-        if (parent != null) {
-            parent.setWorldBoundsOutdated();
-        }
-        setShadowReceiveWorldBoundsOutdated();
     }
 
     private void ensureControlsState() {
@@ -111,13 +91,6 @@ public abstract class Spatial implements ContextCloneable {
                 control.init(application);
             }
             control.setSpatial(this);
-        }
-    }
-
-    protected void updateWorldTransformIfNecessary() {
-        if (isWorldTransformOutdated) {
-            updateWorldTransform();
-            isWorldTransformOutdated = false;
         }
     }
 
@@ -130,14 +103,12 @@ public abstract class Spatial implements ContextCloneable {
         }
     }
 
-    protected void updateWorldBoundsIfNecessary() {
-        if (isWorldBoundsOutdated) {
-            updateWorldBounds(worldBounds, spatial -> true);
-            isWorldBoundsOutdated = false;
-        }
-    }
-
     protected abstract void updateWorldBounds(BoundingBox destinationWorldBounds, Predicate<Spatial> isSpatialConsidered);
+
+    protected void updateWorldBounds() {
+        updateWorldBounds(worldBounds, spatial -> true);
+        updateWorldBounds(worldBoundsShadowReceive, Spatial::isReceivingShadows);
+    }
 
     public void setLocalTransform(Transform transform) {
         localTransform.set(transform);
@@ -196,32 +167,6 @@ public abstract class Spatial implements ContextCloneable {
     protected abstract void collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults);
 
     public abstract void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults);
-
-    // TODO: Changing shadow mode on parent nodes should outdate the children - Before implementing, decide if to continue with the INHERIT approach
-    public void setShadowMode(ShadowMode shadowMode) {
-        boolean wasReceivingShadows = isReceivingShadows();
-        this.shadowMode = shadowMode;
-        boolean isReceivingShadows = isReceivingShadows();
-        if (isReceivingShadows != wasReceivingShadows) {
-            setShadowReceiveWorldBoundsOutdated();
-        }
-    }
-
-    protected void setShadowReceiveWorldBoundsOutdated() {
-        isShadowReceiveWorldBoundsOutdated = true;
-        if (parent != null) {
-            parent.setShadowReceiveWorldBoundsOutdated();
-        }
-    }
-
-    protected boolean updateShadowReceiveWorldBoundsIfNecessary() {
-        if (isShadowReceiveWorldBoundsOutdated) {
-            updateWorldBounds(shadowReceiveWorldBounds, Spatial::isReceivingShadows);
-            isShadowReceiveWorldBoundsOutdated = false;
-            return true;
-        }
-        return false;
-    }
 
     public boolean isReceivingShadows() {
         return (shadowMode == ShadowMode.RECEIVE)
