@@ -98,8 +98,17 @@ public class Node extends Spatial {
     }
 
     public void add(Spatial spatial) {
+        if (spatial.getParent() != null) {
+            spatial.getParent().remove(spatial);
+        }
         spatial.setParent(this);
         children.add(spatial);
+        childrenModified = true;
+    }
+
+    public void remove(Spatial spatial) {
+        spatial.setParent(null);
+        children.remove(spatial);
         childrenModified = true;
     }
 
@@ -108,12 +117,6 @@ public class Node extends Spatial {
             spatial.setParent(null);
         }
         children.clear();
-        childrenModified = true;
-    }
-
-    public void remove(Spatial spatial) {
-        spatial.setParent(null);
-        children.remove(spatial);
         childrenModified = true;
     }
 

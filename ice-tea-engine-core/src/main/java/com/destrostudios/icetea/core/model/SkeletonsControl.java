@@ -8,16 +8,16 @@ import lombok.Getter;
 import java.util.Collection;
 import java.util.LinkedList;
 
-public class SkeletonsNodeControl extends Control {
+public class SkeletonsControl extends Control {
 
-    public SkeletonsNodeControl(SkeletonsNodeControl skeletonsNodeControl, CloneContext context) {
+    public SkeletonsControl(SkeletonsControl skeletonsControl, CloneContext context) {
         skeletons = new LinkedList<>();
-        for (Skeleton skeleton : skeletonsNodeControl.skeletons) {
+        for (Skeleton skeleton : skeletonsControl.skeletons) {
             skeletons.add(context.cloneByReference(skeleton));
         }
     }
 
-    public SkeletonsNodeControl(Collection<Skeleton> skeletons) {
+    public SkeletonsControl(Collection<Skeleton> skeletons) {
         this.skeletons = skeletons;
     }
     @Getter
@@ -56,7 +56,7 @@ public class SkeletonsNodeControl extends Control {
     }
 
     @Override
-    public SkeletonsNodeControl clone(CloneContext context) {
-        return new SkeletonsNodeControl(this, context);
+    public SkeletonsControl clone(CloneContext context) {
+        return new SkeletonsControl(this, context);
     }
 }

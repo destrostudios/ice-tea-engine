@@ -2,6 +2,7 @@ package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.animation.AnimationControl;
+import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
 import com.destrostudios.icetea.core.asset.locator.FileLocator;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
@@ -263,7 +264,7 @@ public class TestApplication extends Application {
 
         // Duck
 
-        nodeDuck = assetManager.loadModel("models/duck/Duck.gltf", CloneContext.reuseAll());
+        nodeDuck = (Node) assetManager.loadModel("models/duck/Duck.gltf");
         nodeDuck.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
         nodeDuck.scale(new Vector3f(0.25f, 0.25f, 0.25f));
         nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("mixColor", new Vector4f(1, 0, 0, 1)));
@@ -276,7 +277,7 @@ public class TestApplication extends Application {
 
         // Animated objects
 
-        Node animatedObject1 = assetManager.loadModel("models/simple_skin/SimpleSkin.gltf", CloneContext.reuseAll());
+        Node animatedObject1 = (Node) assetManager.loadModel("models/simple_skin/SimpleSkin.gltf");
         animatedObject1.forEachGeometry(geometry -> geometry.getMesh().generateNormals());
         animatedObject1.move(new Vector3f(-2.5f, 0.6f, 0));
         animatedObject1.scale(new Vector3f(0.5f, 0.5f, 0.5f));
@@ -285,10 +286,10 @@ public class TestApplication extends Application {
         animationControl1.play(0);
         sceneNode.add(animatedObject1);
 
-        animatedObject2 = assetManager.loadModel("models/footman/scene.gltf", CloneContext.reuseAll());
+        animatedObject2 = (Node) assetManager.loadModel("models/footman/scene.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
         animatedObject2.move(new Vector3f(2.5f, 0, 0));
-        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0)));
-        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 0, 0, 1)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 0, 1, 0)));
         animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject2.forEachGeometry(geometry -> geometry.getMaterial().setCullMode(VK_CULL_MODE_NONE));
         animatedObject2.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
@@ -296,10 +297,9 @@ public class TestApplication extends Application {
         animationControl2.play(animatedObject2AnimationIndex);
         sceneNode.add(animatedObject2);
 
-        Node animatedObject3 = assetManager.loadModel("models/fallacia35.gltf", CloneContext.reuseAll());
+        Spatial animatedObject3 = assetManager.loadModel("models/fallacia35.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
         animatedObject3.move(new Vector3f(3, 0, 0));
-        animatedObject3.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 1, 0, 0)));
-        animatedObject3.scale(new Vector3f(0.0023f, 0.0023f, 0.0023f));
+        animatedObject3.scale(new Vector3f(0.23f, 0.23f, 0.23f));
         animatedObject3.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl3 = animatedObject3.getFirstControl(AnimationControl.class);
         animationControl3.play("Armature|mixamo.com|Layer0");

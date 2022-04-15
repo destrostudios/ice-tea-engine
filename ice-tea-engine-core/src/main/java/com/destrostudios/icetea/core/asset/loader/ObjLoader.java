@@ -16,7 +16,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 
-public class ObjLoader extends AssetLoader<Mesh> {
+public class ObjLoader extends AssetLoader<Mesh, Void> {
 
     private ArrayList<Vector3f> positionsList;
     private ArrayList<Vector2f> texCoordsList;

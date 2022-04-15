@@ -11,12 +11,14 @@ import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.model.Joint;
 import com.destrostudios.icetea.core.model.Skeleton;
 import com.destrostudios.icetea.core.model.SkeletonGeometryControl;
-import com.destrostudios.icetea.core.model.SkeletonsNodeControl;
+import com.destrostudios.icetea.core.model.SkeletonsControl;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.scene.Node;
+import com.destrostudios.icetea.core.scene.Spatial;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.LowEndianUtil;
+import com.destrostudios.icetea.core.util.SpatialUtil;
 import de.javagl.jgltf.model.*;
 import de.javagl.jgltf.model.io.GltfModelReader;
 import de.javagl.jgltf.model.v1.GltfModelV1;
@@ -26,7 +28,7 @@ import org.joml.*;
 import java.io.*;
 import java.util.*;
 
-public class GltfLoader extends AssetLoader<Node> {
+public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
     public GltfLoader() {
         nodesMap = new HashMap<>();
@@ -48,8 +50,8 @@ public class GltfLoader extends AssetLoader<Node> {
     private float[] tmpMatrix4f;
 
     @Override
-    public void setContext(AssetManager assetManager, String key) {
-        super.setContext(assetManager, key);
+    public void setContext(AssetManager assetManager, String key, GltfLoaderSettings settings) {
+        super.setContext(assetManager, key, settings);
         // TODO: Share code between different loaders that need the directory for references
         int slashIndex = key.lastIndexOf("/");
         if (slashIndex != -1) {
@@ -60,12 +62,12 @@ public class GltfLoader extends AssetLoader<Node> {
     }
 
     @Override
-    public Node load(InputStream inputStream) throws IOException {
+    public Spatial load(InputStream inputStream) throws IOException {
         gltfModel = new GltfModelReader().readWithoutReferences(inputStream);
         return loadScenes();
     }
 
-    private Node loadScenes() {
+    private Spatial loadScenes() {
         Node rootNode = new Node();
         for (SceneModel sceneModel : gltfModel.getSceneModels()) {
             Node sceneNode = new Node();
@@ -75,15 +77,16 @@ public class GltfLoader extends AssetLoader<Node> {
             }
             rootNode.add(sceneNode);
         }
+        Spatial spatial = (settings.isBakeGeometries() ? SpatialUtil.bakeGeometries(rootNode) : rootNode);
         Collection<Skeleton> skeletons = skeletonMap.values();
         if (skeletons.size() > 0) {
-            rootNode.addControl(new SkeletonsNodeControl(skeletons));
+            spatial.addControl(new SkeletonsControl(skeletons));
         }
         ArrayList<CombinedAnimation> animations = loadAnimations(gltfModel.getAnimationModels());
         if (animations.size() > 0) {
-            rootNode.addControl(new AnimationControl(animations));
+            spatial.addControl(new AnimationControl(animations));
         }
-        return rootNode;
+        return spatial;
     }
 
     private ArrayList<CombinedAnimation> loadAnimations(List<AnimationModel> animationModels) {
@@ -182,10 +185,7 @@ public class GltfLoader extends AssetLoader<Node> {
             Node child = loadNode(childNodeModel);
             node.add(child);
         }
-        float[] matrix = nodeModel.getMatrix();
-        if (matrix != null) {
-            node.setLocalTransform(loadMatrix(matrix));
-        }
+        node.setLocalTransform(loadTransform(nodeModel));
         nodesMap.put(nodeModel, node);
         return node;
     }
@@ -298,11 +298,7 @@ public class GltfLoader extends AssetLoader<Node> {
     private Joint getOrCreateJoint(NodeModel nodeModel) {
         Joint joint = jointsMap.get(nodeModel);
         if (joint == null) {
-            Transform localResetTransform = new Transform();
-            float[] localResetTransformMatrix = nodeModel.getMatrix();
-            if (localResetTransformMatrix != null) {
-                localResetTransform.set(loadMatrix(localResetTransformMatrix));
-            }
+            Transform localResetTransform = loadTransform(nodeModel);
             joint = new Joint(nodeModel.getChildren().size(), localResetTransform);
             int childIndex = 0;
             for (NodeModel childNodeModel : nodeModel.getChildren()) {
@@ -314,13 +310,26 @@ public class GltfLoader extends AssetLoader<Node> {
         return joint;
     }
 
-    private Matrix4f loadMatrix(float[] matrix) {
-        return new Matrix4f(
-            matrix[0], matrix[1], matrix[2], matrix[3],
-            matrix[4], matrix[5], matrix[6], matrix[7],
-            matrix[8], matrix[9], matrix[10], matrix[11],
-            matrix[12], matrix[13], matrix[14], matrix[15]
-        );
+    private Transform loadTransform(NodeModel nodeModel) {
+        Transform transform = new Transform();
+        float[] matrix = nodeModel.getMatrix();
+        if (matrix != null) {
+            transform.set(loadMatrix(matrix));
+        } else {
+            float[] translation = nodeModel.getTranslation();
+            if (translation != null) {
+                transform.setTranslation(new Vector3f(translation[0], translation[1], translation[2]));
+            }
+            float[] scale = nodeModel.getScale();
+            if (scale != null) {
+                transform.setScale(new Vector3f(scale[0], scale[1], scale[2]));
+            }
+            float[] rotation = nodeModel.getRotation();
+            if (rotation != null) {
+                transform.setRotation(new Quaternionf(rotation[0], rotation[1], rotation[2], rotation[3]));
+            }
+        }
+        return transform;
     }
 
     private LinkedList<Object> readValues(AccessorModel accessorModel) {
@@ -486,6 +495,15 @@ public class GltfLoader extends AssetLoader<Node> {
             ex.printStackTrace();
         }
         return values;
+    }
+
+    private Matrix4f loadMatrix(float[] matrix) {
+        return new Matrix4f(
+            matrix[0], matrix[1], matrix[2], matrix[3],
+            matrix[4], matrix[5], matrix[6], matrix[7],
+            matrix[8], matrix[9], matrix[10], matrix[11],
+            matrix[12], matrix[13], matrix[14], matrix[15]
+        );
     }
 
     private Material loadMaterial(MaterialModel materialModel) {

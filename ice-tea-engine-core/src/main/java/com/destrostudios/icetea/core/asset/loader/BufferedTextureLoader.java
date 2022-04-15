@@ -14,7 +14,7 @@ import static org.lwjgl.stb.STBImage.STBI_rgb_alpha;
 import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
-public class BufferedTextureLoader extends AssetLoader<BufferedTexture> {
+public class BufferedTextureLoader extends AssetLoader<BufferedTexture, Void> {
 
     @Override
     public BufferedTexture load(InputStream inputStream) throws IOException {

@@ -121,7 +121,7 @@ public abstract class Spatial implements ContextCloneable {
         }
     }
 
-    protected void updateWorldTransform() {
+    public void updateWorldTransform() {
         if (parent != null) {
             worldTransform.setChildWorldTransform(parent.getWorldTransform(), localTransform);
             worldTransform.updateMatrixIfNecessary();
@@ -138,6 +138,10 @@ public abstract class Spatial implements ContextCloneable {
     }
 
     protected abstract void updateWorldBounds(BoundingBox destinationWorldBounds, Predicate<Spatial> isSpatialConsidered);
+
+    public void setLocalTransform(Transform transform) {
+        localTransform.set(transform);
+    }
 
     public void setLocalTransform(Matrix4fc transform) {
         localTransform.set(transform);
@@ -251,6 +255,12 @@ public abstract class Spatial implements ContextCloneable {
             }
         }
         return null;
+    }
+
+    public void removeFromParent() {
+        if (parent != null) {
+            parent.remove(this);
+        }
     }
 
     public void setParent(Node parent) {

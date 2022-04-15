@@ -90,7 +90,7 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    protected void updateWorldTransform() {
+    public void updateWorldTransform() {
         super.updateWorldTransform();
         updateWorldTransformUniform();
     }

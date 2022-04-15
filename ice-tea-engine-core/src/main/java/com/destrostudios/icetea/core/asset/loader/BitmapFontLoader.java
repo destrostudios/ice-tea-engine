@@ -12,13 +12,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
-public class BitmapFontLoader extends AssetLoader<BitmapFont> {
+public class BitmapFontLoader extends AssetLoader<BitmapFont, Void> {
 
     private String keyDirectory;
 
     @Override
-    public void setContext(AssetManager assetManager, String key) {
-        super.setContext(assetManager, key);
+    public void setContext(AssetManager assetManager, String key, Void settings) {
+        super.setContext(assetManager, key, settings);
         // TODO: Share code between different loaders that need the directory for references
         int slashIndex = key.lastIndexOf("/");
         if (slashIndex != -1) {
