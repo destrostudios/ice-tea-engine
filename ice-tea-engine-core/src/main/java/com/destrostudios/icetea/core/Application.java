@@ -23,7 +23,6 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
 import java.util.stream.Stream;
@@ -82,7 +81,6 @@ public abstract class Application {
     private long window;
     @Getter
     private long surface;
-    private boolean wasResized;
     @Getter
     private PhysicalDeviceInformation physicalDeviceInformation;
     @Getter
@@ -93,6 +91,7 @@ public abstract class Application {
     private VkDevice logicalDevice;
     @Getter
     private VkQueue graphicsQueue;
+    @Getter
     private VkQueue presentQueue;
     @Getter
     private long commandPool;
@@ -101,6 +100,7 @@ public abstract class Application {
     @Getter
     private SwapChain swapChain;
     private boolean commandBuffersOutdated;
+    private boolean isSceneInitialized;
     protected float time;
 
     @Getter
@@ -120,10 +120,6 @@ public abstract class Application {
     @Getter
     private LinkedList<AppSystem> systems;
 
-    private List<Frame> inFlightFrames;
-    private Map<Integer, Frame> imagesInFlight;
-    private int currentFrame;
-
     public void start() {
         init();
         mainLoop();
@@ -134,10 +130,10 @@ public abstract class Application {
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
-        inputManager = new InputManager(this);
+        inputManager = new InputManager();
         assetManager = new AssetManager();
         assetManager.addLocator(new ClasspathLocator());
-        shaderManager = new ShaderManager(assetManager);
+        shaderManager = new ShaderManager();
         rootNode = new Node();
         sceneNode = new Node();
         rootNode.add(sceneNode);
@@ -151,11 +147,12 @@ public abstract class Application {
         initPhysicalDevice();
         initLogicalDevice();
         initCommandPool();
-        initSwapChain();
-        initCameras();
-        inputManager.init();
-        initScene();
-        initSyncObjects();
+        sceneCamera = new SceneCamera();
+        guiCamera = new GuiCamera();
+        updateGuiCamera();
+        bucketRenderer = new BucketRenderer(this);
+        swapChain = new SwapChain();
+        preloadRenderDependencies();
     }
 
     private void initWindow() {
@@ -173,7 +170,7 @@ public abstract class Application {
     private void onFrameBufferResized(long window, int width, int height) {
         config.setWidth(width);
         config.setHeight(height);
-        wasResized = true;
+        swapChain.onResize();
         updateGuiCamera();
     }
 
@@ -349,63 +346,71 @@ public abstract class Application {
         }
     }
 
-    private void initSwapChain() {
-        sceneCamera = new SceneCamera();
-        guiCamera = new GuiCamera();
-        bucketRenderer = new BucketRenderer();
-        swapChain = new SwapChain();
-        swapChain.init(this);
-        bucketRenderer.init(this);
-    }
-
-    private void initCameras() {
-        sceneCamera.init(this);
-        sceneCamera.setFieldOfViewY((float) Math.toRadians(45));
-        sceneCamera.setAspect((float) swapChain.getExtent().width() / (float) swapChain.getExtent().height());
-        sceneCamera.setZNear(0.1f);
-        sceneCamera.setZFar(100);
-
-        guiCamera.init(this);
-        updateGuiCamera();
-    }
-
     private void updateGuiCamera() {
         guiCamera.setWindowSize(config.getWidth(), config.getHeight());
     }
 
-    protected abstract void initScene();
+    protected void initScene() {
 
-    private void initSyncObjects() {
-        inFlightFrames = new ArrayList<>(config.getFramesInFlight());
-        imagesInFlight = new HashMap<>(swapChain.getImages().size());
-        try (MemoryStack stack = stackPush()) {
-            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.callocStack(stack);
-            semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+    }
 
-            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.callocStack(stack);
-            fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-            fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
-
-            LongBuffer pImageAvailableSemaphore = stack.mallocLong(1);
-            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
-            LongBuffer pFence = stack.mallocLong(1);
-
-            for (int i = 0; i < config.getFramesInFlight(); i++) {
-                int result = vkCreateSemaphore(logicalDevice, semaphoreInfo, null, pImageAvailableSemaphore);
-                if (result != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create image available semaphore for the frame " + i + " (result = " + result + ")");
-                }
-                result = vkCreateSemaphore(logicalDevice, semaphoreInfo, null, pRenderFinishedSemaphore);
-                if (result != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create render finished semaphore for the frame " + i + " (result = " + result + ")");
-                }
-                result = vkCreateFence(logicalDevice, fenceInfo, null, pFence);
-                if (result != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create fence for the frame " + i + " (result = " + result + ")");
-                }
-                inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+    private void mainLoop() {
+        while (!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
+            int imageIndex = swapChain.acquireNextImageIndex();
+            if (imageIndex != -1) {
+                float tpf = calculateNextTpf();
+                update(tpf);
+                updateRenderDependencies(imageIndex, tpf);
+                swapChain.drawFrame(imageIndex);
             }
         }
+        vkDeviceWaitIdle(logicalDevice);
+    }
+
+    private float calculateNextTpf() {
+        float currentTime = (float) glfwGetTime();
+        float tpf = (currentTime - time);
+        time = currentTime;
+        return tpf;
+    }
+
+    protected void update(float tpf) {
+        if (!isSceneInitialized) {
+            initScene();
+            isSceneInitialized = true;
+        }
+        systems.forEach(system -> system.update(tpf));
+    }
+
+    public void preloadRenderDependencies() {
+        updateRenderDependencies(0, 0);
+    }
+
+    private void updateRenderDependencies(int imageIndex, float tpf) {
+        swapChain.update(this, imageIndex, tpf);
+        inputManager.update(this, imageIndex, tpf);
+        shaderManager.update(this, imageIndex, tpf);
+        sceneCamera.update(this, imageIndex, tpf);
+        guiCamera.update(this, imageIndex, tpf);
+        if (light != null) {
+            light.update(this, imageIndex, tpf);
+            if (light.isModified()) {
+                swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
+                recreateRenderJobs();
+                light.setModified(false);
+            }
+        }
+        commandBuffersOutdated |= rootNode.updateAndCheckCommandBuffersOutdated(this, imageIndex, tpf);
+        if (commandBuffersOutdated) {
+            swapChain.recordCommandBuffers();
+            commandBuffersOutdated = false;
+        }
+    }
+
+    public void recreateRenderJobs() {
+        swapChain.recreateRenderJobs();
+        commandBuffersOutdated = true;
     }
 
     public int findMemoryType(int typeFilter, int properties) {
@@ -483,132 +488,6 @@ public abstract class Application {
         return dest;
     }
 
-    private void mainLoop() {
-        while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
-            float tpf = calculateNextTpf();
-            updateState(tpf);
-            drawFrame();
-        }
-        vkDeviceWaitIdle(logicalDevice);
-    }
-
-    private void updateState(float tpf) {
-        inputManager.processPendingEvents();
-        systems.forEach(system -> system.update(tpf));
-        update(tpf);
-        updateRenderDependencies(tpf);
-    }
-
-    private float calculateNextTpf() {
-        float currentTime = (float) glfwGetTime();
-        float tpf = (currentTime - time);
-        time = currentTime;
-        return tpf;
-    }
-
-    protected void update(float tpf) {
-
-    }
-
-    protected void updateRenderDependencies(float tpf) {
-        updateLights();
-        commandBuffersOutdated |= rootNode.update(this, tpf);
-        if (commandBuffersOutdated) {
-            swapChain.recordCommandBuffers();
-            commandBuffersOutdated = false;
-        }
-    }
-
-    private void updateLights() {
-        if (light != null) {
-            light.update(this);
-            if (light.isModified()) {
-                swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
-                recreateRenderJobs();
-                light.setModified(false);
-            }
-        }
-    }
-
-    public void recreateRenderJobs() {
-        swapChain.recreateRenderJobs();
-        commandBuffersOutdated = true;
-    }
-
-    private void drawFrame() {
-        try (MemoryStack stack = stackPush()) {
-            Frame thisFrame = inFlightFrames.get(currentFrame);
-
-            IntBuffer pImageIndex = stack.mallocInt(1);
-            int result = vkAcquireNextImageKHR(
-                logicalDevice,
-                swapChain.getSwapChain(),
-                MathUtil.UINT64_MAX,
-                thisFrame.getImageAvailableSemaphore(),
-                VK_NULL_HANDLE,
-                pImageIndex
-            );
-            if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-                swapChain.recreate();
-                return;
-            } else if (result != VK_SUCCESS) {
-                throw new RuntimeException("Cannot get image (result = " + result + ")");
-            }
-            int imageIndex = pImageIndex.get(0);
-            updateUniformBuffers(imageIndex);
-
-            if (imagesInFlight.containsKey(imageIndex)) {
-                vkWaitForFences(logicalDevice, imagesInFlight.get(imageIndex).getFence(), true, MathUtil.UINT64_MAX);
-            }
-            imagesInFlight.put(imageIndex, thisFrame);
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack);
-            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-            submitInfo.waitSemaphoreCount(1);
-            submitInfo.pWaitSemaphores(stack.longs(thisFrame.getImageAvailableSemaphore()));
-            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-            LongBuffer pRenderFinishedSemaphore = stack.longs(thisFrame.getRenderFinishedSemaphore());
-            submitInfo.pSignalSemaphores(pRenderFinishedSemaphore);
-            submitInfo.pCommandBuffers(stack.pointers(swapChain.getCommandBuffers().get(imageIndex)));
-            LongBuffer pFence = stack.longs(thisFrame.getFence());
-            vkResetFences(logicalDevice, pFence);
-            result = vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.getFence());
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to submit draw command buffer (result = " + result + ")");
-            }
-
-            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.callocStack(stack);
-            presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
-            presentInfo.pWaitSemaphores(pRenderFinishedSemaphore);
-            presentInfo.swapchainCount(1);
-            presentInfo.pSwapchains(stack.longs(swapChain.getSwapChain()));
-            presentInfo.pImageIndices(pImageIndex);
-            result = vkQueuePresentKHR(presentQueue, presentInfo);
-            if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR) || wasResized) {
-                wasResized = false;
-                swapChain.recreate();
-            } else if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to present swap chain image (result = " + result + ")");
-            }
-
-            currentFrame = ((currentFrame + 1) % config.getFramesInFlight());
-
-            // Wait for GPU to be finished, so we can safely access memory in our logic again (e.g. freeing memory of removed objects)
-            vkWaitForFences(logicalDevice, pFence, true, MathUtil.UINT64_MAX);
-        }
-    }
-
-    private void updateUniformBuffers(int currentImage) {
-        swapChain.getRenderJobManager().forEachRenderJob(renderJob -> renderJob.updateUniformBuffers(currentImage));
-        sceneCamera.updateUniformBuffers(currentImage);
-        guiCamera.updateUniformBuffers(currentImage);
-        if (light != null) {
-            light.updateUniformBuffers(currentImage);
-        }
-        rootNode.updateUniformBuffers(currentImage);
-    }
-
     private void cleanup() {
         inputManager.cleanup();
 
@@ -626,13 +505,6 @@ public abstract class Application {
         }
 
         filters.forEach(Filter::cleanup);
-
-        inFlightFrames.forEach(frame -> {
-            vkDestroySemaphore(logicalDevice, frame.getRenderFinishedSemaphore(), null);
-            vkDestroySemaphore(logicalDevice, frame.getImageAvailableSemaphore(), null);
-            vkDestroyFence(logicalDevice, frame.getFence(), null);
-        });
-        inFlightFrames.clear();
 
         vkDestroyCommandPool(logicalDevice, commandPool, null);
 

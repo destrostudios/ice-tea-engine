@@ -25,18 +25,8 @@ public class ReflectionRenderJob extends SceneRenderJob {
     }
 
     @Override
-    public boolean isRendering(Geometry geometry) {
-        return ((geometry != geometryWater) && geometry.hasParent(application.getSceneNode()));
-    }
-
-    @Override
-    public SceneGeometryRenderContext createGeometryRenderContext() {
-        return new SceneGeometryRenderContext(() -> reflectionCamera, application.getBucketRenderer());
-    }
-
-    @Override
-    public void updateUniformBuffers(int currentImage) {
-        super.updateUniformBuffers(currentImage);
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         reflectionCamera.set(application.getSceneCamera());
         Vector3f location = reflectionCamera.getLocation();
         float waterHeight = geometryWater.getWorldTransform().getTranslation().y();
@@ -49,7 +39,17 @@ public class ReflectionRenderJob extends SceneRenderJob {
         rotation.rotateAxis((float) Math.PI, flatWaterLine);
         reflectionCamera.setRotation(rotation);
         reflectionCamera.setClipPlane(new Vector4f(0, 1, 0, waterHeight));
-        reflectionCamera.updateUniformBuffers(currentImage);
+        reflectionCamera.update(application, imageIndex, tpf);
+    }
+
+    @Override
+    public boolean isRendering(Geometry geometry) {
+        return ((geometry != geometryWater) && geometry.hasParent(application.getSceneNode()));
+    }
+
+    @Override
+    public SceneGeometryRenderContext createGeometryRenderContext() {
+        return new SceneGeometryRenderContext(() -> reflectionCamera, application.getBucketRenderer());
     }
 
     @Override

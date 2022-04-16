@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core;
 
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
@@ -7,6 +8,7 @@ import com.destrostudios.icetea.core.render.RenderJobManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
+import lombok.Setter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -14,7 +16,9 @@ import org.lwjgl.vulkan.*;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwWaitEvents;
@@ -25,12 +29,11 @@ import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class SwapChain {
+public class SwapChain extends LifecycleObject {
 
     public SwapChain() {
         renderJobManager = new RenderJobManager();
     }
-    private Application application;
     @Getter
     private VkExtent2D extent;
     @Getter
@@ -45,6 +48,11 @@ public class SwapChain {
     private ArrayList<VkCommandBuffer> commandBuffers;
     @Getter
     private RenderJobManager renderJobManager;
+    private List<Frame> inFlightFrames;
+    private Map<Integer, Frame> imagesInFlight;
+    private int currentFrame;
+    private boolean wasResized;
+    private boolean isDuringRecreation;
 
     public void recreate() {
         // Wait if minimized
@@ -57,17 +65,25 @@ public class SwapChain {
             }
         }
         vkDeviceWaitIdle(application.getLogicalDevice());
+        Application tmpApplication = application;
+        // TODO: This is a workaround to prevent inFlightFrame recreation (not allowed while actively rendering) during swapchain recreation
+        isDuringRecreation = true;
         cleanup();
-        init(application);
+        isDuringRecreation = false;
+        init(tmpApplication);
         recordCommandBuffers();
     }
 
+    @Override
     public void init(Application application) {
-        this.application = application;
+        super.init(application);
         initSwapChain();
         initImageViews();
         initRenderJobs();
         initCommandBuffers();
+        if (inFlightFrames == null) {
+            initSyncObjects();
+        }
     }
 
     private void initSwapChain() {
@@ -209,6 +225,39 @@ public class SwapChain {
         }
     }
 
+    private void initSyncObjects() {
+        inFlightFrames = new ArrayList<>(application.getConfig().getFramesInFlight());
+        imagesInFlight = new HashMap<>(images.size());
+        try (MemoryStack stack = stackPush()) {
+            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.callocStack(stack);
+            semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.callocStack(stack);
+            fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+            fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
+
+            LongBuffer pImageAvailableSemaphore = stack.mallocLong(1);
+            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
+            LongBuffer pFence = stack.mallocLong(1);
+
+            for (int i = 0; i < application.getConfig().getFramesInFlight(); i++) {
+                int result = vkCreateSemaphore(application.getLogicalDevice(), semaphoreInfo, null, pImageAvailableSemaphore);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create image available semaphore for the frame " + i + " (result = " + result + ")");
+                }
+                result = vkCreateSemaphore(application.getLogicalDevice(), semaphoreInfo, null, pRenderFinishedSemaphore);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create render finished semaphore for the frame " + i + " (result = " + result + ")");
+                }
+                result = vkCreateFence(application.getLogicalDevice(), fenceInfo, null, pFence);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create fence for the frame " + i + " (result = " + result + ")");
+                }
+                inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+            }
+        }
+    }
+
     public void recordCommandBuffers() {
         try (MemoryStack stack = stackPush()) {
             VkCommandBufferBeginInfo bufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
@@ -262,11 +311,101 @@ public class SwapChain {
         }
     }
 
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
+        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, imageIndex, tpf));
+    }
+
+    public int acquireNextImageIndex() {
+        try (MemoryStack stack = stackPush()) {
+            Frame thisFrame = inFlightFrames.get(currentFrame);
+            IntBuffer pImageIndex = stack.mallocInt(1);
+            int result = vkAcquireNextImageKHR(
+                application.getLogicalDevice(),
+                swapChain,
+                MathUtil.UINT64_MAX,
+                thisFrame.getImageAvailableSemaphore(),
+                VK_NULL_HANDLE,
+                pImageIndex
+            );
+            if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+                recreate();
+                return -1;
+            } else if (result != VK_SUCCESS) {
+                throw new RuntimeException("Cannot get image (result = " + result + ")");
+            }
+            return pImageIndex.get(0);
+        }
+    }
+
+    public void onResize() {
+        wasResized = true;
+    }
+
+    public void drawFrame(int imageIndex) {
+        try (MemoryStack stack = stackPush()) {
+            Frame thisFrame = inFlightFrames.get(currentFrame);
+
+            if (imagesInFlight.containsKey(imageIndex)) {
+                vkWaitForFences(application.getLogicalDevice(), imagesInFlight.get(imageIndex).getFence(), true, MathUtil.UINT64_MAX);
+            }
+            imagesInFlight.put(imageIndex, thisFrame);
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack);
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.waitSemaphoreCount(1);
+            submitInfo.pWaitSemaphores(stack.longs(thisFrame.getImageAvailableSemaphore()));
+            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
+            LongBuffer pRenderFinishedSemaphore = stack.longs(thisFrame.getRenderFinishedSemaphore());
+            submitInfo.pSignalSemaphores(pRenderFinishedSemaphore);
+            submitInfo.pCommandBuffers(stack.pointers(commandBuffers.get(imageIndex)));
+            LongBuffer pFence = stack.longs(thisFrame.getFence());
+            vkResetFences(application.getLogicalDevice(), pFence);
+            int result = vkQueueSubmit(application.getGraphicsQueue(), submitInfo, thisFrame.getFence());
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to submit draw command buffer (result = " + result + ")");
+            }
+
+            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.callocStack(stack);
+            presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
+            presentInfo.pWaitSemaphores(pRenderFinishedSemaphore);
+            presentInfo.swapchainCount(1);
+            presentInfo.pSwapchains(stack.longs(swapChain));
+            presentInfo.pImageIndices(stack.ints(imageIndex));
+            result = vkQueuePresentKHR(application.getPresentQueue(), presentInfo);
+            if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR) || wasResized) {
+                wasResized = false;
+                recreate();
+            } else if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to present swap chain image (result = " + result + ")");
+            }
+
+            currentFrame = ((currentFrame + 1) % application.getConfig().getFramesInFlight());
+
+            // Wait for GPU to be finished, so we can safely access memory in our logic again (e.g. freeing memory of removed objects)
+            vkWaitForFences(application.getLogicalDevice(), pFence, true, MathUtil.UINT64_MAX);
+        }
+    }
+
+    @Override
     public void cleanup() {
+        if (!isDuringRecreation) {
+            cleanupInFlightFrames();
+        }
         cleanupRenderJobs();
         cleanupCommandBuffers();
         imageViews.forEach(imageView -> vkDestroyImageView(application.getLogicalDevice(), imageView, null));
         vkDestroySwapchainKHR(application.getLogicalDevice(), swapChain, null);
+        super.cleanup();
+    }
+
+    private void cleanupInFlightFrames() {
+        inFlightFrames.forEach(frame -> {
+            vkDestroySemaphore(application.getLogicalDevice(), frame.getRenderFinishedSemaphore(), null);
+            vkDestroySemaphore(application.getLogicalDevice(), frame.getImageAvailableSemaphore(), null);
+            vkDestroyFence(application.getLogicalDevice(), frame.getFence(), null);
+        });
     }
 
     private void cleanupRenderJobs() {

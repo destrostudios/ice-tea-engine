@@ -8,6 +8,7 @@ import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.CollisionResult_AABB_Ray;
 import com.destrostudios.icetea.core.collision.Ray;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.material.descriptor.AdditionalMaterialDescriptorProvider;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorWithLayout;
@@ -21,7 +22,7 @@ import org.joml.*;
 import java.util.*;
 import java.util.function.Predicate;
 
-public abstract class Spatial implements ContextCloneable {
+public abstract class Spatial extends LifecycleObject implements ContextCloneable {
 
     protected Spatial() {
         localTransform = new Transform();
@@ -43,7 +44,6 @@ public abstract class Spatial implements ContextCloneable {
         }
         renderBucket = spatial.renderBucket;
     }
-    protected Application application;
     @Getter
     private Node parent;
     @Getter
@@ -66,32 +66,20 @@ public abstract class Spatial implements ContextCloneable {
     private LinkedList<MaterialDescriptorWithLayout> tmpAdditionalMaterialDescriptors = new LinkedList<>();
     private LinkedList<VertexPositionModifier> tmpVertexPositionModifiers = new LinkedList<>();
 
-    public boolean update(Application application, float tpf) {
-        if (this.application == null) {
-            this.application = application;
-            init();
-        }
-        ensureControlsState();
-        for (Control control : controls) {
-            control.update(tpf);
-        }
-        localTransform.updateMatrixIfNecessary();
-        updateWorldTransform();
+    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
+        update(application, imageIndex, tpf);
         return false;
     }
 
-    protected void init() {
-        // Make sure control-generated materials are available in Geometry.init
-        ensureControlsState();
-    }
-
-    private void ensureControlsState() {
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         for (Control control : controls) {
-            if (!control.isInitialized()) {
-                control.init(application);
-            }
             control.setSpatial(this);
+            control.update(application, imageIndex, tpf);
         }
+        localTransform.updateMatrixIfNecessary();
+        updateWorldTransform();
     }
 
     public void updateWorldTransform() {
@@ -149,12 +137,6 @@ public abstract class Spatial implements ContextCloneable {
             affectingLights.add(light);
         }
         return affectingLights;
-    }
-
-    public void updateUniformBuffers(int currentImage) {
-        for (Control control : controls) {
-            control.updateUniformBuffers(currentImage);
-        }
     }
 
     public void collideStatic(Ray ray, ArrayList<CollisionResult> collisionResults) {

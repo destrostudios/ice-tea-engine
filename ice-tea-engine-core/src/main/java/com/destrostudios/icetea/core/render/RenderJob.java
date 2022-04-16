@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.render;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
@@ -16,9 +17,8 @@ import java.util.function.Function;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
+public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends LifecycleObject {
 
-    protected Application application;
     @Getter
     protected VkExtent2D extent;
     @Getter
@@ -27,12 +27,9 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
     private Texture resolvedColorTexture;
     protected List<Long> frameBuffers;
 
-    public boolean isInitialized() {
-        return (application != null);
-    }
-
+    @Override
     public void init(Application application) {
-        this.application = application;
+        super.init(application);
         extent = calculateExtent();
     }
 
@@ -166,10 +163,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
         return (this == application.getSwapChain().getRenderJobManager().getPresentingRenderJob());
     }
 
-    public void updateUniformBuffers(int currentImage) {
-
-    }
-
     public abstract boolean isRendering(Geometry geometry);
 
     public abstract GRC createGeometryRenderContext();
@@ -185,6 +178,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
 
     public abstract void render(Consumer<RenderAction> actions);
 
+    @Override
     public void cleanup() {
         if (isInitialized()) {
             application.getRootNode().forEachGeometry(geometry -> {
@@ -201,5 +195,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> {
             vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
             application = null;
         }
+        super.cleanup();
     }
 }

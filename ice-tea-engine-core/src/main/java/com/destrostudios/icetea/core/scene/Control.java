@@ -3,43 +3,53 @@ package com.destrostudios.icetea.core.scene;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import lombok.Getter;
 
-public abstract class Control implements ContextCloneable {
+public abstract class Control extends LifecycleObject implements ContextCloneable {
 
     protected Control() { }
 
     protected Control(Control control) {
         active = control.active;
     }
-    protected Application application;
+    @Getter
     protected Spatial spatial;
     protected boolean active;
 
-    public boolean isInitialized() {
-        return (application != null);
-    }
-
-    public void init(Application application) {
-        this.application = application;
-    }
-
     public void setSpatial(Spatial spatial) {
         if (spatial != this.spatial) {
+            if (spatial != null) {
+                if (isInitialized()) {
+                    onAdd();
+                    setActive(true);
+                }
+            } else {
+                onRemove();
+                setActive(false);
+            }
             this.spatial = spatial;
-            onAdd();
         }
-        setActive(true);
+        if (isInitialized()) {
+            setActive(true);
+        }
+    }
+
+    @Override
+    public void init(Application application) {
+        super.init(application);
+        initControl();
+        if (spatial != null) {
+            onAdd();
+            setActive(true);
+        }
+    }
+
+    protected void initControl() {
+
     }
 
     protected void onAdd() {
-
-    }
-
-    public void update(float tpf) {
-
-    }
-
-    public void updateUniformBuffers(int currentImage) {
 
     }
 
@@ -59,10 +69,6 @@ public abstract class Control implements ContextCloneable {
     }
 
     protected void onActiveChanged() {
-
-    }
-
-    public void cleanup() {
 
     }
 

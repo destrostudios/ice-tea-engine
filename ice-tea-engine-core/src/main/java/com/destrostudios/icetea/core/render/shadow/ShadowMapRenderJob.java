@@ -54,8 +54,8 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public void updateUniformBuffers(int currentImage) {
-        super.updateUniformBuffers(currentImage);
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         // TODO: Introduce TempVars
         Matrix4f projectionMatrix = new Matrix4f();
         Matrix4f viewMatrix = new Matrix4f();
@@ -96,7 +96,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         lightTransformUniformData.setMatrix4f("proj", projectionMatrix);
         lightTransformUniformData.setMatrix4f("view", viewMatrix);
         lightTransformUniformData.setVector4f("clipPlane", clipPlane);
-        lightTransformUniformData.updateBufferIfNecessary(currentImage);
+        lightTransformUniformData.updateBufferIfNecessary(imageIndex);
     }
 
     @Override

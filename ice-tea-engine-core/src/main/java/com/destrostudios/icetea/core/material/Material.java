@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core.material;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.data.UniformData;
@@ -15,7 +16,7 @@ import java.util.function.Supplier;
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
 import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
 
-public class Material implements ContextCloneable {
+public class Material extends LifecycleObject implements ContextCloneable {
 
     public Material() {
         parameters = new UniformData();
@@ -36,7 +37,6 @@ public class Material implements ContextCloneable {
         depthWrite = material.depthWrite;
         fillMode = material.fillMode;
     }
-    private Application application;
     @Getter
     @Setter
     private Shader vertexShader;
@@ -76,18 +76,21 @@ public class Material implements ContextCloneable {
     @Getter
     private int fillMode = VK_POLYGON_MODE_FILL;
 
-    public boolean isInitialized() {
-        return (application != null);
+    @Override
+    public void init(Application application) {
+        super.init(application);
+        parameters.setApplication(application);
     }
 
-    public void init(Application application) {
-        this.application = application;
+    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
+        update(application, imageIndex, tpf);
+        boolean commandBufferOutdated = parameters.recreateBuffersIfNecessary(application.getSwapChain().getImages().size());
+        parameters.updateBufferIfNecessary(imageIndex);
         for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
             Texture texture = textureSupplier.get();
-            if (!texture.isInitialized()) {
-                texture.init(application);
-            }
+            texture.update(application, imageIndex, tpf);
         }
+        return commandBufferOutdated;
     }
 
     public void setTexture(String name, Texture texture) {
@@ -110,6 +113,7 @@ public class Material implements ContextCloneable {
         return (usingGeometriesCount <= 0);
     }
 
+    @Override
     public void cleanup() {
         parameters.cleanupBuffer();
         for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
@@ -119,6 +123,7 @@ public class Material implements ContextCloneable {
                 texture.cleanup();
             }
         }
+        super.cleanup();
     }
 
     @Override

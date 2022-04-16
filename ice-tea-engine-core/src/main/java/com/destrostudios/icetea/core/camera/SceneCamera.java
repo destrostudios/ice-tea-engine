@@ -1,11 +1,13 @@
 package com.destrostudios.icetea.core.camera;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.vulkan.VkExtent2D;
 
 public class SceneCamera extends Camera {
 
@@ -22,6 +24,16 @@ public class SceneCamera extends Camera {
     private float zNear;
     @Getter
     private float zFar;
+
+    @Override
+    public void init(Application application) {
+        super.init(application);
+        setFieldOfViewY((float) (Math.PI / 4));
+        VkExtent2D swapchainExtent = application.getSwapChain().getExtent();
+        setAspect((float) swapchainExtent.width() / (float) swapchainExtent.height());
+        setZNear(0.1f);
+        setZFar(100);
+    }
 
     public void set(SceneCamera sceneCamera) {
         super.set(sceneCamera);

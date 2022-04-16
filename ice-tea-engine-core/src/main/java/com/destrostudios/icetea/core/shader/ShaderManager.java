@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.shader;
 
-import com.destrostudios.icetea.core.asset.AssetManager;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,18 +10,11 @@ import java.util.LinkedHashMap;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
-public class ShaderManager {
+public class ShaderManager extends LifecycleObject {
 
-    public ShaderManager(AssetManager assetManager) {
-        this.assetManager = assetManager;
-        filesCache = new HashMap<>();
-        spirvCache = new LinkedHashMap<>();
-        maximumCachedSPIRVs = 1000;
-    }
-    private AssetManager assetManager;
-    private HashMap<String, String> filesCache;
-    private LinkedHashMap<String, SPIRV> spirvCache;
-    private int maximumCachedSPIRVs;
+    private HashMap<String, String> filesCache = new HashMap<>();
+    private LinkedHashMap<String, SPIRV> spirvCache = new LinkedHashMap<>();
+    private int maximumCachedSPIRVs = 1000;
 
     public ByteBuffer getCompiledShaderCode(Shader shader, ShaderType shaderType, String additionalDeclarations) {
         String combinedSource = getCombinedShaderSource(shader, additionalDeclarations);
@@ -49,7 +42,7 @@ public class ShaderManager {
     private String getShaderSource(String shaderFile) {
         return filesCache.computeIfAbsent(shaderFile, sf -> {
             try {
-                return new String(assetManager.load(shaderFile).readAllBytes());
+                return new String(application.getAssetManager().load(shaderFile).readAllBytes());
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -92,10 +85,13 @@ public class ShaderManager {
         return new SPIRV(result, shaderc_result_get_bytes(result));
     }
 
+    @Override
     public void cleanup() {
         for (SPIRV spirv : spirvCache.values()) {
             spirv.free();
         }
         spirvCache.clear();
+        filesCache.clear();
+        super.cleanup();
     }
 }

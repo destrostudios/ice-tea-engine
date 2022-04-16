@@ -66,6 +66,7 @@ public class TestApplication extends Application {
 
     @Override
     protected void initScene() {
+        super.initScene();
         assetManager.addLocator(new FileLocator("./assets"));
 
         sceneCamera.setLocation(new Vector3f(0, 0.3f, 5));
@@ -498,6 +499,7 @@ public class TestApplication extends Application {
 
     @Override
     protected void update(float tpf) {
+        super.update(tpf);
         if ((time > 20) && (!hasAddedDennis)) {
             nodeRotating.add(nodeDennis);
             hasAddedDennis = true;

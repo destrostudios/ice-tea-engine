@@ -6,6 +6,7 @@ import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.*;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.UniformValue;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -23,7 +24,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 
-public class Mesh implements ContextCloneable {
+public class Mesh extends LifecycleObject implements ContextCloneable {
 
     public Mesh() {
         bounds = new BoundingBox();
@@ -103,7 +104,9 @@ public class Mesh implements ContextCloneable {
         return (application != null);
     }
 
+    @Override
     public void init(Application application) {
+        super.init(application);
         this.application = application;
         setBuffersOutdated();
     }
@@ -112,7 +115,8 @@ public class Mesh implements ContextCloneable {
         buffersOutdated = true;
     }
 
-    public boolean recreateBuffersIfNecessary() {
+    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
+        update(application, imageIndex, tpf);
         if (buffersOutdated) {
             recreateVertexBuffer();
             recreateIndexBuffer();
@@ -307,9 +311,11 @@ public class Mesh implements ContextCloneable {
         return (usingGeometriesCount <= 0);
     }
 
+    @Override
     public void cleanup() {
         cleanupVertexBuffer();
         cleanupIndexBuffer();
+        super.cleanup();
     }
 
     @Override

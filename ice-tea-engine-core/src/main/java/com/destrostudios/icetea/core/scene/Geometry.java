@@ -41,13 +41,26 @@ public class Geometry extends Spatial {
     private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts = new HashMap<>();
 
     @Override
-    public boolean update(Application application, float tpf) {
-        AtomicBoolean commandBufferOutdated = new AtomicBoolean(super.update(application, tpf));
+    public void init(Application application) {
+        super.init(application);
+        transformUniformData.setApplication(application);
+    }
+
+    @Override
+    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
+        AtomicBoolean commandBufferOutdated = new AtomicBoolean(super.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf));
         updateWorldBounds();
-        if (mesh.recreateBuffersIfNecessary()) {
+        if (mesh.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf)) {
+            commandBufferOutdated.set(true);
+        }
+        if (material.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf)) {
             commandBufferOutdated.set(true);
         }
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
+        if (transformUniformData.recreateBuffersIfNecessary(application.getSwapChain().getImages().size())) {
+            outdatedRenderContexts.addAll(renderContexts.values());
+        }
+        transformUniformData.updateBufferIfNecessary(imageIndex);
         application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {
             GeometryRenderContext renderContext = renderContexts.get(renderJob);
             if (renderJob.isRendering(this)) {
@@ -63,9 +76,6 @@ public class Geometry extends Spatial {
                 commandBufferOutdated.set(true);
             }
         });
-        if (transformUniformData.recreateBuffersIfNecessary(application.getSwapChain().getImages().size()) | material.getParameters().recreateBuffersIfNecessary(application.getSwapChain().getImages().size())) {
-            outdatedRenderContexts.addAll(renderContexts.values());
-        }
         if (outdatedRenderContexts.size() > 0) {
             for (GeometryRenderContext<?> renderContext : outdatedRenderContexts) {
                 renderContext.recreateDescriptorDependencies();
@@ -73,19 +83,6 @@ public class Geometry extends Spatial {
             commandBufferOutdated.set(true);
         }
         return commandBufferOutdated.get();
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        if (!mesh.isInitialized()) {
-            mesh.init(application);
-        }
-        if (!material.isInitialized()) {
-            material.init(application);
-        }
-        transformUniformData.setApplication(application);
-        material.getParameters().setApplication(application);
     }
 
     @Override
@@ -124,13 +121,6 @@ public class Geometry extends Spatial {
         return renderContexts.get(renderJob);
     }
 
-    @Override
-    public void updateUniformBuffers(int currentImage) {
-        super.updateUniformBuffers(currentImage);
-        transformUniformData.updateBufferIfNecessary(currentImage);
-        material.getParameters().updateBufferIfNecessary(currentImage);
-    }
-
     public List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors() {
         return getAdditionalMaterialDescriptors(this);
     }
@@ -161,10 +151,13 @@ public class Geometry extends Spatial {
         cleanupRenderContexts();
     }
 
+    @Override
     public void cleanup() {
+        transformUniformData.cleanupBuffer();
         tryUnregisterMesh();
         tryUnregisterMaterial();
         cleanupRenderContexts();
+        super.cleanup();
     }
 
     private void tryUnregisterMesh() {

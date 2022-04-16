@@ -32,10 +32,10 @@ public class Node extends Spatial {
     private boolean childrenModified;
 
     @Override
-    public boolean update(Application application, float tpf) {
-        boolean commandBufferOutdated = super.update(application, tpf);
+    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
+        boolean commandBufferOutdated = super.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf);
         for (Spatial child : children) {
-            commandBufferOutdated |= child.update(application, tpf);
+            commandBufferOutdated |= child.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf);
         }
         updateWorldBounds();
         if (childrenModified) {
@@ -63,14 +63,6 @@ public class Node extends Spatial {
             }
         }
         destinationWorldBounds.setMinMax(min, max);
-    }
-
-    @Override
-    public void updateUniformBuffers(int currentImage) {
-        super.updateUniformBuffers(currentImage);
-        for (Spatial child : children) {
-            child.updateUniformBuffers(currentImage);
-        }
     }
 
     @Override
@@ -120,6 +112,14 @@ public class Node extends Spatial {
                 geometryConsumer.accept(geometry);
             }
         }
+    }
+
+    @Override
+    public void cleanup() {
+        for (Spatial child : children) {
+            child.cleanup();
+        }
+        super.cleanup();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.light;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.scene.Node;
@@ -12,7 +13,7 @@ import org.joml.Vector4f;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class Light {
+public abstract class Light extends LifecycleObject {
 
     public Light() {
         affectedSpatials = new LinkedList<>();
@@ -22,7 +23,6 @@ public abstract class Light {
         specularColor = new Vector4f(1, 1, 1, 1);
         uniformData = new UniformData();
     }
-    private Application application;
     @Getter
     private List<Spatial> affectedSpatials;
     @Getter
@@ -42,18 +42,19 @@ public abstract class Light {
     @Setter
     private boolean modified;
 
-    public void update(Application application) {
-        if (this.application == null) {
-            uniformData.setApplication(application);
-            updateUniformDataFields();
-            uniformData.initBuffers(application.getSwapChain().getImages().size());
-            this.application = application;
-        }
+    @Override
+    public void init(Application application) {
+        super.init(application);
+        uniformData.setApplication(application);
+        updateUniformDataFields();
+        uniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 
-    public void updateUniformBuffers(int currentImage) {
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         updateUniformDataFields();
-        uniformData.updateBufferIfNecessary(currentImage);
+        uniformData.updateBufferIfNecessary(imageIndex);
     }
 
     protected void updateUniformDataFields() {
@@ -92,7 +93,9 @@ public abstract class Light {
         return false;
     }
 
+    @Override
     public void cleanup() {
         uniformData.cleanupBuffer();
+        super.cleanup();
     }
 }

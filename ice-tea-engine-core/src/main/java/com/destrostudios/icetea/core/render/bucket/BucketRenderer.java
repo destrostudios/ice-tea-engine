@@ -13,17 +13,14 @@ import java.util.function.Consumer;
 
 public class BucketRenderer {
 
-    public BucketRenderer() {
+    public BucketRenderer(Application application) {
         buckets = new HashMap<>();
-    }
-    private HashMap<RenderBucketType, RenderBucket> buckets;
-
-    public void init(Application application) {
         buckets.put(RenderBucketType.BACKGROUND, new RenderBucket(new FrontToBackGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.OPAQUE, new RenderBucket(new FrontToBackGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.TRANSPARENT, new RenderBucket(new BackToFrontGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.GUI, new RenderBucket(new ZGeometryComparator(), application.getGuiCamera()));
     }
+    private HashMap<RenderBucketType, RenderBucket> buckets;
 
     public void render(Node node, Consumer<Geometry> renderGeometry) {
         node.forEachGeometry(geometry -> {

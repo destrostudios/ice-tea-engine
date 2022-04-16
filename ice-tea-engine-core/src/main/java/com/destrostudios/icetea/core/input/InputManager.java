@@ -1,8 +1,10 @@
 package com.destrostudios.icetea.core.input;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import org.joml.Vector2f;
+import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
@@ -11,32 +13,32 @@ import java.util.LinkedList;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class InputManager {
+public class InputManager extends LifecycleObject {
 
-    public InputManager(Application application) {
-        this.application = application;
-    }
-    private Application application;
     private GLFWKeyCallback glfwKeyCallback;
+    private GLFWCharCallback glfwCharacterCallback;
     private GLFWMouseButtonCallback glfwMouseButtonCallback;
     private GLFWCursorPosCallback glfwCursorPosCallback;
-    private LinkedList<KeyListener> keyListeners;
-    private LinkedList<KeyEvent> pendingKeyEvents;
-    private LinkedList<MouseButtonListener> mouseButtonListeners;
-    private LinkedList<MousePositionEvent> pendingMousePositionEvents;
-    private LinkedList<MousePositionListener> mousePositionListeners;
-    private LinkedList<MouseButtonEvent> pendingMouseButtonEvents;
+    private LinkedList<KeyListener> keyListeners = new LinkedList<>();
+    private LinkedList<CharacterListener> characterListeners = new LinkedList<>();
+    private LinkedList<KeyEvent> pendingKeyEvents = new LinkedList<>();
+    private LinkedList<CharacterEvent> pendingCharacterEvents = new LinkedList<>();
+    private LinkedList<MouseButtonListener> mouseButtonListeners = new LinkedList<>();
+    private LinkedList<MousePositionEvent> pendingMousePositionEvents = new LinkedList<>();
+    private LinkedList<MousePositionListener> mousePositionListeners = new LinkedList<>();
+    private LinkedList<MouseButtonEvent> pendingMouseButtonEvents = new LinkedList<>();
     @Getter
-    private Vector2f cursorPosition;
+    private Vector2f cursorPosition = new Vector2f();
 
-    public void init() {
-        initKeyListeners();
-        initMouseListeners();
+    @Override
+    public void init(Application application) {
+        super.init(application);
+        initKeyCallback();
+        initCharacterCallback();
+        initMouseCallback();
     }
 
-    private void initKeyListeners() {
-        keyListeners = new LinkedList<>();
-        pendingKeyEvents = new LinkedList<>();
+    private void initKeyCallback() {
         glfwKeyCallback = new GLFWKeyCallback() {
 
             @Override
@@ -47,10 +49,19 @@ public class InputManager {
         glfwSetKeyCallback(application.getWindow(), glfwKeyCallback);
     }
 
-    private void initMouseListeners() {
+    private void initCharacterCallback() {
+        glfwCharacterCallback = new GLFWCharCallback() {
+
+            @Override
+            public void invoke(long window, int codepoint) {
+                pendingCharacterEvents.add(new CharacterEvent(codepoint));
+            }
+        };
+        glfwSetCharCallback(application.getWindow(), glfwCharacterCallback);
+    }
+
+    private void initMouseCallback() {
         // Buttons
-        mouseButtonListeners = new LinkedList<>();
-        pendingMouseButtonEvents = new LinkedList<>();
         glfwMouseButtonCallback = new GLFWMouseButtonCallback() {
 
             @Override
@@ -60,9 +71,6 @@ public class InputManager {
         };
         glfwSetMouseButtonCallback(application.getWindow(), glfwMouseButtonCallback);
         // Position
-        cursorPosition = new Vector2f();
-        mousePositionListeners = new LinkedList<>();
-        pendingMousePositionEvents = new LinkedList<>();
         glfwCursorPosCallback = new GLFWCursorPosCallback() {
 
             @Override
@@ -76,11 +84,19 @@ public class InputManager {
         glfwSetCursorPosCallback(application.getWindow(), glfwCursorPosCallback);
     }
 
-    public void processPendingEvents() {
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         // Keys
         for (KeyEvent keyEvent : pendingKeyEvents) {
             for (KeyListener keyListener : keyListeners.toArray(new KeyListener[0])) {
                 keyListener.onKeyEvent(keyEvent);
+            }
+        }
+        // Characters
+        for (CharacterEvent characterEvent : pendingCharacterEvents) {
+            for (CharacterListener characterListener : characterListeners.toArray(new CharacterListener[0])) {
+                characterListener.onCharacterEvent(characterEvent);
             }
         }
         pendingKeyEvents.clear();
@@ -112,6 +128,14 @@ public class InputManager {
         keyListeners.remove(keyListener);
     }
 
+    public void addCharacterListener(CharacterListener characterListener) {
+        characterListeners.add(characterListener);
+    }
+
+    public void removeCharacterListener(CharacterListener characterListener) {
+        characterListeners.remove(characterListener);
+    }
+
     public void addMouseButtonListener(MouseButtonListener mouseButtonListener) {
         mouseButtonListeners.add(mouseButtonListener);
     }
@@ -128,9 +152,12 @@ public class InputManager {
         mousePositionListeners.remove(mousePositionListener);
     }
 
+    @Override
     public void cleanup() {
         glfwKeyCallback.free();
+        glfwCharacterCallback.free();
         glfwMouseButtonCallback.free();
         glfwCursorPosCallback.free();
+        super.cleanup();
     }
 }

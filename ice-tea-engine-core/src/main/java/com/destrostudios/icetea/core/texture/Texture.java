@@ -1,11 +1,11 @@
 package com.destrostudios.icetea.core.texture;
 
-import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class Texture {
+public class Texture extends LifecycleObject {
 
     public Texture() {
 
@@ -25,7 +25,6 @@ public class Texture {
         this.imageViewLayout = imageViewLayout;
         this.imageSampler = imageSampler;
     }
-    protected Application application;
     @Getter
     protected Long image;
     @Getter
@@ -37,14 +36,7 @@ public class Texture {
     @Getter
     protected Long imageSampler;
 
-    public boolean isInitialized() {
-        return (application != null);
-    }
-
-    public void init(Application application) {
-        this.application = application;
-    }
-
+    @Override
     public void cleanup() {
         if (imageSampler != null) {
             vkDestroySampler(application.getLogicalDevice(), imageSampler, null);
@@ -62,5 +54,6 @@ public class Texture {
             vkFreeMemory(application.getLogicalDevice(), imageMemory, null);
             imageMemory = null;
         }
+        super.cleanup();
     }
 }

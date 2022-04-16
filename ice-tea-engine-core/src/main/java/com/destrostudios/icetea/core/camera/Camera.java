@@ -2,12 +2,13 @@ package com.destrostudios.icetea.core.camera;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-public class Camera {
+public class Camera extends LifecycleObject {
 
     public Camera() {
         location = new Vector3f();
@@ -30,7 +31,15 @@ public class Camera {
     @Getter
     private UniformData transformUniformData;
 
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
+        transformUniformData.updateBufferIfNecessary(imageIndex);
+    }
+
+    @Override
     public void init(Application application) {
+        super.init(application);
         transformUniformData.setApplication(application);
         updateUniform_Location();
         updateUniform_ProjectionMatrix();
@@ -71,11 +80,9 @@ public class Camera {
         transformUniformData.setVector4f("clipPlane", clipPlane);
     }
 
-    public void updateUniformBuffers(int currentImage) {
-        transformUniformData.updateBufferIfNecessary(currentImage);
-    }
-
+    @Override
     public void cleanup() {
         transformUniformData.cleanupBuffer();
+        super.cleanup();
     }
 }

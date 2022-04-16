@@ -4,10 +4,11 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import org.joml.Matrix4f;
 
-public class Skeleton implements ContextCloneable {
+public class Skeleton extends LifecycleObject implements ContextCloneable {
 
     public Skeleton(Joint[] joints) {
         this.joints = joints;
@@ -39,19 +40,17 @@ public class Skeleton implements ContextCloneable {
     @Getter
     private UniformData uniformData;
 
+    @Override
     public void init(Application application) {
+        super.init(application);
         uniformData.setApplication(application);
         updateUniformData();
         uniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 
-    public void resetPose() {
-        for (Joint joint : joints) {
-            joint.resetPose();
-        }
-    }
-
-    public void update() {
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         boolean jointMatricesUpdated = false;
         for (Joint joint : joints) {
             joint.update();
@@ -67,14 +66,23 @@ public class Skeleton implements ContextCloneable {
         if (jointMatricesUpdated) {
             updateUniformData();
         }
+        uniformData.updateBufferIfNecessary(imageIndex);
     }
 
     private void updateUniformData() {
         uniformData.setMatrix4fArray("jointMatrices", jointMatrices);
     }
 
+    public void resetPose() {
+        for (Joint joint : joints) {
+            joint.resetPose();
+        }
+    }
+
+    @Override
     public void cleanup() {
         uniformData.cleanupBuffer();
+        super.cleanup();
     }
 
     @Override

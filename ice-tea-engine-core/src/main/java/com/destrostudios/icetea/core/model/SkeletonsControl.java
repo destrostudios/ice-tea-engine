@@ -24,26 +24,10 @@ public class SkeletonsControl extends Control {
     private Collection<Skeleton> skeletons;
 
     @Override
-    public void init(Application application) {
-        super.init(application);
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         for (Skeleton skeleton : skeletons) {
-            skeleton.init(application);
-        }
-    }
-
-    @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        for (Skeleton skeleton : skeletons) {
-            skeleton.update();
-        }
-    }
-
-    @Override
-    public void updateUniformBuffers(int currentImage) {
-        super.updateUniformBuffers(currentImage);
-        for (Skeleton skeleton : skeletons) {
-            skeleton.getUniformData().updateBufferIfNecessary(currentImage);
+            skeleton.update(application, imageIndex, tpf);
         }
     }
 

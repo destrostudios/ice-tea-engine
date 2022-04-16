@@ -27,9 +27,9 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     }
 
     @Override
-    public void updateUniformBuffers(int currentImage) {
-        super.updateUniformBuffers(currentImage);
-        filter.updateUniformBuffers(currentImage);
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
+        filter.update(application, imageIndex, tpf);
     }
 
     @Override
