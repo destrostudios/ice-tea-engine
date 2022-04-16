@@ -93,13 +93,14 @@ public class InputManager extends LifecycleObject {
                 keyListener.onKeyEvent(keyEvent);
             }
         }
+        pendingKeyEvents.clear();
         // Characters
         for (CharacterEvent characterEvent : pendingCharacterEvents) {
             for (CharacterListener characterListener : characterListeners.toArray(new CharacterListener[0])) {
                 characterListener.onCharacterEvent(characterEvent);
             }
         }
-        pendingKeyEvents.clear();
+        pendingCharacterEvents.clear();
         // Mouse buttons
         for (MouseButtonEvent mouseButtonEvent : pendingMouseButtonEvents.toArray(new MouseButtonEvent[0])) {
             for (MouseButtonListener mouseButtonListener : mouseButtonListeners.toArray(new MouseButtonListener[0])) {
