@@ -16,8 +16,7 @@ public class LifecycleObject {
         this.application = application;
     }
 
-    // TODO: Check if needed
-    public boolean isInitialized() {
+    protected boolean isInitialized() {
         return (application != null);
     }
 
