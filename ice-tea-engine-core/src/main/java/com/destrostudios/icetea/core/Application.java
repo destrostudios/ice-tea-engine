@@ -299,7 +299,7 @@ public abstract class Application {
                 VkDeviceQueueCreateInfo queueCreateInfo = queueCreateInfos.get(i);
                 queueCreateInfo.sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
                 queueCreateInfo.queueFamilyIndex(uniqueQueueFamilyIndices[i]);
-                queueCreateInfo.pQueuePriorities(stack.floats(1.0f));
+                queueCreateInfo.pQueuePriorities(stack.floats(1));
             }
             deviceCreateInfo.pQueueCreateInfos(queueCreateInfos);
 

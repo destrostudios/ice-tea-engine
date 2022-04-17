@@ -15,7 +15,7 @@
         <version.ice-tea-engine>0.0.1</version.ice-tea-engine>
         <version.jgltf>2.0.1</version.jgltf>
         <version.joml>1.9.20</version.joml>
-        <version.lwjgl>3.3.0</version.lwjgl>
+        <version.lwjgl>3.3.1</version.lwjgl>
         <version.lombok>1.18.12</version.lombok>
         <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
         <version.maven-source-plugin>3.2.1</version.maven-source-plugin>
