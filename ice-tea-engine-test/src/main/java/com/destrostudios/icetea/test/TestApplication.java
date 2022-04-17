@@ -65,8 +65,8 @@ public class TestApplication extends Application {
     private boolean rotateObjects = true;
 
     @Override
-    protected void initScene() {
-        super.initScene();
+    protected void init() {
+        super.init();
         assetManager.addLocator(new FileLocator("./assets"));
 
         sceneCamera.setLocation(new Vector3f(0, 0.3f, 5));
@@ -497,8 +497,8 @@ public class TestApplication extends Application {
     }
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
+    protected void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         if ((time > 20) && (!hasAddedDennis)) {
             nodeRotating.add(nodeDennis);
             hasAddedDennis = true;

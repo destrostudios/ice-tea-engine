@@ -4,7 +4,7 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.input.MousePositionEvent;
 import com.destrostudios.icetea.core.input.MousePositionListener;
-import com.destrostudios.icetea.core.system.AppSystem;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Matrix3f;
@@ -14,7 +14,7 @@ import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL;
 
-public class CameraMouseRotateSystem extends AppSystem implements MousePositionListener {
+public class CameraMouseRotateSystem extends LifecycleObject implements MousePositionListener {
 
     public CameraMouseRotateSystem(SceneCamera sceneCamera) {
         this.sceneCamera = sceneCamera;
@@ -27,17 +27,10 @@ public class CameraMouseRotateSystem extends AppSystem implements MousePositionL
     private float rotationSpeed = ((-1 / 1024f) * (float) Math.PI);
 
     @Override
-    public void initialize(Application application) {
-        super.initialize(application);
+    public void init(Application application) {
+        super.init(application);
         application.getInputManager().addMousePositionListener(this);
         application.getInputManager().setCursorMode(GLFW_CURSOR_DISABLED);
-    }
-
-    @Override
-    public void cleanup() {
-        super.cleanup();
-        application.getInputManager().removeMousePositionListener(this);
-        application.getInputManager().setCursorMode(GLFW_CURSOR_NORMAL);
     }
 
     @Override
@@ -76,5 +69,12 @@ public class CameraMouseRotateSystem extends AppSystem implements MousePositionL
         rotation.set(rotation.x(), rotation.y(), rotation.z(), -1 * rotation.w());
 
         sceneCamera.setRotation(rotation);
+    }
+
+    @Override
+    public void cleanup() {
+        application.getInputManager().removeMousePositionListener(this);
+        application.getInputManager().setCursorMode(GLFW_CURSOR_NORMAL);
+        super.cleanup();
     }
 }

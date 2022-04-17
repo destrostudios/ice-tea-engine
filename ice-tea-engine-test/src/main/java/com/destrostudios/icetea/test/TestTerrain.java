@@ -32,8 +32,8 @@ public class TestTerrain extends Application {
     }
 
     @Override
-    protected void initScene() {
-        super.initScene();
+    protected void init() {
+        super.init();
         assetManager.addLocator(new FileLocator("./assets"));
 
         sceneCamera.setLocation(new Vector3f(0, 6, 50));

@@ -4,7 +4,7 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.input.KeyEvent;
 import com.destrostudios.icetea.core.input.KeyListener;
-import com.destrostudios.icetea.core.system.AppSystem;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector2f;
@@ -13,7 +13,7 @@ import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
-public class CameraKeyMoveSystem extends AppSystem implements KeyListener {
+public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener {
 
     public CameraKeyMoveSystem(SceneCamera sceneCamera) {
         this.sceneCamera = sceneCamera;
@@ -27,15 +27,9 @@ public class CameraKeyMoveSystem extends AppSystem implements KeyListener {
     private Vector2f moveDirection;
 
     @Override
-    public void initialize(Application application) {
-        super.initialize(application);
+    public void init(Application application) {
+        super.init(application);
         application.getInputManager().addKeyListener(this);
-    }
-
-    @Override
-    public void cleanup() {
-        super.cleanup();
-        application.getInputManager().removeKeyListener(this);
     }
 
     @Override
@@ -75,13 +69,19 @@ public class CameraKeyMoveSystem extends AppSystem implements KeyListener {
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         // Avoid unnecessary vector and matrix recalculations
         if (moveDirection.lengthSquared() > 0) {
             Vector3f deltaRight = sceneCamera.getRight().mul(tpf * moveSpeed * moveDirection.x());
             Vector3f deltaForward = sceneCamera.getBack().mul(-1 * tpf * moveSpeed * moveDirection.y());
             sceneCamera.setLocation(sceneCamera.getLocation().add(deltaRight).add(deltaForward));
         }
+    }
+
+    @Override
+    public void cleanup() {
+        application.getInputManager().removeKeyListener(this);
+        super.cleanup();
     }
 }

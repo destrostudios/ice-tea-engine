@@ -70,7 +70,7 @@ public class SwapChain extends LifecycleObject {
         isDuringRecreation = true;
         cleanup();
         isDuringRecreation = false;
-        update(application, 0, 0);
+        update(tmpApplication, 0, 0);
         recordCommandBuffers();
     }
 

@@ -6,12 +6,12 @@ import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.shader.ShaderManager;
-import com.destrostudios.icetea.core.system.AppSystem;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -100,7 +100,7 @@ public abstract class Application {
     @Getter
     private SwapChain swapChain;
     private boolean commandBuffersOutdated;
-    private boolean isSceneInitialized;
+    private boolean isInitialized;
     protected float time;
 
     @Getter
@@ -118,15 +118,15 @@ public abstract class Application {
     @Getter
     private List<Filter> filters;
     @Getter
-    private LinkedList<AppSystem> systems;
+    private LinkedList<LifecycleObject> systems;
 
     public void start() {
-        init();
+        create();
         mainLoop();
         cleanup();
     }
 
-    private void init() {
+    private void create() {
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
@@ -350,7 +350,7 @@ public abstract class Application {
         guiCamera.setWindowSize(config.getWidth(), config.getHeight());
     }
 
-    protected void initScene() {
+    protected void init() {
 
     }
 
@@ -360,7 +360,7 @@ public abstract class Application {
             int imageIndex = swapChain.acquireNextImageIndex();
             if (imageIndex != -1) {
                 float tpf = calculateNextTpf();
-                update(tpf);
+                update(imageIndex, tpf);
                 updateRenderDependencies(imageIndex, tpf);
                 swapChain.drawFrame(imageIndex);
             }
@@ -375,12 +375,12 @@ public abstract class Application {
         return tpf;
     }
 
-    protected void update(float tpf) {
-        if (!isSceneInitialized) {
-            initScene();
-            isSceneInitialized = true;
+    protected void update(int imageIndex, float tpf) {
+        if (!isInitialized) {
+            init();
+            isInitialized = true;
         }
-        systems.forEach(system -> system.update(tpf));
+        systems.forEach(system -> system.update(this, imageIndex, tpf));
     }
 
     public void preloadRenderDependencies() {
@@ -442,18 +442,17 @@ public abstract class Application {
         recreateRenderJobs();
     }
 
-    public void addSystem(AppSystem system) {
-        system.initialize(this);
+    public void addSystem(LifecycleObject system) {
         systems.add(system);
     }
 
-    public boolean hasSystem(AppSystem system) {
+    public boolean hasSystem(LifecycleObject system) {
         return systems.contains(system);
     }
 
-    public void removeSystem(AppSystem system) {
-        systems.remove(system);
+    public void removeSystem(LifecycleObject system) {
         system.cleanup();
+        systems.remove(system);
     }
 
     public Vector3f getWorldCoordinates(Vector2f screenPosition, float projectionZPos) {
