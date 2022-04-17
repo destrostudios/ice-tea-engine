@@ -454,6 +454,13 @@ public class TestApplication extends Application {
                         }
                     }
                     break;
+                case GLFW_KEY_DELETE:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        inputManager.cleanup();
+                        assetManager.cleanup();
+                        cleanupRenderDependencies();
+                    }
+                    break;
             }
         });
         inputManager.addMouseButtonListener(mouseButtonEvent -> {

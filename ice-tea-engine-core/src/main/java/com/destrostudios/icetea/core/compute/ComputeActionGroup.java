@@ -1,10 +1,10 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
 import com.destrostudios.icetea.core.shader.Shader;
 import lombok.Getter;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
 import java.util.LinkedList;
@@ -12,23 +12,24 @@ import java.util.List;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class ComputeActionGroup {
+public abstract class ComputeActionGroup extends LifecycleObject {
 
     public ComputeActionGroup() {
         computeActions = new LinkedList<>();
     }
-    private Application application;
     @Getter
     protected MaterialDescriptorSetLayout materialDescriptorSetLayout;
     protected ComputePipeline computePipeline;
     @Getter
     protected List<ComputeAction> computeActions;
 
+    @Override
     public void init(Application application) {
-        this.application = application;
+        super.init(application);
         initMaterialDescriptorSetLayout();
         for (ComputeAction computeAction : computeActions) {
-            computeAction.init(application, this);
+            computeAction.setComputeActionGroup(this);
+            computeAction.update(application, 0, 0);
         }
         computePipeline = new ComputePipeline(application, this);
         computePipeline.init();
@@ -62,11 +63,13 @@ public abstract class ComputeActionGroup {
 
     protected abstract int getGroupCountZ();
 
+    @Override
     public void cleanup() {
         computePipeline.cleanup();
         for (ComputeAction computeAction : computeActions) {
             computeAction.cleanup();
         }
         materialDescriptorSetLayout.cleanupDescriptorSetLayout();
+        super.cleanup();
     }
 }

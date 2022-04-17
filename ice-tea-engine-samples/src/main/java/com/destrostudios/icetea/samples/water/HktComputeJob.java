@@ -6,6 +6,7 @@ import com.destrostudios.icetea.core.compute.ComputeJob;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
+import lombok.Setter;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
@@ -18,14 +19,12 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class HktComputeJob extends ComputeJob {
 
-    public HktComputeJob(WaterConfig waterConfig, Texture h0kTexture, Texture h0minuskTexture) {
+    public HktComputeJob(WaterConfig waterConfig, H0kComputeJob h0kComputeJob) {
         this.waterConfig = waterConfig;
-        this.h0kTexture = h0kTexture;
-        this.h0minuskTexture = h0minuskTexture;
+        this.h0kComputeJob = h0kComputeJob;
     }
     private WaterConfig waterConfig;
-    private Texture h0kTexture;
-    private Texture h0minuskTexture;
+    private H0kComputeJob h0kComputeJob;
     @Getter
     private Texture dxCoefficientsTexture;
     @Getter
@@ -34,6 +33,8 @@ public class HktComputeJob extends ComputeJob {
     private Texture dzCoefficientsTexture;
     @Getter
     private UniformData uniformData;
+    @Setter
+    private float time;
 
     @Override
     public void init(Application application) {
@@ -115,7 +116,7 @@ public class HktComputeJob extends ComputeJob {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
         HktComputeActionGroup hktComputeActionGroup = new HktComputeActionGroup(waterConfig.getN());
-        hktComputeActionGroup.addComputeAction(new HktComputeAction(dyCoefficientsTexture, dxCoefficientsTexture, dzCoefficientsTexture, h0kTexture, h0minuskTexture, uniformData));
+        hktComputeActionGroup.addComputeAction(new HktComputeAction(dyCoefficientsTexture, dxCoefficientsTexture, dzCoefficientsTexture, h0kComputeJob.getH0kTexture(), h0kComputeJob.getH0minuskTexture(), uniformData));
         computeActionGroups.add(hktComputeActionGroup);
 
         return computeActionGroups;
@@ -126,16 +127,19 @@ public class HktComputeJob extends ComputeJob {
         return true;
     }
 
-    public void setTime(float time) {
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
         uniformData.setFloat("t", time);
+        uniformData.updateBufferAndCheckRecreation(application, 0, tpf, 1);
     }
 
     @Override
     public void cleanup() {
         uniformData.cleanup();
-        dxCoefficientsTexture.cleanup();
-        dyCoefficientsTexture.cleanup();
         dzCoefficientsTexture.cleanup();
+        dyCoefficientsTexture.cleanup();
+        dxCoefficientsTexture.cleanup();
         super.cleanup();
     }
 }

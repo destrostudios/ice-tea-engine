@@ -19,12 +19,12 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class NormalMapComputeJob extends ComputeJob {
 
-    public NormalMapComputeJob(WaterConfig waterConfig, Texture dyTexture) {
+    public NormalMapComputeJob(WaterConfig waterConfig, FftComputeJob fftComputeJob) {
         this.waterConfig = waterConfig;
-        this.dyTexture = dyTexture;
+        this.fftComputeJob = fftComputeJob;
     }
     private WaterConfig waterConfig;
-    private Texture dyTexture;
+    private FftComputeJob fftComputeJob;
     @Getter
     private Texture normalMapTexture;
 
@@ -108,7 +108,7 @@ public class NormalMapComputeJob extends ComputeJob {
         pushConstants.updateBufferAndCheckRecreation(application, 0, 0, 1);
 
         NormalMapComputeActionGroup normalMapComputeActionGroup = new NormalMapComputeActionGroup(waterConfig.getN(), pushConstants);
-        normalMapComputeActionGroup.addComputeAction(new NormalMapComputeAction(normalMapTexture, dyTexture));
+        normalMapComputeActionGroup.addComputeAction(new NormalMapComputeAction(normalMapTexture, fftComputeJob.getDyTexture()));
         computeActionGroups.add(normalMapComputeActionGroup);
 
         return computeActionGroups;
@@ -139,7 +139,7 @@ public class NormalMapComputeJob extends ComputeJob {
 
     @Override
     public void cleanup() {
-        super.cleanup();
         normalMapTexture.cleanup();
+        super.cleanup();
     }
 }

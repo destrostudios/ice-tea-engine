@@ -1,14 +1,16 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
-public abstract class ComputeAction {
+public abstract class ComputeAction extends LifecycleObject {
 
-    private Application application;
+    @Setter
     private ComputeActionGroup computeActionGroup;
     @Getter
     protected MaterialDescriptorSet materialDescriptorSet;
@@ -18,9 +20,9 @@ public abstract class ComputeAction {
     @Getter
     protected ComputePipeline computePipeline;
 
-    public void init(Application application, ComputeActionGroup computeActionGroup) {
-        this.application = application;
-        this.computeActionGroup = computeActionGroup;
+    @Override
+    protected void init(Application application) {
+        super.init(application);
         initMaterialDescriptorSet();
     }
 

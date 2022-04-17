@@ -168,10 +168,7 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
 
     public void removeControl(Control control) {
         if (controls.remove(control)) {
-            if (isAttachedToRoot()) {
-                control.onRemoveFromRoot();
-            }
-            control.onRemove();
+            control.setSpatial(null);
         }
     }
 
@@ -213,9 +210,7 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     }
 
     protected void onRemoveFromRoot() {
-        for (Control control : controls) {
-            control.onRemoveFromRoot();
-        }
+
     }
 
     protected List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors(Geometry geometry) {
@@ -244,6 +239,14 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
             }
         }
         return tmpVertexPositionModifiers;
+    }
+
+    @Override
+    public void cleanup() {
+        for (Control control : controls) {
+            control.cleanup();
+        }
+        super.cleanup();
     }
 
     @Override

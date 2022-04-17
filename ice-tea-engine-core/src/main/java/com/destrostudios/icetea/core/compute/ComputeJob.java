@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.lwjgl.PointerBuffer;
@@ -15,9 +16,8 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class ComputeJob {
+public abstract class ComputeJob extends LifecycleObject {
 
-    protected Application application;
     private List<ComputeActionGroup> computeActionGroups;
     private VkCommandBuffer commandBuffer;
     @Getter
@@ -26,11 +26,12 @@ public abstract class ComputeJob {
     private Long waitSemaphore;
     private Integer waitDstStage;
 
+    @Override
     public void init(Application application) {
-        this.application = application;
+        super.init(application);
         computeActionGroups = createComputeActionGroups();
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
-            computeActionGroup.init(application);
+            computeActionGroup.update(application, 0, 0);
         }
         initCommandBuffer();
         initFence();
@@ -131,11 +132,13 @@ public abstract class ComputeJob {
         return false;
     }
 
+    @Override
     public void cleanup() {
         vkDestroyFence(application.getLogicalDevice(), fence, null);
         vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), commandBuffer);
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
             computeActionGroup.cleanup();
         }
+        super.cleanup();
     }
 }

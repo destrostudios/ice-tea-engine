@@ -10,28 +10,19 @@ public abstract class Control extends LifecycleObject implements ContextCloneabl
 
     protected Control() { }
 
-    protected Control(Control control) {
-        active = control.active;
-    }
     @Getter
     protected Spatial spatial;
-    protected boolean active;
 
     public void setSpatial(Spatial spatial) {
         if (spatial != this.spatial) {
             if (spatial != null) {
                 if (isInitialized()) {
                     onAdd();
-                    setActive(true);
                 }
             } else {
                 onRemove();
-                setActive(false);
             }
             this.spatial = spatial;
-        }
-        if (isInitialized()) {
-            setActive(true);
         }
     }
 
@@ -41,7 +32,6 @@ public abstract class Control extends LifecycleObject implements ContextCloneabl
         initControl();
         if (spatial != null) {
             onAdd();
-            setActive(true);
         }
     }
 
@@ -53,22 +43,7 @@ public abstract class Control extends LifecycleObject implements ContextCloneabl
 
     }
 
-    public void onRemove() {
-        spatial = null;
-    }
-
-    public void onRemoveFromRoot() {
-        setActive(false);
-    }
-
-    private void setActive(boolean active) {
-        if (active != this.active) {
-            this.active = active;
-            onActiveChanged();
-        }
-    }
-
-    protected void onActiveChanged() {
+    protected void onRemove() {
 
     }
 

@@ -355,11 +355,11 @@ public abstract class Application {
 
     private void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
             int imageIndex = swapChain.acquireNextImageIndex();
             if (imageIndex != -1) {
                 float tpf = calculateNextTpf();
                 inputManager.update(this, 0, tpf);
-                glfwPollEvents();
                 update(imageIndex, tpf);
                 updateRenderDependencies(imageIndex, tpf);
                 swapChain.drawFrame(imageIndex);

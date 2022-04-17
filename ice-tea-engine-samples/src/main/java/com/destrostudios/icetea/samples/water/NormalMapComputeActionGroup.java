@@ -60,4 +60,10 @@ public class NormalMapComputeActionGroup extends ComputeActionGroup {
     protected int getGroupCountZ() {
         return 1;
     }
+
+    @Override
+    public void cleanup() {
+        pushConstants.cleanup();
+        super.cleanup();
+    }
 }

@@ -85,4 +85,15 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
     protected int getGroupCountZ() {
         return 1;
     }
+
+    @Override
+    public void cleanup() {
+        for (ByteBufferData horizontalPushConstantsData : horizontalPushConstants) {
+            horizontalPushConstantsData.cleanup();
+        }
+        for (ByteBufferData verticalPushConstantsData : verticalPushConstants) {
+            verticalPushConstantsData.cleanup();
+        }
+        super.cleanup();
+    }
 }

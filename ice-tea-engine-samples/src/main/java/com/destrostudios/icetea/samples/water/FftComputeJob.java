@@ -19,18 +19,14 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class FftComputeJob extends ComputeJob {
 
-    public FftComputeJob(int n, Texture twiddleFactorsTexture, Texture dxCoefficientsTexture, Texture dyCoefficientsTexture, Texture dzCoefficientsTexture) {
+    public FftComputeJob(int n, TwiddleFactorsComputeJob twiddleFactorsComputeJob, HktComputeJob hktComputeJob) {
         this.n = n;
-        this.twiddleFactorsTexture = twiddleFactorsTexture;
-        this.dxCoefficientsTexture = dxCoefficientsTexture;
-        this.dyCoefficientsTexture = dyCoefficientsTexture;
-        this.dzCoefficientsTexture = dzCoefficientsTexture;
+        this.twiddleFactorsComputeJob = twiddleFactorsComputeJob;
+        this.hktComputeJob = hktComputeJob;
     }
     private int n;
-    private Texture twiddleFactorsTexture;
-    private Texture dxCoefficientsTexture;
-    private Texture dyCoefficientsTexture;
-    private Texture dzCoefficientsTexture;
+    private TwiddleFactorsComputeJob twiddleFactorsComputeJob;
+    private HktComputeJob hktComputeJob;
     @Getter
     private Texture dxTexture;
     @Getter
@@ -38,7 +34,6 @@ public class FftComputeJob extends ComputeJob {
     @Getter
     private Texture dzTexture;
     private Texture dxPingPongTexture;
-    @Getter
     private Texture dyPingPongTexture;
     private Texture dzPingPongTexture;
 
@@ -149,15 +144,15 @@ public class FftComputeJob extends ComputeJob {
         inversionPushConstants.updateBufferAndCheckRecreation(application, 0, 0, 1);
 
         FftButterflyComputeActionGroup butterflyComputeActionGroup = new FftButterflyComputeActionGroup(n, horizontalPushConstants, verticalPushConstants);
-        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsTexture, dxCoefficientsTexture, dxPingPongTexture));
-        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsTexture, dyCoefficientsTexture, dyPingPongTexture));
-        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsTexture, dzCoefficientsTexture, dzPingPongTexture));
+        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture(), hktComputeJob.getDxCoefficientsTexture(), dxPingPongTexture));
+        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture(), hktComputeJob.getDyCoefficientsTexture(), dyPingPongTexture));
+        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture(), hktComputeJob.getDzCoefficientsTexture(), dzPingPongTexture));
         computeActionGroups.add(butterflyComputeActionGroup);
 
         FftInversionComputeActionGroup inverseComputeActionGroup = new FftInversionComputeActionGroup(n, inversionPushConstants);
-        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dxTexture, dxCoefficientsTexture, dxPingPongTexture));
-        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dyTexture, dyCoefficientsTexture, dyPingPongTexture));
-        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dzTexture, dzCoefficientsTexture, dzPingPongTexture));
+        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dxTexture, hktComputeJob.getDxCoefficientsTexture(), dxPingPongTexture));
+        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dyTexture, hktComputeJob.getDyCoefficientsTexture(), dyPingPongTexture));
+        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dzTexture, hktComputeJob.getDzCoefficientsTexture(), dzPingPongTexture));
         computeActionGroups.add(inverseComputeActionGroup);
 
         return computeActionGroups;
@@ -170,12 +165,12 @@ public class FftComputeJob extends ComputeJob {
 
     @Override
     public void cleanup() {
-        super.cleanup();
-        dxTexture.cleanup();
-        dyTexture.cleanup();
+        dzPingPongTexture.cleanup();
+        dyPingPongTexture.cleanup();
+        dxPingPongTexture.cleanup();
         dzTexture.cleanup();
-        dxCoefficientsTexture.cleanup();
-        dyCoefficientsTexture.cleanup();
-        dzCoefficientsTexture.cleanup();
+        dyTexture.cleanup();
+        dxTexture.cleanup();
+        super.cleanup();
     }
 }

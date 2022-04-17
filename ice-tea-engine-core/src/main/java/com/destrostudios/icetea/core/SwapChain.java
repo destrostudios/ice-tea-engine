@@ -279,9 +279,7 @@ public class SwapChain extends LifecycleObject {
     }
 
     private void render(List<RenderJob<?>> renderJobBucket, VkRenderPassBeginInfo renderPassBeginInfo) {
-        renderJobBucket.forEach(renderJob -> {
-            render(renderJob, renderPassBeginInfo);
-        });
+        renderJobBucket.forEach(renderJob -> render(renderJob, renderPassBeginInfo));
     }
 
     private void render(RenderJob<?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo) {

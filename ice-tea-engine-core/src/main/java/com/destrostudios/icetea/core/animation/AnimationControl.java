@@ -16,7 +16,6 @@ public class AnimationControl extends Control {
     }
 
     public AnimationControl(AnimationControl animationControl, CloneContext context) {
-        super(animationControl);
         animations = animationControl.animations.stream().map(context::cloneByReference).collect(Collectors.toList());
         playingAnimation = context.cloneByReference(animationControl.playingAnimation);
         time = animationControl.time;
