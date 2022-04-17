@@ -77,8 +77,14 @@ public class AssetManager {
     }
 
     public void cleanup() {
+        for (Mesh mesh : cachedMeshes.values()) {
+            mesh.cleanup();
+        }
         for (Spatial spatial : cachedModels.values()) {
             spatial.cleanup();
+        }
+        for (BufferedTexture texture : cachedTextures.values()) {
+            texture.cleanup();
         }
     }
 }

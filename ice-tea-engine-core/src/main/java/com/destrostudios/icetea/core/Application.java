@@ -8,7 +8,6 @@ import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
-import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.shader.ShaderManager;
@@ -72,7 +71,7 @@ public abstract class Application {
     @Getter
     protected AssetManager assetManager;
     @Getter
-    private ShaderManager shaderManager;
+    protected ShaderManager shaderManager;
 
     @Getter
     private VkInstance instance;
@@ -106,9 +105,9 @@ public abstract class Application {
     @Getter
     protected SceneCamera sceneCamera;
     @Getter
-    private GuiCamera guiCamera;
+    protected GuiCamera guiCamera;
     @Getter
-    private Node rootNode;
+    protected Node rootNode;
     @Getter
     protected Node sceneNode;
     @Getter
@@ -356,10 +355,11 @@ public abstract class Application {
 
     private void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
             int imageIndex = swapChain.acquireNextImageIndex();
             if (imageIndex != -1) {
                 float tpf = calculateNextTpf();
+                inputManager.update(this, 0, tpf);
+                glfwPollEvents();
                 update(imageIndex, tpf);
                 updateRenderDependencies(imageIndex, tpf);
                 swapChain.drawFrame(imageIndex);
@@ -389,7 +389,6 @@ public abstract class Application {
 
     private void updateRenderDependencies(int imageIndex, float tpf) {
         swapChain.update(this, imageIndex, tpf);
-        inputManager.update(this, imageIndex, tpf);
         shaderManager.update(this, imageIndex, tpf);
         sceneCamera.update(this, imageIndex, tpf);
         guiCamera.update(this, imageIndex, tpf);
@@ -436,7 +435,6 @@ public abstract class Application {
     }
 
     public void removeFilter(Filter filter) {
-        filter.cleanup();
         filters.remove(filter);
         swapChain.getRenderJobManager().getQueuePostScene().remove(filter.getFilterRenderJob());
         recreateRenderJobs();
@@ -490,20 +488,11 @@ public abstract class Application {
     private void cleanup() {
         inputManager.cleanup();
 
-        shaderManager.cleanup();
+        assetManager.cleanup();
 
         swapChain.cleanup();
 
-        rootNode.forEachGeometry(Geometry::cleanup);
-
-        sceneCamera.cleanup();
-        guiCamera.cleanup();
-
-        if (light != null) {
-            light.cleanup();
-        }
-
-        filters.forEach(Filter::cleanup);
+        cleanupRenderDependencies();
 
         vkDestroyCommandPool(logicalDevice, commandPool, null);
 
@@ -520,5 +509,15 @@ public abstract class Application {
         glfwDestroyWindow(window);
 
         glfwTerminate();
+    }
+
+    protected void cleanupRenderDependencies() {
+        shaderManager.cleanup();
+        sceneCamera.cleanup();
+        guiCamera.cleanup();
+        rootNode.cleanup();
+        if (light != null) {
+            light.cleanup();
+        }
     }
 }

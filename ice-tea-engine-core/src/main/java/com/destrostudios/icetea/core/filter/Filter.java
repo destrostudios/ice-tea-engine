@@ -34,7 +34,6 @@ public class Filter extends LifecycleObject {
     @Override
     public void cleanup() {
         uniformData.cleanup();
-        filterRenderJob.cleanup();
         super.cleanup();
     }
 }

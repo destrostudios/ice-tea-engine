@@ -45,4 +45,10 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     public Shader getFragmentShader() {
         return filter.getFragmentShader();
     }
+
+    @Override
+    public void cleanup() {
+        filter.cleanup();
+        super.cleanup();
+    }
 }
