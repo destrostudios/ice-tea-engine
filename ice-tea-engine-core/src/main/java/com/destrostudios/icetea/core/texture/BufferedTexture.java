@@ -7,7 +7,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.stb.STBImage.*;
@@ -16,16 +16,10 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class BufferedTexture extends Texture {
 
-    public BufferedTexture(ByteBuffer pixels, int width, int height, int channels) {
-        this.pixels = pixels;
-        this.width = width;
-        this.height = height;
-        this.channels = channels;
+    public BufferedTexture(TextureDataReader dataReader) throws IOException {
+        this.dataReader = dataReader;
     }
-    private ByteBuffer pixels;
-    private int width;
-    private int height;
-    private int channels;
+    private TextureDataReader dataReader;
     private int mipLevels;
 
     @Override
@@ -39,8 +33,14 @@ public class BufferedTexture extends Texture {
 
     private void initImage(int format) {
         try (MemoryStack stack = stackPush()) {
-            long imageSize = width * height * 4; // channels
-            mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(width, height))) + 1);
+            TextureData textureData;
+            try {
+                textureData = dataReader.read();
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to read texture (exception = \"" + ex.getMessage() + "\")");
+            }
+            long imageSize = textureData.getWidth() * textureData.getHeight() * 4; // channels
+            mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(textureData.getWidth(), textureData.getHeight()))) + 1);
 
             LongBuffer pStagingBuffer = stack.mallocLong(1);
             LongBuffer pStagingBufferMemory = stack.mallocLong(1);
@@ -53,17 +53,21 @@ public class BufferedTexture extends Texture {
             );
 
             PointerBuffer data = stack.mallocPointer(1);
-            vkMapMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0), 0, imageSize, 0, data);
-            BufferUtil.memcpy(pixels, data.getByteBuffer(0, (int) imageSize), imageSize);
+            int result = vkMapMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0), 0, imageSize, 0, data);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to map memory (result = " + result + ")");
+            }
+            BufferUtil.memcpy(textureData.getPixels(), data.getByteBuffer(0, (int) imageSize), imageSize);
             vkUnmapMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0));
 
-            stbi_image_free(pixels);
+            // Texture is cleaned up from RAM immediately, will be read again if texture is cleanuped and reinitialized
+            stbi_image_free(textureData.getPixels());
 
             LongBuffer pTextureImage = stack.mallocLong(1);
             LongBuffer pTextureImageMemory = stack.mallocLong(1);
             application.getImageManager().createImage(
-                width,
-                height,
+                textureData.getWidth(),
+                textureData.getHeight(),
                 mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
                 format,
@@ -85,14 +89,14 @@ public class BufferedTexture extends Texture {
                 mipLevels
             );
 
-            application.getImageManager().copyBufferToImage(pStagingBuffer.get(0), image, width, height);
+            application.getImageManager().copyBufferToImage(pStagingBuffer.get(0), image, textureData.getWidth(), textureData.getHeight());
 
             int finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             application.getImageManager().generateMipmaps(
                 image,
                 format,
-                width,
-                height,
+                textureData.getWidth(),
+                textureData.getHeight(),
                 mipLevels,
                 finalLayout,
                 VK_ACCESS_SHADER_READ_BIT,

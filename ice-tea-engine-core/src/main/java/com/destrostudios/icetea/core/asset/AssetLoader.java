@@ -2,6 +2,7 @@ package com.destrostudios.icetea.core.asset;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 public abstract class AssetLoader<T, S> {
 
@@ -15,5 +16,5 @@ public abstract class AssetLoader<T, S> {
         this.settings = settings;
     }
 
-    public abstract T load(InputStream inputStream) throws IOException;
+    public abstract T load(Supplier<InputStream> inputStreamSupplier) throws IOException;
 }

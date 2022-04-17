@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.function.Supplier;
 
 public class ObjLoader extends AssetLoader<Mesh, Void> {
 
@@ -24,8 +25,11 @@ public class ObjLoader extends AssetLoader<Mesh, Void> {
     private ArrayList<Vector3f> normalsList;
 
     @Override
-    public Mesh load(InputStream inputStream) throws IOException {
-        Obj obj = ObjUtils.convertToRenderable(ObjReader.read(inputStream));
+    public Mesh load(Supplier<InputStream> inputStreamSupplier) throws IOException {
+        Obj obj;
+        try (InputStream inputStream = inputStreamSupplier.get()) {
+            obj = ObjUtils.convertToRenderable(ObjReader.read(inputStream));
+        }
         loadData(obj);
         return createMesh();
     }

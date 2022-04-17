@@ -27,6 +27,7 @@ import org.joml.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
@@ -62,8 +63,10 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
     }
 
     @Override
-    public Spatial load(InputStream inputStream) throws IOException {
-        gltfModel = new GltfModelReader().readWithoutReferences(inputStream);
+    public Spatial load(Supplier<InputStream> inputStreamSupplier) throws IOException {
+        try (InputStream inputStream = inputStreamSupplier.get()) {
+            gltfModel = new GltfModelReader().readWithoutReferences(inputStream);
+        }
         return loadScenes();
     }
 
@@ -341,8 +344,10 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         byte[] buffer = buffers.get(bufferViewModel.getBufferModel());
         try {
             if (buffer == null) {
-                InputStream inputStream = assetManager.load(keyDirectory + bufferViewModel.getBufferModel().getUri());
-                buffer = inputStream.readAllBytes();
+                Supplier<InputStream> inputStreamSupplier = assetManager.load(keyDirectory + bufferViewModel.getBufferModel().getUri());
+                try (InputStream inputStream = inputStreamSupplier.get()) {
+                    buffer = inputStream.readAllBytes();
+                }
                 buffers.put(bufferViewModel.getBufferModel(), buffer);
             }
             ByteArrayInputStream bufferInputStream = new ByteArrayInputStream(buffer);

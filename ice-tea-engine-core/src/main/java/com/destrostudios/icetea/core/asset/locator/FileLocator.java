@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 @AllArgsConstructor
 public class FileLocator implements AssetLocator {
@@ -14,14 +15,16 @@ public class FileLocator implements AssetLocator {
     private String root;
 
     @Override
-    public InputStream getInputStream(String key) {
+    public Supplier<InputStream> getInputStream(String key) {
         File file = new File(root, key);
         if (file.exists()) {
-            try {
-                return new FileInputStream(file);
-            } catch (FileNotFoundException ex) {
-                return null;
-            }
+            return () -> {
+                try {
+                    return new FileInputStream(file);
+                } catch (FileNotFoundException ex) {
+                    throw new RuntimeException("File no longer exists: " + key);
+                }
+            };
         }
         return null;
     }

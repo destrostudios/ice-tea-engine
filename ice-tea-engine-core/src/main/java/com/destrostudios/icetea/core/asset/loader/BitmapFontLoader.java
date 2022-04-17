@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.function.Supplier;
 
 public class BitmapFontLoader extends AssetLoader<BitmapFont, Void> {
 
@@ -29,39 +30,41 @@ public class BitmapFontLoader extends AssetLoader<BitmapFont, Void> {
     }
 
     @Override
-    public BitmapFont load(InputStream inputStream) throws IOException {
+    public BitmapFont load(Supplier<InputStream> inputStreamSupplier) throws IOException {
         int lineHeight = 0;
         HashMap<Character, BitmapFontCharacter> characters = new HashMap<>();
         HashMap<String, Texture> textures = new HashMap<>();
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            String[] parts = line.split("[\\s=]+");
-            switch (parts[0]) {
-                case "common": {
-                    lineHeight = Integer.parseInt(parts[2]);
-                    break;
-                }
-                case "page": {
-                    String id = parts[2];
-                    String file = parts[4];
-                    if (file.startsWith("\"")){
-                        file = file.substring(1, file.length() - 1);
+        try (InputStream inputStream = inputStreamSupplier.get()) {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] parts = line.split("[\\s=]+");
+                switch (parts[0]) {
+                    case "common": {
+                        lineHeight = Integer.parseInt(parts[2]);
+                        break;
                     }
-                    textures.put(id, assetManager.loadTexture(keyDirectory + file));
-                    break;
-                }
-                case "char": {
-                    Character id = (char) Integer.parseInt(parts[2]);
-                    int x = Integer.parseInt(parts[4]);
-                    int y = Integer.parseInt(parts[6]);
-                    int width = Integer.parseInt(parts[8]);
-                    int height = Integer.parseInt(parts[10]);
-                    int xOffset = Integer.parseInt(parts[12]);
-                    int yOffset = Integer.parseInt(parts[14]);
-                    int xAdvance = Integer.parseInt(parts[16]);
-                    characters.put(id, new BitmapFontCharacter(x, y, width, height, xOffset, yOffset, xAdvance));
-                    break;
+                    case "page": {
+                        String id = parts[2];
+                        String file = parts[4];
+                        if (file.startsWith("\"")) {
+                            file = file.substring(1, file.length() - 1);
+                        }
+                        textures.put(id, assetManager.loadTexture(keyDirectory + file));
+                        break;
+                    }
+                    case "char": {
+                        Character id = (char) Integer.parseInt(parts[2]);
+                        int x = Integer.parseInt(parts[4]);
+                        int y = Integer.parseInt(parts[6]);
+                        int width = Integer.parseInt(parts[8]);
+                        int height = Integer.parseInt(parts[10]);
+                        int xOffset = Integer.parseInt(parts[12]);
+                        int yOffset = Integer.parseInt(parts[14]);
+                        int xAdvance = Integer.parseInt(parts[16]);
+                        characters.put(id, new BitmapFontCharacter(x, y, width, height, xOffset, yOffset, xAdvance));
+                        break;
+                    }
                 }
             }
         }

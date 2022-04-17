@@ -3,9 +3,11 @@ package com.destrostudios.icetea.core.shader;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.function.Supplier;
 
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
@@ -42,7 +44,10 @@ public class ShaderManager extends LifecycleObject {
     private String getShaderSource(String shaderFile) {
         return filesCache.computeIfAbsent(shaderFile, sf -> {
             try {
-                return new String(application.getAssetManager().load(shaderFile).readAllBytes());
+                Supplier<InputStream> inputStreamSupplier = application.getAssetManager().load(shaderFile);
+                try (InputStream inputStream = inputStreamSupplier.get()) {
+                    return new String(inputStream.readAllBytes());
+                }
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
