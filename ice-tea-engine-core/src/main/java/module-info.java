@@ -43,7 +43,6 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.scene;
     exports com.destrostudios.icetea.core.scene.gui;
     exports com.destrostudios.icetea.core.shader;
-    exports com.destrostudios.icetea.core.system;
     exports com.destrostudios.icetea.core.texture;
     exports com.destrostudios.icetea.core.util;
 }
