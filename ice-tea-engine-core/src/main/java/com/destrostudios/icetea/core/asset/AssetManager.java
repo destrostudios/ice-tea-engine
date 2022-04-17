@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.function.Supplier;
 
-// TODO: Map extensions to loaders and maybe combine cache with the one in ShaderManager
+// TODO: Map extensions to loaders and combine cache with the one in ShaderManager
 public class AssetManager {
 
     public AssetManager() {

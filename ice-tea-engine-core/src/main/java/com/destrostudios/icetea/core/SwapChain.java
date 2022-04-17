@@ -8,7 +8,6 @@ import com.destrostudios.icetea.core.render.RenderJobManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import lombok.Setter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -36,7 +35,6 @@ public class SwapChain extends LifecycleObject {
     }
     @Getter
     private VkExtent2D extent;
-    @Getter
     private long swapChain;
     @Getter
     private ArrayList<Long> images;
@@ -44,7 +42,6 @@ public class SwapChain extends LifecycleObject {
     private int imageFormat;
     @Getter
     private ArrayList<Long> imageViews;
-    @Getter
     private ArrayList<VkCommandBuffer> commandBuffers;
     @Getter
     private RenderJobManager renderJobManager;
@@ -81,9 +78,7 @@ public class SwapChain extends LifecycleObject {
         initImageViews();
         initRenderJobs();
         initCommandBuffers();
-        if (inFlightFrames == null) {
-            initSyncObjects();
-        }
+        initSyncObjects();
     }
 
     private void initSwapChain() {

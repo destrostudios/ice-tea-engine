@@ -388,8 +388,8 @@ public abstract class Application {
     }
 
     private void updateRenderDependencies(int imageIndex, float tpf) {
-        swapChain.update(this, imageIndex, tpf);
         shaderManager.update(this, imageIndex, tpf);
+        swapChain.update(this, imageIndex, tpf);
         sceneCamera.update(this, imageIndex, tpf);
         guiCamera.update(this, imageIndex, tpf);
         if (light != null) {
@@ -487,31 +487,21 @@ public abstract class Application {
 
     private void cleanup() {
         inputManager.cleanup();
-
         assetManager.cleanup();
-
-        swapChain.cleanup();
-
         cleanupRenderDependencies();
-
         vkDestroyCommandPool(logicalDevice, commandPool, null);
-
         vkDestroyDevice(logicalDevice, null);
-
         vkDestroySurfaceKHR(instance, surface, null);
-
         if (debugMessenger != null) {
             vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
         }
-
         vkDestroyInstance(instance, null);
-
         glfwDestroyWindow(window);
-
         glfwTerminate();
     }
 
     protected void cleanupRenderDependencies() {
+        swapChain.cleanup();
         shaderManager.cleanup();
         sceneCamera.cleanup();
         guiCamera.cleanup();
