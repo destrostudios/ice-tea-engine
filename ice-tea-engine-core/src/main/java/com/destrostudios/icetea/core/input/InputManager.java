@@ -15,10 +15,6 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class InputManager extends LifecycleObject {
 
-    private GLFWKeyCallback glfwKeyCallback;
-    private GLFWCharCallback glfwCharacterCallback;
-    private GLFWMouseButtonCallback glfwMouseButtonCallback;
-    private GLFWCursorPosCallback glfwCursorPosCallback;
     private LinkedList<KeyListener> keyListeners = new LinkedList<>();
     private LinkedList<CharacterListener> characterListeners = new LinkedList<>();
     private LinkedList<KeyEvent> pendingKeyEvents = new LinkedList<>();
@@ -33,45 +29,35 @@ public class InputManager extends LifecycleObject {
     @Override
     protected void init(Application application) {
         super.init(application);
-        initKeyCallback();
-        initCharacterCallback();
-        initMouseCallback();
-    }
-
-    private void initKeyCallback() {
-        glfwKeyCallback = new GLFWKeyCallback() {
+        glfwSetKeyCallback(application.getWindow(), new GLFWKeyCallback() {
 
             @Override
             public void invoke(long window, int key, int scanCode, int action, int modifiers) {
                 pendingKeyEvents.add(new KeyEvent(key, scanCode, action, modifiers));
             }
-        };
-        glfwSetKeyCallback(application.getWindow(), glfwKeyCallback);
-    }
-
-    private void initCharacterCallback() {
-        glfwCharacterCallback = new GLFWCharCallback() {
+        });
+        glfwSetCharCallback(application.getWindow(), new GLFWCharCallback() {
 
             @Override
             public void invoke(long window, int codepoint) {
                 pendingCharacterEvents.add(new CharacterEvent(codepoint));
             }
-        };
-        glfwSetCharCallback(application.getWindow(), glfwCharacterCallback);
-    }
+        });
+        glfwSetCharCallback(application.getWindow(), new GLFWCharCallback() {
 
-    private void initMouseCallback() {
-        // Buttons
-        glfwMouseButtonCallback = new GLFWMouseButtonCallback() {
+            @Override
+            public void invoke(long window, int codepoint) {
+                pendingCharacterEvents.add(new CharacterEvent(codepoint));
+            }
+        });
+        glfwSetMouseButtonCallback(application.getWindow(), new GLFWMouseButtonCallback() {
 
             @Override
             public void invoke(long window, int button, int action, int mods) {
                 pendingMouseButtonEvents.add(new MouseButtonEvent(button, action, mods));
             }
-        };
-        glfwSetMouseButtonCallback(application.getWindow(), glfwMouseButtonCallback);
-        // Position
-        glfwCursorPosCallback = new GLFWCursorPosCallback() {
+        });
+        glfwSetCursorPosCallback(application.getWindow(), new GLFWCursorPosCallback() {
 
             @Override
             public void invoke(long window, double x, double y) {
@@ -80,8 +66,7 @@ public class InputManager extends LifecycleObject {
                 cursorPosition.set(x, y);
                 pendingMousePositionEvents.add(new MousePositionEvent(x, y, deltaX, deltaY));
             }
-        };
-        glfwSetCursorPosCallback(application.getWindow(), glfwCursorPosCallback);
+        });
     }
 
     @Override
@@ -155,10 +140,10 @@ public class InputManager extends LifecycleObject {
 
     @Override
     public void cleanup() {
-        glfwKeyCallback.free();
-        glfwCharacterCallback.free();
-        glfwMouseButtonCallback.free();
-        glfwCursorPosCallback.free();
+        glfwSetKeyCallback(application.getWindow(), null);
+        glfwSetCharCallback(application.getWindow(), null);
+        glfwSetMouseButtonCallback(application.getWindow(), null);
+        glfwSetCursorPosCallback(application.getWindow(), null);
         super.cleanup();
     }
 }
