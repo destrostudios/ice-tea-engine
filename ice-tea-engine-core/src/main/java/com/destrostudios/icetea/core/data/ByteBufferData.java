@@ -2,7 +2,6 @@ package com.destrostudios.icetea.core.data;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import lombok.Getter;
-import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ public class ByteBufferData extends BufferData {
     }
 
     @Override
-    public void cleanupBuffer() {
+    protected void cleanupBuffer() {
         if (byteBuffers != null) {
             // Nothing to do here
             byteBuffers = null;

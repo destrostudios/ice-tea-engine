@@ -10,6 +10,7 @@ import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -32,7 +33,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     private Texture multisampledColorTexture;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         initRenderPass();
         initMaterialDescriptors();
@@ -147,7 +148,8 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     public VkClearValue.Buffer getClearValues(MemoryStack stack) {
         VkClearValue.Buffer clearValues = VkClearValue.callocStack(1, stack);
         // TODO: Check if this is even needed for all fullscreen quad render jobs
-        clearValues.get(0).color().float32(stack.floats(0, 0, 0, 1));
+        Vector4f clearColor = application.getConfig().getClearColor();
+        clearValues.get(0).color().float32(stack.floats(clearColor.x(), clearColor.y(), clearColor.z(), clearColor.w()));
         return clearValues;
     }
 
@@ -160,6 +162,12 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
                 vkCmdDraw(cb, 3, 1, 0, 0);
             });
         }
+    }
+
+    @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
+        multisampledColorTexture.update(application, imageIndex, tpf);
     }
 
     @Override

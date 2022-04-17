@@ -15,7 +15,7 @@ public class SepiaFilter extends Filter {
     private Vector4f color2;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         fragmentShader = new Shader("com/destrostudios/icetea/samples/shaders/filters/sepia.frag");
     }

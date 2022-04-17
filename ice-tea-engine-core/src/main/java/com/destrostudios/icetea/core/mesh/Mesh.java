@@ -41,7 +41,6 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
         bounds = mesh.bounds.clone(context);
         // TODO: CollisionTree cloning, for now it would be recalculated
     }
-    private Application application;
     @Getter
     protected int topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     @Getter
@@ -100,14 +99,9 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
         }
     }
 
-    public boolean isInitialized() {
-        return (application != null);
-    }
-
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
-        this.application = application;
         setBuffersOutdated();
     }
 

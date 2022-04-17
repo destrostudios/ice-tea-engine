@@ -13,16 +13,10 @@ public class ReflectionRenderJob extends SceneRenderJob {
 
     public ReflectionRenderJob(Geometry geometryWater) {
         this.geometryWater = geometryWater;
+        reflectionCamera = new SceneCamera();
     }
     private Geometry geometryWater;
     private SceneCamera reflectionCamera;
-
-    @Override
-    public void init(Application application) {
-        super.init(application);
-        reflectionCamera = new SceneCamera();
-        reflectionCamera.init(application);
-    }
 
     @Override
     public void update(Application application, int imageIndex, float tpf) {
@@ -54,10 +48,7 @@ public class ReflectionRenderJob extends SceneRenderJob {
 
     @Override
     public void cleanup() {
-        if (isInitialized()) {
-            reflectionCamera.cleanup();
-            reflectionCamera = null;
-        }
+        reflectionCamera.cleanup();
         super.cleanup();
     }
 }

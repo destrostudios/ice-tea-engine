@@ -3,7 +3,6 @@ package com.destrostudios.icetea.core.data;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.data.values.UniformValue;
-import lombok.Setter;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -15,15 +14,15 @@ public abstract class BufferData extends FieldsData {
     public BufferData(BufferData bufferData, CloneContext context) {
         super(bufferData, context);
     }
-    @Setter
-    protected Application application;
 
-    @Override
-    protected int getSize(UniformValue<?> uniformValue) {
-        return uniformValue.getAlignedSize();
+    public boolean updateBufferAndCheckRecreation(Application application, int bufferIndex, float tpf, int buffersCount) {
+        update(application, bufferIndex, tpf);
+        boolean wasRecreated = recreateBuffersIfNecessary(buffersCount);
+        updateBufferIfNecessary(bufferIndex);
+        return wasRecreated;
     }
 
-    public boolean recreateBuffersIfNecessary(int buffersCount) {
+    private boolean recreateBuffersIfNecessary(int buffersCount) {
         if (structureModified) {
             cleanupBuffer();
             initBuffers(buffersCount);
@@ -33,7 +32,7 @@ public abstract class BufferData extends FieldsData {
         return false;
     }
 
-    public void initBuffers(int buffersCount) {
+    private void initBuffers(int buffersCount) {
         if (size > 0) {
             initBuffersInternal(buffersCount);
             contentModified = new ArrayList<>(buffersCount);
@@ -46,7 +45,7 @@ public abstract class BufferData extends FieldsData {
 
     protected abstract void initBuffersInternal(int buffersCount);
 
-    public void updateBufferIfNecessary(int bufferIndex) {
+    private void updateBufferIfNecessary(int bufferIndex) {
         if ((size > 0) && contentModified.get(bufferIndex)) {
             ByteBuffer byteBuffer = prepareUpdatingBuffer(bufferIndex);
             int index = 0;
@@ -63,7 +62,19 @@ public abstract class BufferData extends FieldsData {
 
     protected abstract void finishUpdatingBuffer(int bufferIndex);
 
-    public abstract void cleanupBuffer();
+    @Override
+    protected int getSize(UniformValue<?> uniformValue) {
+        return uniformValue.getAlignedSize();
+    }
+
+    @Override
+    public void cleanup() {
+        cleanupBuffer();
+        structureModified = true;
+        super.cleanup();
+    }
+
+    protected abstract void cleanupBuffer();
 
     @Override
     public abstract BufferData clone(CloneContext context);

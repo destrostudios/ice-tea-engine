@@ -109,7 +109,7 @@ public class FftComputeJob extends ComputeJob {
             long imageSampler = pImageSampler.get(0);
 
             Texture texture = new Texture(image, imageMemory, imageView, VK_IMAGE_LAYOUT_GENERAL, imageSampler);
-            texture.init(application);
+            texture.update(application, 0, 0);
             return texture;
         }
     }
@@ -127,8 +127,7 @@ public class FftComputeJob extends ComputeJob {
             horizontalPushConstants[i].setInt("stage", i);
             horizontalPushConstants[i].setInt("pingpong", pingPongIndex);
             horizontalPushConstants[i].setInt("direction", 0);
-            horizontalPushConstants[i].initBuffers(1);
-            horizontalPushConstants[i].updateBufferIfNecessary(0);
+            horizontalPushConstants[i].updateBufferAndCheckRecreation(application, 0, 0, 1);
 
             pingPongIndex++;
             pingPongIndex %= 2;
@@ -138,8 +137,7 @@ public class FftComputeJob extends ComputeJob {
             verticalPushConstants[i].setInt("stage", i);
             verticalPushConstants[i].setInt("pingpong", pingPongIndex);
             verticalPushConstants[i].setInt("direction", 1);
-            verticalPushConstants[i].initBuffers(1);
-            verticalPushConstants[i].updateBufferIfNecessary(0);
+            verticalPushConstants[i].updateBufferAndCheckRecreation(application, 0, 0, 1);
 
             pingPongIndex++;
             pingPongIndex %= 2;
@@ -148,8 +146,7 @@ public class FftComputeJob extends ComputeJob {
         ByteBufferData inversionPushConstants = new ByteBufferData();
         inversionPushConstants.setInt("n", n);
         inversionPushConstants.setInt("pingPongIndex", pingPongIndex);
-        inversionPushConstants.initBuffers(1);
-        inversionPushConstants.updateBufferIfNecessary(0);
+        inversionPushConstants.updateBufferAndCheckRecreation(application, 0, 0, 1);
 
         FftButterflyComputeActionGroup butterflyComputeActionGroup = new FftButterflyComputeActionGroup(n, horizontalPushConstants, verticalPushConstants);
         butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsTexture, dxCoefficientsTexture, dxPingPongTexture));

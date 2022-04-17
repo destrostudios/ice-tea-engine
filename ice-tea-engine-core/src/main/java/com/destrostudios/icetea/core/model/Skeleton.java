@@ -41,14 +41,6 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
     private UniformData uniformData;
 
     @Override
-    public void init(Application application) {
-        super.init(application);
-        uniformData.setApplication(application);
-        updateUniformData();
-        uniformData.initBuffers(application.getSwapChain().getImages().size());
-    }
-
-    @Override
     public void update(Application application, int imageIndex, float tpf) {
         super.update(application, imageIndex, tpf);
         boolean jointMatricesUpdated = false;
@@ -64,13 +56,9 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
             }
         }
         if (jointMatricesUpdated) {
-            updateUniformData();
+            uniformData.setMatrix4fArray("jointMatrices", jointMatrices);
         }
-        uniformData.updateBufferIfNecessary(imageIndex);
-    }
-
-    private void updateUniformData() {
-        uniformData.setMatrix4fArray("jointMatrices", jointMatrices);
+        uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
     }
 
     public void resetPose() {
@@ -81,7 +69,7 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
 
     @Override
     public void cleanup() {
-        uniformData.cleanupBuffer();
+        uniformData.cleanup();
         super.cleanup();
     }
 

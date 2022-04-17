@@ -76,16 +76,9 @@ public class Material extends LifecycleObject implements ContextCloneable {
     @Getter
     private int fillMode = VK_POLYGON_MODE_FILL;
 
-    @Override
-    public void init(Application application) {
-        super.init(application);
-        parameters.setApplication(application);
-    }
-
     public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
         update(application, imageIndex, tpf);
-        boolean commandBufferOutdated = parameters.recreateBuffersIfNecessary(application.getSwapChain().getImages().size());
-        parameters.updateBufferIfNecessary(imageIndex);
+        boolean commandBufferOutdated = parameters.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
         for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
             Texture texture = textureSupplier.get();
             texture.update(application, imageIndex, tpf);
@@ -115,7 +108,7 @@ public class Material extends LifecycleObject implements ContextCloneable {
 
     @Override
     public void cleanup() {
-        parameters.cleanupBuffer();
+        parameters.cleanup();
         for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
             Texture texture = textureSupplier.get();
             // Can already be cleanuped by the provider (e.g. the responsible render job)

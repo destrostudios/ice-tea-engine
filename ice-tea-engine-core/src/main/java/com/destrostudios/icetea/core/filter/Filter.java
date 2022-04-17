@@ -21,18 +21,10 @@ public class Filter extends LifecycleObject {
     private FilterRenderJob filterRenderJob;
 
     @Override
-    public void init(Application application) {
-        super.init(application);
-        uniformData.setApplication(application);
-        updateUniformData();
-        uniformData.initBuffers(application.getSwapChain().getImages().size());
-    }
-
-    @Override
     public void update(Application application, int imageIndex, float tpf) {
         super.update(application, imageIndex, tpf);
         updateUniformData();
-        uniformData.updateBufferIfNecessary(imageIndex);
+        uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
     }
 
     protected void updateUniformData() {
@@ -41,7 +33,7 @@ public class Filter extends LifecycleObject {
 
     @Override
     public void cleanup() {
-        uniformData.cleanupBuffer();
+        uniformData.cleanup();
         filterRenderJob.cleanup();
         super.cleanup();
     }

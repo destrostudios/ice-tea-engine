@@ -138,7 +138,7 @@ public class WaterControl extends Control {
         distortion += tpf * waterConfig.getDistortionSpeed();
 
         hktComputeJob.setTime(time);
-        hktComputeJob.getUniformData().updateBufferIfNecessary(0);
+        hktComputeJob.getUniformData().updateBufferAndCheckRecreation(application, 0, 0, 1);
         hktComputeJob.submit();
 
         fftComputeJob.submit();

@@ -247,7 +247,6 @@ public class TestApplication extends Application {
         materialDennis.setVertexShader(vertexShaderDefault);
         materialDennis.setFragmentShader(fragShaderDefault);
         Texture textureDennis = assetManager.loadTexture("textures/dennis.jpg");
-        textureDennis.init(this); // Preload to avoid lag later on
         materialDennis.setTexture("diffuseMap", textureDennis);
         materialDennis.getParameters().setVector4f("mixColor", new Vector4f(1, 1, 0, 1));
 
@@ -279,7 +278,7 @@ public class TestApplication extends Application {
 
         Node animatedObject1 = (Node) assetManager.loadModel("models/simple_skin/SimpleSkin.gltf");
         animatedObject1.forEachGeometry(geometry -> geometry.getMesh().generateNormals());
-        animatedObject1.move(new Vector3f(-2.5f, 0.6f, 0));
+        animatedObject1.move(new Vector3f(-2.5f, 0, 0));
         animatedObject1.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject1.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl1 = animatedObject1.getFirstControl(AnimationControl.class);

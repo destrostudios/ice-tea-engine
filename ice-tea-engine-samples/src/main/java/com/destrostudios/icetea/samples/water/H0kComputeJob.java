@@ -38,13 +38,13 @@ public class H0kComputeJob extends ComputeJob {
         h0kTexture = createTargetTexture();
         h0minuskTexture = createTargetTexture();
         noiseTexture1 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_0.jpg");
-        noiseTexture1.init(application);
+        noiseTexture1.update(application, 0, 0);
         noiseTexture2 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_1.jpg");
-        noiseTexture2.init(application);
+        noiseTexture2.update(application, 0, 0);
         noiseTexture3 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_2.jpg");
-        noiseTexture3.init(application);
+        noiseTexture3.update(application, 0, 0);
         noiseTexture4 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_3.jpg");
-        noiseTexture4.init(application);
+        noiseTexture4.update(application, 0, 0);
         initUniformData();
         super.init(application);
     }
@@ -101,22 +101,20 @@ public class H0kComputeJob extends ComputeJob {
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.init(application);
+            texture.update(application, 0, 0);
             return texture;
         }
     }
 
     private void initUniformData() {
         uniformData = new UniformData();
-        uniformData.setApplication(application);
         uniformData.setInt("N", waterConfig.getN());
         uniformData.setInt("L", waterConfig.getL());
         uniformData.setFloat("amplitude", waterConfig.getAmplitude());
         uniformData.setFloat("windspeed", waterConfig.getWindSpeed());
         uniformData.setVector2f("w", waterConfig.getWindDirection());
         uniformData.setFloat("capillarSupressFactor", waterConfig.getCapillarSuppressFactor());
-        uniformData.initBuffers(1);
-        uniformData.updateBufferIfNecessary(0);
+        uniformData.updateBufferAndCheckRecreation(application, 0, 0, 1);
     }
 
     @Override
@@ -132,13 +130,13 @@ public class H0kComputeJob extends ComputeJob {
 
     @Override
     public void cleanup() {
-        super.cleanup();
+        uniformData.cleanup();
         h0kTexture.cleanup();
         h0minuskTexture.cleanup();
         noiseTexture1.cleanup();
         noiseTexture2.cleanup();
         noiseTexture3.cleanup();
         noiseTexture4.cleanup();
-        uniformData.cleanupBuffer();
+        super.cleanup();
     }
 }

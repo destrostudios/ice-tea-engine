@@ -29,7 +29,7 @@ public class BufferedTexture extends Texture {
     private int mipLevels;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         int format = VK_FORMAT_R8G8B8A8_SRGB;
         initImage(format);

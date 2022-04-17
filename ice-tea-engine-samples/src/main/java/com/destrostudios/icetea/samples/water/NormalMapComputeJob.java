@@ -93,7 +93,7 @@ public class NormalMapComputeJob extends ComputeJob {
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.init(application);
+            texture.update(application, 0, 0);
             return texture;
         }
     }
@@ -105,8 +105,7 @@ public class NormalMapComputeJob extends ComputeJob {
         ByteBufferData pushConstants = new ByteBufferData();
         pushConstants.setInt("n", waterConfig.getN());
         pushConstants.setFloat("strength", waterConfig.getNormalStrength());
-        pushConstants.initBuffers(1);
-        pushConstants.updateBufferIfNecessary(0);
+        pushConstants.updateBufferAndCheckRecreation(application, 0, 0, 1);
 
         NormalMapComputeActionGroup normalMapComputeActionGroup = new NormalMapComputeActionGroup(waterConfig.getN(), pushConstants);
         normalMapComputeActionGroup.addComputeAction(new NormalMapComputeAction(normalMapTexture, dyTexture));

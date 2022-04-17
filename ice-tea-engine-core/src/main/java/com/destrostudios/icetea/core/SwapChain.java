@@ -70,12 +70,12 @@ public class SwapChain extends LifecycleObject {
         isDuringRecreation = true;
         cleanup();
         isDuringRecreation = false;
-        init(tmpApplication);
+        update(application, 0, 0);
         recordCommandBuffers();
     }
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         initSwapChain();
         initImageViews();
@@ -192,7 +192,7 @@ public class SwapChain extends LifecycleObject {
 
     public void initRenderJobs() {
         // Make sure all render jobs are initialized first, because they can have dependencies between each other
-        renderJobManager.forEachRenderJob(renderJob -> renderJob.init(application));
+        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, 0, 0));
         renderJobManager.forEachRenderJob(renderJob -> {
             application.getRootNode().forEachGeometry(geometry -> {
                 GeometryRenderContext<?> renderContext = geometry.getRenderContext(renderJob);

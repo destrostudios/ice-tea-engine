@@ -14,7 +14,7 @@ public class RadialBlurFilter extends Filter {
     private float sampleStrength;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         fragmentShader = new Shader("com/destrostudios/icetea/samples/shaders/filters/radialBlur.frag");
     }

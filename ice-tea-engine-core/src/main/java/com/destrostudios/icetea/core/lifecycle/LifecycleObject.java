@@ -12,7 +12,7 @@ public class LifecycleObject {
         }
     }
 
-    public void init(Application application) {
+    protected void init(Application application) {
         this.application = application;
     }
 

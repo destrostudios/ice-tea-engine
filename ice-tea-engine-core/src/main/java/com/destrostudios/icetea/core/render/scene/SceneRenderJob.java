@@ -33,7 +33,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     private Texture resolvedDepthTexture;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         initRenderPass();
         multisampledColorTexture = createMultisampledColorTexture();
@@ -225,7 +225,6 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
             multisampledDepthTexture = new Texture(image, imageMemory, imageView, finalLayout);
-            multisampledDepthTexture.init(application);
         }
     }
 
@@ -278,7 +277,6 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             long imageSampler = pImageSampler.get(0);
 
             resolvedDepthTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            resolvedDepthTexture.init(application);
         }
     }
 
@@ -336,11 +334,19 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
+        multisampledColorTexture.update(application, imageIndex, tpf);
+        multisampledDepthTexture.update(application, imageIndex, tpf);
+        resolvedDepthTexture.update(application, imageIndex, tpf);
+    }
+
+    @Override
     public void cleanup() {
         if (isInitialized()) {
-            multisampledColorTexture.cleanup();
-            multisampledDepthTexture.cleanup();
             resolvedDepthTexture.cleanup();
+            multisampledDepthTexture.cleanup();
+            multisampledColorTexture.cleanup();
         }
         super.cleanup();
     }

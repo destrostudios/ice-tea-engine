@@ -31,7 +31,7 @@ public class InputManager extends LifecycleObject {
     private Vector2f cursorPosition = new Vector2f();
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         initKeyCallback();
         initCharacterCallback();

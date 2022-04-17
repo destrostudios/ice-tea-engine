@@ -43,18 +43,10 @@ public abstract class Light extends LifecycleObject {
     private boolean modified;
 
     @Override
-    public void init(Application application) {
-        super.init(application);
-        uniformData.setApplication(application);
-        updateUniformDataFields();
-        uniformData.initBuffers(application.getSwapChain().getImages().size());
-    }
-
-    @Override
     public void update(Application application, int imageIndex, float tpf) {
         super.update(application, imageIndex, tpf);
         updateUniformDataFields();
-        uniformData.updateBufferIfNecessary(imageIndex);
+        uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
     }
 
     protected void updateUniformDataFields() {
@@ -95,7 +87,7 @@ public abstract class Light extends LifecycleObject {
 
     @Override
     public void cleanup() {
-        uniformData.cleanupBuffer();
+        uniformData.cleanup();
         super.cleanup();
     }
 }

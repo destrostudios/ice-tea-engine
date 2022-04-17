@@ -21,15 +21,9 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     private Filter filter;
 
     @Override
-    public void init(Application application) {
-        filter.init(application);
-        super.init(application);
-    }
-
-    @Override
     public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
         filter.update(application, imageIndex, tpf);
+        super.update(application, imageIndex, tpf);
     }
 
     @Override

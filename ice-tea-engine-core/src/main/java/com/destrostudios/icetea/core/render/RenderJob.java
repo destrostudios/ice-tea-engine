@@ -28,7 +28,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
     protected List<Long> frameBuffers;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         extent = calculateExtent();
     }
@@ -61,9 +61,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
 
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-            Texture texture = new Texture(image, imageMemory, imageView, finalLayout);
-            texture.init(application);
-            return texture;
+            return new Texture(image, imageMemory, imageView, finalLayout);
         }
     }
 
@@ -125,9 +123,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
             }
             long imageSampler = pImageSampler.get(0);
 
-            Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.init(application);
-            return texture;
+            return new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
@@ -179,6 +175,14 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
     public abstract void render(Consumer<RenderAction> actions);
 
     @Override
+    public void update(Application application, int imageIndex, float tpf) {
+        super.update(application, imageIndex, tpf);
+        if (resolvedColorTexture != null) {
+            resolvedColorTexture.update(application, imageIndex, tpf);
+        }
+    }
+
+    @Override
     public void cleanup() {
         if (isInitialized()) {
             application.getRootNode().forEachGeometry(geometry -> {
@@ -193,7 +197,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
             }
             frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
             vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
-            application = null;
         }
         super.cleanup();
     }

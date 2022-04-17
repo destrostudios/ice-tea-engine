@@ -26,7 +26,7 @@ public class SceneCamera extends Camera {
     private float zFar;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         setFieldOfViewY((float) (Math.PI / 4));
         VkExtent2D swapchainExtent = application.getSwapChain().getExtent();

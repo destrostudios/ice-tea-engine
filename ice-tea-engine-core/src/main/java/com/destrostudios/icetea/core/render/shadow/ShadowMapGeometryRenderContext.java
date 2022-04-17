@@ -12,7 +12,7 @@ public class ShadowMapGeometryRenderContext extends EssentialGeometryRenderConte
 
     @Override
     protected void fillMaterialDescriptorSet(MaterialDescriptorSetLayout descriptorSetLayout, MaterialDescriptorSet descriptorSet) {
-        super.fillMaterialDescriptorSet(descriptorSetLayout,descriptorSet);
+        super.fillMaterialDescriptorSet(descriptorSetLayout, descriptorSet);
 
         descriptorSetLayout.addDescriptorLayout(new ShadowMapLightTransformDescriptorLayout());
         descriptorSet.addDescriptor(new ShadowMapLightTransformDescriptor("camera", renderJob));

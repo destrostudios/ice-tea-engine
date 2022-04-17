@@ -88,16 +88,14 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             twiddleFactorsTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            twiddleFactorsTexture.init(application);
+            twiddleFactorsTexture.update(application, 0, 0);
         }
     }
 
     private void initUniformData() {
         uniformData = new UniformData();
-        uniformData.setApplication(application);
         uniformData.setInt("n", n);
-        uniformData.initBuffers(1);
-        uniformData.updateBufferIfNecessary(0);
+        uniformData.updateBufferAndCheckRecreation(application, 0, 0, 1);
     }
 
     public static int[] getBitReversedIndices(int n) {
@@ -116,10 +114,8 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
         StorageBufferData storageBufferData = new StorageBufferData();
-        storageBufferData.setApplication(application);
         storageBufferData.setIntArray("bitReversedIndices", getBitReversedIndices(n));
-        storageBufferData.initBuffers(1);
-        storageBufferData.updateBufferIfNecessary(0);
+        storageBufferData.updateBufferAndCheckRecreation(application, 0, 0, 1);
 
         TwiddleFactorsComputeActionGroup twiddleFactorsComputeActionGroup = new TwiddleFactorsComputeActionGroup(n);
         twiddleFactorsComputeActionGroup.addComputeAction(new TwiddleFactorsComputeAction(twiddleFactorsTexture, storageBufferData, uniformData));
@@ -130,8 +126,8 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
 
     @Override
     public void cleanup() {
-        super.cleanup();
+        uniformData.cleanup();
         twiddleFactorsTexture.cleanup();
-        uniformData.cleanupBuffer();
+        super.cleanup();
     }
 }

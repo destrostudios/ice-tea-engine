@@ -63,7 +63,7 @@ public class MemoryBufferData extends BufferData {
     }
 
     @Override
-    public void cleanupBuffer() {
+    protected void cleanupBuffer() {
         if (buffers != null) {
             for (long uniformBuffer : buffers) {
                 vkDestroyBuffer(application.getLogicalDevice(), uniformBuffer, null);

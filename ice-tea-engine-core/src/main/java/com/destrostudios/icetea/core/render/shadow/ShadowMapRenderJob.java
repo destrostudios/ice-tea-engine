@@ -45,7 +45,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     private UniformData lightTransformUniformData;
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         initRenderPass();
         initShadowMapTexture();
@@ -56,6 +56,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     public void update(Application application, int imageIndex, float tpf) {
         super.update(application, imageIndex, tpf);
+        shadowMapTexture.update(application, imageIndex, tpf);
         // TODO: Introduce TempVars
         Matrix4f projectionMatrix = new Matrix4f();
         Matrix4f viewMatrix = new Matrix4f();
@@ -96,7 +97,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         lightTransformUniformData.setMatrix4f("proj", projectionMatrix);
         lightTransformUniformData.setMatrix4f("view", viewMatrix);
         lightTransformUniformData.setVector4f("clipPlane", clipPlane);
-        lightTransformUniformData.updateBufferIfNecessary(imageIndex);
+        lightTransformUniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
     }
 
     @Override
@@ -215,7 +216,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
 
             int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
             shadowMapTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            shadowMapTexture.init(application);
         }
     }
 
@@ -227,12 +227,10 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
 
     private void initLightTransform() {
         lightTransformUniformData = new UniformData();
-        lightTransformUniformData.setApplication(application);
         lightTransformUniformData.setVector3f("location", new Vector3f());
         lightTransformUniformData.setMatrix4f("proj", new Matrix4f());
         lightTransformUniformData.setMatrix4f("view", new Matrix4f());
         lightTransformUniformData.setVector4f("clipPlane", new Vector4f());
-        lightTransformUniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 
     @Override
@@ -280,8 +278,8 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     public void cleanup() {
         if (isInitialized()) {
+            lightTransformUniformData.cleanup();
             shadowMapTexture.cleanup();
-            lightTransformUniformData.cleanupBuffer();
         }
         super.cleanup();
     }

@@ -34,18 +34,16 @@ public class Camera extends LifecycleObject {
     @Override
     public void update(Application application, int imageIndex, float tpf) {
         super.update(application, imageIndex, tpf);
-        transformUniformData.updateBufferIfNecessary(imageIndex);
+        transformUniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
     }
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
-        transformUniformData.setApplication(application);
         updateUniform_Location();
         updateUniform_ProjectionMatrix();
         updateUniform_ViewMatrix();
         updateUniform_ClipPlane();
-        transformUniformData.initBuffers(application.getSwapChain().getImages().size());
     }
 
     protected void set(Camera camera) {
@@ -82,7 +80,7 @@ public class Camera extends LifecycleObject {
 
     @Override
     public void cleanup() {
-        transformUniformData.cleanupBuffer();
+        transformUniformData.cleanup();
         super.cleanup();
     }
 }

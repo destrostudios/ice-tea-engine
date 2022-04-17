@@ -36,7 +36,7 @@ public abstract class Control extends LifecycleObject implements ContextCloneabl
     }
 
     @Override
-    public void init(Application application) {
+    protected void init(Application application) {
         super.init(application);
         initControl();
         if (spatial != null) {
