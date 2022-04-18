@@ -10,13 +10,12 @@ import org.lwjgl.vulkan.*;
 import java.io.IOException;
 import java.nio.LongBuffer;
 
-import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class BufferedTexture extends Texture {
 
-    public BufferedTexture(TextureDataReader dataReader) throws IOException {
+    public BufferedTexture(TextureDataReader dataReader) {
         this.dataReader = dataReader;
     }
     private TextureDataReader dataReader;
@@ -60,8 +59,8 @@ public class BufferedTexture extends Texture {
             BufferUtil.memcpy(textureData.getPixels(), data.getByteBuffer(0, (int) imageSize), imageSize);
             vkUnmapMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0));
 
-            // Texture is cleaned up from RAM immediately, will be read again if texture is cleanuped and reinitialized
-            stbi_image_free(textureData.getPixels());
+            // Texture data is cleaned up from RAM immediately, will be read again if texture is cleanuped and reinitialized
+            textureData.getCleanup().run();
 
             LongBuffer pTextureImage = stack.mallocLong(1);
             LongBuffer pTextureImageMemory = stack.mallocLong(1);
