@@ -40,7 +40,7 @@ public class WaterConfig {
 	private float reflectionBlendMinFactor = 0.25f;
 	private float reflectionBlendMaxFactor = 0.75f;
 	private float reflectionBlendMaxDistance = 1000;
-	private Vector3f waterColor = new Vector3f(0.128f, 0.210f, 0.240f);
+	private Vector3f waterColor = new Vector3f(0.03f, 0.04f, 0.06f);
 	private float eta = 0.15f;
 	private float fresnelFactor = 4;
 	// Movement

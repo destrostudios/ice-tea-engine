@@ -4,12 +4,9 @@ layout(location = 0) in vec3 inWorldPosition;
 
 layout(location = 0) out vec4 outColor;
 
-const vec3 baseColor = vec3(0.18, 0.27, 0.47);
+const vec3 colorTop = vec3(0, 0, 0.6);
+const vec3 colorBottom = vec3(0.34, 0.54, 0.7);
 
 void main() {
-	float red = -0.022 * (abs(inWorldPosition.y) - 20) + 0.18;
-	float green = -0.025 * (abs(inWorldPosition.y) - 20) + 0.27;
-	float blue = -0.019 * (abs(inWorldPosition.y) - 20) + 0.47;
-
-	outColor = vec4(red, green, blue, 1);
+	outColor = vec4(mix(colorBottom, colorTop, (inWorldPosition.y / 31)), 1);
 }

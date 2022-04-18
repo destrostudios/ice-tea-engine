@@ -26,8 +26,8 @@ public class GrassConfig {
 	private String windMapFilePath = "com/destrostudios/icetea/samples/textures/grass/wind.png";
 	private float windMaxAngle = (float) (0.25 * Math.PI);
 	// Fragment
-	private Vector4f baseColor = new Vector4f(0.21244211f, 0.5849056f, 0.22120592f, 1);
-	private Vector4f tipColor = new Vector4f(0.47770557f, 0.8962264f, 0.48615223f, 1);
+	private Vector4f baseColor = new Vector4f(0.02f, 0.15f, 0.02f, 1);
+	private Vector4f tipColor = new Vector4f(0.09f, 0.4f, 0.09f, 1);
 	private String bladeMapFilePath = "com/destrostudios/icetea/samples/textures/grass/blade.png";
 
 }

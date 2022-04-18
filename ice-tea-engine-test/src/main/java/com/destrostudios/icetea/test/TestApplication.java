@@ -149,7 +149,7 @@ public class TestApplication extends Application {
         Material materialGround = new Material();
         materialGround.setVertexShader(vertexShaderDefault);
         materialGround.setFragmentShader(fragShaderDefault);
-        materialGround.getParameters().setVector4f("color", new Vector4f(1, 1, 1, 1));
+        materialGround.getParameters().setVector4f("color", new Vector4f(0.5f, 0.5f, 0.5f, 1));
 
         geometryGround = new Geometry();
         geometryGround.setMesh(meshGround);
