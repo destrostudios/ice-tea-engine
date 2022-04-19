@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.scene;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
@@ -27,8 +26,8 @@ public abstract class Control extends LifecycleObject implements ContextCloneabl
     }
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         initControl();
         if (spatial != null) {
             onAdd();

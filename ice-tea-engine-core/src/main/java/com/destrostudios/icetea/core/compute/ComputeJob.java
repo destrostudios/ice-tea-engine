@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.compute;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -27,8 +26,8 @@ public abstract class ComputeJob extends LifecycleObject {
     private Integer waitDstStage;
 
     @Override
-    public void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         computeActionGroups = createComputeActionGroups();
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
             computeActionGroup.update(application, 0, 0);
@@ -133,12 +132,12 @@ public abstract class ComputeJob extends LifecycleObject {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         vkDestroyFence(application.getLogicalDevice(), fence, null);
         vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), commandBuffer);
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
             computeActionGroup.cleanup();
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

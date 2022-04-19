@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.camera;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.joml.Matrix3f;
@@ -26,8 +25,8 @@ public class SceneCamera extends Camera {
     private float zFar;
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         setFieldOfViewY((float) (Math.PI / 4));
         VkExtent2D swapchainExtent = application.getSwapChain().getExtent();
         setAspect((float) swapchainExtent.width() / (float) swapchainExtent.height());

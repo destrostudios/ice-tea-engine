@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.camera;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
@@ -32,14 +31,14 @@ public class Camera extends LifecycleObject {
     private UniformData transformUniformData;
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         transformUniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
     }
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         updateUniform_Location();
         updateUniform_ProjectionMatrix();
         updateUniform_ViewMatrix();
@@ -79,8 +78,8 @@ public class Camera extends LifecycleObject {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         transformUniformData.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

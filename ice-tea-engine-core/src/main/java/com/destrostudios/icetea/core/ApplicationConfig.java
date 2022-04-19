@@ -10,6 +10,7 @@ import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_MAILBOX_KHR;
 @Setter
 public class ApplicationConfig {
 
+	private boolean enableProfiler;
 	private boolean enableValidationLayer;
 	private boolean displayFpsInTitle;
 	private String title = "IceTea Engine";

@@ -28,8 +28,8 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
     protected List<Long> frameBuffers;
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         extent = calculateExtent();
     }
 
@@ -175,15 +175,15 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
     public abstract void render(Consumer<RenderAction> actions);
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         if (resolvedColorTexture != null) {
             resolvedColorTexture.update(application, imageIndex, tpf);
         }
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         if (isInitialized()) {
             application.getRootNode().forEachGeometry(geometry -> {
                 GeometryRenderContext<?> renderContext = geometry.getRenderContext(this);
@@ -198,6 +198,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
             frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
             vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

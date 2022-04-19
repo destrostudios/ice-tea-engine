@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.compute;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
 import com.destrostudios.icetea.core.shader.Shader;
@@ -24,8 +23,8 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     protected List<ComputeAction> computeActions;
 
     @Override
-    public void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         initMaterialDescriptorSetLayout();
         for (ComputeAction computeAction : computeActions) {
             computeAction.setComputeActionGroup(this);
@@ -64,12 +63,12 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     protected abstract int getGroupCountZ();
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         computePipeline.cleanup();
         for (ComputeAction computeAction : computeActions) {
             computeAction.cleanup();
         }
         materialDescriptorSetLayout.cleanupDescriptorSetLayout();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

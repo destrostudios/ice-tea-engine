@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.render.scene;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
@@ -33,8 +32,8 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     private Texture resolvedDepthTexture;
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         initRenderPass();
         multisampledColorTexture = createMultisampledColorTexture();
         initMultisampledDepthTexture();
@@ -334,20 +333,20 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         multisampledColorTexture.update(application, imageIndex, tpf);
         multisampledDepthTexture.update(application, imageIndex, tpf);
         resolvedDepthTexture.update(application, imageIndex, tpf);
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         if (isInitialized()) {
             resolvedDepthTexture.cleanup();
             multisampledDepthTexture.cleanup();
             multisampledColorTexture.cleanup();
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

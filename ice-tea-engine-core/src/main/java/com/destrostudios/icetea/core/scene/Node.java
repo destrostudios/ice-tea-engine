@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.scene;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
@@ -32,17 +31,17 @@ public class Node extends Spatial {
     private boolean childrenModified;
 
     @Override
-    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
-        boolean commandBufferOutdated = super.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         for (Spatial child : children) {
-            commandBufferOutdated |= child.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf);
+            child.update(application, imageIndex, tpf);
+            commandBufferOutdated |= child.isCommandBufferOutdated();
         }
         updateWorldBounds();
         if (childrenModified) {
             commandBufferOutdated = true;
             childrenModified = false;
         }
-        return commandBufferOutdated;
     }
 
     @Override
@@ -115,11 +114,11 @@ public class Node extends Spatial {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         for (Spatial child : children) {
             child.cleanup();
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     @Override

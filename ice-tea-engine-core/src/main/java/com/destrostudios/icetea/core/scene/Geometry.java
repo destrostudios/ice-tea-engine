@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.scene;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
@@ -16,7 +15,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 public class Geometry extends Spatial {
@@ -41,14 +39,16 @@ public class Geometry extends Spatial {
     private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts = new HashMap<>();
 
     @Override
-    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
-        AtomicBoolean commandBufferOutdated = new AtomicBoolean(super.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf));
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         updateWorldBounds();
-        if (mesh.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf)) {
-            commandBufferOutdated.set(true);
+        mesh.update(application, imageIndex, tpf);
+        if (mesh.isWereBuffersOutdated()) {
+            commandBufferOutdated = true;
         }
-        if (material.updateAndCheckCommandBuffersOutdated(application, imageIndex, tpf)) {
-            commandBufferOutdated.set(true);
+        material.update(application, imageIndex, tpf);
+        if (material.isCommandBufferOutdated()) {
+            commandBufferOutdated = true;
         }
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
         if (transformUniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size())) {
@@ -66,16 +66,15 @@ public class Geometry extends Spatial {
             } else if (renderContext != null) {
                 renderContext.cleanup();
                 renderContexts.remove(renderJob);
-                commandBufferOutdated.set(true);
+                commandBufferOutdated = true;
             }
         });
         if (outdatedRenderContexts.size() > 0) {
             for (GeometryRenderContext<?> renderContext : outdatedRenderContexts) {
                 renderContext.recreateDescriptorDependencies();
             }
-            commandBufferOutdated.set(true);
+            commandBufferOutdated = true;
         }
-        return commandBufferOutdated.get();
     }
 
     @Override
@@ -145,12 +144,12 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         transformUniformData.cleanup();
         tryUnregisterMesh();
         tryUnregisterMaterial();
         cleanupRenderContexts();
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     private void tryUnregisterMesh() {

@@ -91,12 +91,12 @@ public class ShaderManager extends LifecycleObject {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         for (SPIRV spirv : spirvCache.values()) {
             spirv.free();
         }
         spirvCache.clear();
         filesCache.clear();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

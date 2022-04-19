@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.render.RenderJob;
@@ -123,8 +122,8 @@ public class WaterControl extends Control {
     }
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         time += tpf * waterConfig.getTimeSpeed();
         motion += tpf * waterConfig.getMotionSpeed();
         distortion += tpf * waterConfig.getDistortionSpeed();
@@ -154,14 +153,14 @@ public class WaterControl extends Control {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         twiddleFactorsComputeJob.cleanup();
         h0kComputeJob.cleanup();
         hktComputeJob.cleanup();
         fftComputeJob.cleanup();
         normalMapComputeJob.cleanup();
         cleanupRenderJobs();
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     private void cleanupRenderJobs() {

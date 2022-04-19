@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.scene;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Transform;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
@@ -62,24 +61,22 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     @Getter
     @Setter
     private RenderBucketType renderBucket;
+    @Getter
+    protected boolean commandBufferOutdated;
     // TODO: Introduce TempVars
     private LinkedList<MaterialDescriptorWithLayout> tmpAdditionalMaterialDescriptors = new LinkedList<>();
     private LinkedList<VertexPositionModifier> tmpVertexPositionModifiers = new LinkedList<>();
 
-    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
-        update(application, imageIndex, tpf);
-        return false;
-    }
-
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         for (Control control : controls) {
             control.setSpatial(this);
             control.update(application, imageIndex, tpf);
         }
         localTransform.updateMatrixIfNecessary();
         updateWorldTransform();
+        commandBufferOutdated = false;
     }
 
     public void updateWorldTransform() {
@@ -242,11 +239,11 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         for (Control control : controls) {
             control.cleanup();
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     @Override

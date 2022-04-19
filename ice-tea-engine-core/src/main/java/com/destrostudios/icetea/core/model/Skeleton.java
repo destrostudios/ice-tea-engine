@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.model;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.data.UniformData;
@@ -41,8 +40,14 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
     private UniformData uniformData;
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    protected void init() {
+        super.init();
+        updateUniformData();
+    }
+
+    @Override
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         boolean jointMatricesUpdated = false;
         for (Joint joint : joints) {
             joint.update();
@@ -56,9 +61,13 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
             }
         }
         if (jointMatricesUpdated) {
-            uniformData.setMatrix4fArray("jointMatrices", jointMatrices);
+            updateUniformData();
         }
         uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+    }
+
+    private void updateUniformData() {
+        uniformData.setMatrix4fArray("jointMatrices", jointMatrices);
     }
 
     public void resetPose() {
@@ -68,9 +77,9 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         uniformData.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     @Override

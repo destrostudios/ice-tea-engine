@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
 import com.destrostudios.icetea.core.data.StorageBufferData;
@@ -29,11 +28,10 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
     private UniformData uniformData;
 
     @Override
-    public void init(Application application) {
-        this.application = application;
+    protected void init() {
         initTwiddleFactorsTexture();
         initUniformData();
-        super.init(application);
+        super.init();
     }
 
     private void initTwiddleFactorsTexture() {
@@ -125,9 +123,9 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         uniformData.cleanup();
         twiddleFactorsTexture.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

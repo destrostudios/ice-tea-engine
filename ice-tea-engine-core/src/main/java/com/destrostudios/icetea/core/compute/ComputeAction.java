@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.compute;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import lombok.Getter;
@@ -21,8 +20,8 @@ public abstract class ComputeAction extends LifecycleObject {
     protected ComputePipeline computePipeline;
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         initMaterialDescriptorSet();
     }
 
@@ -35,8 +34,10 @@ public abstract class ComputeAction extends LifecycleObject {
 
     protected abstract void fillMaterialDescriptorSet();
 
-    public void cleanup() {
+    @Override
+    protected void cleanupInternal() {
         materialDescriptorSet.cleanupDescriptorSets(descriptorPool, descriptorSets);
         materialDescriptorSet.cleanupDescriptorPool(descriptorPool);
+        super.cleanupInternal();
     }
 }

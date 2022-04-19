@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.camera.systems;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.input.KeyEvent;
 import com.destrostudios.icetea.core.input.KeyListener;
@@ -27,8 +26,8 @@ public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener 
     private Vector2f moveDirection;
 
     @Override
-    public void init(Application application) {
-        super.init(application);
+    public void init() {
+        super.init();
         application.getInputManager().addKeyListener(this);
     }
 
@@ -69,8 +68,8 @@ public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener 
     }
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         // Avoid unnecessary vector and matrix recalculations
         if (moveDirection.lengthSquared() > 0) {
             Vector3f deltaRight = sceneCamera.getRight().mul(tpf * moveSpeed * moveDirection.x());
@@ -80,8 +79,8 @@ public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener 
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         application.getInputManager().removeKeyListener(this);
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

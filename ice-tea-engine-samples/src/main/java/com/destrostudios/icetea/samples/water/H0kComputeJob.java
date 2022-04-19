@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
 import com.destrostudios.icetea.core.data.UniformData;
@@ -33,8 +32,7 @@ public class H0kComputeJob extends ComputeJob {
     private UniformData uniformData;
 
     @Override
-    public void init(Application application) {
-        this.application = application;
+    protected void init() {
         h0kTexture = createTargetTexture();
         h0minuskTexture = createTargetTexture();
         noiseTexture1 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_0.jpg");
@@ -46,7 +44,7 @@ public class H0kComputeJob extends ComputeJob {
         noiseTexture4 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_3.jpg");
         noiseTexture4.update(application, 0, 0);
         initUniformData();
-        super.init(application);
+        super.init();
     }
 
     private Texture createTargetTexture() {
@@ -129,7 +127,7 @@ public class H0kComputeJob extends ComputeJob {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         uniformData.cleanup();
         h0kTexture.cleanup();
         h0minuskTexture.cleanup();
@@ -137,6 +135,6 @@ public class H0kComputeJob extends ComputeJob {
         noiseTexture2.cleanup();
         noiseTexture3.cleanup();
         noiseTexture4.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

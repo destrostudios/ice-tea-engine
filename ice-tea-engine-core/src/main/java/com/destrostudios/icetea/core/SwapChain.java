@@ -72,8 +72,8 @@ public class SwapChain extends LifecycleObject {
     }
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         initSwapChain();
         initImageViews();
         initRenderJobs();
@@ -307,8 +307,8 @@ public class SwapChain extends LifecycleObject {
     }
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, imageIndex, tpf));
     }
 
@@ -384,7 +384,7 @@ public class SwapChain extends LifecycleObject {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         if (!isDuringRecreation) {
             cleanupInFlightFrames();
         }
@@ -392,7 +392,7 @@ public class SwapChain extends LifecycleObject {
         cleanupCommandBuffers();
         imageViews.forEach(imageView -> vkDestroyImageView(application.getLogicalDevice(), imageView, null));
         vkDestroySwapchainKHR(application.getLogicalDevice(), swapChain, null);
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     private void cleanupInFlightFrames() {

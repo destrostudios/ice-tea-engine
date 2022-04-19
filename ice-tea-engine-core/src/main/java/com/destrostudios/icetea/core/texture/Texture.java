@@ -37,7 +37,7 @@ public class Texture extends LifecycleObject {
     protected Long imageSampler;
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         if (imageSampler != null) {
             vkDestroySampler(application.getLogicalDevice(), imageSampler, null);
             imageSampler = null;
@@ -54,6 +54,6 @@ public class Texture extends LifecycleObject {
             vkFreeMemory(application.getLogicalDevice(), imageMemory, null);
             imageMemory = null;
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
 import com.destrostudios.icetea.core.data.ByteBufferData;
@@ -29,10 +28,9 @@ public class NormalMapComputeJob extends ComputeJob {
     private Texture normalMapTexture;
 
     @Override
-    public void init(Application application) {
-        this.application = application;
+    protected void init() {
         normalMapTexture = createNormalMapTexture();
-        super.init(application);
+        super.init();
     }
 
     private Texture createNormalMapTexture() {
@@ -138,8 +136,8 @@ public class NormalMapComputeJob extends ComputeJob {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         normalMapTexture.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

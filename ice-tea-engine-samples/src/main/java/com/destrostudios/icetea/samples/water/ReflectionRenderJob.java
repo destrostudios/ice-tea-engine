@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
 import com.destrostudios.icetea.core.render.scene.SceneRenderJob;
@@ -19,8 +18,8 @@ public class ReflectionRenderJob extends SceneRenderJob {
     private SceneCamera reflectionCamera;
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         reflectionCamera.set(application.getSceneCamera());
         Vector3f location = reflectionCamera.getLocation();
         float waterHeight = geometryWater.getWorldTransform().getTranslation().y();
@@ -47,8 +46,8 @@ public class ReflectionRenderJob extends SceneRenderJob {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         reflectionCamera.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

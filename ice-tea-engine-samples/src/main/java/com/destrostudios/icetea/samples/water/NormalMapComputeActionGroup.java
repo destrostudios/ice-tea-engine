@@ -62,8 +62,8 @@ public class NormalMapComputeActionGroup extends ComputeActionGroup {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         pushConstants.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

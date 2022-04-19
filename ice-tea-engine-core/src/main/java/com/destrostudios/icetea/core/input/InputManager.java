@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.input;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import org.joml.Vector2f;
@@ -27,8 +26,8 @@ public class InputManager extends LifecycleObject {
     private Vector2f cursorPosition = new Vector2f();
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         glfwSetKeyCallback(application.getWindow(), new GLFWKeyCallback() {
 
             @Override
@@ -70,8 +69,8 @@ public class InputManager extends LifecycleObject {
     }
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         // Keys
         for (KeyEvent keyEvent : pendingKeyEvents) {
             for (KeyListener keyListener : keyListeners.toArray(new KeyListener[0])) {
@@ -139,11 +138,11 @@ public class InputManager extends LifecycleObject {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         glfwSetKeyCallback(application.getWindow(), null);
         glfwSetCharCallback(application.getWindow(), null);
         glfwSetMouseButtonCallback(application.getWindow(), null);
         glfwSetCursorPosCallback(application.getWindow(), null);
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

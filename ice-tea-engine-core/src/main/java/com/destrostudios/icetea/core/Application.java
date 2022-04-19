@@ -7,6 +7,7 @@ import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.profiler.Profiler;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.scene.Node;
@@ -60,6 +61,9 @@ public abstract class Application {
     }
     @Getter
     protected ApplicationConfig config;
+    @Getter
+    protected Profiler profiler;
+
     @Getter
     private PhysicalDeviceManager physicalDeviceManager;
     @Getter
@@ -126,6 +130,9 @@ public abstract class Application {
     }
 
     private void create() {
+        if (config.isEnableProfiler()) {
+            profiler = new Profiler();
+        }
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
@@ -400,7 +407,8 @@ public abstract class Application {
                 light.setModified(false);
             }
         }
-        commandBuffersOutdated |= rootNode.updateAndCheckCommandBuffersOutdated(this, imageIndex, tpf);
+        rootNode.update(this, imageIndex, tpf);
+        commandBuffersOutdated |= rootNode.isCommandBufferOutdated();
         if (commandBuffersOutdated) {
             swapChain.recordCommandBuffers();
             commandBuffersOutdated = false;

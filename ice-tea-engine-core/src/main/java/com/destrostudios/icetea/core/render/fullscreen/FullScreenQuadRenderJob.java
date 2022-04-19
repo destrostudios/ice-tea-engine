@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
 import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
 import com.destrostudios.icetea.core.render.RenderAction;
@@ -33,8 +32,8 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     private Texture multisampledColorTexture;
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         initRenderPass();
         initMaterialDescriptors();
         initRenderPipeline();
@@ -165,19 +164,19 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     }
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         multisampledColorTexture.update(application, imageIndex, tpf);
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         if (isInitialized()) {
             multisampledColorTexture.cleanup();
             materialDescriptorSet.cleanupDescriptorSets(descriptorPool, descriptorSets);
             materialDescriptorSet.cleanupDescriptorPool(descriptorPool);
             materialDescriptorSetLayout.cleanupDescriptorSetLayout();
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

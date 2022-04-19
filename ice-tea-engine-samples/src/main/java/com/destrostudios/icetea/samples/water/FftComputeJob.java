@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
 import com.destrostudios.icetea.core.data.ByteBufferData;
@@ -38,15 +37,14 @@ public class FftComputeJob extends ComputeJob {
     private Texture dzPingPongTexture;
 
     @Override
-    public void init(Application application) {
-        this.application = application;
+    protected void init() {
         dxTexture = createTargetTexture();
         dyTexture = createTargetTexture();
         dzTexture = createTargetTexture();
         dxPingPongTexture = createTargetTexture();
         dyPingPongTexture = createTargetTexture();
         dzPingPongTexture = createTargetTexture();
-        super.init(application);
+        super.init();
     }
 
     private Texture createTargetTexture() {
@@ -164,13 +162,13 @@ public class FftComputeJob extends ComputeJob {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         dzPingPongTexture.cleanup();
         dyPingPongTexture.cleanup();
         dxPingPongTexture.cleanup();
         dzTexture.cleanup();
         dyTexture.cleanup();
         dxTexture.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

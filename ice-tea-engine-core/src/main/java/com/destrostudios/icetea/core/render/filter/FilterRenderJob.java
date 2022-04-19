@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.render.filter;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.material.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.material.descriptor.SimpleTextureDescriptorLayout;
@@ -21,9 +20,16 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     private Filter filter;
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
+    protected void init() {
+        // FullScreenQuadRenderJob needs the filter config material descriptor already in init
+        filter.update(application, 0, 0);
+        super.init();
+    }
+
+    @Override
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         filter.update(application, imageIndex, tpf);
-        super.update(application, imageIndex, tpf);
     }
 
     @Override
@@ -47,8 +53,8 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         filter.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

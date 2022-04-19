@@ -68,10 +68,10 @@ public abstract class BufferData extends FieldsData {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         cleanupBuffer();
         structureModified = true;
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     protected abstract void cleanupBuffer();

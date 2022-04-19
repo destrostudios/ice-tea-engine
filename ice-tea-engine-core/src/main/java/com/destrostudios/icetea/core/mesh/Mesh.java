@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.mesh;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.*;
@@ -58,6 +57,8 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
     @Getter
     private Long indexBufferMemory;
     private boolean buffersOutdated;
+    @Getter
+    private boolean wereBuffersOutdated;
     private int usingGeometriesCount;
     @Getter
     private BoundingBox bounds;
@@ -100,8 +101,8 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
     }
 
     @Override
-    protected void init(Application application) {
-        super.init(application);
+    protected void init() {
+        super.init();
         setBuffersOutdated();
     }
 
@@ -109,15 +110,15 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
         buffersOutdated = true;
     }
 
-    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
-        update(application, imageIndex, tpf);
+    @Override
+    protected void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
+        wereBuffersOutdated = buffersOutdated;
         if (buffersOutdated) {
             recreateVertexBuffer();
             recreateIndexBuffer();
             buffersOutdated = false;
-            return true;
         }
-        return false;
     }
 
     private void recreateVertexBuffer() {
@@ -306,10 +307,10 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         cleanupVertexBuffer();
         cleanupIndexBuffer();
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     @Override

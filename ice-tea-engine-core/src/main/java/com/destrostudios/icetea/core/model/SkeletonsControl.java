@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.model;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.scene.Control;
 import lombok.Getter;
@@ -24,19 +23,19 @@ public class SkeletonsControl extends Control {
     private Collection<Skeleton> skeletons;
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         for (Skeleton skeleton : skeletons) {
             skeleton.update(application, imageIndex, tpf);
         }
     }
 
     @Override
-    public void cleanup() {
-        super.cleanup();
+    protected void cleanupInternal() {
         for (Skeleton skeleton : skeletons) {
             skeleton.cleanup();
         }
+        super.cleanupInternal();
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.filter;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.data.UniformData;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.render.filter.FilterRenderJob;
@@ -21,8 +20,8 @@ public class Filter extends LifecycleObject {
     private FilterRenderJob filterRenderJob;
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         updateUniformData();
         uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
     }
@@ -32,8 +31,8 @@ public class Filter extends LifecycleObject {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         uniformData.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

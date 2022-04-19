@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
 import com.destrostudios.icetea.core.data.UniformData;
@@ -37,13 +36,12 @@ public class HktComputeJob extends ComputeJob {
     private float time;
 
     @Override
-    public void init(Application application) {
-        this.application = application;
+    protected void init() {
         dyCoefficientsTexture = createTargetTexture();
         dxCoefficientsTexture = createTargetTexture();
         dzCoefficientsTexture = createTargetTexture();
         initUniformData();
-        super.init(application);
+        super.init();
     }
 
     private Texture createTargetTexture() {
@@ -128,18 +126,18 @@ public class HktComputeJob extends ComputeJob {
     }
 
     @Override
-    public void update(Application application, int imageIndex, float tpf) {
-        super.update(application, imageIndex, tpf);
+    public void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
         uniformData.setFloat("t", time);
         uniformData.updateBufferAndCheckRecreation(application, 0, tpf, 1);
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         uniformData.cleanup();
         dzCoefficientsTexture.cleanup();
         dyCoefficientsTexture.cleanup();
         dxCoefficientsTexture.cleanup();
-        super.cleanup();
+        super.cleanupInternal();
     }
 }

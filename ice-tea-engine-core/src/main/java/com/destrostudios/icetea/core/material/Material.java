@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.material;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
@@ -75,15 +74,17 @@ public class Material extends LifecycleObject implements ContextCloneable {
     @Setter
     @Getter
     private int fillMode = VK_POLYGON_MODE_FILL;
+    @Getter
+    protected boolean commandBufferOutdated;
 
-    public boolean updateAndCheckCommandBuffersOutdated(Application application, int imageIndex, float tpf) {
-        update(application, imageIndex, tpf);
-        boolean commandBufferOutdated = parameters.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+    @Override
+    protected void update(int imageIndex, float tpf) {
+        super.update(imageIndex, tpf);
+        commandBufferOutdated = parameters.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
         for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
             Texture texture = textureSupplier.get();
             texture.update(application, imageIndex, tpf);
         }
-        return commandBufferOutdated;
     }
 
     public void setTexture(String name, Texture texture) {
@@ -107,7 +108,7 @@ public class Material extends LifecycleObject implements ContextCloneable {
     }
 
     @Override
-    public void cleanup() {
+    protected void cleanupInternal() {
         parameters.cleanup();
         for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
             Texture texture = textureSupplier.get();
@@ -116,7 +117,7 @@ public class Material extends LifecycleObject implements ContextCloneable {
                 texture.cleanup();
             }
         }
-        super.cleanup();
+        super.cleanupInternal();
     }
 
     @Override
