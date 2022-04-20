@@ -1,34 +1,35 @@
 package com.destrostudios.icetea.core.profiler;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
-
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Profiler {
 
-    private HashMap<LifecycleObject, ProfilerDurations> init = new HashMap<>();
-    private HashMap<LifecycleObject, ProfilerDurations> update = new HashMap<>();
-    private HashMap<LifecycleObject, ProfilerDurations> cleanup = new HashMap<>();
+    private HashMap<String, ProfilerDurations> durations = new HashMap<>();
 
     public void clear() {
-        init.clear();
-        update.clear();
-        cleanup.clear();
+        durations.clear();
     }
 
-    public void onInit(LifecycleObject lifecycleObject, long duration) {
-        getDurations(init, lifecycleObject).addDuration(duration);
+    public void addDuration(String key, long duration) {
+        ProfilerDurations profilerDurations = durations.computeIfAbsent(key, ProfilerDurations::new);
+        profilerDurations.addDuration(duration);
     }
 
-    public void onUpdate(LifecycleObject lifecycleObject, long duration) {
-        getDurations(update, lifecycleObject).addDuration(duration);
+    public List<ProfilerDurations> getSortedResults(ProfilerOrder order) {
+        return durations.values().stream()
+                .sorted(Comparator.comparingDouble(pd -> -1 * getOrderValue(pd, order)))
+                .collect(Collectors.toList());
     }
 
-    public void onCleanup(LifecycleObject lifecycleObject, long duration) {
-        getDurations(cleanup, lifecycleObject).addDuration(duration);
-    }
-
-    private ProfilerDurations getDurations(HashMap<LifecycleObject, ProfilerDurations> durations, LifecycleObject lifecycleObject) {
-        return durations.computeIfAbsent(lifecycleObject, lo -> new ProfilerDurations());
+    private double getOrderValue(ProfilerDurations profilerDurations, ProfilerOrder order) {
+        switch (order) {
+            case INVOCATIONS: return profilerDurations.getInvocations();
+            case MINIMUM_DURATION: return profilerDurations.getMinimumDuration();
+            case MAXIMUM_DURATION: return profilerDurations.getMaximumDuration();
+        }
+        return profilerDurations.getAverageDuration();
     }
 }

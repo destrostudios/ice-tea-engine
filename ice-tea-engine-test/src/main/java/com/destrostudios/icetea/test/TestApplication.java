@@ -15,6 +15,7 @@ import com.destrostudios.icetea.core.font.BitmapText;
 import com.destrostudios.icetea.core.light.*;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
+import com.destrostudios.icetea.core.profiler.ProfilerSystem;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.*;
@@ -42,6 +43,7 @@ public class TestApplication extends Application {
     }
 
     public TestApplication() {
+        config.setEnableProfiler(true);
         config.setEnableValidationLayer(true);
         config.setDisplayFpsInTitle(true);
     }
@@ -121,7 +123,7 @@ public class TestApplication extends Application {
         panel2.setBackground(assetManager.loadTexture("textures/icetea2.png"));
         guiNode.add(panel2);
 
-        BitmapFont bitmapFont = assetManager.loadBitmapFont("com/destrostudios/icetea/samples/fonts/Verdana_18.fnt");
+        BitmapFont bitmapFont = assetManager.loadBitmapFont("com/destrostudios/icetea/core/fonts/Verdana_18.fnt");
 
         BitmapText bitmapTextStatic = new BitmapText(bitmapFont, "Hello World.");
         bitmapTextStatic.move(new Vector3f(-0.5f, 0.1f, 3));
@@ -373,6 +375,7 @@ public class TestApplication extends Application {
 
         CameraMouseRotateSystem cameraMouseRotateSystem = new CameraMouseRotateSystem(sceneCamera);
         CameraKeyMoveSystem cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
+        ProfilerSystem profilerSystem = new ProfilerSystem();
         inputManager.addKeyListener(keyEvent -> {
             switch (keyEvent.getKey()) {
                 case GLFW_KEY_1:
@@ -459,6 +462,15 @@ public class TestApplication extends Application {
                         inputManager.cleanup();
                         assetManager.cleanup();
                         cleanupRenderDependencies();
+                    }
+                    break;
+                case GLFW_KEY_INSERT:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        if (hasSystem(profilerSystem)) {
+                            removeSystem(profilerSystem);
+                        } else {
+                            addSystem(profilerSystem);
+                        }
                     }
                     break;
             }

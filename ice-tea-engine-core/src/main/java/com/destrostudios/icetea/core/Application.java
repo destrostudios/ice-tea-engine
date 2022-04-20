@@ -10,6 +10,7 @@ import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.profiler.Profiler;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.light.Light;
+import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.shader.ShaderManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
@@ -144,6 +145,7 @@ public abstract class Application {
         sceneNode = new Node();
         rootNode.add(sceneNode);
         guiNode = new Node();
+        guiNode.setRenderBucket(RenderBucketType.GUI);
         rootNode.add(guiNode);
         filters = new LinkedList<>();
         systems = new LinkedList<>();

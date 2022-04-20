@@ -3,8 +3,6 @@ package com.destrostudios.icetea.core.lifecycle;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.profiler.Profiler;
 
-import java.util.function.BiConsumer;
-
 public class LifecycleObject {
 
     protected Application application;
@@ -12,9 +10,9 @@ public class LifecycleObject {
     public final void update(Application application, int imageIndex, float tpf) {
         if (this.application == null) {
             this.application = application;
-            executeProfiled(this::init, (profiler, duration) -> profiler.onInit(this, duration));
+            executeProfiled(this::init, "init");
         }
-        executeProfiled(() -> update(imageIndex, tpf), (profiler, duration) -> profiler.onUpdate(this, duration));
+        executeProfiled(() -> update(imageIndex, tpf), "update");
     }
 
     protected void init() {
@@ -30,7 +28,7 @@ public class LifecycleObject {
     }
 
     public final void cleanup() {
-        executeProfiled(this::cleanupInternal, (profiler, duration) -> profiler.onCleanup(this, duration));
+        executeProfiled(this::cleanupInternal, "cleanup");
         application = null;
     }
 
@@ -38,7 +36,7 @@ public class LifecycleObject {
 
     }
 
-    private void executeProfiled(Runnable runnable, BiConsumer<Profiler, Long> profileDuration) {
+    private void executeProfiled(Runnable runnable, String method) {
         // Profiler might have to be fetched before or afterwards, because its reference can be not existing yet or already cleanuped up
         Profiler profiler = ((application != null) ? application.getProfiler() : null);
         long startNanoTime = System.nanoTime();
@@ -48,7 +46,8 @@ public class LifecycleObject {
             profiler = application.getProfiler();
         }
         if (profiler != null) {
-            profileDuration.accept(profiler, duration);
+            profiler.addDuration(getClass().getName() + "." + method, duration);
+            profiler.addDuration(getClass().getName() + "#" + hashCode() + "." + method, duration);
         }
     }
 }

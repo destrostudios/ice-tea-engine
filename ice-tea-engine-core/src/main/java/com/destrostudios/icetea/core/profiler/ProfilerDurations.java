@@ -4,6 +4,11 @@ import lombok.Getter;
 
 public class ProfilerDurations {
 
+    public ProfilerDurations(String key) {
+        this.key = key;
+    }
+    @Getter
+    private String key;
     @Getter
     private long invocations;
     private long durationsSum;

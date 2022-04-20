@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core.font;
 
 import com.destrostudios.icetea.core.material.Material;
-import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
 import lombok.Getter;
@@ -34,8 +33,6 @@ public class BitmapText extends Geometry {
         material.setTransparent(true);
         setMaterial(material);
         updateMaterial(font);
-
-        setRenderBucket(RenderBucketType.GUI);
     }
     @Getter
     private BitmapFont font;

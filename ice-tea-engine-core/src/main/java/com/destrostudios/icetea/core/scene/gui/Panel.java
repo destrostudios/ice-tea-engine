@@ -3,7 +3,6 @@ package com.destrostudios.icetea.core.scene.gui;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Quad;
-import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
 
@@ -27,8 +26,6 @@ public class Panel extends Geometry {
         material.setDepthTest(false);
         material.setDepthWrite(false);
         setMaterial(material);
-
-        setRenderBucket(RenderBucketType.GUI);
     }
 
     public void setBackground(Texture texture) {
