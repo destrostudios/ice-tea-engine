@@ -131,9 +131,7 @@ public abstract class Application {
     }
 
     private void create() {
-        if (config.isEnableProfiler()) {
-            profiler = new Profiler();
-        }
+        profiler = new Profiler();
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);

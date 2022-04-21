@@ -43,7 +43,6 @@ public class TestApplication extends Application {
     }
 
     public TestApplication() {
-        config.setEnableProfiler(true);
         config.setEnableValidationLayer(true);
         config.setDisplayFpsInTitle(true);
     }
@@ -467,8 +466,10 @@ public class TestApplication extends Application {
                 case GLFW_KEY_INSERT:
                     if (keyEvent.getAction() == GLFW_PRESS) {
                         if (hasSystem(profilerSystem)) {
+                            config.setEnableProfiler(false);
                             removeSystem(profilerSystem);
                         } else {
+                            config.setEnableProfiler(true);
                             addSystem(profilerSystem);
                         }
                     }

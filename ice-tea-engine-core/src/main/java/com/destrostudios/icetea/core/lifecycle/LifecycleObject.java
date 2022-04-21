@@ -37,15 +37,16 @@ public class LifecycleObject {
     }
 
     private void executeProfiled(Runnable runnable, String method) {
-        // Profiler might have to be fetched before or afterwards, because its reference can be not existing yet or already cleanuped up
-        Profiler profiler = ((application != null) ? application.getProfiler() : null);
+        // Application might have to be fetched before or afterwards, because its reference can be not existing yet or already cleaned up
+        Application tmpApplication = application;
         long startNanoTime = System.nanoTime();
         runnable.run();
         long duration = (System.nanoTime() - startNanoTime);
         if (application != null) {
-            profiler = application.getProfiler();
+            tmpApplication = application;
         }
-        if (profiler != null) {
+        if ((tmpApplication != null) && tmpApplication.getConfig().isEnableProfiler()) {
+            Profiler profiler = application.getProfiler();
             profiler.addDuration(getClass().getName() + "." + method, duration);
             profiler.addDuration(getClass().getName() + "#" + hashCode() + "." + method, duration);
         }
