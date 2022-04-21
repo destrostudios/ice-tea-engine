@@ -20,6 +20,7 @@
         <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
         <version.maven-source-plugin>3.2.1</version.maven-source-plugin>
         <version.obj>0.3.0</version.obj>
+        <version.slf4j>1.7.36</version.slf4j>
     </properties>
     <build>
         <plugins>
@@ -92,6 +93,17 @@
                 <groupId>de.javagl</groupId>
                 <artifactId>jgltf-model</artifactId>
                 <version>${version.jgltf}</version>
+            </dependency>
+            <!--SLF4J-->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${version.slf4j}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${version.slf4j}</version>
             </dependency>
             <!--Lombok-->
             <dependency>

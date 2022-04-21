@@ -23,6 +23,8 @@ import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.LongBuffer;
 import java.util.*;
@@ -46,6 +48,8 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public abstract class Application {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
     static final Set<String> DEVICE_EXTENSIONS_NAMES = Stream.of(
         // Required to use swapchains
@@ -131,6 +135,7 @@ public abstract class Application {
     }
 
     private void create() {
+        LOGGER.debug("Creating application...");
         profiler = new Profiler();
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
@@ -158,10 +163,14 @@ public abstract class Application {
         updateGuiCamera();
         bucketRenderer = new BucketRenderer(this);
         swapChain = new SwapChain();
+        LOGGER.debug("Preloading render dependencies...");
         preloadRenderDependencies();
+        LOGGER.debug("Preloaded render dependencies.");
+        LOGGER.debug("Created application.");
     }
 
     private void initWindow() {
+        LOGGER.debug("Initializing window...");
         if (!glfwInit()) {
             throw new RuntimeException("Cannot initialize GLFW");
         }
@@ -171,9 +180,11 @@ public abstract class Application {
             throw new RuntimeException("Cannot create window");
         }
         glfwSetFramebufferSizeCallback(window, this::onFrameBufferResized);
+        LOGGER.debug("Initialized window.");
     }
 
     private void onFrameBufferResized(long window, int width, int height) {
+        LOGGER.debug("Window resized to {} x {}.", width, height);
         config.setWidth(width);
         config.setHeight(height);
         swapChain.onResize();
@@ -182,6 +193,7 @@ public abstract class Application {
 
     private void createInstance() {
         try (MemoryStack stack = stackPush()) {
+            LOGGER.debug("Creating instance...");
             VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.callocStack(stack);
             instanceCreateInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
             VkApplicationInfo applicationInfo = VkApplicationInfo.callocStack(stack);
@@ -211,6 +223,7 @@ public abstract class Application {
                 enabledLayerNamesBuffer.rewind();
                 instanceCreateInfo.ppEnabledLayerNames(enabledLayerNamesBuffer);
             }
+            LOGGER.debug("Enabled layers: {}", String.join(", ", enabledLayerNames));
 
             PointerBuffer instancePointer = stack.mallocPointer(1);
             int result = vkCreateInstance(instanceCreateInfo, null, instancePointer);
@@ -218,8 +231,10 @@ public abstract class Application {
                 throw new RuntimeException("Failed to create instance (result = " + result + ")");
             }
             instance = new VkInstance(instancePointer.get(0), instanceCreateInfo);
+            LOGGER.debug("Created instance.");
 
             if (config.isEnableValidationLayer()) {
+                LOGGER.debug("Creating debug utils messenger.");
                 VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = createDebugMessengerCreateInfo(stack);
                 LongBuffer pDebugMessenger = stack.longs(VK_NULL_HANDLE);
                 result = vkCreateDebugUtilsMessengerEXT(instance, debugMessengerCreateInfo, null, pDebugMessenger);
@@ -227,6 +242,7 @@ public abstract class Application {
                     throw new RuntimeException("Failed to create debug messenger (result = " + result + ")");
                 }
                 debugMessenger = pDebugMessenger.get(0);
+                LOGGER.debug("Created debug utils messenger.");
             }
         }
     }
@@ -259,32 +275,38 @@ public abstract class Application {
     protected int onDebugMessengerCallback(int messageSeverity, int messageType, long pCallbackData, long pUserData) {
         VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
         String message = callbackData.pMessageString();
-        if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-            System.err.println(message);
-        } else {
-            System.out.println(message);
+        switch (messageSeverity) {
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: LOGGER.debug(message); break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: LOGGER.info(message); break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: LOGGER.warn(message); break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT: LOGGER.error(message); break;
         }
         return VK_FALSE;
     }
 
     private void initSurface() {
         try (MemoryStack stack = stackPush()) {
+            LOGGER.debug("Initializing surface...");
             LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
             int result = glfwCreateWindowSurface(instance, window, null, pSurface);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create window surface (result = " + result + ")");
             }
             surface = pSurface.get(0);
+            LOGGER.debug("Initialized surface.");
         }
     }
 
     private void initPhysicalDevice() {
+        LOGGER.debug("Initializing physical device...");
         physicalDeviceInformation = physicalDeviceManager.pickPhysicalDevice();
         physicalDevice = physicalDeviceInformation.getPhysicalDevice();
         msaaSamples = physicalDeviceInformation.getMaxSamples();
+        LOGGER.debug("Initialized physical device.");
     }
 
     private void initLogicalDevice() {
+        LOGGER.debug("Initializing logical device...");
         try (MemoryStack stack = stackPush()) {
             VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.callocStack(stack);
             deviceCreateInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
@@ -298,6 +320,7 @@ public abstract class Application {
                 VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
                 VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME
             ).collect(toSet());
+            LOGGER.debug("Enabled extensions: {}", String.join(", ", enabledExtensionNames));
             deviceCreateInfo.ppEnabledExtensionNames(BufferUtil.asPointerBuffer(enabledExtensionNames, stack));
 
             int[] uniqueQueueFamilyIndices = physicalDeviceInformation.getUniqueQueueFamilyIndices();
@@ -325,6 +348,7 @@ public abstract class Application {
                 throw new RuntimeException("Failed to create logical device (result = " + result + ")");
             }
             logicalDevice = new VkDevice(pDevice.get(0), physicalDevice, deviceCreateInfo);
+            LOGGER.debug("Created logical device.");
 
             PointerBuffer pQueue = stack.pointers(VK_NULL_HANDLE);
 
@@ -333,11 +357,13 @@ public abstract class Application {
 
             vkGetDeviceQueue(logicalDevice, physicalDeviceInformation.getQueueFamilyIndexSurface(), 0, pQueue);
             presentQueue = new VkQueue(pQueue.get(0), logicalDevice);
+            LOGGER.debug("Initialized logical device.");
         }
     }
 
     private void initCommandPool() {
         try (MemoryStack stack = stackPush()) {
+            LOGGER.debug("Initializing command pool...");
             VkCommandPoolCreateInfo poolCreateInfo = VkCommandPoolCreateInfo.callocStack(stack);
             poolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
             poolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -349,6 +375,7 @@ public abstract class Application {
                 throw new RuntimeException("Failed to create command pool (result = " + result + ")");
             }
             commandPool = pCommandPool.get(0);
+            LOGGER.debug("Initialized command pool.");
         }
     }
 
@@ -356,11 +383,8 @@ public abstract class Application {
         guiCamera.setWindowSize(config.getWidth(), config.getHeight());
     }
 
-    protected void init() {
-
-    }
-
     private void mainLoop() {
+        LOGGER.debug("Started main loop.");
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
             int imageIndex = swapChain.acquireNextImageIndex();
@@ -372,6 +396,7 @@ public abstract class Application {
                 swapChain.drawFrame(imageIndex);
             }
         }
+        LOGGER.debug("Finished main loop.");
         vkDeviceWaitIdle(logicalDevice);
     }
 
@@ -388,6 +413,10 @@ public abstract class Application {
             isInitialized = true;
         }
         systems.forEach(system -> system.update(this, imageIndex, tpf));
+    }
+
+    protected void init() {
+
     }
 
     public void preloadRenderDependencies() {
@@ -494,6 +523,7 @@ public abstract class Application {
     }
 
     private void cleanup() {
+        LOGGER.debug("Cleaning up application...");
         inputManager.cleanup();
         assetManager.cleanup();
         cleanupRenderDependencies();
@@ -506,6 +536,7 @@ public abstract class Application {
         vkDestroyInstance(instance, null);
         glfwDestroyWindow(window);
         glfwTerminate();
+        LOGGER.debug("Cleaned up application.");
     }
 
     protected void cleanupRenderDependencies() {

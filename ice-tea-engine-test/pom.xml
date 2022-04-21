@@ -21,6 +21,10 @@
             <groupId>com.destrostudios.icetea</groupId>
             <artifactId>ice-tea-engine-samples</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

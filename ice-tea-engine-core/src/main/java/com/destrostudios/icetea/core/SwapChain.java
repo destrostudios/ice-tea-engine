@@ -11,6 +11,8 @@ import lombok.Getter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -29,6 +31,8 @@ import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class SwapChain extends LifecycleObject {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SwapChain.class);
 
     public SwapChain() {
         renderJobManager = new RenderJobManager();
@@ -73,18 +77,25 @@ public class SwapChain extends LifecycleObject {
 
     @Override
     protected void init() {
+        LOGGER.debug("Initializing swapchain...");
         super.init();
         initSwapChain();
         initImageViews();
         initRenderJobs();
         initCommandBuffers();
         initSyncObjects();
+        LOGGER.debug("Initialized swapchain.");
     }
 
     private void initSwapChain() {
         try (MemoryStack stack = stackPush()) {
             PhysicalDeviceInformation physicalDeviceInformation = application.getPhysicalDeviceInformation();
-            VkSurfaceCapabilitiesKHR surfaceCapabilities = application.getPhysicalDeviceManager().getSurfaceCapabilities(stack);
+
+            // TODO: Can this only be done once initially like the rest of PhysicalDeviceInformation?
+            LOGGER.debug("Fetching physical device surface capabilities...");
+            VkSurfaceCapabilitiesKHR surfaceCapabilities = VkSurfaceCapabilitiesKHR.mallocStack(stack);
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(application.getPhysicalDevice(), application.getSurface(), surfaceCapabilities);
+            LOGGER.debug("Fetched physical device surface capabilities.");
 
             VkExtent2D extent = chooseSwapExtent(surfaceCapabilities, application.getWindow(), stack);
             this.extent = VkExtent2D.create().set(extent);
@@ -93,57 +104,76 @@ public class SwapChain extends LifecycleObject {
             swapchainCreateInfo.sType(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR);
             swapchainCreateInfo.surface(application.getSurface());
 
-            IntBuffer imageCount = stack.ints(surfaceCapabilities.minImageCount() + 1);
-            if ((surfaceCapabilities.maxImageCount() > 0) && (imageCount.get(0) > surfaceCapabilities.maxImageCount())) {
-                imageCount.put(0, surfaceCapabilities.maxImageCount());
+            int surfaceMinImagesCount = surfaceCapabilities.minImageCount();
+            LOGGER.debug("Surface minimum image count: {}", surfaceMinImagesCount);
+            int surfaceMaxImagesCount = surfaceCapabilities.maxImageCount();
+            LOGGER.debug("Surface maximum image count: {}", surfaceMaxImagesCount);
+            IntBuffer imageCount = stack.ints(surfaceMinImagesCount + 1);
+            if ((surfaceMaxImagesCount > 0) && (imageCount.get(0) > surfaceMaxImagesCount)) {
+                imageCount.put(0, surfaceMaxImagesCount);
             }
+            LOGGER.debug("Choosing image count: {}", imageCount.get(0));
             swapchainCreateInfo.minImageCount(imageCount.get(0));
-            VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(physicalDeviceInformation.getSurfaceFormats());
-            swapchainCreateInfo.imageFormat(surfaceFormat.format());
-            swapchainCreateInfo.imageColorSpace(surfaceFormat.colorSpace());
+
+            VkSurfaceFormatKHR surfaceFormat = chooseSurfaceFormat(physicalDeviceInformation.getSurfaceFormats());
+            imageFormat = surfaceFormat.format();
+            int colorSpace = surfaceFormat.colorSpace();
+            LOGGER.debug("Surface format: Format = {}, ColorSpace = {}", imageFormat, colorSpace);
+            swapchainCreateInfo.imageFormat(imageFormat);
+            swapchainCreateInfo.imageColorSpace(colorSpace);
             swapchainCreateInfo.imageExtent(extent);
             swapchainCreateInfo.imageArrayLayers(1);
             swapchainCreateInfo.imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
             if (physicalDeviceInformation.getQueueFamilyIndexGraphics() != physicalDeviceInformation.getQueueFamilyIndexSurface()) {
+                LOGGER.debug("Image sharing mode: Concurrent");
                 swapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
                 swapchainCreateInfo.pQueueFamilyIndices(stack.ints(physicalDeviceInformation.getQueueFamilyIndexGraphics(), physicalDeviceInformation.getQueueFamilyIndexSurface()));
             } else {
+                LOGGER.debug("Image sharing mode: Exclusive");
                 swapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
             }
 
             swapchainCreateInfo.preTransform(surfaceCapabilities.currentTransform());
             swapchainCreateInfo.compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
-            int presentMode = chooseSwapPresentMode(physicalDeviceInformation.getSurfacePresentModes(), application.getConfig().getPreferredPresentMode());
+            int presentMode = choosePresentMode(physicalDeviceInformation.getSurfacePresentModes(), application.getConfig().getPreferredPresentMode());
             swapchainCreateInfo.presentMode(presentMode);
             swapchainCreateInfo.clipped(true);
             swapchainCreateInfo.oldSwapchain(VK_NULL_HANDLE);
 
             LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
+            LOGGER.debug("Creating swapchain...");
             int result = vkCreateSwapchainKHR(application.getLogicalDevice(), swapchainCreateInfo, null, pSwapChain);
+            LOGGER.debug("Created swapchain.");
             if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create swap chain (result = " + result + ")");
+                throw new RuntimeException("Failed to create swapchain (result = " + result + ")");
             }
             swapChain = pSwapChain.get(0);
 
+            LOGGER.debug("Fetching swapchain images...");
             vkGetSwapchainImagesKHR(application.getLogicalDevice(), swapChain, imageCount, null);
+            LOGGER.debug("Found {} swapchain images.", imageCount.get(0));
             LongBuffer pImages = stack.mallocLong(imageCount.get(0));
             vkGetSwapchainImagesKHR(application.getLogicalDevice(), swapChain, imageCount, pImages);
+            LOGGER.debug("Fetched {} swapchain images.", imageCount.get(0));
             images = new ArrayList<>(imageCount.get(0));
             for (int i = 0;i < pImages.capacity();i++) {
                 images.add(pImages.get(i));
             }
-            imageFormat = surfaceFormat.format();
         }
     }
 
     private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, long window, MemoryStack stack) {
-        if (capabilities.currentExtent().width() != MathUtil.UINT32_MAX) {
-            return capabilities.currentExtent();
+        VkExtent2D currentExtent = capabilities.currentExtent();
+        if (currentExtent.width() != MathUtil.UINT32_MAX) {
+            LOGGER.debug("Using available current extent: {} x {}", currentExtent.width(), currentExtent.height());
+            return currentExtent;
         }
         IntBuffer width = stack.ints(0);
         IntBuffer height = stack.ints(0);
+        LOGGER.debug("Fetching framebuffer size...");
         glfwGetFramebufferSize(window, width, height);
+        LOGGER.debug("Fetched framebuffer size: {} x {}", width.get(0), height.get(0));
         VkExtent2D actualExtent = VkExtent2D.mallocStack(stack).set(width.get(0), height.get(0));
 
         VkExtent2D minExtent = capabilities.minImageExtent();
@@ -151,11 +181,12 @@ public class SwapChain extends LifecycleObject {
 
         actualExtent.width(MathUtil.clamp(minExtent.width(), maxExtent.width(), actualExtent.width()));
         actualExtent.height(MathUtil.clamp(minExtent.height(), maxExtent.height(), actualExtent.height()));
+        LOGGER.debug("Calculated actual extent: {} x {}", actualExtent.width(), actualExtent.height());
 
         return actualExtent;
     }
 
-    private VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkSurfaceFormatKHR.Buffer availableFormats) {
+    private VkSurfaceFormatKHR chooseSurfaceFormat(VkSurfaceFormatKHR.Buffer availableFormats) {
         // TODO: Should have a proper ranking logic (preferring nonlinear) and not just have one preferred combination and default to the first one otherwise
         // TODO: Also, if we happen to use a linear color space, we have to adjust the read texture pixels and stored image formats as a transformation back to sRGB at the end doesn't happen automatically yet
         return availableFormats.stream()
@@ -165,21 +196,26 @@ public class SwapChain extends LifecycleObject {
                 .orElse(availableFormats.get(0));
     }
 
-    private int chooseSwapPresentMode(IntBuffer availablePresentModes, int preferredPresentMode) {
+    private int choosePresentMode(IntBuffer availablePresentModes, int preferredPresentMode) {
+        LOGGER.debug("Choosing present mode...");
         for (int i = 0; i < availablePresentModes.capacity(); i++) {
             int presentMode = availablePresentModes.get(i);
             if (presentMode == preferredPresentMode) {
+                LOGGER.debug("Choosing preferred present mode: {}", presentMode);
                 return presentMode;
             }
         }
+        LOGGER.debug("Preferred present mode not available, defaulting to FIFO.");
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
     private void initImageViews() {
+        LOGGER.debug("Initializing image views...");
         imageViews = new ArrayList<>(images.size());
         for (long swapChainImage : images) {
             imageViews.add(application.getImageManager().createImageView(swapChainImage, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1));
         }
+        LOGGER.debug("Initialized image views.");
     }
 
     public void recreateRenderJobs() {
@@ -188,6 +224,7 @@ public class SwapChain extends LifecycleObject {
     }
 
     public void initRenderJobs() {
+        LOGGER.debug("Initializing render jobs...");
         // Make sure all render jobs are initialized first, because they can have dependencies between each other
         renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, 0, 0));
         renderJobManager.forEachRenderJob(renderJob -> {
@@ -198,10 +235,12 @@ public class SwapChain extends LifecycleObject {
                 }
             });
         });
+        LOGGER.debug("Initialized render jobs.");
     }
 
     private void initCommandBuffers() {
         try (MemoryStack stack = stackPush()) {
+            LOGGER.debug("Initializing command buffers...");
             int commandBuffersCount = images.size();
             commandBuffers = new ArrayList<>(commandBuffersCount);
             VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.callocStack(stack);
@@ -219,10 +258,12 @@ public class SwapChain extends LifecycleObject {
             for (int i = 0; i < commandBuffersCount; i++) {
                 commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), application.getLogicalDevice()));
             }
+            LOGGER.debug("Initialized command buffers.");
         }
     }
 
     private void initSyncObjects() {
+        LOGGER.debug("Initializing sync objects...");
         inFlightFrames = new ArrayList<>(application.getConfig().getFramesInFlight());
         imagesInFlight = new HashMap<>(images.size());
         try (MemoryStack stack = stackPush()) {
@@ -253,6 +294,7 @@ public class SwapChain extends LifecycleObject {
                 inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
             }
         }
+        LOGGER.debug("Initialized sync objects.");
     }
 
     public void recordCommandBuffers() {
@@ -373,7 +415,7 @@ public class SwapChain extends LifecycleObject {
                 wasResized = false;
                 recreate();
             } else if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to present swap chain image (result = " + result + ")");
+                throw new RuntimeException("Failed to present swapchain image (result = " + result + ")");
             }
 
             currentFrame = ((currentFrame + 1) % application.getConfig().getFramesInFlight());
