@@ -51,7 +51,8 @@ public class Geometry extends Spatial {
             commandBufferOutdated = true;
         }
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
-        if (transformUniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size())) {
+        transformUniformData.update(application, imageIndex, tpf);
+        if (transformUniformData.isWasBufferRecreated()) {
             outdatedRenderContexts.addAll(renderContexts.values());
         }
         application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {

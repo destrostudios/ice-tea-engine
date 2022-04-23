@@ -96,7 +96,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         lightTransformUniformData.setMatrix4f("proj", projectionMatrix);
         lightTransformUniformData.setMatrix4f("view", viewMatrix);
         lightTransformUniformData.setVector4f("clipPlane", clipPlane);
-        lightTransformUniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+        lightTransformUniformData.update(application, imageIndex, tpf);
     }
 
     @Override

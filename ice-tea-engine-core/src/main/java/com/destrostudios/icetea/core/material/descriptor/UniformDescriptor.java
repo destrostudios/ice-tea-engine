@@ -31,7 +31,7 @@ public class UniformDescriptor extends MaterialDescriptor {
     @Override
     public void updateReferenceDescriptorWrite(VkWriteDescriptorSet descriptorSet, int currentImage) {
         VkDescriptorBufferInfo.Buffer descriptorBufferInfo = descriptorSet.pBufferInfo();
-        descriptorBufferInfo.buffer(uniformData.getBuffers().get(currentImage));
+        descriptorBufferInfo.buffer(uniformData.getBuffer());
     }
 
     @Override

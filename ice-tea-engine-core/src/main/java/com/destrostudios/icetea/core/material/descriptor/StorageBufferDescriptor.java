@@ -31,7 +31,7 @@ public class StorageBufferDescriptor extends MaterialDescriptor {
     @Override
     public void updateReferenceDescriptorWrite(VkWriteDescriptorSet descriptorSet, int currentImage) {
         VkDescriptorBufferInfo.Buffer descriptorBufferInfo = descriptorSet.pBufferInfo();
-        descriptorBufferInfo.buffer(storageBufferData.getBuffers().get(0));
+        descriptorBufferInfo.buffer(storageBufferData.getBuffer());
     }
 
     @Override

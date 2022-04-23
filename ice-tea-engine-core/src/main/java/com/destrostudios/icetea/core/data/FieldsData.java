@@ -10,7 +10,6 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -25,19 +24,14 @@ public abstract class FieldsData extends LifecycleObject implements ContextClone
         }
         size = fieldsData.size;
         structureModified = true;
-        if (fieldsData.contentModified != null) {
-            contentModified = new ArrayList<>();
-            for (int i = 0; i < fieldsData.contentModified.size(); i++) {
-                contentModified.add(true);
-            }
-        }
+        contentModified = true;
     }
     @Getter
     protected Map<String, UniformValue<?>> fields = new LinkedHashMap<>();
     @Getter
     protected int size;
     protected boolean structureModified;
-    protected ArrayList<Boolean> contentModified;
+    protected boolean contentModified;
 
     public void setInt(String name, Integer value) {
         set(name, value, IntUniformValue::new);
@@ -82,25 +76,17 @@ public abstract class FieldsData extends LifecycleObject implements ContextClone
         } else {
             uniformValue.setValue(value);
         }
-        onContentModified();
+        contentModified = true;
     }
 
     public void clear(String name) {
         UniformValue<?> uniformValue = fields.remove(name);
         size -= getSize(uniformValue);
         structureModified = true;
-        onContentModified();
+        contentModified = true;
     }
 
     protected abstract int getSize(UniformValue<?> uniformValue);
-
-    private void onContentModified() {
-        if (contentModified != null) {
-            for (int i = 0; i < contentModified.size(); i++) {
-                contentModified.set(i, true);
-            }
-        }
-    }
 
     public Integer getInt(String name) {
         return get(name);

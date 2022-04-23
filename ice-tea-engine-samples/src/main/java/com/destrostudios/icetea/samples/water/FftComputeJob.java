@@ -120,7 +120,7 @@ public class FftComputeJob extends ComputeJob {
             horizontalPushConstants[i].setInt("stage", i);
             horizontalPushConstants[i].setInt("pingpong", pingPongIndex);
             horizontalPushConstants[i].setInt("direction", 0);
-            horizontalPushConstants[i].updateBufferAndCheckRecreation(application, 0, 0, 1);
+            horizontalPushConstants[i].update(application, 0, 0);
 
             pingPongIndex++;
             pingPongIndex %= 2;
@@ -130,7 +130,7 @@ public class FftComputeJob extends ComputeJob {
             verticalPushConstants[i].setInt("stage", i);
             verticalPushConstants[i].setInt("pingpong", pingPongIndex);
             verticalPushConstants[i].setInt("direction", 1);
-            verticalPushConstants[i].updateBufferAndCheckRecreation(application, 0, 0, 1);
+            verticalPushConstants[i].update(application, 0, 0);
 
             pingPongIndex++;
             pingPongIndex %= 2;
@@ -139,7 +139,7 @@ public class FftComputeJob extends ComputeJob {
         ByteBufferData inversionPushConstants = new ByteBufferData();
         inversionPushConstants.setInt("n", n);
         inversionPushConstants.setInt("pingPongIndex", pingPongIndex);
-        inversionPushConstants.updateBufferAndCheckRecreation(application, 0, 0, 1);
+        inversionPushConstants.update(application, 0, 0);
 
         FftButterflyComputeActionGroup butterflyComputeActionGroup = new FftButterflyComputeActionGroup(n, horizontalPushConstants, verticalPushConstants);
         butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture(), hktComputeJob.getDxCoefficientsTexture(), dxPingPongTexture));

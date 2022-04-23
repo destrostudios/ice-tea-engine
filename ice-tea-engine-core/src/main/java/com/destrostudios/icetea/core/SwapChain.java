@@ -37,6 +37,7 @@ public class SwapChain extends LifecycleObject {
     public SwapChain() {
         renderJobManager = new RenderJobManager();
     }
+    private static final int FRAMES_IN_FLIGHT = 2;
     @Getter
     private VkExtent2D extent;
     private long swapChain;
@@ -49,7 +50,7 @@ public class SwapChain extends LifecycleObject {
     private ArrayList<VkCommandBuffer> commandBuffers;
     @Getter
     private RenderJobManager renderJobManager;
-    private List<Frame> inFlightFrames;
+    private Frame[] inFlightFrames;
     private Map<Integer, Frame> imagesInFlight;
     private int currentFrame;
     private boolean wasResized;
@@ -264,7 +265,7 @@ public class SwapChain extends LifecycleObject {
 
     private void initSyncObjects() {
         LOGGER.debug("Initializing sync objects...");
-        inFlightFrames = new ArrayList<>(application.getConfig().getFramesInFlight());
+        inFlightFrames = new Frame[FRAMES_IN_FLIGHT];
         imagesInFlight = new HashMap<>(images.size());
         try (MemoryStack stack = stackPush()) {
             VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.callocStack(stack);
@@ -278,7 +279,7 @@ public class SwapChain extends LifecycleObject {
             LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
             LongBuffer pFence = stack.mallocLong(1);
 
-            for (int i = 0; i < application.getConfig().getFramesInFlight(); i++) {
+            for (int i = 0; i < inFlightFrames.length; i++) {
                 int result = vkCreateSemaphore(application.getLogicalDevice(), semaphoreInfo, null, pImageAvailableSemaphore);
                 if (result != VK_SUCCESS) {
                     throw new RuntimeException("Failed to create image available semaphore for the frame " + i + " (result = " + result + ")");
@@ -291,7 +292,7 @@ public class SwapChain extends LifecycleObject {
                 if (result != VK_SUCCESS) {
                     throw new RuntimeException("Failed to create fence for the frame " + i + " (result = " + result + ")");
                 }
-                inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+                inFlightFrames[i] = new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0));
             }
         }
         LOGGER.debug("Initialized sync objects.");
@@ -356,7 +357,7 @@ public class SwapChain extends LifecycleObject {
 
     public int acquireNextImageIndex() {
         try (MemoryStack stack = stackPush()) {
-            Frame thisFrame = inFlightFrames.get(currentFrame);
+            Frame thisFrame = inFlightFrames[currentFrame];
             IntBuffer pImageIndex = stack.mallocInt(1);
             int result = vkAcquireNextImageKHR(
                 application.getLogicalDevice(),
@@ -382,7 +383,7 @@ public class SwapChain extends LifecycleObject {
 
     public void drawFrame(int imageIndex) {
         try (MemoryStack stack = stackPush()) {
-            Frame thisFrame = inFlightFrames.get(currentFrame);
+            Frame thisFrame = inFlightFrames[currentFrame];
 
             if (imagesInFlight.containsKey(imageIndex)) {
                 vkWaitForFences(application.getLogicalDevice(), imagesInFlight.get(imageIndex).getFence(), true, MathUtil.UINT64_MAX);
@@ -418,7 +419,7 @@ public class SwapChain extends LifecycleObject {
                 throw new RuntimeException("Failed to present swapchain image (result = " + result + ")");
             }
 
-            currentFrame = ((currentFrame + 1) % application.getConfig().getFramesInFlight());
+            currentFrame = ((currentFrame + 1) % inFlightFrames.length);
 
             // Wait for GPU to be finished, so we can safely access memory in our logic again (e.g. freeing memory of removed objects)
             vkWaitForFences(application.getLogicalDevice(), pFence, true, MathUtil.UINT64_MAX);
@@ -438,11 +439,11 @@ public class SwapChain extends LifecycleObject {
     }
 
     private void cleanupInFlightFrames() {
-        inFlightFrames.forEach(frame -> {
+        for (Frame frame : inFlightFrames) {
             vkDestroySemaphore(application.getLogicalDevice(), frame.getRenderFinishedSemaphore(), null);
             vkDestroySemaphore(application.getLogicalDevice(), frame.getImageAvailableSemaphore(), null);
             vkDestroyFence(application.getLogicalDevice(), frame.getFence(), null);
-        });
+        }
     }
 
     private void cleanupRenderJobs() {

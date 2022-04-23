@@ -7,7 +7,6 @@ import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -24,57 +23,49 @@ public class MemoryBufferData extends BufferData {
     }
     private int usage;
     @Getter
-    private ArrayList<Long> buffers;
-    private ArrayList<Long> buffersMemory;
+    private Long buffer;
+    private Long bufferMemory;
 
     @Override
-    protected void initBuffersInternal(int buffersCount) {
+    protected void initBufferInternal() {
         try (MemoryStack stack = stackPush()) {
-            buffers = new ArrayList<>(buffersCount);
-            buffersMemory = new ArrayList<>(buffersCount);
             LongBuffer pBuffer = stack.mallocLong(1);
             LongBuffer pBufferMemory = stack.mallocLong(1);
-            for (int i = 0; i < buffersCount; i++) {
-                application.getBufferManager().createBuffer(
-                        size,
-                        usage,
-                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        pBuffer,
-                        pBufferMemory
-                );
-                buffers.add(pBuffer.get(0));
-                buffersMemory.add(pBufferMemory.get(0));
-            }
+            application.getBufferManager().createBuffer(
+                size,
+                usage,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                pBuffer,
+                pBufferMemory
+            );
+            buffer = pBuffer.get(0);
+            bufferMemory = pBufferMemory.get(0);
         }
     }
 
     @Override
-    protected ByteBuffer prepareUpdatingBuffer(int bufferIndex) {
+    protected ByteBuffer prepareUpdatingBuffer() {
         try (MemoryStack stack = stackPush()) {
             PointerBuffer data = stack.mallocPointer(1);
-            vkMapMemory(application.getLogicalDevice(), buffersMemory.get(bufferIndex), 0, size, 0, data);
+            vkMapMemory(application.getLogicalDevice(), bufferMemory, 0, size, 0, data);
             return data.getByteBuffer(0, size);
         }
     }
 
     @Override
-    protected void finishUpdatingBuffer(int bufferIndex) {
-        vkUnmapMemory(application.getLogicalDevice(), buffersMemory.get(bufferIndex));
+    protected void finishUpdatingBuffer() {
+        vkUnmapMemory(application.getLogicalDevice(), bufferMemory);
     }
 
     @Override
     protected void cleanupBuffer() {
-        if (buffers != null) {
-            for (long uniformBuffer : buffers) {
-                vkDestroyBuffer(application.getLogicalDevice(), uniformBuffer, null);
-            }
-            buffers = null;
+        if (buffer != null) {
+            vkDestroyBuffer(application.getLogicalDevice(), buffer, null);
+            buffer = null;
         }
-        if (buffersMemory != null) {
-            for (long uniformBufferMemory : buffersMemory) {
-                vkFreeMemory(application.getLogicalDevice(), uniformBufferMemory, null);
-            }
-            buffersMemory = null;
+        if (bufferMemory != null) {
+            vkFreeMemory(application.getLogicalDevice(), bufferMemory, null);
+            bufferMemory = null;
         }
     }
 

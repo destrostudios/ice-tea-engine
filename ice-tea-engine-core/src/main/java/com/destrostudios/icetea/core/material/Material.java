@@ -80,7 +80,8 @@ public class Material extends LifecycleObject implements ContextCloneable {
     @Override
     protected void update(int imageIndex, float tpf) {
         super.update(imageIndex, tpf);
-        commandBufferOutdated = parameters.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+        parameters.update(application, imageIndex, tpf);;
+        commandBufferOutdated = parameters.isWasBufferRecreated();
         for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
             Texture texture = textureSupplier.get();
             texture.update(application, imageIndex, tpf);

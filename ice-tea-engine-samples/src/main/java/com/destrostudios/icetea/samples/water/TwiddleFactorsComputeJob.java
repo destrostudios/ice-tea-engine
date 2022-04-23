@@ -93,7 +93,7 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
     private void initUniformData() {
         uniformData = new UniformData();
         uniformData.setInt("n", n);
-        uniformData.updateBufferAndCheckRecreation(application, 0, 0, 1);
+        uniformData.update(application, 0, 0);
     }
 
     public static int[] getBitReversedIndices(int n) {
@@ -113,7 +113,7 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
 
         StorageBufferData storageBufferData = new StorageBufferData();
         storageBufferData.setIntArray("bitReversedIndices", getBitReversedIndices(n));
-        storageBufferData.updateBufferAndCheckRecreation(application, 0, 0, 1);
+        storageBufferData.update(application, 0, 0);
 
         TwiddleFactorsComputeActionGroup twiddleFactorsComputeActionGroup = new TwiddleFactorsComputeActionGroup(n);
         twiddleFactorsComputeActionGroup.addComputeAction(new TwiddleFactorsComputeAction(twiddleFactorsTexture, storageBufferData, uniformData));

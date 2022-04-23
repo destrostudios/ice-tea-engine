@@ -65,7 +65,7 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
 
     private void recordComputeAction(VkCommandBuffer commandBuffer, ComputeAction computeAction, ByteBufferData pushConstants) {
         try (MemoryStack stack = stackPush()) {
-            vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getByteBuffers().get(0));
+            vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getByteBuffer());
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, stack.longs(computeAction.getDescriptorSets().get(0)), null);
             vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
         }

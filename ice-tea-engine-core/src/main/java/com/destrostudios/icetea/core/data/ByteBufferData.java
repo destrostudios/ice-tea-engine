@@ -4,7 +4,6 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 import lombok.Getter;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import static org.lwjgl.system.MemoryUtil.memAlloc;
 
@@ -16,33 +15,27 @@ public class ByteBufferData extends BufferData {
         super(byteBufferData, context);
     }
     @Getter
-    private ArrayList<ByteBuffer> byteBuffers;
+    private ByteBuffer byteBuffer;
 
     @Override
-    protected void initBuffersInternal(int buffersCount) {
-        byteBuffers = new ArrayList<>(buffersCount);
-        for (int i = 0; i < buffersCount; i++) {
-            ByteBuffer byteBuffer = memAlloc(size);
-            byteBuffers.add(byteBuffer);
-        }
+    protected void initBufferInternal() {
+        byteBuffer = memAlloc(size);
     }
 
     @Override
-    protected ByteBuffer prepareUpdatingBuffer(int bufferIndex) {
-        return byteBuffers.get(bufferIndex);
+    protected ByteBuffer prepareUpdatingBuffer() {
+        return byteBuffer;
     }
 
     @Override
-    protected void finishUpdatingBuffer(int bufferIndex) {
+    protected void finishUpdatingBuffer() {
         // Nothing to do here
     }
 
     @Override
     protected void cleanupBuffer() {
-        if (byteBuffers != null) {
-            // Nothing to do here
-            byteBuffers = null;
-        }
+        // Nothing to do here
+        byteBuffer = null;
     }
 
     @Override

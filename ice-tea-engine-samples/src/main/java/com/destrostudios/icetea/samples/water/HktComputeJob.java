@@ -106,7 +106,7 @@ public class HktComputeJob extends ComputeJob {
         uniformData.setInt("N", waterConfig.getN());
         uniformData.setInt("L", waterConfig.getL());
         uniformData.setFloat("t", 0f);
-        uniformData.updateBufferAndCheckRecreation(application, 0, 0, 1);
+        uniformData.update(application, 0, 0);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class HktComputeJob extends ComputeJob {
     public void update(int imageIndex, float tpf) {
         super.update(imageIndex, tpf);
         uniformData.setFloat("t", time);
-        uniformData.updateBufferAndCheckRecreation(application, 0, tpf, 1);
+        uniformData.update(application, 0, tpf);
     }
 
     @Override

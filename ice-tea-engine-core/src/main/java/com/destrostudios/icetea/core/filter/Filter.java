@@ -23,7 +23,7 @@ public class Filter extends LifecycleObject {
     public void update(int imageIndex, float tpf) {
         super.update(imageIndex, tpf);
         updateUniformData();
-        uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+        uniformData.update(application, imageIndex, tpf);
     }
 
     protected void updateUniformData() {

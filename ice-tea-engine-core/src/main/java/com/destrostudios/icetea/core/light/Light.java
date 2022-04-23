@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.light;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
 import com.destrostudios.icetea.core.data.UniformData;
@@ -46,7 +45,7 @@ public abstract class Light extends LifecycleObject {
     public void update(int imageIndex, float tpf) {
         super.update(imageIndex, tpf);
         updateUniformDataFields();
-        uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+        uniformData.update(application, imageIndex, tpf);
     }
 
     protected void updateUniformDataFields() {

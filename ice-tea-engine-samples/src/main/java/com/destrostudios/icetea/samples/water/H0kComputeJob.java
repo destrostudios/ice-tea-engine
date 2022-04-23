@@ -112,7 +112,7 @@ public class H0kComputeJob extends ComputeJob {
         uniformData.setFloat("windspeed", waterConfig.getWindSpeed());
         uniformData.setVector2f("w", waterConfig.getWindDirection());
         uniformData.setFloat("capillarSupressFactor", waterConfig.getCapillarSuppressFactor());
-        uniformData.updateBufferAndCheckRecreation(application, 0, 0, 1);
+        uniformData.update(application, 0, 0);
     }
 
     @Override

@@ -63,7 +63,7 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
         if (jointMatricesUpdated) {
             updateUniformData();
         }
-        uniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+        uniformData.update(application, imageIndex, tpf);
     }
 
     private void updateUniformData() {

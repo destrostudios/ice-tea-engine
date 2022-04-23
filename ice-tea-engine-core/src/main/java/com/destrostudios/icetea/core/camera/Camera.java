@@ -33,7 +33,7 @@ public class Camera extends LifecycleObject {
     @Override
     public void update(int imageIndex, float tpf) {
         super.update(imageIndex, tpf);
-        transformUniformData.updateBufferAndCheckRecreation(application, imageIndex, tpf, application.getSwapChain().getImages().size());
+        transformUniformData.update(application, imageIndex, tpf);
     }
 
     @Override

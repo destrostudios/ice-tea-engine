@@ -103,7 +103,7 @@ public class NormalMapComputeJob extends ComputeJob {
         ByteBufferData pushConstants = new ByteBufferData();
         pushConstants.setInt("n", waterConfig.getN());
         pushConstants.setFloat("strength", waterConfig.getNormalStrength());
-        pushConstants.updateBufferAndCheckRecreation(application, 0, 0, 1);
+        pushConstants.update(application, 0, 0);
 
         NormalMapComputeActionGroup normalMapComputeActionGroup = new NormalMapComputeActionGroup(waterConfig.getN(), pushConstants);
         normalMapComputeActionGroup.addComputeAction(new NormalMapComputeAction(normalMapTexture, fftComputeJob.getDyTexture()));
