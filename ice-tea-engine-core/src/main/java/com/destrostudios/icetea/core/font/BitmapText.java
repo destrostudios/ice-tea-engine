@@ -40,14 +40,18 @@ public class BitmapText extends Geometry {
     private String text;
 
     public void setFont(BitmapFont font) {
-        this.font = font;
-        updateMesh();
-        updateMaterial(font);
+        if (!font.equals(this.font)) {
+            this.font = font;
+            updateMesh();
+            updateMaterial(font);
+        }
     }
 
     public void setText(String text) {
-        this.text = text;
-        updateMesh();
+        if (!text.equals(this.text)) {
+            this.text = text;
+            updateMesh();
+        }
     }
 
     private void updateMesh() {
