@@ -22,14 +22,14 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     @Override
     protected void init() {
         // FullScreenQuadRenderJob needs the filter config material descriptor already in init
-        filter.update(application, 0, 0);
+        filter.update(application, 0);
         super.init();
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
-        filter.update(application, imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
+        filter.update(application, tpf);
     }
 
     @Override

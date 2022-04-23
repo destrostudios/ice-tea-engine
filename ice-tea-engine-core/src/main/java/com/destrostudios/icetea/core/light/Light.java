@@ -42,10 +42,10 @@ public abstract class Light extends LifecycleObject {
     private boolean modified;
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         updateUniformDataFields();
-        uniformData.update(application, imageIndex, tpf);
+        uniformData.update(application, tpf);
     }
 
     protected void updateUniformDataFields() {

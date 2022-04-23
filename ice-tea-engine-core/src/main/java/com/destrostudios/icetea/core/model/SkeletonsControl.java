@@ -23,10 +23,10 @@ public class SkeletonsControl extends Control {
     private Collection<Skeleton> skeletons;
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         for (Skeleton skeleton : skeletons) {
-            skeleton.update(application, imageIndex, tpf);
+            skeleton.update(application, tpf);
         }
     }
 

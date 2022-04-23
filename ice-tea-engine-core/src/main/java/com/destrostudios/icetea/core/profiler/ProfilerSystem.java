@@ -39,8 +39,8 @@ public class ProfilerSystem extends LifecycleObject implements KeyListener {
     }
 
     @Override
-    protected void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    protected void update(float tpf) {
+        super.update(tpf);
         timeSinceCollecting += tpf;
         if (timeSinceCollecting > interval) {
             updateTexts();

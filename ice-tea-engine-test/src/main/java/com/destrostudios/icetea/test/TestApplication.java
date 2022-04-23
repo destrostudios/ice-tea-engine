@@ -516,8 +516,8 @@ public class TestApplication extends Application {
     }
 
     @Override
-    protected void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    protected void update(float tpf) {
+        super.update(tpf);
         if ((time > 20) && (!hasAddedDennis)) {
             nodeRotating.add(nodeDennis);
             hasAddedDennis = true;

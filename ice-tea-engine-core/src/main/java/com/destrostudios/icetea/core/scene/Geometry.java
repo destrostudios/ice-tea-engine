@@ -39,19 +39,19 @@ public class Geometry extends Spatial {
     private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts = new HashMap<>();
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         updateWorldBounds();
-        mesh.update(application, imageIndex, tpf);
+        mesh.update(application, tpf);
         if (mesh.isWereBuffersOutdated()) {
             commandBufferOutdated = true;
         }
-        material.update(application, imageIndex, tpf);
+        material.update(application, tpf);
         if (material.isCommandBufferOutdated()) {
             commandBufferOutdated = true;
         }
         Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
-        transformUniformData.update(application, imageIndex, tpf);
+        transformUniformData.update(application, tpf);
         if (transformUniformData.isWasBufferRecreated()) {
             outdatedRenderContexts.addAll(renderContexts.values());
         }

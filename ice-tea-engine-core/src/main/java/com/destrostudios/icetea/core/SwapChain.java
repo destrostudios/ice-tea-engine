@@ -72,7 +72,7 @@ public class SwapChain extends LifecycleObject {
         isDuringRecreation = true;
         cleanup();
         isDuringRecreation = false;
-        update(tmpApplication, 0, 0);
+        update(tmpApplication, 0);
         recordCommandBuffers();
     }
 
@@ -227,7 +227,7 @@ public class SwapChain extends LifecycleObject {
     public void initRenderJobs() {
         LOGGER.debug("Initializing render jobs...");
         // Make sure all render jobs are initialized first, because they can have dependencies between each other
-        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, 0, 0));
+        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, 0));
         renderJobManager.forEachRenderJob(renderJob -> {
             application.getRootNode().forEachGeometry(geometry -> {
                 GeometryRenderContext<?> renderContext = geometry.getRenderContext(renderJob);
@@ -350,9 +350,9 @@ public class SwapChain extends LifecycleObject {
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
-        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, imageIndex, tpf));
+    public void update(float tpf) {
+        super.update(tpf);
+        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, tpf));
     }
 
     public int acquireNextImageIndex() {

@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.render;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
@@ -175,10 +174,10 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
     public abstract void render(Consumer<RenderAction> actions);
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         if (resolvedColorTexture != null) {
-            resolvedColorTexture.update(application, imageIndex, tpf);
+            resolvedColorTexture.update(application, tpf);
         }
     }
 

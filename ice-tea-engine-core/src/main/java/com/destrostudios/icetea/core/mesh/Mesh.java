@@ -111,8 +111,8 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
     }
 
     @Override
-    protected void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    protected void update(float tpf) {
+        super.update(tpf);
         wereBuffersOutdated = buffersOutdated;
         if (buffersOutdated) {
             recreateVertexBuffer();

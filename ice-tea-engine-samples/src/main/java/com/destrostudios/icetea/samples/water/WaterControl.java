@@ -32,25 +32,25 @@ public class WaterControl extends Control {
     protected void initControl() {
         super.initControl();
         twiddleFactorsComputeJob = new TwiddleFactorsComputeJob(waterConfig.getN());
-        twiddleFactorsComputeJob.update(application, 0, 0);
+        twiddleFactorsComputeJob.update(application, 0);
         twiddleFactorsComputeJob.submit();
 
         h0kComputeJob = new H0kComputeJob(waterConfig);
-        h0kComputeJob.update(application, 0, 0);
+        h0kComputeJob.update(application, 0);
         h0kComputeJob.submit();
 
         hktComputeJob = new HktComputeJob(waterConfig, h0kComputeJob);
-        hktComputeJob.update(application, 0, 0);
+        hktComputeJob.update(application, 0);
         hktComputeJob.submit();
 
         fftComputeJob = new FftComputeJob(waterConfig.getN(), twiddleFactorsComputeJob, hktComputeJob);
         fftComputeJob.setWait(hktComputeJob.getSignalSemaphore(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-        fftComputeJob.update(application, 0, 0);
+        fftComputeJob.update(application, 0);
         fftComputeJob.submit();
 
         normalMapComputeJob = new NormalMapComputeJob(waterConfig, fftComputeJob);
         normalMapComputeJob.setWait(fftComputeJob.getSignalSemaphore(), VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-        normalMapComputeJob.update(application, 0, 0);
+        normalMapComputeJob.update(application, 0);
         normalMapComputeJob.submit();
     }
 
@@ -122,20 +122,20 @@ public class WaterControl extends Control {
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         time += tpf * waterConfig.getTimeSpeed();
         motion += tpf * waterConfig.getMotionSpeed();
         distortion += tpf * waterConfig.getDistortionSpeed();
 
         hktComputeJob.setTime(time);
-        hktComputeJob.update(application, imageIndex, tpf);
+        hktComputeJob.update(application, tpf);
         hktComputeJob.submit();
 
-        fftComputeJob.update(application, imageIndex, tpf);
+        fftComputeJob.update(application, tpf);
         fftComputeJob.submit();
 
-        normalMapComputeJob.update(application, imageIndex, tpf);
+        normalMapComputeJob.update(application, tpf);
         normalMapComputeJob.submit();
 
         Geometry geometry = (Geometry) spatial;

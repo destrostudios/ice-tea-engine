@@ -31,9 +31,9 @@ public class Camera extends LifecycleObject {
     private UniformData transformUniformData;
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
-        transformUniformData.update(application, imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
+        transformUniformData.update(application, tpf);
     }
 
     @Override

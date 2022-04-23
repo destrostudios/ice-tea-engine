@@ -64,8 +64,8 @@ public class AnimationControl extends Control {
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         if (playing) {
             time += tpf * speed;
             needsUpdate = true;

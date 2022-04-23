@@ -164,9 +164,9 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
-        multisampledColorTexture.update(application, imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
+        multisampledColorTexture.update(application, tpf);
     }
 
     @Override

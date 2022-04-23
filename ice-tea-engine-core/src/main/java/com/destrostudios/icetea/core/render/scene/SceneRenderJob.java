@@ -333,11 +333,11 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
-        multisampledColorTexture.update(application, imageIndex, tpf);
-        multisampledDepthTexture.update(application, imageIndex, tpf);
-        resolvedDepthTexture.update(application, imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
+        multisampledColorTexture.update(application, tpf);
+        multisampledDepthTexture.update(application, tpf);
+        resolvedDepthTexture.update(application, tpf);
     }
 
     @Override

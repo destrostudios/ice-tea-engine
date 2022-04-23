@@ -30,7 +30,7 @@ public abstract class ComputeJob extends LifecycleObject {
         super.init();
         computeActionGroups = createComputeActionGroups();
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
-            computeActionGroup.update(application, 0, 0);
+            computeActionGroup.update(application, 0);
         }
         initCommandBuffer();
         initFence();

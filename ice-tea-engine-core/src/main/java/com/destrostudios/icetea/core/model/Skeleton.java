@@ -46,8 +46,8 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         boolean jointMatricesUpdated = false;
         for (Joint joint : joints) {
             joint.update();
@@ -63,7 +63,7 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
         if (jointMatricesUpdated) {
             updateUniformData();
         }
-        uniformData.update(application, imageIndex, tpf);
+        uniformData.update(application, tpf);
     }
 
     private void updateUniformData() {

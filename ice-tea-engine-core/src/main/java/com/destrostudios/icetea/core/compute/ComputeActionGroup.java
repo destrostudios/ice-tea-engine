@@ -28,7 +28,7 @@ public abstract class ComputeActionGroup extends LifecycleObject {
         initMaterialDescriptorSetLayout();
         for (ComputeAction computeAction : computeActions) {
             computeAction.setComputeActionGroup(this);
-            computeAction.update(application, 0, 0);
+            computeAction.update(application, 0);
         }
         computePipeline = new ComputePipeline(application, this);
         computePipeline.init();

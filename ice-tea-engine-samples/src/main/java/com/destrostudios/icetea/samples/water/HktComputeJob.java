@@ -96,7 +96,7 @@ public class HktComputeJob extends ComputeJob {
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.update(application, 0, 0);
+            texture.update(application, 0);
             return texture;
         }
     }
@@ -106,7 +106,7 @@ public class HktComputeJob extends ComputeJob {
         uniformData.setInt("N", waterConfig.getN());
         uniformData.setInt("L", waterConfig.getL());
         uniformData.setFloat("t", 0f);
-        uniformData.update(application, 0, 0);
+        uniformData.update(application, 0);
     }
 
     @Override
@@ -126,10 +126,10 @@ public class HktComputeJob extends ComputeJob {
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         uniformData.setFloat("t", time);
-        uniformData.update(application, 0, tpf);
+        uniformData.update(application, tpf);
     }
 
     @Override

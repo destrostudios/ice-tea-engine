@@ -68,8 +68,8 @@ public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener 
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         // Avoid unnecessary vector and matrix recalculations
         if (moveDirection.lengthSquared() > 0) {
             Vector3f deltaRight = sceneCamera.getRight().mul(tpf * moveSpeed * moveDirection.x());

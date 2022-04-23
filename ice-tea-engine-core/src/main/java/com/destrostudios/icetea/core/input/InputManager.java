@@ -69,8 +69,8 @@ public class InputManager extends LifecycleObject {
     }
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         // Keys
         for (KeyEvent keyEvent : pendingKeyEvents) {
             for (KeyListener keyListener : keyListeners.toArray(new KeyListener[0])) {

@@ -20,10 +20,10 @@ public class Filter extends LifecycleObject {
     private FilterRenderJob filterRenderJob;
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         updateUniformData();
-        uniformData.update(application, imageIndex, tpf);
+        uniformData.update(application, tpf);
     }
 
     protected void updateUniformData() {

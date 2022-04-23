@@ -390,9 +390,9 @@ public abstract class Application {
             int imageIndex = swapChain.acquireNextImageIndex();
             if (imageIndex != -1) {
                 float tpf = calculateNextTpf();
-                inputManager.update(this, 0, tpf);
-                update(imageIndex, tpf);
-                updateRenderDependencies(imageIndex, tpf);
+                inputManager.update(this, tpf);
+                update(tpf);
+                updateRenderDependencies(tpf);
                 swapChain.drawFrame(imageIndex);
             }
         }
@@ -407,12 +407,12 @@ public abstract class Application {
         return tpf;
     }
 
-    protected void update(int imageIndex, float tpf) {
+    protected void update(float tpf) {
         if (!isInitialized) {
             init();
             isInitialized = true;
         }
-        systems.forEach(system -> system.update(this, imageIndex, tpf));
+        systems.forEach(system -> system.update(this, tpf));
     }
 
     protected void init() {
@@ -420,23 +420,23 @@ public abstract class Application {
     }
 
     public void preloadRenderDependencies() {
-        updateRenderDependencies(0, 0);
+        updateRenderDependencies(0);
     }
 
-    private void updateRenderDependencies(int imageIndex, float tpf) {
-        shaderManager.update(this, imageIndex, tpf);
-        swapChain.update(this, imageIndex, tpf);
-        sceneCamera.update(this, imageIndex, tpf);
-        guiCamera.update(this, imageIndex, tpf);
+    private void updateRenderDependencies(float tpf) {
+        shaderManager.update(this, tpf);
+        swapChain.update(this, tpf);
+        sceneCamera.update(this, tpf);
+        guiCamera.update(this, tpf);
         if (light != null) {
-            light.update(this, imageIndex, tpf);
+            light.update(this, tpf);
             if (light.isModified()) {
                 swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
                 recreateRenderJobs();
                 light.setModified(false);
             }
         }
-        rootNode.update(this, imageIndex, tpf);
+        rootNode.update(this, tpf);
         commandBuffersOutdated |= rootNode.isCommandBufferOutdated();
         if (commandBuffersOutdated) {
             swapChain.recordCommandBuffers();

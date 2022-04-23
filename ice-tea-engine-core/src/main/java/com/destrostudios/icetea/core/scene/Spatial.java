@@ -68,11 +68,11 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     private LinkedList<VertexPositionModifier> tmpVertexPositionModifiers = new LinkedList<>();
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         for (Control control : controls) {
             control.setSpatial(this);
-            control.update(application, imageIndex, tpf);
+            control.update(application, tpf);
         }
         localTransform.updateMatrixIfNecessary();
         updateWorldTransform();

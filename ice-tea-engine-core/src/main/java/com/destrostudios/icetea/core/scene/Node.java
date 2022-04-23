@@ -31,10 +31,10 @@ public class Node extends Spatial {
     private boolean childrenModified;
 
     @Override
-    public void update(int imageIndex, float tpf) {
-        super.update(imageIndex, tpf);
+    public void update(float tpf) {
+        super.update(tpf);
         for (Spatial child : children) {
-            child.update(application, imageIndex, tpf);
+            child.update(application, tpf);
             commandBufferOutdated |= child.isCommandBufferOutdated();
         }
         updateWorldBounds();

@@ -36,13 +36,13 @@ public class H0kComputeJob extends ComputeJob {
         h0kTexture = createTargetTexture();
         h0minuskTexture = createTargetTexture();
         noiseTexture1 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_0.jpg");
-        noiseTexture1.update(application, 0, 0);
+        noiseTexture1.update(application, 0);
         noiseTexture2 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_1.jpg");
-        noiseTexture2.update(application, 0, 0);
+        noiseTexture2.update(application, 0);
         noiseTexture3 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_2.jpg");
-        noiseTexture3.update(application, 0, 0);
+        noiseTexture3.update(application, 0);
         noiseTexture4 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_3.jpg");
-        noiseTexture4.update(application, 0, 0);
+        noiseTexture4.update(application, 0);
         initUniformData();
         super.init();
     }
@@ -99,7 +99,7 @@ public class H0kComputeJob extends ComputeJob {
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.update(application, 0, 0);
+            texture.update(application, 0);
             return texture;
         }
     }
@@ -112,7 +112,7 @@ public class H0kComputeJob extends ComputeJob {
         uniformData.setFloat("windspeed", waterConfig.getWindSpeed());
         uniformData.setVector2f("w", waterConfig.getWindDirection());
         uniformData.setFloat("capillarSupressFactor", waterConfig.getCapillarSuppressFactor());
-        uniformData.update(application, 0, 0);
+        uniformData.update(application, 0);
     }
 
     @Override

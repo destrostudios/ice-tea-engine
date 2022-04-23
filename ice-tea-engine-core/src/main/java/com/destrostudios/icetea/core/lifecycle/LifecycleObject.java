@@ -7,19 +7,19 @@ public class LifecycleObject {
 
     protected Application application;
 
-    public final void update(Application application, int imageIndex, float tpf) {
+    public final void update(Application application, float tpf) {
         if (this.application == null) {
             this.application = application;
             executeProfiled(this::init, "init");
         }
-        executeProfiled(() -> update(imageIndex, tpf), "update");
+        executeProfiled(() -> update(tpf), "update");
     }
 
     protected void init() {
 
     }
 
-    protected void update(int imageIndex, float tpf) {
+    protected void update(float tpf) {
 
     }
 
