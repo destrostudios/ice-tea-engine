@@ -529,13 +529,11 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                 String textureFilePath = keyDirectory + baseColorTextureModel.getImageModel().getUri();
                 Texture texture = assetManager.loadTexture(textureFilePath);
                 material.setTexture("diffuseMap", texture);
-            } else {
-                // TODO: For now, only color OR texture is supported
-                Object baseColorFactorValue = materialModel.getValues().get("baseColorFactor");
-                if (baseColorFactorValue != null) {
-                    float[] baseColorFactor = (float[]) baseColorFactorValue;
-                    material.getParameters().setVector4f("color", new Vector4f(baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]));
-                }
+            }
+            Object baseColorFactorValue = materialModel.getValues().get("baseColorFactor");
+            if (baseColorFactorValue != null) {
+                float[] baseColorFactor = (float[]) baseColorFactorValue;
+                material.getParameters().setVector4f("color", new Vector4f(baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]));
             }
             return material;
         });

@@ -224,7 +224,7 @@ public class TestApplication extends Application {
         materialTrees.setFragmentShader(fragShaderDefault);
         Texture textureTree = assetManager.loadTexture("textures/trees.jpg");
         materialTrees.setTexture("diffuseMap", textureTree);
-        materialTrees.getParameters().setVector4f("mixColor", new Vector4f(0, 0, 1, 1));
+        materialTrees.getParameters().setVector4f("color", new Vector4f(0, 0, 1, 1));
 
         Geometry geometryTrees = new Geometry();
         geometryTrees.setMesh(meshTrees);
@@ -249,7 +249,7 @@ public class TestApplication extends Application {
         materialDennis.setFragmentShader(fragShaderDefault);
         Texture textureDennis = assetManager.loadTexture("textures/dennis.jpg");
         materialDennis.setTexture("diffuseMap", textureDennis);
-        materialDennis.getParameters().setVector4f("mixColor", new Vector4f(1, 1, 0, 1));
+        materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
         Geometry geometryDennis = new Geometry();
         geometryDennis.setMesh(meshDennis);
@@ -267,7 +267,6 @@ public class TestApplication extends Application {
         nodeDuck = (Node) assetManager.loadModel("models/duck/Duck.gltf");
         nodeDuck.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
         nodeDuck.scale(new Vector3f(0.25f, 0.25f, 0.25f));
-        nodeDuck.forEachGeometry(geometry -> geometry.getMaterial().getParameters().setVector4f("mixColor", new Vector4f(1, 0, 0, 1)));
         nodeDuck.setShadowMode(ShadowMode.CAST);
 
         Node nodeDuckWrapper = new Node();
@@ -330,7 +329,7 @@ public class TestApplication extends Application {
         materialKnot.setVertexShader(vertexShaderDefault);
         materialKnot.setFragmentShader(fragShaderDefault);
         materialKnot.setTexture("diffuseMap", textureChalet);
-        materialKnot.getParameters().setVector4f("mixColor", new Vector4f(0, 1, 0, 1));
+        materialKnot.getParameters().setVector4f("color", new Vector4f(0.33f, 1.33f, 0.33f, 1));
 
         Geometry geometryKnot = new Geometry();
         geometryKnot.setMesh(meshKnot);
@@ -353,7 +352,7 @@ public class TestApplication extends Application {
         materialBounds.setFragmentShader(fragShaderDefault);
         materialBounds.setCullMode(VK_CULL_MODE_NONE);
         materialBounds.setFillMode(VK_POLYGON_MODE_LINE);
-        materialBounds.getParameters().setVector4f("mixColor", new Vector4f(1, 0, 0, 1));
+        materialBounds.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
 
         geometryBounds = new Geometry();
         geometryBounds.setMesh(meshBox);
