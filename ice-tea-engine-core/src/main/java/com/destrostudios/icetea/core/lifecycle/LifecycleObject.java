@@ -46,7 +46,7 @@ public class LifecycleObject {
             tmpApplication = application;
         }
         if ((tmpApplication != null) && tmpApplication.getConfig().isEnableProfiler()) {
-            Profiler profiler = application.getProfiler();
+            Profiler profiler = tmpApplication.getProfiler();
             profiler.addDuration(getClass().getName() + "." + method, duration);
             profiler.addDuration(getClass().getName() + "#" + hashCode() + "." + method, duration);
         }

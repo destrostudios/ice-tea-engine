@@ -38,9 +38,4 @@ public class ShadowMapGeometryRenderContext extends EssentialGeometryRenderConte
     public ShadowMapRenderPipeline getRenderPipeline() {
         return shadowMapRenderPipeline;
     }
-
-    @Override
-    public long getDescriptorSet(int commandBufferIndex) {
-        return descriptorSets.get(commandBufferIndex);
-    }
 }

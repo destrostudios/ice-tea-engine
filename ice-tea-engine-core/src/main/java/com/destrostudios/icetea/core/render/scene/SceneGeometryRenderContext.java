@@ -68,9 +68,4 @@ public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<S
     public SceneRenderPipeline getRenderPipeline() {
         return sceneRenderPipeline;
     }
-
-    @Override
-    public long getDescriptorSet(int commandBufferIndex) {
-        return descriptorSets.get(commandBufferIndex);
-    }
 }

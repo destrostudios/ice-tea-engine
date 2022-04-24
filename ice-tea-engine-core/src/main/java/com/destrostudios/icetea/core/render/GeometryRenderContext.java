@@ -43,7 +43,9 @@ public abstract class GeometryRenderContext<RJ extends RenderJob<?>> {
 
     public abstract RenderPipeline<RJ> getRenderPipeline();
 
-    public abstract long getDescriptorSet(int commandBufferIndex);
+    public long getDescriptorSet(int commandBufferIndex) {
+        return descriptorSets.get(commandBufferIndex);
+    }
 
     public void cleanup() {
         cleanupDescriptorDependencies();
