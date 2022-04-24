@@ -38,7 +38,7 @@ public class MaterialDescriptorSet {
             int descriptorIndex = 0;
             for (MaterialDescriptor descriptor : descriptors) {
                 VkDescriptorPoolSize descriptorsPoolSize = poolSizes.get(descriptorIndex);
-                descriptorsPoolSize.descriptorCount(descriptorSetsCount);
+                descriptorsPoolSize.descriptorCount(1);
                 descriptor.initPoolSize(descriptorsPoolSize, setLayout.getDescriptorLayout(descriptorIndex));
                 descriptorIndex++;
             }
