@@ -5,11 +5,10 @@ import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.material.Material;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorWithLayout;
+import com.destrostudios.icetea.core.resource.descriptor.GeometryTransformDescriptor;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.render.GeometryRenderContext;
-import com.destrostudios.icetea.core.data.UniformData;
-import com.destrostudios.icetea.core.render.RenderJob;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -20,62 +19,30 @@ import java.util.function.Predicate;
 public class Geometry extends Spatial {
 
     public Geometry() {
-        transformUniformData = new UniformData();
+        transformUniformBuffer = new UniformDataBuffer();
+        transformUniformBuffer.setDescriptor("default", new GeometryTransformDescriptor());
     }
 
     public Geometry(Geometry geometry, CloneContext context) {
         super(geometry, context);
         setMesh(context.isCloneMeshes() ? context.cloneByReference(geometry.mesh) : geometry.mesh);
         setMaterial(context.isCloneMaterials() ? context.cloneByReference(geometry.material) : geometry.material);
-        transformUniformData = geometry.transformUniformData.clone(context);
+        transformUniformBuffer = geometry.transformUniformBuffer.clone(context);
     }
     @Getter
     protected Mesh mesh;
     @Getter
     protected Material material;
     @Getter
-    private UniformData transformUniformData;
-    @Getter
-    private HashMap<RenderJob<?>, GeometryRenderContext<?>> renderContexts = new HashMap<>();
+    private UniformDataBuffer transformUniformBuffer;
 
     @Override
     public void update(float tpf) {
         super.update(tpf);
         updateWorldBounds();
         mesh.update(application, tpf);
-        if (mesh.isWereBuffersOutdated()) {
-            commandBufferOutdated = true;
-        }
         material.update(application, tpf);
-        if (material.isCommandBufferOutdated()) {
-            commandBufferOutdated = true;
-        }
-        Set<GeometryRenderContext<?>> outdatedRenderContexts = new HashSet<>();
-        transformUniformData.update(application, tpf);
-        if (transformUniformData.isWasBufferRecreated()) {
-            outdatedRenderContexts.addAll(renderContexts.values());
-        }
-        application.getSwapChain().getRenderJobManager().forEachRenderJob(renderJob -> {
-            GeometryRenderContext renderContext = renderContexts.get(renderJob);
-            if (renderJob.isRendering(this)) {
-                if (renderContext == null) {
-                    renderContext = renderJob.createGeometryRenderContext();
-                    renderContext.init(application, renderJob, this);
-                    renderContexts.put(renderJob, renderContext);
-                    outdatedRenderContexts.add(renderContext);
-                }
-            } else if (renderContext != null) {
-                renderContext.cleanup();
-                renderContexts.remove(renderJob);
-                commandBufferOutdated = true;
-            }
-        });
-        if (outdatedRenderContexts.size() > 0) {
-            for (GeometryRenderContext<?> renderContext : outdatedRenderContexts) {
-                renderContext.recreateDescriptorDependencies();
-            }
-            commandBufferOutdated = true;
-        }
+        application.getSwapChain().setResourceActive(transformUniformBuffer);
     }
 
     @Override
@@ -95,7 +62,7 @@ public class Geometry extends Spatial {
     }
 
     private void updateWorldTransformUniform() {
-        transformUniformData.setMatrix4f("model", worldTransform.getMatrix());
+        transformUniformBuffer.getData().setMatrix4f("model", worldTransform.getMatrix());
     }
 
     public void setMesh(Mesh mesh) {
@@ -110,12 +77,8 @@ public class Geometry extends Spatial {
         material.increaseUsingGeometriesCount();
     }
 
-    public GeometryRenderContext<?> getRenderContext(RenderJob<?> renderJob) {
-        return renderContexts.get(renderJob);
-    }
-
-    public List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors() {
-        return getAdditionalMaterialDescriptors(this);
+    public void addAdditionalResourceDescriptors(Map<String, ResourceDescriptor<?>> resourceDescriptors) {
+        super.addAdditionalResourceDescriptors(this, resourceDescriptors);
     }
 
     @Override
@@ -139,17 +102,10 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    protected void onRemoveFromRoot() {
-        super.onRemoveFromRoot();
-        cleanupRenderContexts();
-    }
-
-    @Override
     protected void cleanupInternal() {
-        transformUniformData.cleanup();
+        transformUniformBuffer.cleanup();
         tryUnregisterMesh();
         tryUnregisterMaterial();
-        cleanupRenderContexts();
         super.cleanupInternal();
     }
 
@@ -169,13 +125,6 @@ public class Geometry extends Spatial {
                 material.cleanup();
             }
         }
-    }
-
-    private void cleanupRenderContexts() {
-        for (GeometryRenderContext<?> renderContext : renderContexts.values()) {
-            renderContext.cleanup();
-        }
-        renderContexts.clear();
     }
 
     @Override

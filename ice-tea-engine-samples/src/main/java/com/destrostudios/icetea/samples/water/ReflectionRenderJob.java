@@ -41,8 +41,8 @@ public class ReflectionRenderJob extends SceneRenderJob {
     }
 
     @Override
-    public SceneGeometryRenderContext createGeometryRenderContext() {
-        return new SceneGeometryRenderContext(() -> reflectionCamera, application.getBucketRenderer());
+    public SceneGeometryRenderContext createGeometryRenderContext(Geometry geometry) {
+        return new SceneGeometryRenderContext(geometry, this, () -> reflectionCamera, application.getBucketRenderer());
     }
 
     @Override

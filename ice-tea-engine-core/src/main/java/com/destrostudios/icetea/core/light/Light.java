@@ -1,8 +1,9 @@
 package com.destrostudios.icetea.core.light;
 
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.resource.descriptor.LightDescriptor;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
-import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.scene.Spatial;
 import lombok.Getter;
@@ -20,7 +21,8 @@ public abstract class Light extends LifecycleObject {
         lightColor = new Vector4f(1, 1, 1, 1);
         ambientColor = new Vector4f(0.1f, 0.1f, 0.1f, 1);
         specularColor = new Vector4f(1, 1, 1, 1);
-        uniformData = new UniformData();
+        uniformBuffer = new UniformDataBuffer();
+        uniformBuffer.setDescriptor("default", new LightDescriptor());
     }
     @Getter
     private List<Spatial> affectedSpatials;
@@ -36,7 +38,7 @@ public abstract class Light extends LifecycleObject {
     @Setter
     private Vector4f specularColor;
     @Getter
-    protected UniformData uniformData;
+    protected UniformDataBuffer uniformBuffer;
     @Getter
     @Setter
     private boolean modified;
@@ -44,14 +46,14 @@ public abstract class Light extends LifecycleObject {
     @Override
     public void update(float tpf) {
         super.update(tpf);
-        updateUniformDataFields();
-        uniformData.update(application, tpf);
+        updateUniformBufferFields();
+        application.getSwapChain().setResourceActive(uniformBuffer);
     }
 
-    protected void updateUniformDataFields() {
-        uniformData.setVector4f("lightColor", lightColor);
-        uniformData.setVector4f("ambientColor", ambientColor);
-        uniformData.setVector4f("specularColor", specularColor);
+    protected void updateUniformBufferFields() {
+        uniformBuffer.getData().setVector4f("lightColor", lightColor);
+        uniformBuffer.getData().setVector4f("ambientColor", ambientColor);
+        uniformBuffer.getData().setVector4f("specularColor", specularColor);
     }
 
     public void addAffectedSpatial(Spatial spatial) {
@@ -86,7 +88,7 @@ public abstract class Light extends LifecycleObject {
 
     @Override
     protected void cleanupInternal() {
-        uniformData.cleanup();
+        uniformBuffer.cleanup();
         super.cleanupInternal();
     }
 }

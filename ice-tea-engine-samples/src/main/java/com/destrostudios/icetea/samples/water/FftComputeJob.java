@@ -2,7 +2,10 @@ package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
-import com.destrostudios.icetea.core.data.ByteBufferData;
+import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
+import com.destrostudios.icetea.core.resource.descriptor.ComputeImageDescriptor;
+import com.destrostudios.icetea.core.resource.descriptor.NormalMapDescriptor;
+import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -22,6 +25,22 @@ public class FftComputeJob extends ComputeJob {
         this.n = n;
         this.twiddleFactorsComputeJob = twiddleFactorsComputeJob;
         this.hktComputeJob = hktComputeJob;
+        dxTexture = new Texture();
+        dxTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
+        dxTexture.setDescriptor("default", new SimpleTextureDescriptor());
+        dyTexture = new Texture();
+        dyTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
+        dyTexture.setDescriptor("normalMap", new NormalMapDescriptor());
+        dyTexture.setDescriptor("default", new SimpleTextureDescriptor());
+        dzTexture = new Texture();
+        dzTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
+        dzTexture.setDescriptor("default", new SimpleTextureDescriptor());
+        dxPingPongTexture = new Texture();
+        dxPingPongTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
+        dyPingPongTexture = new Texture();
+        dyPingPongTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
+        dzPingPongTexture = new Texture();
+        dzPingPongTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
     }
     private int n;
     private TwiddleFactorsComputeJob twiddleFactorsComputeJob;
@@ -38,16 +57,27 @@ public class FftComputeJob extends ComputeJob {
 
     @Override
     protected void init() {
-        dxTexture = createTargetTexture();
-        dyTexture = createTargetTexture();
-        dzTexture = createTargetTexture();
-        dxPingPongTexture = createTargetTexture();
-        dyPingPongTexture = createTargetTexture();
-        dzPingPongTexture = createTargetTexture();
+        initTargetTexture(dxTexture);
+        dxTexture.update(application, 0);
+
+        initTargetTexture(dyTexture);
+        dyTexture.update(application, 0);
+
+        initTargetTexture(dzTexture);
+        dzTexture.update(application, 0);
+
+        initTargetTexture(dxPingPongTexture);
+        dxPingPongTexture.update(application, 0);
+
+        initTargetTexture(dyPingPongTexture);
+        dyPingPongTexture.update(application, 0);
+
+        initTargetTexture(dzPingPongTexture);
+        dzPingPongTexture.update(application, 0);
         super.init();
     }
 
-    private Texture createTargetTexture() {
+    private void initTargetTexture(Texture texture) {
         try (MemoryStack stack = stackPush()) {
             int width = n;
             int height = n;
@@ -101,9 +131,8 @@ public class FftComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            Texture texture = new Texture(image, imageMemory, imageView, VK_IMAGE_LAYOUT_GENERAL, imageSampler);
-            texture.update(application, 0);
-            return texture;
+            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
@@ -112,45 +141,45 @@ public class FftComputeJob extends ComputeJob {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
         int stages = (int) MathUtil.log2(n);
-        ByteBufferData[] horizontalPushConstants = new ByteBufferData[stages];
-        ByteBufferData[] verticalPushConstants = new ByteBufferData[stages];
+        ByteDataBuffer[] horizontalPushConstants = new ByteDataBuffer[stages];
+        ByteDataBuffer[] verticalPushConstants = new ByteDataBuffer[stages];
         int pingPongIndex = 0;
         for (int i = 0; i < stages; i++) {
-            horizontalPushConstants[i] = new ByteBufferData();
-            horizontalPushConstants[i].setInt("stage", i);
-            horizontalPushConstants[i].setInt("pingpong", pingPongIndex);
-            horizontalPushConstants[i].setInt("direction", 0);
+            horizontalPushConstants[i] = new ByteDataBuffer();
+            horizontalPushConstants[i].getData().setInt("stage", i);
+            horizontalPushConstants[i].getData().setInt("pingpong", pingPongIndex);
+            horizontalPushConstants[i].getData().setInt("direction", 0);
             horizontalPushConstants[i].update(application, 0);
 
             pingPongIndex++;
             pingPongIndex %= 2;
         }
         for (int i = 0; i < stages; i++) {
-            verticalPushConstants[i] = new ByteBufferData();
-            verticalPushConstants[i].setInt("stage", i);
-            verticalPushConstants[i].setInt("pingpong", pingPongIndex);
-            verticalPushConstants[i].setInt("direction", 1);
+            verticalPushConstants[i] = new ByteDataBuffer();
+            verticalPushConstants[i].getData().setInt("stage", i);
+            verticalPushConstants[i].getData().setInt("pingpong", pingPongIndex);
+            verticalPushConstants[i].getData().setInt("direction", 1);
             verticalPushConstants[i].update(application, 0);
 
             pingPongIndex++;
             pingPongIndex %= 2;
         }
 
-        ByteBufferData inversionPushConstants = new ByteBufferData();
-        inversionPushConstants.setInt("n", n);
-        inversionPushConstants.setInt("pingPongIndex", pingPongIndex);
+        ByteDataBuffer inversionPushConstants = new ByteDataBuffer();
+        inversionPushConstants.getData().setInt("n", n);
+        inversionPushConstants.getData().setInt("pingPongIndex", pingPongIndex);
         inversionPushConstants.update(application, 0);
 
         FftButterflyComputeActionGroup butterflyComputeActionGroup = new FftButterflyComputeActionGroup(n, horizontalPushConstants, verticalPushConstants);
-        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture(), hktComputeJob.getDxCoefficientsTexture(), dxPingPongTexture));
-        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture(), hktComputeJob.getDyCoefficientsTexture(), dyPingPongTexture));
-        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture(), hktComputeJob.getDzCoefficientsTexture(), dzPingPongTexture));
+        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture().getDescriptor("read"), hktComputeJob.getDxCoefficientsTexture().getDescriptor("read"), dxPingPongTexture.getDescriptor("compute")));
+        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture().getDescriptor("read"), hktComputeJob.getDyCoefficientsTexture().getDescriptor("read"), dyPingPongTexture.getDescriptor("compute")));
+        butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture().getDescriptor("read"), hktComputeJob.getDzCoefficientsTexture().getDescriptor("read"), dzPingPongTexture.getDescriptor("compute")));
         computeActionGroups.add(butterflyComputeActionGroup);
 
         FftInversionComputeActionGroup inverseComputeActionGroup = new FftInversionComputeActionGroup(n, inversionPushConstants);
-        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dxTexture, hktComputeJob.getDxCoefficientsTexture(), dxPingPongTexture));
-        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dyTexture, hktComputeJob.getDyCoefficientsTexture(), dyPingPongTexture));
-        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dzTexture, hktComputeJob.getDzCoefficientsTexture(), dzPingPongTexture));
+        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dxTexture.getDescriptor("compute"), hktComputeJob.getDxCoefficientsTexture().getDescriptor("read"), dxPingPongTexture.getDescriptor("compute")));
+        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dyTexture.getDescriptor("compute"), hktComputeJob.getDyCoefficientsTexture().getDescriptor("read"), dyPingPongTexture.getDescriptor("compute")));
+        inverseComputeActionGroup.addComputeAction(new FftInversionComputeAction(dzTexture.getDescriptor("compute"), hktComputeJob.getDzCoefficientsTexture().getDescriptor("read"), dzPingPongTexture.getDescriptor("compute")));
         computeActionGroups.add(inverseComputeActionGroup);
 
         return computeActionGroups;

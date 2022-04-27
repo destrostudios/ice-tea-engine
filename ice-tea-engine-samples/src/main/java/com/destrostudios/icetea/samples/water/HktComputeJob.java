@@ -2,7 +2,9 @@ package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
-import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
+import com.destrostudios.icetea.core.resource.descriptor.ComputeImageDescriptor;
+import com.destrostudios.icetea.core.resource.descriptor.UniformDescriptor;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +23,17 @@ public class HktComputeJob extends ComputeJob {
     public HktComputeJob(WaterConfig waterConfig, H0kComputeJob h0kComputeJob) {
         this.waterConfig = waterConfig;
         this.h0kComputeJob = h0kComputeJob;
+        dxCoefficientsTexture = new Texture();
+        dxCoefficientsTexture.setDescriptor("write", new ComputeImageDescriptor("rgba32f", true));
+        dxCoefficientsTexture.setDescriptor("read", new ComputeImageDescriptor("rgba32f", false));
+
+        dyCoefficientsTexture = new Texture();
+        dyCoefficientsTexture.setDescriptor("write", new ComputeImageDescriptor("rgba32f", true));
+        dyCoefficientsTexture.setDescriptor("read", new ComputeImageDescriptor("rgba32f", false));
+
+        dzCoefficientsTexture = new Texture();
+        dzCoefficientsTexture.setDescriptor("write", new ComputeImageDescriptor("rgba32f", true));
+        dzCoefficientsTexture.setDescriptor("read", new ComputeImageDescriptor("rgba32f", false));
     }
     private WaterConfig waterConfig;
     private H0kComputeJob h0kComputeJob;
@@ -30,21 +43,26 @@ public class HktComputeJob extends ComputeJob {
     private Texture dyCoefficientsTexture;
     @Getter
     private Texture dzCoefficientsTexture;
-    @Getter
-    private UniformData uniformData;
+    private UniformDataBuffer uniformBuffer;
     @Setter
     private float time;
 
     @Override
     protected void init() {
-        dyCoefficientsTexture = createTargetTexture();
-        dxCoefficientsTexture = createTargetTexture();
-        dzCoefficientsTexture = createTargetTexture();
-        initUniformData();
+        initTargetTexture(dxCoefficientsTexture);
+        dxCoefficientsTexture.update(application, 0);
+
+        initTargetTexture(dyCoefficientsTexture);
+        dyCoefficientsTexture.update(application, 0);
+
+        initTargetTexture(dzCoefficientsTexture);
+        dzCoefficientsTexture.update(application, 0);
+
+        initUniformBuffer();
         super.init();
     }
 
-    private Texture createTargetTexture() {
+    private void initTargetTexture(Texture texture) {
         try (MemoryStack stack = stackPush()) {
             int width = waterConfig.getN();
             int height = waterConfig.getN();
@@ -95,18 +113,17 @@ public class HktComputeJob extends ComputeJob {
             long imageSampler = pImageSampler.get(0);
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.update(application, 0);
-            return texture;
+            texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
-    private void initUniformData() {
-        uniformData = new UniformData();
-        uniformData.setInt("N", waterConfig.getN());
-        uniformData.setInt("L", waterConfig.getL());
-        uniformData.setFloat("t", 0f);
-        uniformData.update(application, 0);
+    private void initUniformBuffer() {
+        uniformBuffer = new UniformDataBuffer();
+        uniformBuffer.getData().setInt("N", waterConfig.getN());
+        uniformBuffer.getData().setInt("L", waterConfig.getL());
+        uniformBuffer.getData().setFloat("t", 0f);
+        uniformBuffer.setDescriptor("default", new UniformDescriptor(VK_SHADER_STAGE_COMPUTE_BIT));
+        uniformBuffer.update(application, 0);
     }
 
     @Override
@@ -114,7 +131,7 @@ public class HktComputeJob extends ComputeJob {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
         HktComputeActionGroup hktComputeActionGroup = new HktComputeActionGroup(waterConfig.getN());
-        hktComputeActionGroup.addComputeAction(new HktComputeAction(dyCoefficientsTexture, dxCoefficientsTexture, dzCoefficientsTexture, h0kComputeJob.getH0kTexture(), h0kComputeJob.getH0minuskTexture(), uniformData));
+        hktComputeActionGroup.addComputeAction(new HktComputeAction(dxCoefficientsTexture.getDescriptor("write"), dyCoefficientsTexture.getDescriptor("write"), dzCoefficientsTexture.getDescriptor("write"), h0kComputeJob.getH0kTexture().getDescriptor("read"), h0kComputeJob.getH0minuskTexture().getDescriptor("read"), uniformBuffer.getDescriptor("default")));
         computeActionGroups.add(hktComputeActionGroup);
 
         return computeActionGroups;
@@ -128,13 +145,13 @@ public class HktComputeJob extends ComputeJob {
     @Override
     public void update(float tpf) {
         super.update(tpf);
-        uniformData.setFloat("t", time);
-        uniformData.update(application, tpf);
+        uniformBuffer.getData().setFloat("t", time);
+        uniformBuffer.update(application, 0);
     }
 
     @Override
     protected void cleanupInternal() {
-        uniformData.cleanup();
+        uniformBuffer.cleanup();
         dzCoefficientsTexture.cleanup();
         dyCoefficientsTexture.cleanup();
         dxCoefficientsTexture.cleanup();

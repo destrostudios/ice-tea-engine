@@ -1,8 +1,7 @@
 package com.destrostudios.icetea.core.render.scene;
 
-import com.destrostudios.icetea.core.*;
 import com.destrostudios.icetea.core.material.Material;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
+import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
@@ -19,8 +18,8 @@ import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
 public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 
-    public SceneRenderPipeline(Application application, SceneRenderJob renderJob, Geometry geometry, SceneGeometryRenderContext sceneGeometryRenderContext) {
-        super(application, renderJob);
+    public SceneRenderPipeline(SceneRenderJob renderJob, Geometry geometry, SceneGeometryRenderContext sceneGeometryRenderContext) {
+        super(renderJob);
         this.geometry = geometry;
         this.sceneGeometryRenderContext = sceneGeometryRenderContext;
     }
@@ -28,13 +27,14 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
     private SceneGeometryRenderContext sceneGeometryRenderContext;
 
     @Override
-    public void init() {
+    protected void init() {
+        super.init();
         try (MemoryStack stack = stackPush()) {
             Mesh mesh = geometry.getMesh();
             Material material = geometry.getMaterial();
 
-            MaterialDescriptorSet materialDescriptorSet = sceneGeometryRenderContext.getMaterialDescriptorSet();
-            String materialDescriptorSetShaderDeclaration = materialDescriptorSet.getShaderDeclaration();
+            ResourceDescriptorSet resourceDescriptorSet = sceneGeometryRenderContext.getResourceDescriptorSet();
+            String resourceDescriptorSetShaderDeclaration = resourceDescriptorSet.getShaderDeclaration();
 
             int shaderStagesCount = 2;
             if (material.getTessellationControlShader() != null) {
@@ -52,33 +52,33 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             int shaderStageIndex = 0;
             LinkedList<Long> shaderModules = new LinkedList<>();
 
-            long vertShaderModule = createShaderModule_Vertex(material.getVertexShader(), materialDescriptorSetShaderDeclaration, mesh);
+            long vertShaderModule = createShaderModule_Vertex(material.getVertexShader(), resourceDescriptorSetShaderDeclaration, mesh);
             createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
             shaderModules.add(vertShaderModule);
             shaderStageIndex++;
 
             if (material.getTessellationControlShader() != null) {
-                long tessellationControlShaderModule = createShaderModule(material.getTessellationControlShader(), ShaderType.TESSELLATION_CONTROL_SHADER, materialDescriptorSetShaderDeclaration);
+                long tessellationControlShaderModule = createShaderModule(material.getTessellationControlShader(), ShaderType.TESSELLATION_CONTROL_SHADER, resourceDescriptorSetShaderDeclaration);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tessellationControlShaderModule, stack);
                 shaderModules.add(tessellationControlShaderModule);
                 shaderStageIndex++;
             }
 
             if (material.getTessellationEvaluationShader() != null) {
-                long tessellationEvaluationShaderModule = createShaderModule(material.getTessellationEvaluationShader(), ShaderType.TESSELLATION_EVALUATION_SHADER, materialDescriptorSetShaderDeclaration);
+                long tessellationEvaluationShaderModule = createShaderModule(material.getTessellationEvaluationShader(), ShaderType.TESSELLATION_EVALUATION_SHADER, resourceDescriptorSetShaderDeclaration);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tessellationEvaluationShaderModule, stack);
                 shaderModules.add(tessellationEvaluationShaderModule);
                 shaderStageIndex++;
             }
 
             if (material.getGeometryShader() != null) {
-                long geometryShaderModule = createShaderModule(material.getGeometryShader(), ShaderType.GEOMETRY_SHADER, materialDescriptorSetShaderDeclaration);
+                long geometryShaderModule = createShaderModule(material.getGeometryShader(), ShaderType.GEOMETRY_SHADER, resourceDescriptorSetShaderDeclaration);
                 createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_GEOMETRY_BIT, geometryShaderModule, stack);
                 shaderModules.add(geometryShaderModule);
                 shaderStageIndex++;
             }
 
-            long fragShaderModule = createShaderModule(material.getFragmentShader(), ShaderType.FRAGMENT_SHADER, materialDescriptorSetShaderDeclaration);
+            long fragShaderModule = createShaderModule(material.getFragmentShader(), ShaderType.FRAGMENT_SHADER, resourceDescriptorSetShaderDeclaration);
             createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule, stack);
             shaderModules.add(fragShaderModule);
             shaderStageIndex++;
@@ -184,7 +184,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-            pipelineLayoutInfo.pSetLayouts(stack.longs(materialDescriptorSet.getSetLayout().getDescriptorSetLayout()));
+            pipelineLayoutInfo.pSetLayouts(resourceDescriptorSet.getDescriptorSetLayouts(stack));
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
             int result = vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout);

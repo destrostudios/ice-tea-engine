@@ -69,12 +69,15 @@ public class WaterControl extends Control {
         refractionRenderJob = new RefractionRenderJob(geometry);
         queuePreScene.add(reflectionRenderJob);
         queuePreScene.add(refractionRenderJob);
-        application.recreateRenderJobs();
+        application.getSwapChain().cleanupRenderJobs();
 
-        geometry.setMaterial(createMaterial(reflectionRenderJob, refractionRenderJob));
+        // The material immediately needs the textures (before SwapChain.update)
+        reflectionRenderJob.update(application, 0);
+        refractionRenderJob.update(application, 0);
+        geometry.setMaterial(createMaterial());
     }
 
-    private Material createMaterial(ReflectionRenderJob currentReflectionRenderJob, RefractionRenderJob currentRefractionRenderJob) {
+    private Material createMaterial() {
         Material material = new Material();
         material.setVertexShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.vert"));
         material.setFragmentShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.frag"));
@@ -106,8 +109,8 @@ public class WaterControl extends Control {
         material.getParameters().setFloat("capillarDownsampling", waterConfig.getCapillarDownsampling());
         material.setTexture("dudvMap", application.getAssetManager().loadTexture(waterConfig.getDudvMapFilePath()));
         material.getParameters().setFloat("dudvDownsampling", waterConfig.getDudvDownsampling());
-        material.setTexture("reflectionMap", currentReflectionRenderJob::getResolvedColorTexture);
-        material.setTexture("refractionMap", currentRefractionRenderJob::getResolvedColorTexture);
+        material.setTexture("reflectionMap", reflectionRenderJob.getResolvedColorTexture());
+        material.setTexture("refractionMap", refractionRenderJob.getResolvedColorTexture());
         material.getParameters().setFloat("kReflection", waterConfig.getKReflection());
         material.getParameters().setFloat("kRefraction", waterConfig.getKRefraction());
         material.getParameters().setFloat("reflectionBlendMinFactor", waterConfig.getReflectionBlendMinFactor());
@@ -149,7 +152,7 @@ public class WaterControl extends Control {
         LinkedList<RenderJob<?>> queuePreScene = application.getSwapChain().getRenderJobManager().getQueuePreScene();
         queuePreScene.remove(reflectionRenderJob);
         queuePreScene.remove(refractionRenderJob);
-        application.recreateRenderJobs();
+        application.getSwapChain().cleanupRenderJobs();
     }
 
     @Override

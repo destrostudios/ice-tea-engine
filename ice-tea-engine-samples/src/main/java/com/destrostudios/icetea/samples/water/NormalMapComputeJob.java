@@ -2,7 +2,9 @@ package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
-import com.destrostudios.icetea.core.data.ByteBufferData;
+import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
+import com.destrostudios.icetea.core.resource.descriptor.ComputeImageDescriptor;
+import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -21,6 +23,9 @@ public class NormalMapComputeJob extends ComputeJob {
     public NormalMapComputeJob(WaterConfig waterConfig, FftComputeJob fftComputeJob) {
         this.waterConfig = waterConfig;
         this.fftComputeJob = fftComputeJob;
+        normalMapTexture = new Texture();
+        normalMapTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", true));
+        normalMapTexture.setDescriptor("default", new SimpleTextureDescriptor());
     }
     private WaterConfig waterConfig;
     private FftComputeJob fftComputeJob;
@@ -29,11 +34,12 @@ public class NormalMapComputeJob extends ComputeJob {
 
     @Override
     protected void init() {
-        normalMapTexture = createNormalMapTexture();
+        initNormalMapTexture();
+        normalMapTexture.update(application, 0);
         super.init();
     }
 
-    private Texture createNormalMapTexture() {
+    private void initNormalMapTexture() {
         try (MemoryStack stack = stackPush()) {
             int width = waterConfig.getN();
             int height = waterConfig.getN();
@@ -90,9 +96,7 @@ public class NormalMapComputeJob extends ComputeJob {
             long imageSampler = pImageSampler.get(0);
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.update(application, 0);
-            return texture;
+            normalMapTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
@@ -100,13 +104,13 @@ public class NormalMapComputeJob extends ComputeJob {
     protected List<ComputeActionGroup> createComputeActionGroups() {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
-        ByteBufferData pushConstants = new ByteBufferData();
-        pushConstants.setInt("n", waterConfig.getN());
-        pushConstants.setFloat("strength", waterConfig.getNormalStrength());
+        ByteDataBuffer pushConstants = new ByteDataBuffer();
+        pushConstants.getData().setInt("n", waterConfig.getN());
+        pushConstants.getData().setFloat("strength", waterConfig.getNormalStrength());
         pushConstants.update(application, 0);
 
         NormalMapComputeActionGroup normalMapComputeActionGroup = new NormalMapComputeActionGroup(waterConfig.getN(), pushConstants);
-        normalMapComputeActionGroup.addComputeAction(new NormalMapComputeAction(normalMapTexture, fftComputeJob.getDyTexture()));
+        normalMapComputeActionGroup.addComputeAction(new NormalMapComputeAction(normalMapTexture.getDescriptor("compute"), fftComputeJob.getDyTexture().getDescriptor("normalMap")));
         computeActionGroups.add(normalMapComputeActionGroup);
 
         return computeActionGroups;

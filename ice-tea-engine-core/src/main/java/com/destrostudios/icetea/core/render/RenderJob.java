@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.render;
 
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
@@ -9,19 +10,22 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends LifecycleObject {
+public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends LifecycleObject {
 
     @Getter
     protected VkExtent2D extent;
     @Getter
     protected long renderPass;
+    private HashMap<Geometry, GRC> renderContexts = new HashMap<>();
     @Getter
     private Texture resolvedColorTexture;
     protected List<Long> frameBuffers;
@@ -34,7 +38,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
 
     protected abstract VkExtent2D calculateExtent();
 
-    protected Texture createMultisampledColorTexture() {
+    protected void initMultisampledColorTexture(Texture texture) {
         try (MemoryStack stack = stackPush()) {
             int imageFormat = application.getSwapChain().getImageFormat();
 
@@ -60,7 +64,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
 
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-            return new Texture(image, imageMemory, imageView, finalLayout);
+            texture.set(image, imageMemory, imageView, finalLayout);
         }
     }
 
@@ -69,13 +73,17 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
             return application.getSwapChain().getImageViews().get(frameBufferIndex);
         } else {
             if (resolvedColorTexture == null) {
-                resolvedColorTexture = createResolvedColorTexture();
+                resolvedColorTexture = new Texture();
+                resolvedColorTexture.setDescriptor("default", new SimpleTextureDescriptor());
+            }
+            if (resolvedColorTexture.getImage() == null) {
+                initResolvedColorTexture(resolvedColorTexture);
             }
             return resolvedColorTexture.getImageView();
         }
     }
 
-    private Texture createResolvedColorTexture() {
+    private void initResolvedColorTexture(Texture texture) {
         try (MemoryStack stack = stackPush()) {
             int imageFormat = application.getSwapChain().getImageFormat();
 
@@ -122,7 +130,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
             }
             long imageSampler = pImageSampler.get(0);
 
-            return new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
+            texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
@@ -158,10 +166,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
         return (this == application.getSwapChain().getRenderJobManager().getPresentingRenderJob());
     }
 
-    public abstract boolean isRendering(Geometry geometry);
-
-    public abstract GRC createGeometryRenderContext();
-
     public VkRect2D getRenderArea(MemoryStack stack) {
         VkRect2D renderArea = VkRect2D.callocStack(stack);
         renderArea.offset(VkOffset2D.callocStack(stack).set(0, 0));
@@ -177,26 +181,57 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends Li
     public void update(float tpf) {
         super.update(tpf);
         if (resolvedColorTexture != null) {
-            resolvedColorTexture.update(application, tpf);
+            application.getSwapChain().setResourceActive(resolvedColorTexture);
+        }
+        synchronizeRenderContextsWithRootNode();
+    }
+
+    private void synchronizeRenderContextsWithRootNode() {
+        for (Map.Entry<Geometry, GRC> entry : renderContexts.entrySet().toArray(new Map.Entry[0])) {
+            Geometry geometry = entry.getKey();
+            if ((!geometry.hasParent(application.getRootNode())) || (!isRendering(geometry))) {
+                entry.getValue().cleanup();
+                renderContexts.remove(geometry);
+            }
+        }
+        application.getRootNode().forEachGeometry(geometry -> {
+            GRC renderContext = getRenderContext(geometry);
+            if ((renderContext == null) && isRendering(geometry)) {
+                renderContext = createGeometryRenderContext(geometry);
+                renderContexts.put(geometry, renderContext);
+            }
+        });
+    }
+
+    public void updateRenderContexts(float tpf) {
+        for (GRC renderContext : renderContexts.values()) {
+            renderContext.update(application, tpf);
         }
     }
+
+    protected abstract boolean isRendering(Geometry geometry);
+
+    protected abstract GRC createGeometryRenderContext(Geometry geometry);
 
     @Override
     protected void cleanupInternal() {
         if (isInitialized()) {
             application.getRootNode().forEachGeometry(geometry -> {
-                GeometryRenderContext<?> renderContext = geometry.getRenderContext(this);
+                GRC renderContext = getRenderContext(geometry);
                 if (renderContext != null) {
-                    renderContext.cleanupDescriptorDependencies();
+                    renderContext.cleanup();
                 }
             });
             if (resolvedColorTexture != null) {
                 resolvedColorTexture.cleanup();
-                resolvedColorTexture = null;
             }
             frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
             vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
         }
         super.cleanupInternal();
+    }
+
+    protected GRC getRenderContext(Geometry geometry) {
+        return renderContexts.get(geometry);
     }
 }

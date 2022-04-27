@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.texture;
 
-import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import org.lwjgl.PointerBuffer;
@@ -17,6 +17,7 @@ public class BufferedTexture extends Texture {
 
     public BufferedTexture(TextureDataReader dataReader) {
         this.dataReader = dataReader;
+        setDescriptor("default", new SimpleTextureDescriptor());
     }
     private TextureDataReader dataReader;
     private int mipLevels;
@@ -28,6 +29,7 @@ public class BufferedTexture extends Texture {
         initImage(format);
         initImageView(format);
         initImageSampler();
+        onSet();
     }
 
     private void initImage(int format) {

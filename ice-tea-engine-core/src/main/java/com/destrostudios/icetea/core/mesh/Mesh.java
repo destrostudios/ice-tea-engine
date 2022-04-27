@@ -115,6 +115,9 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
         super.update(tpf);
         wereBuffersOutdated = buffersOutdated;
         if (buffersOutdated) {
+            if (vertices.length == 0) {
+                throw new UnsupportedOperationException("Initializing a mesh without vertices would currently crash the application by trying to allocate a buffer with size 0.");
+            }
             recreateVertexBuffer();
             recreateIndexBuffer();
             buffersOutdated = false;

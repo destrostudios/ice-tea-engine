@@ -107,7 +107,6 @@ public abstract class Application {
     private BucketRenderer bucketRenderer;
     @Getter
     private SwapChain swapChain;
-    private boolean commandBuffersOutdated;
     private boolean isInitialized;
     protected float time;
 
@@ -163,6 +162,7 @@ public abstract class Application {
         updateGuiCamera();
         bucketRenderer = new BucketRenderer(this);
         swapChain = new SwapChain();
+        swapChain.update(this, 0);
         LOGGER.debug("Preloading render dependencies...");
         preloadRenderDependencies();
         LOGGER.debug("Preloaded render dependencies.");
@@ -387,12 +387,12 @@ public abstract class Application {
         LOGGER.debug("Started main loop.");
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
+            float tpf = calculateNextTpf();
+            inputManager.update(this, tpf);
+            update(tpf);
+            updateRenderDependencies(tpf);
             int imageIndex = swapChain.acquireNextImageIndex();
             if (imageIndex != -1) {
-                float tpf = calculateNextTpf();
-                inputManager.update(this, tpf);
-                update(tpf);
-                updateRenderDependencies(tpf);
                 swapChain.drawFrame(imageIndex);
             }
         }
@@ -425,28 +425,18 @@ public abstract class Application {
 
     private void updateRenderDependencies(float tpf) {
         shaderManager.update(this, tpf);
-        swapChain.update(this, tpf);
         sceneCamera.update(this, tpf);
         guiCamera.update(this, tpf);
         if (light != null) {
             light.update(this, tpf);
             if (light.isModified()) {
                 swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
-                recreateRenderJobs();
+                swapChain.cleanupRenderJobs();
                 light.setModified(false);
             }
         }
         rootNode.update(this, tpf);
-        commandBuffersOutdated |= rootNode.isCommandBufferOutdated();
-        if (commandBuffersOutdated) {
-            swapChain.recordCommandBuffers();
-            commandBuffersOutdated = false;
-        }
-    }
-
-    public void recreateRenderJobs() {
-        swapChain.recreateRenderJobs();
-        commandBuffersOutdated = true;
+        swapChain.update(this, tpf);
     }
 
     public int findMemoryType(int typeFilter, int properties) {
@@ -468,13 +458,13 @@ public abstract class Application {
     public void addFilter(Filter filter) {
         filters.add(filter);
         swapChain.getRenderJobManager().getQueuePostScene().add(filter.getFilterRenderJob());
-        recreateRenderJobs();
+        swapChain.cleanupRenderJobs();
     }
 
     public void removeFilter(Filter filter) {
         filters.remove(filter);
         swapChain.getRenderJobManager().getQueuePostScene().remove(filter.getFilterRenderJob());
-        recreateRenderJobs();
+        swapChain.cleanupRenderJobs();
     }
 
     public void addSystem(LifecycleObject system) {
@@ -539,7 +529,7 @@ public abstract class Application {
         LOGGER.debug("Cleaned up application.");
     }
 
-    protected void cleanupRenderDependencies() {
+    public void cleanupRenderDependencies() {
         swapChain.cleanup();
         shaderManager.cleanup();
         sceneCamera.cleanup();

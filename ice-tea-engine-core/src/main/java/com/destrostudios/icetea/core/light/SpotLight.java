@@ -19,8 +19,8 @@ public class SpotLight extends Light {
     private Quaternionf rotation;
 
     @Override
-    protected void updateUniformDataFields() {
-        super.updateUniformDataFields();
-        uniformData.setVector3f("translation", translation);
+    protected void updateUniformBufferFields() {
+        super.updateUniformBufferFields();
+        uniformBuffer.getData().setVector3f("translation", translation);
     }
 }

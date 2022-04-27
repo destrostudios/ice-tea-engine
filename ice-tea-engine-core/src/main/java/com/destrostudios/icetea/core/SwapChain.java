@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
-import com.destrostudios.icetea.core.render.GeometryRenderContext;
+import com.destrostudios.icetea.core.resource.Resource;
 import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderJobManager;
@@ -16,10 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwWaitEvents;
@@ -36,6 +33,7 @@ public class SwapChain extends LifecycleObject {
 
     public SwapChain() {
         renderJobManager = new RenderJobManager();
+        activeResources = new HashSet<>();
     }
     private static final int FRAMES_IN_FLIGHT = 2;
     @Getter
@@ -47,7 +45,9 @@ public class SwapChain extends LifecycleObject {
     private int imageFormat;
     @Getter
     private ArrayList<Long> imageViews;
+    private HashSet<Resource> activeResources;
     private ArrayList<VkCommandBuffer> commandBuffers;
+    private boolean commandBuffersOutdated;
     @Getter
     private RenderJobManager renderJobManager;
     private Frame[] inFlightFrames;
@@ -82,7 +82,6 @@ public class SwapChain extends LifecycleObject {
         super.init();
         initSwapChain();
         initImageViews();
-        initRenderJobs();
         initCommandBuffers();
         initSyncObjects();
         LOGGER.debug("Initialized swapchain.");
@@ -219,26 +218,6 @@ public class SwapChain extends LifecycleObject {
         LOGGER.debug("Initialized image views.");
     }
 
-    public void recreateRenderJobs() {
-        cleanupRenderJobs();
-        initRenderJobs();
-    }
-
-    public void initRenderJobs() {
-        LOGGER.debug("Initializing render jobs...");
-        // Make sure all render jobs are initialized first, because they can have dependencies between each other
-        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, 0));
-        renderJobManager.forEachRenderJob(renderJob -> {
-            application.getRootNode().forEachGeometry(geometry -> {
-                GeometryRenderContext<?> renderContext = geometry.getRenderContext(renderJob);
-                if (renderContext != null) {
-                    renderContext.createDescriptorDependencies();
-                }
-            });
-        });
-        LOGGER.debug("Initialized render jobs.");
-    }
-
     private void initCommandBuffers() {
         try (MemoryStack stack = stackPush()) {
             LOGGER.debug("Initializing command buffers...");
@@ -298,7 +277,30 @@ public class SwapChain extends LifecycleObject {
         LOGGER.debug("Initialized sync objects.");
     }
 
-    public void recordCommandBuffers() {
+    public <T> void setResourceActive(Resource resource) {
+        activeResources.add(resource);
+    }
+
+    public void setCommandBuffersOutdated() {
+        commandBuffersOutdated = true;
+    }
+
+    @Override
+    public void update(float tpf) {
+        super.update(tpf);
+        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, tpf));
+        for (Resource resource : activeResources) {
+            resource.update(application, tpf);
+        }
+        renderJobManager.forEachRenderJob(renderJob -> renderJob.updateRenderContexts(tpf));
+        activeResources.clear();
+        if (commandBuffersOutdated) {
+            recordCommandBuffers();
+            commandBuffersOutdated = false;
+        }
+    }
+
+    private void recordCommandBuffers() {
         try (MemoryStack stack = stackPush()) {
             VkCommandBufferBeginInfo bufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
             bufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
@@ -347,12 +349,6 @@ public class SwapChain extends LifecycleObject {
         for (int i = 0; i < commandBuffers.size(); i++) {
             renderAction.render(commandBuffers.get(i), i);
         }
-    }
-
-    @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, tpf));
     }
 
     public int acquireNextImageIndex() {
@@ -446,7 +442,7 @@ public class SwapChain extends LifecycleObject {
         }
     }
 
-    private void cleanupRenderJobs() {
+    public void cleanupRenderJobs() {
         renderJobManager.forEachRenderJob(RenderJob::cleanup);
     }
 

@@ -1,7 +1,8 @@
 package com.destrostudios.icetea.core.camera;
 
-import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.resource.descriptor.CameraTransformDescriptor;
 import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -15,7 +16,8 @@ public class Camera extends LifecycleObject {
         viewMatrix = new Matrix4f();
         projectionViewMatrix = new Matrix4f();
         clipPlane = new Vector4f();
-        transformUniformData = new UniformData();
+        transformUniformBuffer = new UniformDataBuffer();
+        transformUniformBuffer.setDescriptor("default", new CameraTransformDescriptor());
     }
     @Getter
     protected Vector3f location;
@@ -28,13 +30,7 @@ public class Camera extends LifecycleObject {
     @Getter
     protected Vector4f clipPlane;
     @Getter
-    private UniformData transformUniformData;
-
-    @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        transformUniformData.update(application, tpf);
-    }
+    private UniformDataBuffer transformUniformBuffer;
 
     @Override
     protected void init() {
@@ -43,6 +39,12 @@ public class Camera extends LifecycleObject {
         updateUniform_ProjectionMatrix();
         updateUniform_ViewMatrix();
         updateUniform_ClipPlane();
+    }
+
+    @Override
+    public void update(float tpf) {
+        super.update(tpf);
+        application.getSwapChain().setResourceActive(transformUniformBuffer);
     }
 
     protected void set(Camera camera) {
@@ -62,24 +64,24 @@ public class Camera extends LifecycleObject {
     }
 
     protected void updateUniform_Location() {
-        transformUniformData.setVector3f("location", location);
+        transformUniformBuffer.getData().setVector3f("location", location);
     }
 
     protected void updateUniform_ProjectionMatrix() {
-        transformUniformData.setMatrix4f("proj", projectionMatrix);
+        transformUniformBuffer.getData().setMatrix4f("proj", projectionMatrix);
     }
 
     protected void updateUniform_ViewMatrix() {
-        transformUniformData.setMatrix4f("view", viewMatrix);
+        transformUniformBuffer.getData().setMatrix4f("view", viewMatrix);
     }
 
     protected void updateUniform_ClipPlane() {
-        transformUniformData.setVector4f("clipPlane", clipPlane);
+        transformUniformBuffer.getData().setVector4f("clipPlane", clipPlane);
     }
 
     @Override
     protected void cleanupInternal() {
-        transformUniformData.cleanup();
+        transformUniformBuffer.cleanup();
         super.cleanupInternal();
     }
 }

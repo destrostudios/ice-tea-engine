@@ -35,11 +35,10 @@ public class Node extends Spatial {
         super.update(tpf);
         for (Spatial child : children) {
             child.update(application, tpf);
-            commandBufferOutdated |= child.isCommandBufferOutdated();
         }
         updateWorldBounds();
         if (childrenModified) {
-            commandBufferOutdated = true;
+            application.getSwapChain().setCommandBuffersOutdated();
             childrenModified = false;
         }
     }

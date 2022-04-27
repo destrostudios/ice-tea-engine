@@ -2,8 +2,7 @@ package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeAction;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
-import com.destrostudios.icetea.core.data.ByteBufferData;
-import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptorLayout;
+import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
 import com.destrostudios.icetea.core.shader.Shader;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
@@ -14,21 +13,14 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class FftButterflyComputeActionGroup extends ComputeActionGroup {
 
-    public FftButterflyComputeActionGroup(int n, ByteBufferData[] horizontalPushConstants, ByteBufferData[] verticalPushConstants) {
+    public FftButterflyComputeActionGroup(int n, ByteDataBuffer[] horizontalPushConstants, ByteDataBuffer[] verticalPushConstants) {
         this.n = n;
         this.horizontalPushConstants = horizontalPushConstants;
         this.verticalPushConstants = verticalPushConstants;
     }
     private int n;
-    private ByteBufferData[] horizontalPushConstants;
-    private ByteBufferData[] verticalPushConstants;
-
-    @Override
-    protected void fillMaterialDescriptorLayout() {
-        materialDescriptorSetLayout.addDescriptorLayout(new ComputeImageDescriptorLayout());
-        materialDescriptorSetLayout.addDescriptorLayout(new ComputeImageDescriptorLayout());
-        materialDescriptorSetLayout.addDescriptorLayout(new ComputeImageDescriptorLayout());
-    }
+    private ByteDataBuffer[] horizontalPushConstants;
+    private ByteDataBuffer[] verticalPushConstants;
 
     @Override
     public Shader getComputeShader() {
@@ -37,7 +29,7 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
 
     @Override
     protected int getPushConstantsSize() {
-        return horizontalPushConstants[0].getSize();
+        return horizontalPushConstants[0].getData().getSize();
     }
 
     @Override
@@ -47,9 +39,9 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
         recordComputeActions(commandBuffer, verticalPushConstants);
     }
 
-    private void recordComputeActions(VkCommandBuffer commandBuffer, ByteBufferData[] pushConstantsArray) {
+    private void recordComputeActions(VkCommandBuffer commandBuffer, ByteDataBuffer[] pushConstantsArray) {
         try (MemoryStack stack = stackPush()) {
-            for (ByteBufferData pushConstants : pushConstantsArray) {
+            for (ByteDataBuffer pushConstants : pushConstantsArray) {
                 recordComputeAction(commandBuffer, computeActions.get(0), pushConstants);
                 recordComputeAction(commandBuffer, computeActions.get(1), pushConstants);
                 recordComputeAction(commandBuffer, computeActions.get(2), pushConstants);
@@ -63,10 +55,10 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
         }
     }
 
-    private void recordComputeAction(VkCommandBuffer commandBuffer, ComputeAction computeAction, ByteBufferData pushConstants) {
+    private void recordComputeAction(VkCommandBuffer commandBuffer, ComputeAction computeAction, ByteDataBuffer pushConstants) {
         try (MemoryStack stack = stackPush()) {
             vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getByteBuffer());
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, stack.longs(computeAction.getDescriptorSets().get(0)), null);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, computeAction.getResourceDescriptorSet().getDescriptorSets(0, stack), null);
             vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
         }
     }
@@ -88,10 +80,10 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
 
     @Override
     protected void cleanupInternal() {
-        for (ByteBufferData horizontalPushConstantsData : horizontalPushConstants) {
+        for (ByteDataBuffer horizontalPushConstantsData : horizontalPushConstants) {
             horizontalPushConstantsData.cleanup();
         }
-        for (ByteBufferData verticalPushConstantsData : verticalPushConstants) {
+        for (ByteDataBuffer verticalPushConstantsData : verticalPushConstants) {
             verticalPushConstantsData.cleanup();
         }
         super.cleanupInternal();

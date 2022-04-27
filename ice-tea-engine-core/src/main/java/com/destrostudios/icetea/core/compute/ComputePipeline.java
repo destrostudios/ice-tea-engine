@@ -16,18 +16,18 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class ComputePipeline extends Pipeline {
 
-    public ComputePipeline(Application application, ComputeActionGroup computeActionGroup) {
-        super(application);
+    public ComputePipeline(ComputeActionGroup computeActionGroup) {
         this.computeActionGroup = computeActionGroup;
     }
     private ComputeActionGroup computeActionGroup;
 
     @Override
-    public void init() {
+    protected void init() {
+        super.init();
         try (MemoryStack stack = stackPush()) {
             ComputeAction referenceComputeAction = computeActionGroup.getComputeActions().get(0);
             Shader compShader = computeActionGroup.getComputeShader();
-            long compShaderModule = createShaderModule(compShader, ShaderType.COMPUTE_SHADER, referenceComputeAction.getMaterialDescriptorSet().getShaderDeclaration());
+            long compShaderModule = createShaderModule(compShader, ShaderType.COMPUTE_SHADER, referenceComputeAction.getResourceDescriptorSet().getShaderDeclaration());
 
             VkPipelineShaderStageCreateInfo compShaderStageInfo = VkPipelineShaderStageCreateInfo.callocStack(stack);
             compShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
@@ -39,7 +39,7 @@ public class ComputePipeline extends Pipeline {
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-            pipelineLayoutInfo.pSetLayouts(stack.longs(computeActionGroup.getMaterialDescriptorSetLayout().getDescriptorSetLayout()));
+            pipelineLayoutInfo.pSetLayouts(referenceComputeAction.getResourceDescriptorSet().getDescriptorSetLayouts(stack));
             if (computeActionGroup.getPushConstantsSize() > 0) {
                 VkPushConstantRange.Buffer pushConstantRange = VkPushConstantRange.calloc(1)
                         .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)

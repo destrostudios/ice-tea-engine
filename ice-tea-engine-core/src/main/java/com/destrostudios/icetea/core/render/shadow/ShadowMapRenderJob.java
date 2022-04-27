@@ -1,10 +1,11 @@
 package com.destrostudios.icetea.core.render.shadow;
 
 import com.destrostudios.icetea.core.collision.BoundingBox;
-import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.light.SpotLight;
-import com.destrostudios.icetea.core.render.GeometryRenderContext;
+import com.destrostudios.icetea.core.resource.descriptor.ShadowMapLightTransformDescriptor;
+import com.destrostudios.icetea.core.resource.descriptor.ShadowMapTextureDescriptor;
 import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderPipeline;
@@ -31,6 +32,8 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         this.light = light;
         shadowMapWidth = shadowMapSize;
         shadowMapHeight = shadowMapSize;
+        shadowMapTexture = new Texture();
+        shadowMapTexture.setDescriptor("default", new ShadowMapTextureDescriptor());
     }
     @Getter
     private Light light;
@@ -41,7 +44,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Getter
     private Texture shadowMapTexture;
     @Getter
-    private UniformData lightTransformUniformData;
+    private UniformDataBuffer lightTransformUniformBuffer;
 
     @Override
     protected void init() {
@@ -50,53 +53,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         initShadowMapTexture();
         initFrameBuffer();
         initLightTransform();
-    }
-
-    @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        shadowMapTexture.update(application, tpf);
-        // TODO: Introduce TempVars
-        Matrix4f projectionMatrix = new Matrix4f();
-        Matrix4f viewMatrix = new Matrix4f();
-        Vector4f clipPlane = new Vector4f();
-        if (light instanceof DirectionalLight) {
-            DirectionalLight directionalLight = (DirectionalLight) light;
-            BoundingBox shadowMapBounds = application.getSceneNode().getWorldBoundsShadowReceive();
-
-            // BoundingBox -> BoundingSphere
-            Vector3f shadowMapBoundsCenter = shadowMapBounds.getCenter();
-            float shadowMapBoundsRadius = (float) Math.sqrt(
-                (shadowMapBounds.getExtent().x() * shadowMapBounds.getExtent().x()) +
-                (shadowMapBounds.getExtent().y() * shadowMapBounds.getExtent().y()) +
-                (shadowMapBounds.getExtent().z() * shadowMapBounds.getExtent().z())
-            );
-
-            projectionMatrix.ortho(
-                -1 * shadowMapBoundsRadius,
-                shadowMapBoundsRadius,
-                -1 * shadowMapBoundsRadius,
-                shadowMapBoundsRadius,
-                -1 * shadowMapBoundsRadius,
-                shadowMapBoundsRadius,
-                true
-            );
-            projectionMatrix.m11(projectionMatrix.m11() * -1);
-
-            viewMatrix.lookAt(shadowMapBoundsCenter, shadowMapBoundsCenter.add(directionalLight.getDirection(), new Vector3f()), new Vector3f(0, 0, 1));
-        } else if (light instanceof SpotLight) {
-            SpotLight spotLight = (SpotLight) light;
-            projectionMatrix.perspective((float) Math.toRadians(45), ((float) shadowMapWidth) / shadowMapHeight, 0.1f, 100, true);
-            projectionMatrix.m11(projectionMatrix.m11() * -1);
-
-            MathUtil.setViewMatrix(viewMatrix, spotLight.getTranslation(), spotLight.getRotation());
-        }
-        // We set the actual cameras location to get the same vertex results (i.e. tessellation based on camera distance), but we use the tweaked shadow render matrices for proj+view
-        lightTransformUniformData.setVector3f("location", application.getSceneCamera().getLocation());
-        lightTransformUniformData.setMatrix4f("proj", projectionMatrix);
-        lightTransformUniformData.setMatrix4f("view", viewMatrix);
-        lightTransformUniformData.setVector4f("clipPlane", clipPlane);
-        lightTransformUniformData.update(application, tpf);
     }
 
     @Override
@@ -214,7 +170,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             long imageSampler = pImageSampler.get(0);
 
             int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            shadowMapTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
+            shadowMapTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
@@ -225,21 +181,69 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     private void initLightTransform() {
-        lightTransformUniformData = new UniformData();
-        lightTransformUniformData.setVector3f("location", new Vector3f());
-        lightTransformUniformData.setMatrix4f("proj", new Matrix4f());
-        lightTransformUniformData.setMatrix4f("view", new Matrix4f());
-        lightTransformUniformData.setVector4f("clipPlane", new Vector4f());
+        lightTransformUniformBuffer = new UniformDataBuffer();
+        lightTransformUniformBuffer.getData().setVector3f("location", new Vector3f());
+        lightTransformUniformBuffer.getData().setMatrix4f("proj", new Matrix4f());
+        lightTransformUniformBuffer.getData().setMatrix4f("view", new Matrix4f());
+        lightTransformUniformBuffer.getData().setVector4f("clipPlane", new Vector4f());
+        lightTransformUniformBuffer.setDescriptor("default", new ShadowMapLightTransformDescriptor());
     }
 
     @Override
-    public boolean isRendering(Geometry geometry) {
+    public void update(float tpf) {
+        super.update(tpf);
+        application.getSwapChain().setResourceActive(shadowMapTexture);
+        // TODO: Introduce TempVars
+        Matrix4f projectionMatrix = new Matrix4f();
+        Matrix4f viewMatrix = new Matrix4f();
+        Vector4f clipPlane = new Vector4f();
+        if (light instanceof DirectionalLight) {
+            DirectionalLight directionalLight = (DirectionalLight) light;
+            BoundingBox shadowMapBounds = application.getSceneNode().getWorldBoundsShadowReceive();
+
+            // BoundingBox -> BoundingSphere
+            Vector3f shadowMapBoundsCenter = shadowMapBounds.getCenter();
+            float shadowMapBoundsRadius = (float) Math.sqrt(
+                    (shadowMapBounds.getExtent().x() * shadowMapBounds.getExtent().x()) +
+                            (shadowMapBounds.getExtent().y() * shadowMapBounds.getExtent().y()) +
+                            (shadowMapBounds.getExtent().z() * shadowMapBounds.getExtent().z())
+            );
+
+            projectionMatrix.ortho(
+                    -1 * shadowMapBoundsRadius,
+                    shadowMapBoundsRadius,
+                    -1 * shadowMapBoundsRadius,
+                    shadowMapBoundsRadius,
+                    -1 * shadowMapBoundsRadius,
+                    shadowMapBoundsRadius,
+                    true
+            );
+            projectionMatrix.m11(projectionMatrix.m11() * -1);
+
+            viewMatrix.lookAt(shadowMapBoundsCenter, shadowMapBoundsCenter.add(directionalLight.getDirection(), new Vector3f()), new Vector3f(0, 0, 1));
+        } else if (light instanceof SpotLight) {
+            SpotLight spotLight = (SpotLight) light;
+            projectionMatrix.perspective((float) Math.toRadians(45), ((float) shadowMapWidth) / shadowMapHeight, 0.1f, 100, true);
+            projectionMatrix.m11(projectionMatrix.m11() * -1);
+
+            MathUtil.setViewMatrix(viewMatrix, spotLight.getTranslation(), spotLight.getRotation());
+        }
+        // We set the actual cameras location to get the same vertex results (i.e. tessellation based on camera distance), but we use the tweaked shadow render matrices for proj+view
+        lightTransformUniformBuffer.getData().setVector3f("location", application.getSceneCamera().getLocation());
+        lightTransformUniformBuffer.getData().setMatrix4f("proj", projectionMatrix);
+        lightTransformUniformBuffer.getData().setMatrix4f("view", viewMatrix);
+        lightTransformUniformBuffer.getData().setVector4f("clipPlane", clipPlane);
+        application.getSwapChain().setResourceActive(lightTransformUniformBuffer);
+    }
+
+    @Override
+    protected boolean isRendering(Geometry geometry) {
         return geometry.isCastingShadows();
     }
 
     @Override
-    public ShadowMapGeometryRenderContext createGeometryRenderContext() {
-        return new ShadowMapGeometryRenderContext();
+    protected ShadowMapGeometryRenderContext createGeometryRenderContext(Geometry geometry) {
+        return new ShadowMapGeometryRenderContext(geometry, this);
     }
 
     @Override
@@ -252,10 +256,10 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     public void render(Consumer<RenderAction> actions) {
         application.getRootNode().forEachGeometry(geometry -> {
-            GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
-            if (geometryRenderContext != null) {
+            ShadowMapGeometryRenderContext renderContext = getRenderContext(geometry);
+            if (renderContext != null) {
                 try (MemoryStack stack = stackPush()) {
-                    RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
+                    RenderPipeline<?> renderPipeline = renderContext.getRenderPipeline();
                     actions.accept((cb, cbi) -> vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline()));
                     LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
                     LongBuffer offsets = stack.longs(0);
@@ -263,7 +267,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
                     if (geometry.getMesh().getIndexBuffer() != null) {
                         actions.accept((cb, cbi) -> vkCmdBindIndexBuffer(cb, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32));
                     }
-                    actions.accept((cb, cbi) -> vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(cbi)), null));
+                    actions.accept((cb, cbi) -> vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, renderContext.getResourceDescriptorSet().getDescriptorSets(cbi, stack), null));
                     if (geometry.getMesh().getIndices() != null) {
                         actions.accept((cb, cbi) -> vkCmdDrawIndexed(cb, geometry.getMesh().getIndices().length, 1, 0, 0, 0));
                     } else {
@@ -277,9 +281,9 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     protected void cleanupInternal() {
         if (isInitialized()) {
-            lightTransformUniformData.cleanup();
-            shadowMapTexture.cleanup();
+            lightTransformUniformBuffer.cleanup();
         }
+        shadowMapTexture.cleanup();
         super.cleanupInternal();
     }
 }

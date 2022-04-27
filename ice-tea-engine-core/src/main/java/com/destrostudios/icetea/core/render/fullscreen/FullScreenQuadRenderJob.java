@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
+import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
@@ -14,7 +13,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -23,11 +21,11 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
-    protected MaterialDescriptorSetLayout materialDescriptorSetLayout;
+    public FullScreenQuadRenderJob() {
+        multisampledColorTexture = new Texture();
+    }
     @Getter
-    protected MaterialDescriptorSet materialDescriptorSet;
-    private long descriptorPool;
-    private List<Long> descriptorSets;
+    protected ResourceDescriptorSet resourceDescriptorSet;
     private FullScreenQuadRenderPipeline renderPipeline;
     private Texture multisampledColorTexture;
 
@@ -35,9 +33,9 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     protected void init() {
         super.init();
         initRenderPass();
-        initMaterialDescriptors();
-        initRenderPipeline();
-        multisampledColorTexture = createMultisampledColorTexture();
+        initResourceDescriptorSet();
+        renderPipeline = new FullScreenQuadRenderPipeline(this);
+        initMultisampledColorTexture(multisampledColorTexture);
         initFrameBuffers();
     }
 
@@ -105,23 +103,8 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
         }
     }
 
-    private void initMaterialDescriptors() {
-        materialDescriptorSetLayout = new MaterialDescriptorSetLayout(application);
-        materialDescriptorSet = new MaterialDescriptorSet(application, materialDescriptorSetLayout, application.getSwapChain().getImages().size());
-
-        fillMaterialDescriptorLayoutAndSet();
-
-        materialDescriptorSetLayout.initDescriptorSetLayout();
-
-        descriptorPool = materialDescriptorSet.createDescriptorPool();
-        descriptorSets = materialDescriptorSet.createDescriptorSets(descriptorPool);
-    }
-
-    protected abstract void fillMaterialDescriptorLayoutAndSet();
-
-    private void initRenderPipeline() {
-        renderPipeline = new FullScreenQuadRenderPipeline(application, this);
-        renderPipeline.init();
+    protected void initResourceDescriptorSet() {
+        resourceDescriptorSet = new ResourceDescriptorSet();
     }
 
     public abstract Shader getFragmentShader();
@@ -139,8 +122,8 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     }
 
     @Override
-    public SceneGeometryRenderContext createGeometryRenderContext() {
-        return null;
+    public SceneGeometryRenderContext createGeometryRenderContext(Geometry geometry) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -156,7 +139,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     public void render(Consumer<RenderAction> actions) {
         try (MemoryStack stack = stackPush()) {
             actions.accept((cb, cbi) -> {
-                vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(descriptorSets.get(cbi)), null);
+                vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, resourceDescriptorSet.getDescriptorSets(cbi, stack), null);
                 vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
                 vkCmdDraw(cb, 3, 1, 0, 0);
             });
@@ -170,13 +153,17 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     }
 
     @Override
+    public void updateRenderContexts(float tpf) {
+        super.updateRenderContexts(tpf);
+        renderPipeline.update(application, tpf);
+    }
+
+    @Override
     protected void cleanupInternal() {
         if (isInitialized()) {
-            multisampledColorTexture.cleanup();
-            materialDescriptorSet.cleanupDescriptorSets(descriptorPool, descriptorSets);
-            materialDescriptorSet.cleanupDescriptorPool(descriptorPool);
-            materialDescriptorSetLayout.cleanupDescriptorSetLayout();
+            renderPipeline.cleanup();
         }
+        multisampledColorTexture.cleanup();
         super.cleanupInternal();
     }
 }

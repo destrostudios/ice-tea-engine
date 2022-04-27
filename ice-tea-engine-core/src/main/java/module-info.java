@@ -18,6 +18,7 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.animation;
     exports com.destrostudios.icetea.core.asset;
     exports com.destrostudios.icetea.core.asset.loader;
+    exports com.destrostudios.icetea.core.buffer;
     exports com.destrostudios.icetea.core.asset.locator;
     exports com.destrostudios.icetea.core.camera;
     exports com.destrostudios.icetea.core.camera.systems;
@@ -29,9 +30,9 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.filter;
     exports com.destrostudios.icetea.core.font;
     exports com.destrostudios.icetea.core.input;
+    exports com.destrostudios.icetea.core.light;
     exports com.destrostudios.icetea.core.lifecycle;
     exports com.destrostudios.icetea.core.material;
-    exports com.destrostudios.icetea.core.material.descriptor;
     exports com.destrostudios.icetea.core.mesh;
     exports com.destrostudios.icetea.core.model;
     exports com.destrostudios.icetea.core.render;
@@ -41,6 +42,8 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.render.fullscreen;
     exports com.destrostudios.icetea.core.render.scene;
     exports com.destrostudios.icetea.core.render.shadow;
+    exports com.destrostudios.icetea.core.resource;
+    exports com.destrostudios.icetea.core.resource.descriptor;
     exports com.destrostudios.icetea.core.scene;
     exports com.destrostudios.icetea.core.scene.gui;
     exports com.destrostudios.icetea.core.shader;

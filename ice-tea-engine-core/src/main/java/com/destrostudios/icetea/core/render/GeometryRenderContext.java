@@ -1,61 +1,50 @@
 package com.destrostudios.icetea.core.render;
 
-import com.destrostudios.icetea.core.Application;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
 
-import java.util.List;
+public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> extends LifecycleObject {
 
-public abstract class GeometryRenderContext<RJ extends RenderJob<?>> {
-
-    protected Application application;
+    public GeometryRenderContext(Geometry geometry, RJ renderJob) {
+        this.geometry = geometry;
+        this.renderJob = renderJob;
+        this.renderPipeline = createRenderPipeline();
+    }
     protected RJ renderJob;
+    @Getter
+    private RP renderPipeline;
+    @Getter
     protected Geometry geometry;
     @Getter
-    protected MaterialDescriptorSet materialDescriptorSet;
-    private Long descriptorPool;
-    protected List<Long> descriptorSets;
+    protected ResourceDescriptorSet resourceDescriptorSet;
 
-    public void init(Application application, RJ renderJob, Geometry geometry) {
-        this.application = application;
-        this.renderJob = renderJob;
-        this.geometry = geometry;
+    protected abstract RP createRenderPipeline();
+
+    @Override
+    protected void init() {
+        super.init();
+        resourceDescriptorSet = new ResourceDescriptorSet();
     }
 
-    public void recreateDescriptorDependencies() {
-        cleanupDescriptorDependencies();
-        createDescriptorDependencies();
-    }
-
-    public void createDescriptorDependencies() {
-        MaterialDescriptorSetLayout materialDescriptorSetLayout = new MaterialDescriptorSetLayout(application);
-        materialDescriptorSet = new MaterialDescriptorSet(application, materialDescriptorSetLayout, application.getSwapChain().getImages().size());
-        fillMaterialDescriptorSet(materialDescriptorSetLayout, materialDescriptorSet);
-        materialDescriptorSetLayout.initDescriptorSetLayout();
-
-        descriptorPool = materialDescriptorSet.createDescriptorPool();
-        descriptorSets = materialDescriptorSet.createDescriptorSets(descriptorPool);
-    }
-
-    protected abstract void fillMaterialDescriptorSet(MaterialDescriptorSetLayout descriptorSetLayout, MaterialDescriptorSet descriptorSet);
-
-    public abstract RenderPipeline<RJ> getRenderPipeline();
-
-    public long getDescriptorSet(int commandBufferIndex) {
-        return descriptorSets.get(commandBufferIndex);
-    }
-
-    public void cleanup() {
-        cleanupDescriptorDependencies();
-    }
-
-    public void cleanupDescriptorDependencies() {
-        if (materialDescriptorSet != null) {
-            materialDescriptorSet.cleanupDescriptorSets(descriptorPool, descriptorSets);
-            materialDescriptorSet.cleanupDescriptorPool(descriptorPool);
-            materialDescriptorSet = null;
+    @Override
+    protected void update(float tpf) {
+        super.update(tpf);
+        setDescriptors();
+        if (geometry.getMesh().isWereBuffersOutdated() || resourceDescriptorSet.isChanged()) {
+            resourceDescriptorSet.onApplied();
+            renderPipeline.cleanup();
+            application.getSwapChain().setCommandBuffersOutdated();
         }
+        renderPipeline.update(application, tpf);
+    }
+
+    protected abstract void setDescriptors();
+
+    @Override
+    protected void cleanupInternal() {
+        renderPipeline.cleanup();
+        super.cleanupInternal();
     }
 }

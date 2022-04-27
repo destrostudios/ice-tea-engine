@@ -2,8 +2,9 @@ package com.destrostudios.icetea.core.model;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
-import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.resource.descriptor.SkeletonDescriptor;
 import lombok.Getter;
 import org.joml.Matrix4f;
 
@@ -15,7 +16,8 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
         for (int i = 0; i < jointMatrices.length; i++) {
             jointMatrices[i] = new Matrix4f();
         }
-        uniformData = new UniformData();
+        uniformBuffer = new UniformDataBuffer();
+        uniformBuffer.setDescriptor("default", new SkeletonDescriptor());
     }
 
     public Skeleton(Skeleton skeleton, CloneContext context) {
@@ -31,18 +33,18 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
         for (int i = 0; i < jointMatrices.length; i++) {
             jointMatrices[i] = new Matrix4f(skeleton.jointMatrices[i]);
         }
-        uniformData = skeleton.uniformData.clone(context);
+        uniformBuffer = skeleton.uniformBuffer.clone(context);
     }
     private Joint[] joints;
     @Getter
     private Matrix4f[] jointMatrices;
     @Getter
-    private UniformData uniformData;
+    private UniformDataBuffer uniformBuffer;
 
     @Override
     protected void init() {
         super.init();
-        updateUniformData();
+        updateUniformBuffer();
     }
 
     @Override
@@ -61,13 +63,13 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
             }
         }
         if (jointMatricesUpdated) {
-            updateUniformData();
+            updateUniformBuffer();
         }
-        uniformData.update(application, tpf);
+        application.getSwapChain().setResourceActive(uniformBuffer);
     }
 
-    private void updateUniformData() {
-        uniformData.setMatrix4fArray("jointMatrices", jointMatrices);
+    private void updateUniformBuffer() {
+        uniformBuffer.getData().setMatrix4fArray("jointMatrices", jointMatrices);
     }
 
     public void resetPose() {
@@ -78,7 +80,7 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
 
     @Override
     protected void cleanupInternal() {
-        uniformData.cleanup();
+        uniformBuffer.cleanup();
         super.cleanupInternal();
     }
 

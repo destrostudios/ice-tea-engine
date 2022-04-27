@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.render;
 
-import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Pipeline;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.UniformValue;
@@ -16,8 +15,7 @@ import static org.lwjgl.vulkan.VK10.VK_VERTEX_INPUT_RATE_VERTEX;
 
 public abstract class RenderPipeline<RJ extends RenderJob<?>> extends Pipeline {
 
-    public RenderPipeline(Application application, RJ renderJob) {
-        super(application);
+    public RenderPipeline(RJ renderJob) {
         this.renderJob = renderJob;
     }
     protected RJ renderJob;
@@ -40,7 +38,7 @@ public abstract class RenderPipeline<RJ extends RenderJob<?>> extends Pipeline {
 
     protected static VkVertexInputBindingDescription.Buffer getVertexBindingDescriptions(Mesh mesh) {
         VertexData referenceVertex = getReferenceVertex(mesh);
-        VkVertexInputBindingDescription.Buffer bindingDescription =  VkVertexInputBindingDescription.callocStack(1);
+        VkVertexInputBindingDescription.Buffer bindingDescription = VkVertexInputBindingDescription.callocStack(1);
         bindingDescription.binding(0);
         bindingDescription.stride(referenceVertex.getSize());
         bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);

@@ -513,6 +513,10 @@ public class TestApplication extends Application {
                 }
             }
         });
+        bitmapTextDynamic.setText("Hi");
+        materialCool.getParameters().setFloat("time", time);
+        materialGrass.getParameters().setFloat("time", time);
+        preloadRenderDependencies();
     }
 
     @Override

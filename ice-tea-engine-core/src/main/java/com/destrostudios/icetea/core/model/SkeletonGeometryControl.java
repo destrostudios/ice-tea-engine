@@ -2,10 +2,8 @@ package com.destrostudios.icetea.core.model;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.data.VertexData;
-import com.destrostudios.icetea.core.material.descriptor.AdditionalMaterialDescriptorProvider;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorWithLayout;
-import com.destrostudios.icetea.core.material.descriptor.SkeletonDescriptor;
-import com.destrostudios.icetea.core.material.descriptor.SkeletonDescriptorLayout;
+import com.destrostudios.icetea.core.resource.AdditionalResourceDescriptorProvider;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import com.destrostudios.icetea.core.mesh.VertexPositionModifier;
 import com.destrostudios.icetea.core.scene.Control;
 import com.destrostudios.icetea.core.scene.Geometry;
@@ -15,10 +13,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 
-public class SkeletonGeometryControl extends Control implements AdditionalMaterialDescriptorProvider, VertexPositionModifier {
+public class SkeletonGeometryControl extends Control implements AdditionalResourceDescriptorProvider, VertexPositionModifier {
 
     public SkeletonGeometryControl(SkeletonGeometryControl skeletonGeometryControl, CloneContext context) {
         this(context.cloneByReference(skeletonGeometryControl.skeleton));
@@ -26,16 +23,13 @@ public class SkeletonGeometryControl extends Control implements AdditionalMateri
 
     public SkeletonGeometryControl(Skeleton skeleton) {
         this.skeleton = skeleton;
-        additionalMaterialDescriptors = new LinkedList<>();
-        additionalMaterialDescriptors.add(new MaterialDescriptorWithLayout(new SkeletonDescriptorLayout(), new SkeletonDescriptor("skeleton", skeleton)));
     }
     @Getter
     private Skeleton skeleton;
-    private LinkedList<MaterialDescriptorWithLayout> additionalMaterialDescriptors;
 
     @Override
-    public List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors(Geometry geometry) {
-        return additionalMaterialDescriptors;
+    public void addAdditionalResourceDescriptors(Geometry geometry, Map<String, ResourceDescriptor<?>> resourceDescriptors) {
+        resourceDescriptors.put("skeleton", skeleton.getUniformBuffer().getDescriptor("default"));
     }
 
     @Override

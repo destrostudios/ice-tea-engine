@@ -1,29 +1,26 @@
 package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeAction;
-import com.destrostudios.icetea.core.data.UniformData;
-import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptor;
-import com.destrostudios.icetea.core.material.descriptor.UniformDescriptor;
-import com.destrostudios.icetea.core.texture.Texture;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class HktComputeAction extends ComputeAction {
 
-    private Texture dyCoefficientsTexture;
-    private Texture dxCoefficientsTexture;
-    private Texture dzCoefficientsTexture;
-    private Texture h0kTexture;
-    private Texture h0minuskTexture;
-    private UniformData uniformData;
+    private ResourceDescriptor<?> dxCoefficientsTextureDescriptorWrite;
+    private ResourceDescriptor<?> dyCoefficientsTextureDescriptorWrite;
+    private ResourceDescriptor<?> dzCoefficientsTextureDescriptorWrite;
+    private ResourceDescriptor<?> h0kTextureDescriptorRead;
+    private ResourceDescriptor<?> h0minuskTextureDescriptorRead;
+    private ResourceDescriptor<?> uniformDescriptor;
 
     @Override
-    protected void fillMaterialDescriptorSet() {
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("tilde_hkt_dy", dyCoefficientsTexture, "rgba32f", true));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("tilde_hkt_dx", dxCoefficientsTexture, "rgba32f", true));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("tilde_hkt_dz", dzCoefficientsTexture, "rgba32f", true));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("tilde_h0k", h0kTexture, "rgba32f", false));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("tilde_h0minusk", h0minuskTexture, "rgba32f", false));
-        materialDescriptorSet.addDescriptor(new UniformDescriptor("constants", uniformData));
+    protected void fillResourceDescriptorSet() {
+        resourceDescriptorSet.setDescriptor("tilde_hkt_dx", dxCoefficientsTextureDescriptorWrite);
+        resourceDescriptorSet.setDescriptor("tilde_hkt_dy", dyCoefficientsTextureDescriptorWrite);
+        resourceDescriptorSet.setDescriptor("tilde_hkt_dz", dzCoefficientsTextureDescriptorWrite);
+        resourceDescriptorSet.setDescriptor("tilde_h0k", h0kTextureDescriptorRead);
+        resourceDescriptorSet.setDescriptor("tilde_h0minusk", h0minuskTextureDescriptorRead);
+        resourceDescriptorSet.setDescriptor("constants", uniformDescriptor);
     }
 }

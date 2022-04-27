@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.data.values.*;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
+import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -12,26 +13,29 @@ import org.joml.Vector4f;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public abstract class FieldsData extends LifecycleObject implements ContextCloneable {
+public class FieldsData extends LifecycleObject implements ContextCloneable {
 
-    public FieldsData() { }
+    public FieldsData(Function<UniformValue<?>, Integer> getValueSize) {
+        this.getValueSize = getValueSize;
+    }
 
     public FieldsData(FieldsData fieldsData, CloneContext context) {
         for (Map.Entry<String, UniformValue<?>> entry : fieldsData.fields.entrySet()) {
             fields.put(entry.getKey(), entry.getValue().clone(context));
         }
+        getValueSize = fieldsData.getValueSize;
         size = fieldsData.size;
-        structureModified = true;
-        contentModified = true;
     }
     @Getter
     protected Map<String, UniformValue<?>> fields = new LinkedHashMap<>();
+    private Function<UniformValue<?>, Integer> getValueSize;
     @Getter
     protected int size;
-    protected boolean structureModified;
-    protected boolean contentModified;
+    @Setter
+    private FieldsDataListener listener;
 
     public void setInt(String name, Integer value) {
         set(name, value, IntUniformValue::new);
@@ -65,28 +69,31 @@ public abstract class FieldsData extends LifecycleObject implements ContextClone
         set(name, value, Matrix4fArrayUniformValue::new);
     }
 
-    private <T> void set(String name, T value, Supplier<UniformValue<T>> uniformDataSupplier) {
+    private <T> void set(String name, T value, Supplier<UniformValue<T>> uniformValueSupplier) {
         UniformValue<T> uniformValue = (UniformValue<T>) fields.get(name);
         if (uniformValue == null) {
-            uniformValue = uniformDataSupplier.get();
+            uniformValue = uniformValueSupplier.get();
             uniformValue.setValue(value);
             fields.put(name, uniformValue);
-            size += getSize(uniformValue);
-            structureModified = true;
+            size += getValueSize.apply(uniformValue);
+            if (listener != null) {
+                listener.onFieldValueAdded(uniformValue);
+            }
         } else {
             uniformValue.setValue(value);
         }
-        contentModified = true;
+        if (listener != null) {
+            listener.onFieldValueSet(uniformValue);
+        }
     }
 
     public void clear(String name) {
         UniformValue<?> uniformValue = fields.remove(name);
-        size -= getSize(uniformValue);
-        structureModified = true;
-        contentModified = true;
+        size -= getValueSize.apply(uniformValue);
+        if (listener != null) {
+            listener.onFieldValueRemoved(uniformValue);
+        }
     }
-
-    protected abstract int getSize(UniformValue<?> uniformValue);
 
     public Integer getInt(String name) {
         return get(name);
@@ -126,5 +133,7 @@ public abstract class FieldsData extends LifecycleObject implements ContextClone
     }
 
     @Override
-    public abstract FieldsData clone(CloneContext context);
+    public FieldsData clone(CloneContext context) {
+        return new FieldsData(this, context);
+    }
 }

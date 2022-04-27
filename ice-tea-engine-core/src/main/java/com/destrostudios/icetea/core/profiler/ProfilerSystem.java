@@ -35,6 +35,7 @@ public class ProfilerSystem extends LifecycleObject implements KeyListener {
             bitmapTexts[i] = new BitmapText(bitmapFont, "");
             application.getGuiNode().add(bitmapTexts[i]);
         }
+        updateTexts();
         application.getInputManager().addKeyListener(this);
     }
 
@@ -125,10 +126,10 @@ public class ProfilerSystem extends LifecycleObject implements KeyListener {
 
     @Override
     protected void cleanupInternal() {
-        super.cleanupInternal();
         for (BitmapText bitmapText : bitmapTexts) {
             application.getGuiNode().remove(bitmapText);
             bitmapText.cleanup();
         }
+        super.cleanupInternal();
     }
 }

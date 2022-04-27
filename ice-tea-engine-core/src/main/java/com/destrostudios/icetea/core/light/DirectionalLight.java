@@ -14,8 +14,8 @@ public class DirectionalLight extends Light {
     private Vector3f direction;
 
     @Override
-    protected void updateUniformDataFields() {
-        super.updateUniformDataFields();
-        uniformData.setVector3f("direction", direction);
+    protected void updateUniformBufferFields() {
+        super.updateUniformBufferFields();
+        uniformBuffer.getData().setVector3f("direction", direction);
     }
 }

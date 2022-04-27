@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
 import com.destrostudios.icetea.core.shader.Shader;
 import lombok.Getter;
 import org.lwjgl.vulkan.VkCommandBuffer;
@@ -16,8 +15,6 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     public ComputeActionGroup() {
         computeActions = new LinkedList<>();
     }
-    @Getter
-    protected MaterialDescriptorSetLayout materialDescriptorSetLayout;
     protected ComputePipeline computePipeline;
     @Getter
     protected List<ComputeAction> computeActions;
@@ -25,22 +22,11 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     @Override
     protected void init() {
         super.init();
-        initMaterialDescriptorSetLayout();
         for (ComputeAction computeAction : computeActions) {
-            computeAction.setComputeActionGroup(this);
             computeAction.update(application, 0);
         }
-        computePipeline = new ComputePipeline(application, this);
-        computePipeline.init();
+        computePipeline = new ComputePipeline(this);
     }
-
-    private void initMaterialDescriptorSetLayout() {
-        materialDescriptorSetLayout = new MaterialDescriptorSetLayout(application);
-        fillMaterialDescriptorLayout();
-        materialDescriptorSetLayout.initDescriptorSetLayout();
-    }
-
-    protected abstract void fillMaterialDescriptorLayout();
 
     public abstract Shader getComputeShader();
 
@@ -63,12 +49,17 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     protected abstract int getGroupCountZ();
 
     @Override
+    protected void update(float tpf) {
+        super.update(tpf);
+        computePipeline.update(application, tpf);
+    }
+
+    @Override
     protected void cleanupInternal() {
         computePipeline.cleanup();
         for (ComputeAction computeAction : computeActions) {
             computeAction.cleanup();
         }
-        materialDescriptorSetLayout.cleanupDescriptorSetLayout();
         super.cleanupInternal();
     }
 }

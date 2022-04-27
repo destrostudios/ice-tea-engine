@@ -2,7 +2,9 @@ package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
-import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
+import com.destrostudios.icetea.core.resource.descriptor.ComputeImageDescriptor;
+import com.destrostudios.icetea.core.resource.descriptor.UniformDescriptor;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
@@ -19,6 +21,14 @@ public class H0kComputeJob extends ComputeJob {
 
     public H0kComputeJob(WaterConfig waterConfig) {
         this.waterConfig = waterConfig;
+
+        h0kTexture = new Texture();
+        h0kTexture.setDescriptor("write", new ComputeImageDescriptor("rgba32f", true));
+        h0kTexture.setDescriptor("read", new ComputeImageDescriptor("rgba32f", false));
+
+        h0minuskTexture = new Texture();
+        h0minuskTexture.setDescriptor("write", new ComputeImageDescriptor("rgba32f", true));
+        h0minuskTexture.setDescriptor("read", new ComputeImageDescriptor("rgba32f", false));
     }
     private WaterConfig waterConfig;
     @Getter
@@ -29,25 +39,37 @@ public class H0kComputeJob extends ComputeJob {
     private Texture noiseTexture2;
     private Texture noiseTexture3;
     private Texture noiseTexture4;
-    private UniformData uniformData;
+    private UniformDataBuffer uniformBuffer;
 
     @Override
     protected void init() {
-        h0kTexture = createTargetTexture();
-        h0minuskTexture = createTargetTexture();
+        initTargetTexture(h0kTexture);
+        h0kTexture.update(application, 0);
+
+        initTargetTexture(h0minuskTexture);
+        h0minuskTexture.update(application, 0);
+
         noiseTexture1 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_0.jpg");
+        noiseTexture1.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture1.update(application, 0);
+
         noiseTexture2 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_1.jpg");
+        noiseTexture2.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture2.update(application, 0);
+
         noiseTexture3 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_2.jpg");
+        noiseTexture3.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture3.update(application, 0);
+
         noiseTexture4 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_3.jpg");
+        noiseTexture4.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture4.update(application, 0);
-        initUniformData();
+
+        initUniformBuffer();
         super.init();
     }
 
-    private Texture createTargetTexture() {
+    private void initTargetTexture(Texture texture) {
         try (MemoryStack stack = stackPush()) {
             int width = waterConfig.getN();
             int height = waterConfig.getN();
@@ -98,21 +120,20 @@ public class H0kComputeJob extends ComputeJob {
             long imageSampler = pImageSampler.get(0);
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            Texture texture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
-            texture.update(application, 0);
-            return texture;
+            texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
-    private void initUniformData() {
-        uniformData = new UniformData();
-        uniformData.setInt("N", waterConfig.getN());
-        uniformData.setInt("L", waterConfig.getL());
-        uniformData.setFloat("amplitude", waterConfig.getAmplitude());
-        uniformData.setFloat("windspeed", waterConfig.getWindSpeed());
-        uniformData.setVector2f("w", waterConfig.getWindDirection());
-        uniformData.setFloat("capillarSupressFactor", waterConfig.getCapillarSuppressFactor());
-        uniformData.update(application, 0);
+    private void initUniformBuffer() {
+        uniformBuffer = new UniformDataBuffer();
+        uniformBuffer.getData().setInt("N", waterConfig.getN());
+        uniformBuffer.getData().setInt("L", waterConfig.getL());
+        uniformBuffer.getData().setFloat("amplitude", waterConfig.getAmplitude());
+        uniformBuffer.getData().setFloat("windspeed", waterConfig.getWindSpeed());
+        uniformBuffer.getData().setVector2f("w", waterConfig.getWindDirection());
+        uniformBuffer.getData().setFloat("capillarSupressFactor", waterConfig.getCapillarSuppressFactor());
+        uniformBuffer.setDescriptor("default", new UniformDescriptor(VK_SHADER_STAGE_COMPUTE_BIT));
+        uniformBuffer.update(application, 0);
     }
 
     @Override
@@ -120,7 +141,7 @@ public class H0kComputeJob extends ComputeJob {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
         H0kComputeActionGroup h0kComputeActionGroup = new H0kComputeActionGroup(waterConfig.getN());
-        h0kComputeActionGroup.addComputeAction(new H0kComputeAction(h0kTexture, h0minuskTexture, noiseTexture1, noiseTexture2, noiseTexture3, noiseTexture4, uniformData));
+        h0kComputeActionGroup.addComputeAction(new H0kComputeAction(h0kTexture.getDescriptor("write"), h0minuskTexture.getDescriptor("write"), noiseTexture1.getDescriptor("compute"), noiseTexture2.getDescriptor("compute"), noiseTexture3.getDescriptor("compute"), noiseTexture4.getDescriptor("compute"), uniformBuffer.getDescriptor("default")));
         computeActionGroups.add(h0kComputeActionGroup);
 
         return computeActionGroups;
@@ -128,13 +149,13 @@ public class H0kComputeJob extends ComputeJob {
 
     @Override
     protected void cleanupInternal() {
-        uniformData.cleanup();
-        h0kTexture.cleanup();
-        h0minuskTexture.cleanup();
-        noiseTexture1.cleanup();
-        noiseTexture2.cleanup();
-        noiseTexture3.cleanup();
+        uniformBuffer.cleanup();
         noiseTexture4.cleanup();
+        noiseTexture3.cleanup();
+        noiseTexture2.cleanup();
+        noiseTexture1.cleanup();
+        h0minuskTexture.cleanup();
+        h0kTexture.cleanup();
         super.cleanupInternal();
     }
 }

@@ -2,15 +2,16 @@ package com.destrostudios.icetea.core.material;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
+import com.destrostudios.icetea.core.data.FieldsData;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.resource.descriptor.MaterialParamsDescriptor;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
-import com.destrostudios.icetea.core.data.UniformData;
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.HashMap;
-import java.util.function.Supplier;
 
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
 import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
@@ -18,7 +19,8 @@ import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
 public class Material extends LifecycleObject implements ContextCloneable {
 
     public Material() {
-        parameters = new UniformData();
+        parametersBuffer = new UniformDataBuffer();
+        parametersBuffer.setDescriptor("default", new MaterialParamsDescriptor());
     }
 
     public Material(Material material, CloneContext context) {
@@ -28,8 +30,8 @@ public class Material extends LifecycleObject implements ContextCloneable {
         tessellationControlShader = material.tessellationControlShader;
         tessellationEvaluationShader = material.tessellationEvaluationShader;
         geometryShader = material.geometryShader;
-        parameters = material.parameters.clone(context);
-        textureSuppliers.putAll(material.getTextureSuppliers());
+        parametersBuffer = material.parametersBuffer.clone(context);
+        textures.putAll(material.getTextures());
         transparent = material.transparent;
         cullMode = material.cullMode;
         depthTest = material.depthTest;
@@ -55,9 +57,9 @@ public class Material extends LifecycleObject implements ContextCloneable {
     @Setter
     private Shader geometryShader;
     @Getter
-    private UniformData parameters;
+    private UniformDataBuffer parametersBuffer;
     @Getter
-    private HashMap<String, Supplier<Texture>> textureSuppliers = new HashMap<>();
+    private HashMap<String, Texture> textures = new HashMap<>();
     private int usingGeometriesCount;
     @Setter
     @Getter
@@ -74,26 +76,22 @@ public class Material extends LifecycleObject implements ContextCloneable {
     @Setter
     @Getter
     private int fillMode = VK_POLYGON_MODE_FILL;
-    @Getter
-    protected boolean commandBufferOutdated;
 
     @Override
     protected void update(float tpf) {
         super.update(tpf);
-        parameters.update(application, tpf);;
-        commandBufferOutdated = parameters.isWasBufferRecreated();
-        for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
-            Texture texture = textureSupplier.get();
-            texture.update(application, tpf);
+        application.getSwapChain().setResourceActive(parametersBuffer);
+        for (Texture texture : textures.values()) {
+            application.getSwapChain().setResourceActive(texture);
         }
     }
 
-    public void setTexture(String name, Texture texture) {
-        setTexture(name, () -> texture);
+    public FieldsData getParameters() {
+        return parametersBuffer.getData();
     }
 
-    public void setTexture(String name, Supplier<Texture> textureSupplier) {
-        textureSuppliers.put(name, textureSupplier);
+    public void setTexture(String name, Texture texture) {
+        textures.put(name, texture);
     }
 
     public void increaseUsingGeometriesCount() {
@@ -110,13 +108,9 @@ public class Material extends LifecycleObject implements ContextCloneable {
 
     @Override
     protected void cleanupInternal() {
-        parameters.cleanup();
-        for (Supplier<Texture> textureSupplier : textureSuppliers.values()) {
-            Texture texture = textureSupplier.get();
-            // Can already be cleanuped by the provider (e.g. the responsible render job)
-            if (texture != null) {
-                texture.cleanup();
-            }
+        parametersBuffer.cleanup();
+        for (Texture texture : textures.values()) {
+            texture.cleanup();
         }
         super.cleanupInternal();
     }

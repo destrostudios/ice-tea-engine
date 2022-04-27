@@ -1,20 +1,18 @@
 package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeAction;
-import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptor;
-import com.destrostudios.icetea.core.material.descriptor.NormalMapDescriptor;
-import com.destrostudios.icetea.core.texture.Texture;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class NormalMapComputeAction extends ComputeAction {
 
-    private Texture normalMapTexture;
-    private Texture dyTexture;
+    private ResourceDescriptor<?> normalMapTextureDescriptor;
+    private ResourceDescriptor<?> dyTextureDescriptor;
 
     @Override
-    protected void fillMaterialDescriptorSet() {
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("normalMap", normalMapTexture, "rgba32f", true));
-        materialDescriptorSet.addDescriptor(new NormalMapDescriptor("heightMap", dyTexture));
+    protected void fillResourceDescriptorSet() {
+        resourceDescriptorSet.setDescriptor("normalMap", normalMapTextureDescriptor);
+        resourceDescriptorSet.setDescriptor("heightMap", dyTextureDescriptor);
     }
 }

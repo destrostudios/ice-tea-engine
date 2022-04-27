@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
-import com.destrostudios.icetea.core.*;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
+import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
@@ -16,20 +15,21 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadRenderJob> {
 
-    public FullScreenQuadRenderPipeline(Application application, FullScreenQuadRenderJob renderJob) {
-        super(application, renderJob);
+    public FullScreenQuadRenderPipeline(FullScreenQuadRenderJob renderJob) {
+        super(renderJob);
     }
 
     @Override
-    public void init() {
+    protected void init() {
+        super.init();
         try (MemoryStack stack = stackPush()) {
-            MaterialDescriptorSet materialDescriptorSet = renderJob.getMaterialDescriptorSet();
-            String materialDescriptorSetShaderDeclaration = materialDescriptorSet.getShaderDeclaration();
+            ResourceDescriptorSet resourceDescriptorSet = renderJob.getResourceDescriptorSet();
+            String resourceDescriptorSetShaderDeclaration = resourceDescriptorSet.getShaderDeclaration();
 
             Shader vertShader = new Shader("com/destrostudios/icetea/core/shaders/fullScreenQuad.vert");
             Shader fragShader = renderJob.getFragmentShader();
-            long vertShaderModule = createShaderModule(vertShader, ShaderType.VERTEX_SHADER, materialDescriptorSetShaderDeclaration);
-            long fragShaderModule = createShaderModule(fragShader, ShaderType.FRAGMENT_SHADER, materialDescriptorSetShaderDeclaration);
+            long vertShaderModule = createShaderModule(vertShader, ShaderType.VERTEX_SHADER, resourceDescriptorSetShaderDeclaration);
+            long fragShaderModule = createShaderModule(fragShader, ShaderType.FRAGMENT_SHADER, resourceDescriptorSetShaderDeclaration);
 
             VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(2, stack);
             ByteBuffer entryPoint = stack.UTF8("main");
@@ -127,7 +127,7 @@ public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadR
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-            pipelineLayoutInfo.pSetLayouts(stack.longs(materialDescriptorSet.getSetLayout().getDescriptorSetLayout()));
+            pipelineLayoutInfo.pSetLayouts(resourceDescriptorSet.getDescriptorSetLayouts(stack));
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
             int result = vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout);

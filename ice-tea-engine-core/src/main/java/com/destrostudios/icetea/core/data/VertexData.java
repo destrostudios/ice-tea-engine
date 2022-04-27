@@ -5,15 +5,12 @@ import com.destrostudios.icetea.core.data.values.UniformValue;
 
 public class VertexData extends FieldsData {
 
-    public VertexData() { }
+    public VertexData() {
+        super(UniformValue::getSize);
+    }
 
     public VertexData(VertexData vertexData, CloneContext context) {
         super(vertexData, context);
-    }
-
-    @Override
-    protected int getSize(UniformValue<?> uniformValue) {
-        return uniformValue.getSize();
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.destrostudios.icetea.core.render.scene;
 
+import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderPipeline;
@@ -24,9 +24,13 @@ import static org.lwjgl.vulkan.VK12.*;
 
 public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
-    @Getter
+    public SceneRenderJob() {
+        multisampledColorTexture = new Texture();
+        multisampledDepthTexture = new Texture();
+        resolvedDepthTexture = new Texture();
+        resolvedDepthTexture.setDescriptor("default", new SimpleTextureDescriptor());
+    }
     private Texture multisampledColorTexture;
-    @Getter
     private Texture multisampledDepthTexture;
     @Getter
     private Texture resolvedDepthTexture;
@@ -35,7 +39,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     protected void init() {
         super.init();
         initRenderPass();
-        multisampledColorTexture = createMultisampledColorTexture();
+        initMultisampledColorTexture(multisampledColorTexture);
         initMultisampledDepthTexture();
         initResolvedDepthTexture();
         initFrameBuffers();
@@ -223,7 +227,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
-            multisampledDepthTexture = new Texture(image, imageMemory, imageView, finalLayout);
+            multisampledDepthTexture.set(image, imageMemory, imageView, finalLayout);
         }
     }
 
@@ -275,7 +279,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             }
             long imageSampler = pImageSampler.get(0);
 
-            resolvedDepthTexture = new Texture(image, imageMemory, imageView, finalLayout, imageSampler);
+            resolvedDepthTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
 
@@ -289,13 +293,13 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    public boolean isRendering(Geometry geometry) {
+    protected boolean isRendering(Geometry geometry) {
         return true;
     }
 
     @Override
-    public SceneGeometryRenderContext createGeometryRenderContext() {
-        return new SceneGeometryRenderContext(() -> application.getSceneCamera(), application.getBucketRenderer());
+    protected SceneGeometryRenderContext createGeometryRenderContext(Geometry geometry) {
+        return new SceneGeometryRenderContext(geometry, this, () -> application.getSceneCamera(), application.getBucketRenderer());
     }
 
     @Override
@@ -310,10 +314,10 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     @Override
     public void render(Consumer<RenderAction> actions) {
         application.getBucketRenderer().render(application.getRootNode(), geometry -> {
-            GeometryRenderContext<?> geometryRenderContext = geometry.getRenderContext(this);
-            if (geometryRenderContext != null) {
+            SceneGeometryRenderContext renderContext = getRenderContext(geometry);
+            if (renderContext != null) {
                 try (MemoryStack stack = stackPush()) {
-                    RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
+                    RenderPipeline<?> renderPipeline = renderContext.getRenderPipeline();
                     actions.accept((cb, cbi) -> vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline()));
                     LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
                     LongBuffer offsets = stack.longs(0);
@@ -321,7 +325,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
                     if (geometry.getMesh().getIndexBuffer() != null) {
                         actions.accept((cb, cbi) -> vkCmdBindIndexBuffer(cb, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32));
                     }
-                    actions.accept((cb, cbi) -> vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, stack.longs(geometryRenderContext.getDescriptorSet(cbi)), null));
+                    actions.accept((cb, cbi) -> vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, renderContext.getResourceDescriptorSet().getDescriptorSets(cbi, stack), null));
                     if (geometry.getMesh().getIndices() != null) {
                         actions.accept((cb, cbi) -> vkCmdDrawIndexed(cb, geometry.getMesh().getIndices().length, 1, 0, 0, 0));
                     } else {
@@ -337,16 +341,14 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
         super.update(tpf);
         multisampledColorTexture.update(application, tpf);
         multisampledDepthTexture.update(application, tpf);
-        resolvedDepthTexture.update(application, tpf);
+        application.getSwapChain().setResourceActive(resolvedDepthTexture);
     }
 
     @Override
     protected void cleanupInternal() {
-        if (isInitialized()) {
-            resolvedDepthTexture.cleanup();
-            multisampledDepthTexture.cleanup();
-            multisampledColorTexture.cleanup();
-        }
+        resolvedDepthTexture.cleanup();
+        multisampledDepthTexture.cleanup();
+        multisampledColorTexture.cleanup();
         super.cleanupInternal();
     }
 }

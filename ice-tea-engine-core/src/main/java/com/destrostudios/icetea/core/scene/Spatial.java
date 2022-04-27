@@ -9,8 +9,8 @@ import com.destrostudios.icetea.core.collision.CollisionResult_AABB_Ray;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.light.Light;
-import com.destrostudios.icetea.core.material.descriptor.AdditionalMaterialDescriptorProvider;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorWithLayout;
+import com.destrostudios.icetea.core.resource.AdditionalResourceDescriptorProvider;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import com.destrostudios.icetea.core.mesh.VertexPositionModifier;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
@@ -61,10 +61,8 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     @Getter
     @Setter
     private RenderBucketType renderBucket;
-    @Getter
-    protected boolean commandBufferOutdated;
     // TODO: Introduce TempVars
-    private LinkedList<MaterialDescriptorWithLayout> tmpAdditionalMaterialDescriptors = new LinkedList<>();
+    private LinkedList<ResourceDescriptor> tmpAdditionalResourceDescriptors = new LinkedList<>();
     private LinkedList<VertexPositionModifier> tmpVertexPositionModifiers = new LinkedList<>();
 
     @Override
@@ -76,7 +74,6 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
         }
         localTransform.updateMatrixIfNecessary();
         updateWorldTransform();
-        commandBufferOutdated = false;
     }
 
     public void updateWorldTransform() {
@@ -185,9 +182,6 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     }
 
     public void setParent(Node parent) {
-        if ((parent == null) && isAttachedToRoot()) {
-            onRemoveFromRoot();
-        }
         this.parent = parent;
     }
 
@@ -206,22 +200,17 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
         return false;
     }
 
-    protected void onRemoveFromRoot() {
-
-    }
-
-    protected List<MaterialDescriptorWithLayout> getAdditionalMaterialDescriptors(Geometry geometry) {
-        tmpAdditionalMaterialDescriptors.clear();
+    protected void addAdditionalResourceDescriptors(Geometry geometry, Map<String, ResourceDescriptor<?>> resourceDescriptors) {
+        tmpAdditionalResourceDescriptors.clear();
         if (parent != null) {
-            tmpAdditionalMaterialDescriptors.addAll(parent.getAdditionalMaterialDescriptors(geometry));
+            parent.addAdditionalResourceDescriptors(geometry, resourceDescriptors);
         }
         for (Control control : controls) {
-            if (control instanceof AdditionalMaterialDescriptorProvider) {
-                AdditionalMaterialDescriptorProvider additionalMaterialDescriptorProvider = (AdditionalMaterialDescriptorProvider) control;
-                tmpAdditionalMaterialDescriptors.addAll(additionalMaterialDescriptorProvider.getAdditionalMaterialDescriptors(geometry));
+            if (control instanceof AdditionalResourceDescriptorProvider) {
+                AdditionalResourceDescriptorProvider additionalResourceDescriptorProvider = (AdditionalResourceDescriptorProvider) control;
+                additionalResourceDescriptorProvider.addAdditionalResourceDescriptors(geometry, resourceDescriptors);
             }
         }
-        return tmpAdditionalMaterialDescriptors;
     }
 
     protected List<VertexPositionModifier> getVertexPositionModifiers() {

@@ -1,31 +1,34 @@
 package com.destrostudios.icetea.core.render;
 
-import com.destrostudios.icetea.core.material.descriptor.*;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
+import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
-public abstract class EssentialGeometryRenderContext<RJ extends RenderJob<?>> extends GeometryRenderContext<RJ> {
+public abstract class EssentialGeometryRenderContext<RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> extends GeometryRenderContext<RJ, RP> {
+
+    public EssentialGeometryRenderContext(Geometry geometry, RJ renderJob) {
+        super(geometry, renderJob);
+    }
+    // TODO: Introduce TempVars
+    private HashMap<String, ResourceDescriptor<?>> tmpAdditionalResourceDescriptors = new HashMap<>();
 
     @Override
-    protected void fillMaterialDescriptorSet(MaterialDescriptorSetLayout descriptorSetLayout, MaterialDescriptorSet descriptorSet) {
-        descriptorSetLayout.addDescriptorLayout(new GeometryTransformDescriptorLayout());
-        descriptorSet.addDescriptor(new GeometryTransformDescriptor("geometry", geometry));
-
-        for (MaterialDescriptorWithLayout descriptorWithLayout : geometry.getAdditionalMaterialDescriptors()) {
-            descriptorSetLayout.addDescriptorLayout(descriptorWithLayout.getLayout());
-            descriptorSet.addDescriptor(descriptorWithLayout.getDescriptor());
+    protected void init() {
+        super.init();
+        resourceDescriptorSet.setDescriptor("geometry", geometry.getTransformUniformBuffer().getDescriptor("default"));
+        tmpAdditionalResourceDescriptors.clear();
+        geometry.addAdditionalResourceDescriptors(tmpAdditionalResourceDescriptors);
+        for (Map.Entry<String, ResourceDescriptor<?>> entry : tmpAdditionalResourceDescriptors.entrySet()) {
+            resourceDescriptorSet.setDescriptor(entry.getKey(), entry.getValue());
         }
-
         if (geometry.getMaterial().getParameters().getSize() > 0) {
-            descriptorSetLayout.addDescriptorLayout(new MaterialParamsDescriptorLayout());
-            descriptorSet.addDescriptor(new MaterialParamsDescriptor("params", geometry.getMaterial()));
+            resourceDescriptorSet.setDescriptor("params", geometry.getMaterial().getParametersBuffer().getDescriptor("default"));
         }
-
-        for (Map.Entry<String, Supplier<Texture>> entry : geometry.getMaterial().getTextureSuppliers().entrySet()) {
-            descriptorSetLayout.addDescriptorLayout(new SimpleTextureDescriptorLayout());
-            descriptorSet.addDescriptor(new SimpleTextureDescriptor(entry.getKey(), entry.getValue().get()));
+        for (Map.Entry<String, Texture> entry : geometry.getMaterial().getTextures().entrySet()) {
+            resourceDescriptorSet.setDescriptor(entry.getKey(), entry.getValue().getDescriptor("default"));
         }
     }
 }

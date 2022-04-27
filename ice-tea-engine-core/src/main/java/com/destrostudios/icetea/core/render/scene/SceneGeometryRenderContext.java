@@ -2,70 +2,43 @@ package com.destrostudios.icetea.core.render.scene;
 
 import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.light.Light;
-import com.destrostudios.icetea.core.material.descriptor.*;
 import com.destrostudios.icetea.core.render.EssentialGeometryRenderContext;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
+import com.destrostudios.icetea.core.scene.Geometry;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<SceneRenderJob> {
+public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<SceneRenderJob, SceneRenderPipeline> {
 
-    public SceneGeometryRenderContext(Supplier<Camera> defaultCameraSupplier, BucketRenderer bucketRenderer) {
+    public SceneGeometryRenderContext(Geometry geometry, SceneRenderJob renderJob, Supplier<Camera> defaultCameraSupplier, BucketRenderer bucketRenderer) {
+        super(geometry, renderJob);
         this.defaultCameraSupplier = defaultCameraSupplier;
         this.bucketRenderer = bucketRenderer;
     }
     private Supplier<Camera> defaultCameraSupplier;
     private BucketRenderer bucketRenderer;
-    private SceneRenderPipeline sceneRenderPipeline;
 
     @Override
-    protected void fillMaterialDescriptorSet(MaterialDescriptorSetLayout descriptorSetLayout, MaterialDescriptorSet descriptorSet) {
-        super.fillMaterialDescriptorSet(descriptorSetLayout,descriptorSet);
+    protected SceneRenderPipeline createRenderPipeline() {
+        return new SceneRenderPipeline(renderJob, geometry, this);
+    }
 
+    @Override
+    protected void setDescriptors() {
         Camera forcedCamera = bucketRenderer.getBucket(geometry).getForcedCamera();
         Camera camera = ((forcedCamera != null) ? forcedCamera : defaultCameraSupplier.get());
-        descriptorSetLayout.addDescriptorLayout(new CameraTransformDescriptorLayout());
-        descriptorSet.addDescriptor(new CameraTransformDescriptor("camera", camera));
+        resourceDescriptorSet.setDescriptor("camera", camera.getTransformUniformBuffer().getDescriptor("default"));
 
         // TODO: Handle multiple lights + shadows (use a descriptor binding array)
         List<Light> affectingLights = geometry.getAffectingLights();
         for (Light light : affectingLights) {
-            descriptorSetLayout.addDescriptorLayout(new LightDescriptorLayout());
-            descriptorSet.addDescriptor(new LightDescriptor("light", light));
-
+            resourceDescriptorSet.setDescriptor("light", light.getUniformBuffer().getDescriptor("default"));
             for (ShadowMapRenderJob shadowMapRenderJob : light.getShadowMapRenderJobs()) {
-                descriptorSetLayout.addDescriptorLayout(new ShadowMapLightTransformDescriptorLayout());
-                descriptorSet.addDescriptor(new ShadowMapLightTransformDescriptor("shadowMapLight", shadowMapRenderJob));
-
-                descriptorSetLayout.addDescriptorLayout(new ShadowMapTextureDescriptorLayout());
-                descriptorSet.addDescriptor(new ShadowMapTextureDescriptor("shadowMapTexture", shadowMapRenderJob));
+                resourceDescriptorSet.setDescriptor("shadowMapLight", shadowMapRenderJob.getLightTransformUniformBuffer().getDescriptor("default"));
+                resourceDescriptorSet.setDescriptor("shadowMapTexture", shadowMapRenderJob.getShadowMapTexture().getDescriptor("default"));
             }
         }
-    }
-
-    @Override
-    public void createDescriptorDependencies() {
-        super.createDescriptorDependencies();
-        sceneRenderPipeline = new SceneRenderPipeline(application, renderJob, geometry, this);
-        sceneRenderPipeline.init();
-    }
-
-    @Override
-    public void cleanupDescriptorDependencies() {
-        if (materialDescriptorSet != null) {
-            materialDescriptorSet.getSetLayout().cleanupDescriptorSetLayout();
-        }
-        super.cleanupDescriptorDependencies();
-        if (sceneRenderPipeline != null) {
-            sceneRenderPipeline.cleanup();
-            sceneRenderPipeline = null;
-        }
-    }
-
-    @Override
-    public SceneRenderPipeline getRenderPipeline() {
-        return sceneRenderPipeline;
     }
 }

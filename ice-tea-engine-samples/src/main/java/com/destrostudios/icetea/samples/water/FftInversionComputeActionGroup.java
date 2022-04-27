@@ -1,10 +1,9 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.data.ByteBufferData;
+import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
 import com.destrostudios.icetea.core.compute.ComputeAction;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.shader.Shader;
-import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptorLayout;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
@@ -13,19 +12,12 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class FftInversionComputeActionGroup extends ComputeActionGroup {
 
-    public FftInversionComputeActionGroup(int n, ByteBufferData pushConstants) {
+    public FftInversionComputeActionGroup(int n, ByteDataBuffer pushConstants) {
         this.n = n;
         this.pushConstants = pushConstants;
     }
     private int n;
-    private ByteBufferData pushConstants;
-
-    @Override
-    protected void fillMaterialDescriptorLayout() {
-        materialDescriptorSetLayout.addDescriptorLayout(new ComputeImageDescriptorLayout());
-        materialDescriptorSetLayout.addDescriptorLayout(new ComputeImageDescriptorLayout());
-        materialDescriptorSetLayout.addDescriptorLayout(new ComputeImageDescriptorLayout());
-    }
+    private ByteDataBuffer pushConstants;
 
     @Override
     public Shader getComputeShader() {
@@ -34,7 +26,7 @@ public class FftInversionComputeActionGroup extends ComputeActionGroup {
 
     @Override
     protected int getPushConstantsSize() {
-        return pushConstants.getSize();
+        return pushConstants.getData().getSize();
     }
 
     @Override
@@ -43,7 +35,7 @@ public class FftInversionComputeActionGroup extends ComputeActionGroup {
         try (MemoryStack stack = stackPush()) {
             vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getByteBuffer());
             for (ComputeAction computeAction : computeActions) {
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, stack.longs(computeAction.getDescriptorSets().get(0)), null);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, computeAction.getResourceDescriptorSet().getDescriptorSets(0, stack), null);
                 vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
             }
         }

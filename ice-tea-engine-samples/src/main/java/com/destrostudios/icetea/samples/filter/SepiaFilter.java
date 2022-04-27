@@ -19,9 +19,9 @@ public class SepiaFilter extends Filter {
     private Vector4f color2;
 
     @Override
-    protected void updateUniformData() {
-        super.updateUniformData();
-        uniformData.setVector4f("color1", color1);
-        uniformData.setVector4f("color2", color2);
+    protected void updateUniformBuffer() {
+        super.updateUniformBuffer();
+        uniformBuffer.getData().setVector4f("color1", color1);
+        uniformBuffer.getData().setVector4f("color2", color2);
     }
 }

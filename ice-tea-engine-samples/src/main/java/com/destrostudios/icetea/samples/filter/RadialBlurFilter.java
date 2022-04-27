@@ -18,9 +18,9 @@ public class RadialBlurFilter extends Filter {
     private float sampleStrength;
 
     @Override
-    protected void updateUniformData() {
-        super.updateUniformData();
-        uniformData.setFloat("sampleDist", sampleDist);
-        uniformData.setFloat("sampleStrength", sampleStrength);
+    protected void updateUniformBuffer() {
+        super.updateUniformBuffer();
+        uniformBuffer.getData().setFloat("sampleDist", sampleDist);
+        uniformBuffer.getData().setFloat("sampleStrength", sampleStrength);
     }
 }

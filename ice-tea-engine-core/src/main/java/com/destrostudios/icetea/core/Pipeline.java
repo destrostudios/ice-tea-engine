@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core;
 
+import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import lombok.Getter;
@@ -13,18 +14,12 @@ import java.nio.LongBuffer;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class Pipeline {
+public abstract class Pipeline extends LifecycleObject {
 
-    public Pipeline(Application application) {
-        this.application = application;
-    }
-    protected Application application;
     @Getter
     protected long pipelineLayout;
     @Getter
     protected long pipeline;
-
-    public abstract void init();
 
     protected void createShaderStage(VkPipelineShaderStageCreateInfo.Buffer shaderStages, int shaderStageIndex, int shaderStage, long shaderModule, MemoryStack stack) {
         VkPipelineShaderStageCreateInfo shaderStageCreateInfo = shaderStages.get(shaderStageIndex);
@@ -51,8 +46,12 @@ public abstract class Pipeline {
         }
     }
 
-    public void cleanup() {
-        vkDestroyPipeline(application.getLogicalDevice(), pipeline, null);
-        vkDestroyPipelineLayout(application.getLogicalDevice(), pipelineLayout, null);
+    @Override
+    protected void cleanupInternal() {
+        if (application != null) {
+            vkDestroyPipeline(application.getLogicalDevice(), pipeline, null);
+            vkDestroyPipelineLayout(application.getLogicalDevice(), pipelineLayout, null);
+        }
+        super.cleanupInternal();
     }
 }

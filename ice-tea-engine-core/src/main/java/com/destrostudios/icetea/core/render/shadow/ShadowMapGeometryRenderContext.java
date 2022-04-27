@@ -1,41 +1,21 @@
 package com.destrostudios.icetea.core.render.shadow;
 
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSet;
-import com.destrostudios.icetea.core.material.descriptor.MaterialDescriptorSetLayout;
-import com.destrostudios.icetea.core.material.descriptor.ShadowMapLightTransformDescriptor;
-import com.destrostudios.icetea.core.material.descriptor.ShadowMapLightTransformDescriptorLayout;
 import com.destrostudios.icetea.core.render.EssentialGeometryRenderContext;
+import com.destrostudios.icetea.core.scene.Geometry;
 
-public class ShadowMapGeometryRenderContext extends EssentialGeometryRenderContext<ShadowMapRenderJob> {
+public class ShadowMapGeometryRenderContext extends EssentialGeometryRenderContext<ShadowMapRenderJob, ShadowMapRenderPipeline> {
 
-    private ShadowMapRenderPipeline shadowMapRenderPipeline;
-
-    @Override
-    protected void fillMaterialDescriptorSet(MaterialDescriptorSetLayout descriptorSetLayout, MaterialDescriptorSet descriptorSet) {
-        super.fillMaterialDescriptorSet(descriptorSetLayout, descriptorSet);
-
-        descriptorSetLayout.addDescriptorLayout(new ShadowMapLightTransformDescriptorLayout());
-        descriptorSet.addDescriptor(new ShadowMapLightTransformDescriptor("camera", renderJob));
+    public ShadowMapGeometryRenderContext(Geometry geometry, ShadowMapRenderJob renderJob) {
+        super(geometry, renderJob);
     }
 
     @Override
-    public void createDescriptorDependencies() {
-        super.createDescriptorDependencies();
-        shadowMapRenderPipeline = new ShadowMapRenderPipeline(application, renderJob, geometry, this);
-        shadowMapRenderPipeline.init();
+    protected ShadowMapRenderPipeline createRenderPipeline() {
+        return new ShadowMapRenderPipeline(renderJob, geometry, this);
     }
 
     @Override
-    public void cleanupDescriptorDependencies() {
-        super.cleanupDescriptorDependencies();
-        if (shadowMapRenderPipeline != null) {
-            shadowMapRenderPipeline.cleanup();
-            shadowMapRenderPipeline = null;
-        }
-    }
-
-    @Override
-    public ShadowMapRenderPipeline getRenderPipeline() {
-        return shadowMapRenderPipeline;
+    protected void setDescriptors() {
+        resourceDescriptorSet.setDescriptor("camera", renderJob.getLightTransformUniformBuffer().getDescriptor("default"));
     }
 }

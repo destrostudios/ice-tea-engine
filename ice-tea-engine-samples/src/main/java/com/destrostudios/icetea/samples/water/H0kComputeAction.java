@@ -1,31 +1,28 @@
 package com.destrostudios.icetea.samples.water;
 
 import com.destrostudios.icetea.core.compute.ComputeAction;
-import com.destrostudios.icetea.core.texture.Texture;
-import com.destrostudios.icetea.core.data.UniformData;
-import com.destrostudios.icetea.core.material.descriptor.ComputeImageDescriptor;
-import com.destrostudios.icetea.core.material.descriptor.UniformDescriptor;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class H0kComputeAction extends ComputeAction {
 
-    private Texture h0kTexture;
-    private Texture h0minuskTexture;
-    private Texture noiseTexture1;
-    private Texture noiseTexture2;
-    private Texture noiseTexture3;
-    private Texture noiseTexture4;
-    private UniformData uniformData;
+    private ResourceDescriptor<?> h0kTextureDescriptorWrite;
+    private ResourceDescriptor<?> h0minuskTextureDescriptorWrite;
+    private ResourceDescriptor<?> noiseTexture1Descriptor;
+    private ResourceDescriptor<?> noiseTexture2Descriptor;
+    private ResourceDescriptor<?> noiseTexture3Descriptor;
+    private ResourceDescriptor<?> noiseTexture4Descriptor;
+    private ResourceDescriptor<?> uniformDescriptor;
 
     @Override
-    protected void fillMaterialDescriptorSet() {
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("tilde_h0k", h0kTexture, "rgba32f", true));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("tilde_h0minusk", h0minuskTexture, "rgba32f", true));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("noise_r0", noiseTexture1, "rgba8", false));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("noise_i0", noiseTexture2, "rgba8", false));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("noise_r1", noiseTexture3, "rgba8", false));
-        materialDescriptorSet.addDescriptor(new ComputeImageDescriptor("noise_i1", noiseTexture4, "rgba8", false));
-        materialDescriptorSet.addDescriptor(new UniformDescriptor("constants", uniformData));
+    protected void fillResourceDescriptorSet() {
+        resourceDescriptorSet.setDescriptor("tilde_h0k", h0kTextureDescriptorWrite);
+        resourceDescriptorSet.setDescriptor("tilde_h0minusk", h0minuskTextureDescriptorWrite);
+        resourceDescriptorSet.setDescriptor("noise_r0", noiseTexture1Descriptor);
+        resourceDescriptorSet.setDescriptor("noise_i0", noiseTexture2Descriptor);
+        resourceDescriptorSet.setDescriptor("noise_r1", noiseTexture3Descriptor);
+        resourceDescriptorSet.setDescriptor("noise_i1", noiseTexture4Descriptor);
+        resourceDescriptorSet.setDescriptor("constants", uniformDescriptor);
     }
 }
