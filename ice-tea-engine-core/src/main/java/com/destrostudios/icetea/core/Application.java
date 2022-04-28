@@ -6,6 +6,7 @@ import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
+import com.destrostudios.icetea.core.lifecycle.LifecycleManager;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.profiler.Profiler;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
@@ -68,6 +69,8 @@ public abstract class Application {
     protected ApplicationConfig config;
     @Getter
     protected Profiler profiler;
+    @Getter
+    protected LifecycleManager lifecycleManager;
 
     @Getter
     private PhysicalDeviceManager physicalDeviceManager;
@@ -136,6 +139,7 @@ public abstract class Application {
     private void create() {
         LOGGER.debug("Creating application...");
         profiler = new Profiler();
+        lifecycleManager = new LifecycleManager();
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
@@ -164,7 +168,7 @@ public abstract class Application {
         swapChain = new SwapChain();
         swapChain.update(this, 0);
         LOGGER.debug("Preloading render dependencies...");
-        preloadRenderDependencies();
+        updateRenderDependencies();
         LOGGER.debug("Preloaded render dependencies.");
         LOGGER.debug("Created application.");
     }
@@ -388,9 +392,11 @@ public abstract class Application {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
             float tpf = calculateNextTpf();
+            lifecycleManager.onNewCycle();
             inputManager.update(this, tpf);
             update(tpf);
             updateRenderDependencies(tpf);
+            cleanupAfterUpdate();
             int imageIndex = swapChain.acquireNextImageIndex();
             if (imageIndex != -1) {
                 swapChain.drawFrame(imageIndex);
@@ -419,7 +425,7 @@ public abstract class Application {
 
     }
 
-    public void preloadRenderDependencies() {
+    public void updateRenderDependencies() {
         updateRenderDependencies(0);
     }
 
@@ -437,6 +443,10 @@ public abstract class Application {
         }
         rootNode.update(this, tpf);
         swapChain.update(this, tpf);
+    }
+
+    protected void cleanupAfterUpdate() {
+
     }
 
     public int findMemoryType(int typeFilter, int properties) {
@@ -527,6 +537,11 @@ public abstract class Application {
         glfwDestroyWindow(window);
         glfwTerminate();
         LOGGER.debug("Cleaned up application.");
+
+        int inactiveObjectsCount = lifecycleManager.getInactiveObjects().size();
+        if (inactiveObjectsCount > 0) {
+            LOGGER.warn("There are still {} inactive lifecycle objects after cleaning up the whole application.", inactiveObjectsCount);
+        }
     }
 
     public void cleanupRenderDependencies() {

@@ -457,7 +457,6 @@ public class TestApplication extends Application {
                     break;
                 case GLFW_KEY_DELETE:
                     if (keyEvent.getAction() == GLFW_PRESS) {
-                        inputManager.cleanup();
                         assetManager.cleanup();
                         cleanupRenderDependencies();
                     }
@@ -516,7 +515,7 @@ public class TestApplication extends Application {
         bitmapTextDynamic.setText("Hi");
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
-        preloadRenderDependencies();
+        updateRenderDependencies();
     }
 
     @Override

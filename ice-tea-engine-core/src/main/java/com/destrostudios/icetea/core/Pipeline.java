@@ -48,10 +48,8 @@ public abstract class Pipeline extends LifecycleObject {
 
     @Override
     protected void cleanupInternal() {
-        if (application != null) {
-            vkDestroyPipeline(application.getLogicalDevice(), pipeline, null);
-            vkDestroyPipelineLayout(application.getLogicalDevice(), pipelineLayout, null);
-        }
+        vkDestroyPipeline(application.getLogicalDevice(), pipeline, null);
+        vkDestroyPipelineLayout(application.getLogicalDevice(), pipelineLayout, null);
         super.cleanupInternal();
     }
 }

@@ -11,8 +11,10 @@ public class LifecycleObject {
         if (this.application == null) {
             this.application = application;
             executeProfiled(this::init, "init");
+            application.getLifecycleManager().onInit(this);
         }
         executeProfiled(() -> update(tpf), "update");
+        application.getLifecycleManager().onUpdate(this);
     }
 
     protected void init() {
@@ -28,8 +30,11 @@ public class LifecycleObject {
     }
 
     public final void cleanup() {
-        executeProfiled(this::cleanupInternal, "cleanup");
-        application = null;
+        if (application != null) {
+            executeProfiled(this::cleanupInternal, "cleanup");
+            application.getLifecycleManager().onCleanup(this);
+            application = null;
+        }
     }
 
     protected void cleanupInternal() {

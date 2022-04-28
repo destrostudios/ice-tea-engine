@@ -178,10 +178,8 @@ public abstract class ResourceDescriptor<R extends Resource> extends LifecycleOb
 
     @Override
     protected void cleanupInternal() {
-        if (application != null) {
-            vkDestroyDescriptorPool(application.getLogicalDevice(), descriptorPool, null);
-            vkDestroyDescriptorSetLayout(application.getLogicalDevice(), descriptorSetLayout, null);
-        }
+        vkDestroyDescriptorPool(application.getLogicalDevice(), descriptorPool, null);
+        vkDestroyDescriptorSetLayout(application.getLogicalDevice(), descriptorSetLayout, null);
         super.cleanupInternal();
     }
 
