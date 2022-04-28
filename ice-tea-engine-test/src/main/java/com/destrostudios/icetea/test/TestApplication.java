@@ -526,6 +526,7 @@ public class TestApplication extends Application {
             hasAddedDennis = true;
         } else if ((time > 24) && (!hasRemovedDennis)) {
             nodeRotating.remove(nodeDennis);
+            nodeDennis.cleanup();
             hasRemovedDennis = true;
         }
 
