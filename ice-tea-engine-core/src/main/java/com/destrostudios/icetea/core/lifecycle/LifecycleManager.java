@@ -1,8 +1,6 @@
 package com.destrostudios.icetea.core.lifecycle;
 
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -10,8 +8,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LifecycleManager {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleManager.class);
 
     @Getter
     private LinkedList<LifecycleObject> initializedObjects = new LinkedList<>();
@@ -36,16 +32,6 @@ public class LifecycleManager {
 
     void onCleanup(LifecycleObject lifecycleObject) {
         initializedObjects.remove(lifecycleObject);
-    }
-
-    public void cleanupInactiveObjects() {
-        for (LifecycleObject lifecycleObject : getInactiveObjects().toArray(new LifecycleObject[0])) {
-            lifecycleObject.cleanup();
-        }
-        int newInactiveObjectsCount = getInactiveObjects().size();
-        if (newInactiveObjectsCount > 0) {
-            LOGGER.warn("There are still {} inactive lifecycle objects after cleaning up all previously inactive ones.", newInactiveObjectsCount);
-        }
     }
 
     public List<LifecycleObject> getInactiveObjects() {
