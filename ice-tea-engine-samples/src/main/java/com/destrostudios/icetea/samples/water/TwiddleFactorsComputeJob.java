@@ -135,6 +135,14 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
     }
 
     @Override
+    protected void prepareResourcesUpdate() {
+        super.prepareResourcesUpdate();
+        setResourceActive(twiddleFactorsTexture);
+        setResourceActive(storageBuffer);
+        setResourceActive(uniformBuffer);
+    }
+
+    @Override
     protected void cleanupInternal() {
         uniformBuffer.cleanup();
         storageBuffer.cleanup();

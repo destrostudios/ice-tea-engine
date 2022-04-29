@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.resource.Resource;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.lwjgl.PointerBuffer;
@@ -9,6 +10,7 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -17,6 +19,9 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class ComputeJob extends LifecycleObject {
 
+    protected ComputeJob() {
+        activeResources = new HashSet<>();
+    }
     private List<ComputeActionGroup> computeActionGroups;
     private VkCommandBuffer commandBuffer;
     @Getter
@@ -24,6 +29,7 @@ public abstract class ComputeJob extends LifecycleObject {
     private long fence;
     private Long waitSemaphore;
     private Integer waitDstStage;
+    private HashSet<Resource> activeResources;
 
     @Override
     protected void init() {
@@ -88,6 +94,27 @@ public abstract class ComputeJob extends LifecycleObject {
     public void setWait(long waitSemaphore, int waitDstStage) {
         this.waitSemaphore = waitSemaphore;
         this.waitDstStage = waitDstStage;
+    }
+
+    @Override
+    protected void update(float tpf) {
+        super.update(tpf);
+        for (ComputeActionGroup computeActionGroup : computeActionGroups) {
+            computeActionGroup.update(application, 0);
+        }
+        prepareResourcesUpdate();
+        for (Resource resource : activeResources) {
+            resource.update(application, tpf);
+        }
+        activeResources.clear();
+    }
+
+    protected void prepareResourcesUpdate() {
+
+    }
+
+    protected void setResourceActive(Resource resource) {
+        activeResources.add(resource);
     }
 
     public void submit() {

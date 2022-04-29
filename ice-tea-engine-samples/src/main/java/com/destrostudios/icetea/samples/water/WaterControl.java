@@ -131,6 +131,10 @@ public class WaterControl extends Control {
         motion += tpf * waterConfig.getMotionSpeed();
         distortion += tpf * waterConfig.getDistortionSpeed();
 
+        twiddleFactorsComputeJob.update(application, tpf);
+
+        h0kComputeJob.update(application, tpf);
+
         hktComputeJob.setTime(time);
         hktComputeJob.update(application, tpf);
         hktComputeJob.submit();

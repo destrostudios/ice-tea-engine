@@ -25,6 +25,7 @@ public class FftComputeJob extends ComputeJob {
         this.n = n;
         this.twiddleFactorsComputeJob = twiddleFactorsComputeJob;
         this.hktComputeJob = hktComputeJob;
+        inversionPushConstants = new ByteDataBuffer();
         dxTexture = new Texture();
         dxTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
         dxTexture.setDescriptor("default", new SimpleTextureDescriptor());
@@ -45,6 +46,9 @@ public class FftComputeJob extends ComputeJob {
     private int n;
     private TwiddleFactorsComputeJob twiddleFactorsComputeJob;
     private HktComputeJob hktComputeJob;
+    private ByteDataBuffer[] horizontalPushConstants;
+    private ByteDataBuffer[] verticalPushConstants;
+    private ByteDataBuffer inversionPushConstants;
     @Getter
     private Texture dxTexture;
     @Getter
@@ -141,8 +145,8 @@ public class FftComputeJob extends ComputeJob {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
         int stages = (int) MathUtil.log2(n);
-        ByteDataBuffer[] horizontalPushConstants = new ByteDataBuffer[stages];
-        ByteDataBuffer[] verticalPushConstants = new ByteDataBuffer[stages];
+        horizontalPushConstants = new ByteDataBuffer[stages];
+        verticalPushConstants = new ByteDataBuffer[stages];
         int pingPongIndex = 0;
         for (int i = 0; i < stages; i++) {
             horizontalPushConstants[i] = new ByteDataBuffer();
@@ -165,7 +169,6 @@ public class FftComputeJob extends ComputeJob {
             pingPongIndex %= 2;
         }
 
-        ByteDataBuffer inversionPushConstants = new ByteDataBuffer();
         inversionPushConstants.getData().setInt("n", n);
         inversionPushConstants.getData().setInt("pingPongIndex", pingPongIndex);
         inversionPushConstants.update(application, 0);
@@ -191,6 +194,24 @@ public class FftComputeJob extends ComputeJob {
     }
 
     @Override
+    protected void prepareResourcesUpdate() {
+        super.prepareResourcesUpdate();
+        for (ByteDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
+            setResourceActive(horizontalPushConstantsBuffer);
+        }
+        for (ByteDataBuffer verticalPushConstantsBuffer : verticalPushConstants) {
+            setResourceActive(verticalPushConstantsBuffer);
+        }
+        setResourceActive(inversionPushConstants);
+        setResourceActive(dxTexture);
+        setResourceActive(dyTexture);
+        setResourceActive(dzTexture);
+        setResourceActive(dxPingPongTexture);
+        setResourceActive(dyPingPongTexture);
+        setResourceActive(dzPingPongTexture);
+    }
+
+    @Override
     protected void cleanupInternal() {
         dzPingPongTexture.cleanup();
         dyPingPongTexture.cleanup();
@@ -198,6 +219,12 @@ public class FftComputeJob extends ComputeJob {
         dzTexture.cleanup();
         dyTexture.cleanup();
         dxTexture.cleanup();
+        for (ByteDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
+            horizontalPushConstantsBuffer.cleanup();
+        }
+        for (ByteDataBuffer verticalPushConstantsBuffer : horizontalPushConstants) {
+            verticalPushConstantsBuffer.cleanup();
+        }
         super.cleanupInternal();
     }
 }

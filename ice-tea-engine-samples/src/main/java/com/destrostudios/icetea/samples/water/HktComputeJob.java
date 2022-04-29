@@ -143,10 +143,13 @@ public class HktComputeJob extends ComputeJob {
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    protected void prepareResourcesUpdate() {
+        super.prepareResourcesUpdate();
+        setResourceActive(dxCoefficientsTexture);
+        setResourceActive(dyCoefficientsTexture);
+        setResourceActive(dzCoefficientsTexture);
         uniformBuffer.getData().setFloat("t", time);
-        uniformBuffer.update(application, 0);
+        setResourceActive(uniformBuffer);
     }
 
     @Override

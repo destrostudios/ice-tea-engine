@@ -22,9 +22,6 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     @Override
     protected void init() {
         super.init();
-        for (ComputeAction computeAction : computeActions) {
-            computeAction.update(application, 0);
-        }
         computePipeline = new ComputePipeline(this);
     }
 
@@ -51,6 +48,9 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     @Override
     protected void update(float tpf) {
         super.update(tpf);
+        for (ComputeAction computeAction : computeActions) {
+            computeAction.update(application, tpf);
+        }
         computePipeline.update(application, tpf);
     }
 

@@ -148,6 +148,18 @@ public class H0kComputeJob extends ComputeJob {
     }
 
     @Override
+    protected void prepareResourcesUpdate() {
+        super.prepareResourcesUpdate();
+        setResourceActive(h0kTexture);
+        setResourceActive(h0minuskTexture);
+        setResourceActive(noiseTexture1);
+        setResourceActive(noiseTexture2);
+        setResourceActive(noiseTexture3);
+        setResourceActive(noiseTexture4);
+        setResourceActive(uniformBuffer);
+    }
+
+    @Override
     protected void cleanupInternal() {
         uniformBuffer.cleanup();
         noiseTexture4.cleanup();

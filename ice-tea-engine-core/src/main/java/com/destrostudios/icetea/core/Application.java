@@ -396,7 +396,7 @@ public abstract class Application {
             inputManager.update(this, tpf);
             update(tpf);
             updateRenderDependencies(tpf);
-            cleanupAfterUpdate();
+            onLifecycle();
             int imageIndex = swapChain.acquireNextImageIndex();
             if (imageIndex != -1) {
                 swapChain.drawFrame(imageIndex);
@@ -445,7 +445,7 @@ public abstract class Application {
         swapChain.update(this, tpf);
     }
 
-    protected void cleanupAfterUpdate() {
+    protected void onLifecycle() {
 
     }
 

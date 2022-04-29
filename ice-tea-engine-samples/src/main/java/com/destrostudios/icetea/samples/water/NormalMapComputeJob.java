@@ -23,12 +23,14 @@ public class NormalMapComputeJob extends ComputeJob {
     public NormalMapComputeJob(WaterConfig waterConfig, FftComputeJob fftComputeJob) {
         this.waterConfig = waterConfig;
         this.fftComputeJob = fftComputeJob;
+        pushConstants = new ByteDataBuffer();
         normalMapTexture = new Texture();
         normalMapTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", true));
         normalMapTexture.setDescriptor("default", new SimpleTextureDescriptor());
     }
     private WaterConfig waterConfig;
     private FftComputeJob fftComputeJob;
+    private ByteDataBuffer pushConstants;
     @Getter
     private Texture normalMapTexture;
 
@@ -104,7 +106,6 @@ public class NormalMapComputeJob extends ComputeJob {
     protected List<ComputeActionGroup> createComputeActionGroups() {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
-        ByteDataBuffer pushConstants = new ByteDataBuffer();
         pushConstants.getData().setInt("n", waterConfig.getN());
         pushConstants.getData().setFloat("strength", waterConfig.getNormalStrength());
         pushConstants.update(application, 0);
@@ -114,6 +115,13 @@ public class NormalMapComputeJob extends ComputeJob {
         computeActionGroups.add(normalMapComputeActionGroup);
 
         return computeActionGroups;
+    }
+
+    @Override
+    protected void prepareResourcesUpdate() {
+        super.prepareResourcesUpdate();
+        setResourceActive(pushConstants);
+        setResourceActive(normalMapTexture);
     }
 
     @Override

@@ -277,7 +277,7 @@ public class SwapChain extends LifecycleObject {
         LOGGER.debug("Initialized sync objects.");
     }
 
-    public <T> void setResourceActive(Resource resource) {
+    public void setResourceActive(Resource resource) {
         activeResources.add(resource);
     }
 
