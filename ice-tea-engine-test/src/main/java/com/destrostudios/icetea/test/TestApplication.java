@@ -471,6 +471,11 @@ public class TestApplication extends Application {
                         }
                     }
                     break;
+                case GLFW_KEY_F12:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        stop();
+                    }
+                    break;
             }
         });
         inputManager.addMouseButtonListener(mouseButtonEvent -> {

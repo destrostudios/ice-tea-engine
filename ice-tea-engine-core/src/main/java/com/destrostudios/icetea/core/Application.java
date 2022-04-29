@@ -112,6 +112,7 @@ public abstract class Application {
     private SwapChain swapChain;
     private boolean isInitialized;
     protected float time;
+    private boolean stop;
 
     @Getter
     protected SceneCamera sceneCamera;
@@ -389,7 +390,7 @@ public abstract class Application {
 
     private void mainLoop() {
         LOGGER.debug("Started main loop.");
-        while (!glfwWindowShouldClose(window)) {
+        while (!(glfwWindowShouldClose(window) || stop)) {
             glfwPollEvents();
             float tpf = calculateNextTpf();
             lifecycleManager.onNewCycle();
@@ -520,6 +521,10 @@ public abstract class Application {
         dest.y = (((tmp.y() / tmp.w()) + 1) / 2) * config.getHeight();
         dest.z = (((tmp.z() / tmp.w()) + 1) / 2);
         return dest;
+    }
+
+    public void stop() {
+        stop = true;
     }
 
     private void cleanupAndClose() {
