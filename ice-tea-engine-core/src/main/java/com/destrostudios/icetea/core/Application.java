@@ -524,6 +524,9 @@ public abstract class Application {
 
     private void cleanup() {
         LOGGER.debug("Cleaning up application...");
+        for (LifecycleObject system : systems) {
+            system.cleanup();
+        }
         inputManager.cleanup();
         assetManager.cleanup();
         cleanupRenderDependencies();
@@ -538,9 +541,9 @@ public abstract class Application {
         glfwTerminate();
         LOGGER.debug("Cleaned up application.");
 
-        int inactiveObjectsCount = lifecycleManager.getInactiveObjects().size();
-        if (inactiveObjectsCount > 0) {
-            LOGGER.warn("There are still {} inactive lifecycle objects after cleaning up the whole application.", inactiveObjectsCount);
+        int initializedObjectsCount = lifecycleManager.getInitializedObjects().size();
+        if (initializedObjectsCount > 0) {
+            LOGGER.warn("There are still {} initialized lifecycle objects after cleaning up the whole application.", initializedObjectsCount);
         }
     }
 

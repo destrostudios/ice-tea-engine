@@ -15,7 +15,7 @@ public abstract class Control extends LifecycleObject implements ContextCloneabl
     public void setSpatial(Spatial spatial) {
         if (spatial != this.spatial) {
             if (spatial != null) {
-                if (isInitialized()) {
+                if (application != null) {
                     onAdd();
                 }
             } else {

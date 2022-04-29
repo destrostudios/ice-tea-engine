@@ -280,9 +280,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
 
     @Override
     protected void cleanupInternal() {
-        if (isInitialized()) {
-            lightTransformUniformBuffer.cleanup();
-        }
+        lightTransformUniformBuffer.cleanup();
         shadowMapTexture.cleanup();
         super.cleanupInternal();
     }

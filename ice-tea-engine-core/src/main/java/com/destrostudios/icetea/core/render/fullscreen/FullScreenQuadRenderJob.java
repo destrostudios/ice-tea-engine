@@ -160,9 +160,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
 
     @Override
     protected void cleanupInternal() {
-        if (isInitialized()) {
-            renderPipeline.cleanup();
-        }
+        renderPipeline.cleanup();
         multisampledColorTexture.cleanup();
         super.cleanupInternal();
     }

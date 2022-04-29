@@ -5,7 +5,8 @@ import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.*;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.UniformValue;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.lifecycle.MultiConsumableLifecycleObject;
+import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -23,7 +24,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 
-public class Mesh extends LifecycleObject implements ContextCloneable {
+public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements ContextCloneable {
 
     public Mesh() {
         bounds = new BoundingBox();
@@ -59,7 +60,6 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
     private boolean buffersOutdated;
     @Getter
     private boolean wereBuffersOutdated;
-    private int usingGeometriesCount;
     @Getter
     private BoundingBox bounds;
     private BIHTree collisionTree;
@@ -176,17 +176,6 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
         }
     }
 
-    private void cleanupVertexBuffer() {
-        if (vertexBuffer != null) {
-            vkDestroyBuffer(application.getLogicalDevice(), vertexBuffer, null);
-            vertexBuffer = null;
-        }
-        if (vertexBufferMemory != null) {
-            vkFreeMemory(application.getLogicalDevice(), vertexBufferMemory, null);
-            vertexBufferMemory = null;
-        }
-    }
-
     private void recreateIndexBuffer() {
         cleanupIndexBuffer();
 
@@ -227,17 +216,6 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
                 vkDestroyBuffer(application.getLogicalDevice(), stagingBuffer, null);
                 vkFreeMemory(application.getLogicalDevice(), stagingBufferMemory, null);
             }
-        }
-    }
-
-    private void cleanupIndexBuffer() {
-        if (indexBuffer != null) {
-            vkDestroyBuffer(application.getLogicalDevice(), indexBuffer, null);
-            indexBuffer = null;
-        }
-        if (indexBufferMemory != null) {
-            vkFreeMemory(application.getLogicalDevice(), indexBufferMemory, null);
-            indexBufferMemory = null;
         }
     }
 
@@ -297,23 +275,33 @@ public class Mesh extends LifecycleObject implements ContextCloneable {
         return 0;
     }
 
-    public void increaseUsingGeometriesCount() {
-        usingGeometriesCount++;
-    }
-
-    public void decreaseUsingGeometriesCount() {
-        usingGeometriesCount--;
-    }
-
-    public boolean isUnused() {
-        return (usingGeometriesCount <= 0);
-    }
-
     @Override
     protected void cleanupInternal() {
         cleanupVertexBuffer();
         cleanupIndexBuffer();
         super.cleanupInternal();
+    }
+
+    private void cleanupVertexBuffer() {
+        if (vertexBuffer != null) {
+            vkDestroyBuffer(application.getLogicalDevice(), vertexBuffer, null);
+            vertexBuffer = null;
+        }
+        if (vertexBufferMemory != null) {
+            vkFreeMemory(application.getLogicalDevice(), vertexBufferMemory, null);
+            vertexBufferMemory = null;
+        }
+    }
+
+    private void cleanupIndexBuffer() {
+        if (indexBuffer != null) {
+            vkDestroyBuffer(application.getLogicalDevice(), indexBuffer, null);
+            indexBuffer = null;
+        }
+        if (indexBufferMemory != null) {
+            vkFreeMemory(application.getLogicalDevice(), indexBufferMemory, null);
+            indexBufferMemory = null;
+        }
     }
 
     @Override

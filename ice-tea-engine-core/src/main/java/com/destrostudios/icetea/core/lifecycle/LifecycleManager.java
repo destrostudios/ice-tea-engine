@@ -13,6 +13,7 @@ public class LifecycleManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleManager.class);
 
+    @Getter
     private LinkedList<LifecycleObject> initializedObjects = new LinkedList<>();
     @Getter
     private HashSet<LifecycleObject> activeObjects = new HashSet<>();

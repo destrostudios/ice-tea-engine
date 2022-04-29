@@ -3,8 +3,9 @@ package com.destrostudios.icetea.core.material;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.data.FieldsData;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.lifecycle.MultiConsumableLifecycleObject;
 import com.destrostudios.icetea.core.resource.descriptor.MaterialParamsDescriptor;
+import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
@@ -16,7 +17,7 @@ import java.util.HashMap;
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
 import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
 
-public class Material extends LifecycleObject implements ContextCloneable {
+public class Material extends MultiConsumableLifecycleObject<Geometry> implements ContextCloneable {
 
     public Material() {
         parametersBuffer = new UniformDataBuffer();
@@ -60,7 +61,6 @@ public class Material extends LifecycleObject implements ContextCloneable {
     private UniformDataBuffer parametersBuffer;
     @Getter
     private HashMap<String, Texture> textures = new HashMap<>();
-    private int usingGeometriesCount;
     @Setter
     @Getter
     private boolean transparent;
@@ -92,18 +92,6 @@ public class Material extends LifecycleObject implements ContextCloneable {
 
     public void setTexture(String name, Texture texture) {
         textures.put(name, texture);
-    }
-
-    public void increaseUsingGeometriesCount() {
-        usingGeometriesCount++;
-    }
-
-    public void decreaseUsingGeometriesCount() {
-        usingGeometriesCount--;
-    }
-
-    public boolean isUnused() {
-        return (usingGeometriesCount <= 0);
     }
 
     @Override

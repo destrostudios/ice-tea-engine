@@ -37,6 +37,17 @@ public class Geometry extends Spatial {
     private UniformDataBuffer transformUniformBuffer;
 
     @Override
+    protected void init() {
+        super.init();
+        if (mesh != null) {
+            mesh.onConsumerInit(this);
+        }
+        if (material != null) {
+            material.onConsumerInit(this);
+        }
+    }
+
+    @Override
     public void update(float tpf) {
         super.update(tpf);
         updateWorldBounds();
@@ -66,15 +77,19 @@ public class Geometry extends Spatial {
     }
 
     public void setMesh(Mesh mesh) {
-        tryUnregisterMesh();
+        if (this.mesh != null) {
+            this.mesh.removeConsumer(this);
+        }
+        mesh.addConsumer(this);
         this.mesh = mesh;
-        mesh.increaseUsingGeometriesCount();
     }
 
     public void setMaterial(Material material) {
-        tryUnregisterMaterial();
+        if (this.material != null) {
+            this.material.removeConsumer(this);
+        }
+        material.addConsumer(this);
         this.material = material;
-        material.increaseUsingGeometriesCount();
     }
 
     public void addAdditionalResourceDescriptors(Map<String, ResourceDescriptor<?>> resourceDescriptors) {
@@ -104,27 +119,13 @@ public class Geometry extends Spatial {
     @Override
     protected void cleanupInternal() {
         transformUniformBuffer.cleanup();
-        tryUnregisterMesh();
-        tryUnregisterMaterial();
-        super.cleanupInternal();
-    }
-
-    private void tryUnregisterMesh() {
         if (mesh != null) {
-            mesh.decreaseUsingGeometriesCount();
-            if (mesh.isUnused()) {
-                mesh.cleanup();
-            }
+            mesh.onConsumerCleanup(this);
         }
-    }
-
-    private void tryUnregisterMaterial() {
         if (material != null) {
-            material.decreaseUsingGeometriesCount();
-            if (material.isUnused()) {
-                material.cleanup();
-            }
+            material.onConsumerCleanup(this);
         }
+        super.cleanupInternal();
     }
 
     @Override

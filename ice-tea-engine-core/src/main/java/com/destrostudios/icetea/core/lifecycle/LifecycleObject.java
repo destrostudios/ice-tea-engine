@@ -25,10 +25,6 @@ public class LifecycleObject {
 
     }
 
-    protected boolean isInitialized() {
-        return (application != null);
-    }
-
     public final void cleanup() {
         if (application != null) {
             executeProfiled(this::cleanupInternal, "cleanup");

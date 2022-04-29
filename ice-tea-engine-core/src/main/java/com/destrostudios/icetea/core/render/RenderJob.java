@@ -215,19 +215,17 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
 
     @Override
     protected void cleanupInternal() {
-        if (isInitialized()) {
-            application.getRootNode().forEachGeometry(geometry -> {
-                GRC renderContext = getRenderContext(geometry);
-                if (renderContext != null) {
-                    renderContext.cleanup();
-                }
-            });
-            if (resolvedColorTexture != null) {
-                resolvedColorTexture.cleanup();
+        application.getRootNode().forEachGeometry(geometry -> {
+            GRC renderContext = getRenderContext(geometry);
+            if (renderContext != null) {
+                renderContext.cleanup();
             }
-            frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
-            vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
+        });
+        if (resolvedColorTexture != null) {
+            resolvedColorTexture.cleanup();
         }
+        frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
+        vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
         super.cleanupInternal();
     }
 

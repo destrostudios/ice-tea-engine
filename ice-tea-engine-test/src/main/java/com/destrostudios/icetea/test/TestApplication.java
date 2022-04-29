@@ -49,7 +49,6 @@ public class TestApplication extends Application {
     private Material materialCool;
     private Panel panel1;
     private Node nodeRotating;
-    private Geometry geometryWater;
     private Geometry geometryGround;
     private Geometry geometryGrass;
     private Material materialGrass;
@@ -138,7 +137,7 @@ public class TestApplication extends Application {
         // Water
 
         float waterSize = 100;
-        geometryWater = WaterFactory.createWater(new WaterConfig());
+        Geometry geometryWater = WaterFactory.createWater(new WaterConfig());
         geometryWater.move(new Vector3f(waterSize / -2, 0, waterSize / -2));
         geometryWater.scale(new Vector3f(waterSize, 1, waterSize));
         sceneNode.add(geometryWater);
@@ -545,5 +544,11 @@ public class TestApplication extends Application {
         bitmapTextDynamic.setText("Time:\n" + time);
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
+    }
+
+    @Override
+    protected void onLifecycle() {
+        super.onLifecycle();
+        // System.out.println(lifecycleManager.getInactiveObjects().size());
     }
 }
