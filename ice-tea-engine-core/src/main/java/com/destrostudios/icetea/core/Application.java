@@ -133,7 +133,7 @@ public abstract class Application {
     public void start() {
         create();
         mainLoop();
-        cleanup();
+        cleanupAndClose();
     }
 
     private void create() {
@@ -522,11 +522,12 @@ public abstract class Application {
         return dest;
     }
 
-    private void cleanup() {
+    private void cleanupAndClose() {
         LOGGER.debug("Cleaning up application...");
         for (LifecycleObject system : systems) {
             system.cleanup();
         }
+        cleanup();
         inputManager.cleanup();
         assetManager.cleanup();
         cleanupRenderDependencies();
@@ -545,6 +546,10 @@ public abstract class Application {
         if (initializedObjectsCount > 0) {
             LOGGER.warn("There are still {} initialized lifecycle objects after cleaning up the whole application.", initializedObjectsCount);
         }
+    }
+
+    protected void cleanup() {
+
     }
 
     public void cleanupRenderDependencies() {
