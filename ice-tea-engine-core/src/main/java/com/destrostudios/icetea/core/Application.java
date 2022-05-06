@@ -175,17 +175,26 @@ public abstract class Application {
     }
 
     private void initWindow() {
-        LOGGER.debug("Initializing window...");
+        LOGGER.debug("Initializing GLFW...");
         if (!glfwInit()) {
             throw new RuntimeException("Cannot initialize GLFW");
         }
+        LOGGER.debug("Initialized GLFW.");
+
+        LOGGER.debug("Setting window hint...");
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        LOGGER.debug("Set window hint.");
+
+        LOGGER.debug("Creating window...");
         window = glfwCreateWindow(config.getWidth(), config.getHeight(), config.getTitle(), NULL, NULL);
         if (window == NULL) {
             throw new RuntimeException("Cannot create window");
         }
+        LOGGER.debug("Created window.");
+
+        LOGGER.debug("Creating resize callback...");
         glfwSetFramebufferSizeCallback(window, this::onFrameBufferResized);
-        LOGGER.debug("Initialized window.");
+        LOGGER.debug("Created resize callback.");
     }
 
     private void onFrameBufferResized(long window, int width, int height) {
