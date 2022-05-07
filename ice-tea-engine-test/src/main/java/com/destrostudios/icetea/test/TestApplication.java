@@ -49,6 +49,7 @@ public class TestApplication extends Application {
     private Material materialCool;
     private Panel panel1;
     private Node nodeRotating;
+    private Geometry geometryWater;
     private Geometry geometryGround;
     private Geometry geometryGrass;
     private Material materialGrass;
@@ -63,6 +64,8 @@ public class TestApplication extends Application {
     private boolean hasAddedDennis;
     private boolean hasRemovedDennis;
     private boolean rotateObjects = true;
+    private RadialBlurFilter radialBlurFilter;
+    private SepiaFilter sepiaFilter;
 
     @Override
     protected void init() {
@@ -137,7 +140,7 @@ public class TestApplication extends Application {
         // Water
 
         float waterSize = 100;
-        Geometry geometryWater = WaterFactory.createWater(new WaterConfig());
+        geometryWater = WaterFactory.createWater(new WaterConfig());
         geometryWater.move(new Vector3f(waterSize / -2, 0, waterSize / -2));
         geometryWater.scale(new Vector3f(waterSize, 1, waterSize));
         sceneNode.add(geometryWater);
@@ -365,8 +368,8 @@ public class TestApplication extends Application {
 
         // Filters
 
-        RadialBlurFilter radialBlurFilter = new RadialBlurFilter();
-        SepiaFilter sepiaFilter = new SepiaFilter();
+        radialBlurFilter = new RadialBlurFilter();
+        sepiaFilter = new SepiaFilter();
 
         // Inputs
 
@@ -555,5 +558,15 @@ public class TestApplication extends Application {
     protected void onLifecycle() {
         super.onLifecycle();
         // System.out.println(lifecycleManager.getInactiveObjects().size());
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        radialBlurFilter.getFilterRenderJob().cleanup();
+        sepiaFilter.getFilterRenderJob().cleanup();
+        geometryGrass.cleanup();
+        geometryGround.cleanup();
+        geometryWater.cleanup();
     }
 }

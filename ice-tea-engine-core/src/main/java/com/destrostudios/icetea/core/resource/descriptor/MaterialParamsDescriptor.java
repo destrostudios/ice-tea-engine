@@ -3,7 +3,6 @@ package com.destrostudios.icetea.core.resource.descriptor;
 import com.destrostudios.icetea.core.clone.CloneContext;
 
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
 
 public class MaterialParamsDescriptor extends UniformDescriptor {
 

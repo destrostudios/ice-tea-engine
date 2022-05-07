@@ -48,6 +48,7 @@ public class NormalMapComputeJob extends ComputeJob {
             int log2n = getLog2N();
             int mipLevels = log2n;
             int maxLod = log2n;
+            int format = VK_FORMAT_R32G32B32A32_SFLOAT;
 
             LongBuffer pImage = stack.mallocLong(1);
             LongBuffer pImageMemory = stack.mallocLong(1);
@@ -56,15 +57,17 @@ public class NormalMapComputeJob extends ComputeJob {
                 height,
                 mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
-                VK_FORMAT_R32G32B32A32_SFLOAT,
-                VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                format,
+                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pImage,
                 pImageMemory
             );
             long image = pImage.get(0);
             long imageMemory = pImageMemory.get(0);
+
+            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            application.getImageManager().transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, mipLevels);
 
             long imageView = application.getImageManager().createImageView(
                 image,
@@ -97,7 +100,6 @@ public class NormalMapComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             normalMapTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
@@ -126,21 +128,22 @@ public class NormalMapComputeJob extends ComputeJob {
 
     @Override
     public void submit() {
-        super.submit();
-
         int width = waterConfig.getN();
         int height = waterConfig.getN();
         int mipLevels = getLog2N();
+        application.getImageManager().transitionImageLayout(normalMapTexture.getImage(), VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
         application.getImageManager().generateMipmaps(
             normalMapTexture.getImage(),
             VK_FORMAT_R32G32B32A32_SFLOAT,
             width,
             height,
             mipLevels,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_IMAGE_LAYOUT_GENERAL,
             VK_ACCESS_SHADER_READ_BIT,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
         );
+        super.submit();
     }
 
     private int getLog2N() {

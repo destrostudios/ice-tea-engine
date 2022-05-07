@@ -85,16 +85,17 @@ public class FftComputeJob extends ComputeJob {
         try (MemoryStack stack = stackPush()) {
             int width = n;
             int height = n;
+            int format = VK_FORMAT_R32G32B32A32_SFLOAT;
+            int mipLevels = 1;
 
             LongBuffer pImage = stack.mallocLong(1);
             LongBuffer pImageMemory = stack.mallocLong(1);
             application.getImageManager().createImage(
                 width,
                 height,
-                1,
+                mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
-                VK_FORMAT_R32G32B32A32_SFLOAT,
-                VK_IMAGE_TILING_OPTIMAL,
+                format,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pImage,
@@ -102,6 +103,9 @@ public class FftComputeJob extends ComputeJob {
             );
             long image = pImage.get(0);
             long imageMemory = pImageMemory.get(0);
+
+            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            application.getImageManager().transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, mipLevels);
 
             long imageView = application.getImageManager().createImageView(
                 image,
@@ -135,7 +139,6 @@ public class FftComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }

@@ -3,7 +3,6 @@ package com.destrostudios.icetea.core.resource.descriptor;
 import com.destrostudios.icetea.core.clone.CloneContext;
 
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_GEOMETRY_BIT;
 
 public class GeometryTransformDescriptor extends UniformDescriptor {
 

@@ -105,7 +105,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             resolvedColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             resolvedColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
             resolvedColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
             VkAttachmentReference2 resolvedColorAttachmentRef = attachmentRefs.get(2);
             resolvedColorAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
@@ -123,7 +123,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             resolvedDepthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             resolvedDepthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
             resolvedDepthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            resolvedDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            resolvedDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
             VkAttachmentReference2 resolvedDepthAttachmentRef = attachmentRefs.get(3);
             resolvedDepthAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
@@ -212,7 +212,6 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
                 1,
                 application.getMsaaSamples(),
                 depthFormat,
-                VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pDepthImage,
@@ -222,11 +221,10 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             long image = pDepthImage.get(0);
             long imageMemory = pDepthImageMemory.get(0);
 
-            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            application.getImageManager().transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
-
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
+            // Will later be true because of the specified attachment transition after renderpass
+            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             multisampledDepthTexture.set(image, imageMemory, imageView, finalLayout);
         }
     }
@@ -243,7 +241,6 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
                 1,
                 VK_SAMPLE_COUNT_1_BIT,
                 depthFormat,
-                VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pDepthImage,
@@ -252,9 +249,6 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
             long image = pDepthImage.get(0);
             long imageMemory = pDepthImageMemory.get(0);
-
-            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            application.getImageManager().transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
 
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
@@ -279,6 +273,8 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             }
             long imageSampler = pImageSampler.get(0);
 
+            // Will later be true because of the specified attachment transition after renderpass
+            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
             resolvedDepthTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }

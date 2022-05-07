@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.function.Supplier;
 
 // TODO: Map extensions to loaders and combine cache with the one in ShaderManager
+// TODO: Settings should be in cache key, so that you don't get a wrongly configured asset
 public class AssetManager {
 
     public AssetManager() {
@@ -49,7 +50,11 @@ public class AssetManager {
     }
 
     public BufferedTexture loadTexture(String key) {
-        return cachedTextures.computeIfAbsent(key, k -> load(k, new BufferedTextureLoader(), null));
+        return loadTexture(key, BufferedTextureLoaderSettings.builder().build());
+    }
+
+    public BufferedTexture loadTexture(String key, BufferedTextureLoaderSettings settings) {
+        return cachedTextures.computeIfAbsent(key, k -> load(k, new BufferedTextureLoader(), settings));
     }
 
     public BitmapFont loadBitmapFont(String key) {

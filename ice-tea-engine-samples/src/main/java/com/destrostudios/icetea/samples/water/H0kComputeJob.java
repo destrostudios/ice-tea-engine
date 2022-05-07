@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.samples.water;
 
+import com.destrostudios.icetea.core.asset.loader.BufferedTextureLoaderSettings;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
@@ -49,19 +50,26 @@ public class H0kComputeJob extends ComputeJob {
         initTargetTexture(h0minuskTexture);
         h0minuskTexture.update(application, 0);
 
-        noiseTexture1 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_0.jpg");
+        BufferedTextureLoaderSettings noiseTextureSettings = BufferedTextureLoaderSettings.builder()
+                .format(VK_FORMAT_R8G8B8A8_UNORM)
+                .usage(VK_IMAGE_USAGE_STORAGE_BIT)
+                .layout(VK_IMAGE_LAYOUT_GENERAL)
+                .createDefaultDescriptor(false)
+                .build();
+
+        noiseTexture1 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_0.jpg", noiseTextureSettings);
         noiseTexture1.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture1.update(application, 0);
 
-        noiseTexture2 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_1.jpg");
+        noiseTexture2 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_1.jpg", noiseTextureSettings);
         noiseTexture2.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture2.update(application, 0);
 
-        noiseTexture3 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_2.jpg");
+        noiseTexture3 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_2.jpg", noiseTextureSettings);
         noiseTexture3.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture3.update(application, 0);
 
-        noiseTexture4 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_3.jpg");
+        noiseTexture4 = application.getAssetManager().loadTexture("com/destrostudios/icetea/samples/textures/water/noise_" + waterConfig.getN() + "_3.jpg", noiseTextureSettings);
         noiseTexture4.setDescriptor("compute", new ComputeImageDescriptor("rgba8", false));
         noiseTexture4.update(application, 0);
 
@@ -73,16 +81,17 @@ public class H0kComputeJob extends ComputeJob {
         try (MemoryStack stack = stackPush()) {
             int width = waterConfig.getN();
             int height = waterConfig.getN();
+            int format = VK_FORMAT_R32G32B32A32_SFLOAT;
+            int mipLevels = 1;
 
             LongBuffer pImage = stack.mallocLong(1);
             LongBuffer pImageMemory = stack.mallocLong(1);
             application.getImageManager().createImage(
                 width,
                 height,
-                1,
+                mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
-                VK_FORMAT_R32G32B32A32_SFLOAT,
-                VK_IMAGE_TILING_OPTIMAL,
+                format,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pImage,
@@ -90,6 +99,9 @@ public class H0kComputeJob extends ComputeJob {
             );
             long image = pImage.get(0);
             long imageMemory = pImageMemory.get(0);
+
+            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            application.getImageManager().transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, mipLevels);
 
             long imageView = application.getImageManager().createImageView(
                 image,
@@ -119,7 +131,6 @@ public class H0kComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }

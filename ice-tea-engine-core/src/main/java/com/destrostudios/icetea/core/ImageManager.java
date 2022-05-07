@@ -21,7 +21,6 @@ public class ImageManager {
         int mipLevels,
         int numSamples,
         int format,
-        int tiling,
         int usage,
         int memProperties,
         LongBuffer pTextureImage,
@@ -37,7 +36,7 @@ public class ImageManager {
             imageCreateInfo.mipLevels(mipLevels);
             imageCreateInfo.arrayLayers(1);
             imageCreateInfo.format(format);
-            imageCreateInfo.tiling(tiling);
+            imageCreateInfo.tiling(VK_IMAGE_TILING_OPTIMAL);
             imageCreateInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
             imageCreateInfo.usage(usage);
             imageCreateInfo.samples(numSamples);
@@ -117,6 +116,16 @@ public class ImageManager {
                 barrier.dstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
                 sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            } else if ((oldLayout == VK_IMAGE_LAYOUT_GENERAL) && (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)) {
+                barrier.srcAccessMask(0);
+                barrier.dstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
+                sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            } else if ((oldLayout == VK_IMAGE_LAYOUT_UNDEFINED) && (newLayout == VK_IMAGE_LAYOUT_GENERAL)) {
+                barrier.srcAccessMask(0);
+                barrier.dstAccessMask(VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
+                sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT; // TODO: Specify more exactly, but will be refactored anyways
             } else if((oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) && (newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
                 barrier.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
                 barrier.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
@@ -173,7 +182,7 @@ public class ImageManager {
         }
     }
 
-    public void generateMipmaps(long image, int imageFormat, int width, int height, int mipLevels, int finalLayout, int finalDstAccessMask, int finalDstStageMask) {
+    public void generateMipmaps(long image, int imageFormat, int width, int height, int mipLevels, int oldLayout, int finalLayout, int finalDstAccessMask, int finalDstStageMask) {
         try (MemoryStack stack = stackPush()) {
             // Check if image format supports linear blitting
             VkFormatProperties formatProperties = VkFormatProperties.mallocStack(stack);
@@ -200,7 +209,7 @@ public class ImageManager {
             barrier.subresourceRange().levelCount(1);
             for (int i = 1; i < mipLevels; i++) {
                 barrier.subresourceRange().baseMipLevel(i - 1);
-                barrier.oldLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                barrier.oldLayout(oldLayout);
                 barrier.newLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
                 barrier.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
                 barrier.dstAccessMask(VK_ACCESS_TRANSFER_READ_BIT);
@@ -234,13 +243,13 @@ public class ImageManager {
                     image,
                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                     image,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                    oldLayout,
                     blit,
                     VK_FILTER_LINEAR
                 );
 
                 barrier.oldLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-                barrier.newLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                barrier.newLayout(finalLayout);
                 barrier.srcAccessMask(VK_ACCESS_TRANSFER_READ_BIT);
                 barrier.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
 
@@ -262,7 +271,7 @@ public class ImageManager {
                 }
             }
             barrier.subresourceRange().baseMipLevel(mipLevels - 1);
-            barrier.oldLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            barrier.oldLayout(oldLayout);
             barrier.newLayout(finalLayout);
             barrier.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
             barrier.dstAccessMask(finalDstAccessMask);

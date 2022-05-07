@@ -14,7 +14,6 @@ import java.util.LinkedList;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
 public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
 

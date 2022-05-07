@@ -25,7 +25,7 @@ public abstract class ComputeJob extends LifecycleObject {
     private List<ComputeActionGroup> computeActionGroups;
     private VkCommandBuffer commandBuffer;
     @Getter
-    private long signalSemaphore;
+    private Long signalSemaphore;
     private long fence;
     private Long waitSemaphore;
     private Integer waitDstStage;
@@ -40,6 +40,9 @@ public abstract class ComputeJob extends LifecycleObject {
         }
         initCommandBuffer();
         initFence();
+        if (shouldCreateSignalSemaphore()) {
+            initSignalSempahore();
+        }
     }
 
     protected abstract List<ComputeActionGroup> createComputeActionGroups();
@@ -91,6 +94,19 @@ public abstract class ComputeJob extends LifecycleObject {
         }
     }
 
+    private void initSignalSempahore() {
+        try (MemoryStack stack = stackPush()) {
+            VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.callocStack(stack);
+            semaphoreCreateInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+            LongBuffer pSignalSemaphore = stack.mallocLong(1);
+            int result = vkCreateSemaphore(application.getLogicalDevice(), semaphoreCreateInfo, null, pSignalSemaphore);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create signal semaphore (result = " + result + ")");
+            }
+            signalSemaphore = pSignalSemaphore.get(0);
+        }
+    }
+
     public void setWait(long waitSemaphore, int waitDstStage) {
         this.waitSemaphore = waitSemaphore;
         this.waitDstStage = waitDstStage;
@@ -123,15 +139,7 @@ public abstract class ComputeJob extends LifecycleObject {
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
-            if (shouldCreateSignalSemaphore()) {
-                VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.callocStack(stack);
-                semaphoreCreateInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
-                LongBuffer pSignalSemaphore = stack.mallocLong(1);
-                int result = vkCreateSemaphore(application.getLogicalDevice(), semaphoreCreateInfo, null, pSignalSemaphore);
-                if (result != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create signal semaphore (result = " + result + ")");
-                }
-                signalSemaphore = pSignalSemaphore.get(0);
+            if (signalSemaphore != null) {
                 submitInfo.pSignalSemaphores(stack.longs(signalSemaphore));
             }
 
@@ -150,7 +158,7 @@ public abstract class ComputeJob extends LifecycleObject {
                 vkResetFences(application.getLogicalDevice(), fence);
                 throw new RuntimeException("Failed to submit compute command buffer (result = " + result + ")");
             }
-            VK10.vkWaitForFences(application.getLogicalDevice(), fence, true, MathUtil.UINT64_MAX);
+            vkWaitForFences(application.getLogicalDevice(), fence, true, MathUtil.UINT64_MAX);
         }
     }
 
@@ -160,6 +168,9 @@ public abstract class ComputeJob extends LifecycleObject {
 
     @Override
     protected void cleanupInternal() {
+        if (signalSemaphore != null) {
+            vkDestroySemaphore(application.getLogicalDevice(), signalSemaphore, null);
+        }
         vkDestroyFence(application.getLogicalDevice(), fence, null);
         vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), commandBuffer);
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {

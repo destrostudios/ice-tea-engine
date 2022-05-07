@@ -77,7 +77,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
             resolvedColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             resolvedColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
             resolvedColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
             VkAttachmentReference resolvedColorAttachmentRef = attachmentRefs.get(1);
             resolvedColorAttachmentRef.attachment(1);

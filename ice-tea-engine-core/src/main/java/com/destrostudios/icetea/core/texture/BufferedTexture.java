@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.texture;
 
-import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import org.lwjgl.PointerBuffer;
@@ -15,24 +14,28 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class BufferedTexture extends Texture {
 
-    public BufferedTexture(TextureDataReader dataReader) {
+    public BufferedTexture(TextureDataReader dataReader, int format, int usage, int layout) {
         this.dataReader = dataReader;
-        setDescriptor("default", new SimpleTextureDescriptor());
+        this.format = format;
+        this.usage = usage;
+        this.layout = layout;
     }
     private TextureDataReader dataReader;
+    private int format;
+    private int usage;
+    private int layout;
     private int mipLevels;
 
     @Override
     protected void init() {
         super.init();
-        int format = VK_FORMAT_R8G8B8A8_SRGB;
-        initImage(format);
-        initImageView(format);
+        initImage();
+        initImageView();
         initImageSampler();
         onSet();
     }
 
-    private void initImage(int format) {
+    private void initImage() {
         try (MemoryStack stack = stackPush()) {
             TextureData textureData;
             try {
@@ -72,8 +75,8 @@ public class BufferedTexture extends Texture {
                 mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
                 format,
-                VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+                // TRANSFER_SRC and TRANSFER_DST are needed for the mipmap generation below
+                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | usage,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pTextureImage,
                 pTextureImageMemory
@@ -92,25 +95,25 @@ public class BufferedTexture extends Texture {
 
             application.getImageManager().copyBufferToImage(pStagingBuffer.get(0), image, textureData.getWidth(), textureData.getHeight());
 
-            int finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             application.getImageManager().generateMipmaps(
                 image,
                 format,
                 textureData.getWidth(),
                 textureData.getHeight(),
                 mipLevels,
-                finalLayout,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                layout,
                 VK_ACCESS_SHADER_READ_BIT,
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
             );
-            imageViewLayout = finalLayout;
+            imageViewLayout = layout;
 
             vkDestroyBuffer(application.getLogicalDevice(), pStagingBuffer.get(0), null);
             vkFreeMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0), null);
         }
     }
 
-    private void initImageView(int format) {
+    private void initImageView() {
         imageView = application.getImageManager().createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
     }
 
@@ -124,14 +127,14 @@ public class BufferedTexture extends Texture {
             samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerCreateInfo.anisotropyEnable(true);
-            samplerCreateInfo.maxAnisotropy(16.0f);
+            samplerCreateInfo.maxAnisotropy(16);
             samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
             samplerCreateInfo.unnormalizedCoordinates(false);
             samplerCreateInfo.compareEnable(false);
             samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);
             samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
             samplerCreateInfo.minLod(0); // Optional
-            samplerCreateInfo.maxLod((float) mipLevels);
+            samplerCreateInfo.maxLod(mipLevels);
             samplerCreateInfo.mipLodBias(0); // Optional
 
             LongBuffer pImageSampler = stack.mallocLong(1);

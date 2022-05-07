@@ -50,7 +50,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
                 1,
                 application.getMsaaSamples(),
                 imageFormat,
-                VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pColorImage,
@@ -59,11 +58,10 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
             long image = pColorImage.get(0);
             long imageMemory = pColorImageMemory.get(0);
 
-            int finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            application.getImageManager().transitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
-
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
+            // Will later be true because of the specified attachment transition after renderpass
+            int finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             texture.set(image, imageMemory, imageView, finalLayout);
         }
     }
@@ -95,7 +93,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
                 1,
                 VK_SAMPLE_COUNT_1_BIT,
                 imageFormat,
-                VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pColorImage,
@@ -103,9 +100,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
             );
             long image = pColorImage.get(0);
             long imageMemory = pColorImageMemory.get(0);
-
-            int finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            application.getImageManager().transitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, 1);
 
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
@@ -130,6 +124,8 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
             }
             long imageSampler = pImageSampler.get(0);
 
+            // Will later be true because of the specified attachment transition after renderpass
+            int finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
         }
     }
@@ -215,12 +211,9 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
 
     @Override
     protected void cleanupInternal() {
-        application.getRootNode().forEachGeometry(geometry -> {
-            GRC renderContext = getRenderContext(geometry);
-            if (renderContext != null) {
-                renderContext.cleanup();
-            }
-        });
+        for (GRC renderContext : renderContexts.values()) {
+            renderContext.cleanup();
+        }
         if (resolvedColorTexture != null) {
             resolvedColorTexture.cleanup();
         }

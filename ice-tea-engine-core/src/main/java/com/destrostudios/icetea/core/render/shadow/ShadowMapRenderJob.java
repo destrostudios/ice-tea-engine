@@ -115,7 +115,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             LongBuffer pRenderPass = stack.mallocLong(1);
             int result = vkCreateRenderPass(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
             if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create render pass (result = " + result +")");
+                throw new RuntimeException("Failed to create render pass (result = " + result + ")");
             }
             renderPass = pRenderPass.get(0);
         }
@@ -131,7 +131,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
                 1,
                 VK_SAMPLE_COUNT_1_BIT,
                 VK_FORMAT_D16_UNORM,
-                VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 pImage,

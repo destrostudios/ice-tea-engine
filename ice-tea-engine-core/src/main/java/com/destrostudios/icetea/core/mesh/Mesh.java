@@ -22,7 +22,6 @@ import java.util.*;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 
 public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements ContextCloneable {
 
