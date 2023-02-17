@@ -22,11 +22,13 @@ import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.scene.gui.Panel;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
+import com.destrostudios.icetea.imgui.ImGuiSystem;
 import com.destrostudios.icetea.samples.filter.RadialBlurFilter;
 import com.destrostudios.icetea.samples.filter.SepiaFilter;
 import com.destrostudios.icetea.samples.terrain.GrassConfig;
 import com.destrostudios.icetea.samples.terrain.GrassFactory;
 import com.destrostudios.icetea.samples.water.*;
+import imgui.ImGui;
 import org.joml.*;
 
 import java.lang.Math;
@@ -375,6 +377,7 @@ public class TestApplication extends Application {
 
         CameraMouseRotateSystem cameraMouseRotateSystem = new CameraMouseRotateSystem(sceneCamera);
         CameraKeyMoveSystem cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
+        ImGuiSystem imGuiSystem = new ImGuiSystem(ImGui::showDemoWindow);
         ProfilerSystem profilerSystem = new ProfilerSystem();
         inputManager.addKeyListener(keyEvent -> {
             switch (keyEvent.getKey()) {
@@ -454,6 +457,15 @@ public class TestApplication extends Application {
                             float deltaZ = (float) ((Math.random() * 2) - 1);
                             clone.getLocalTransform().getTranslation().add(deltaX, 0, deltaZ);
                             nodeRotating.add(clone);
+                        }
+                    }
+                    break;
+                case GLFW_KEY_G:
+                    if (keyEvent.getAction() == GLFW_PRESS) {
+                        if (hasSystem(imGuiSystem)) {
+                            removeSystem(imGuiSystem);
+                        } else {
+                            addSystem(imGuiSystem);
                         }
                     }
                     break;

@@ -27,7 +27,7 @@ import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class SwapChain extends LifecycleObject {
+public class SwapChain extends LifecycleObject implements WindowResizeListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SwapChain.class);
 
@@ -84,6 +84,7 @@ public class SwapChain extends LifecycleObject {
         initImageViews();
         initCommandBuffers();
         initSyncObjects();
+        application.addWindowResizeListener(this);
         LOGGER.debug("Initialized swapchain.");
     }
 
@@ -373,7 +374,8 @@ public class SwapChain extends LifecycleObject {
         }
     }
 
-    public void onResize() {
+    @Override
+    public void onWindowResize(int width, int height) {
         wasResized = true;
     }
 
@@ -424,6 +426,7 @@ public class SwapChain extends LifecycleObject {
 
     @Override
     protected void cleanupInternal() {
+        application.removeWindowResizeListener(this);
         if (!isDuringRecreation) {
             cleanupInFlightFrames();
         }

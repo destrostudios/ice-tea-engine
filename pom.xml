@@ -7,6 +7,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>ice-tea-engine-core</module>
+        <module>ice-tea-engine-imgui</module>
         <module>ice-tea-engine-samples</module>
         <module>ice-tea-engine-test</module>
     </modules>
@@ -15,8 +16,9 @@
         <version.ice-tea-engine>0.0.1</version.ice-tea-engine>
         <version.jgltf>2.0.1</version.jgltf>
         <version.joml>1.9.20</version.joml>
+        <version.imgui-java>1.86.7</version.imgui-java>
         <version.lwjgl>3.3.1</version.lwjgl>
-        <version.lombok>1.18.12</version.lombok>
+        <version.lombok>1.18.26</version.lombok>
         <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
         <version.maven-source-plugin>3.2.1</version.maven-source-plugin>
         <version.obj>0.3.0</version.obj>
@@ -29,8 +31,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${version.maven-compiler-plugin}</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>17</source>
+                    <target>17</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -65,6 +67,11 @@
             </dependency>
             <dependency>
                 <groupId>com.destrostudios.icetea</groupId>
+                <artifactId>ice-tea-engine-imgui</artifactId>
+                <version>${version.ice-tea-engine}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.destrostudios.icetea</groupId>
                 <artifactId>ice-tea-engine-samples</artifactId>
                 <version>${version.ice-tea-engine}</version>
             </dependency>
@@ -93,6 +100,18 @@
                 <groupId>de.javagl</groupId>
                 <artifactId>jgltf-model</artifactId>
                 <version>${version.jgltf}</version>
+            </dependency>
+            <!--ImGUI-->
+            <dependency>
+                <groupId>io.github.spair</groupId>
+                <artifactId>imgui-java-binding</artifactId>
+                <version>${version.imgui-java}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.spair</groupId>
+                <artifactId>imgui-java-natives-windows</artifactId>
+                <version>${version.imgui-java}</version>
+                <scope>runtime</scope>
             </dependency>
             <!--SLF4J-->
             <dependency>

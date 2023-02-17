@@ -1,8 +1,8 @@
 package com.destrostudios.icetea.core.texture;
 
+import com.destrostudios.icetea.core.buffer.StagingResizableMemoryBuffer;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -43,30 +43,18 @@ public class BufferedTexture extends Texture {
             } catch (IOException ex) {
                 throw new RuntimeException("Failed to read texture (exception = \"" + ex.getMessage() + "\")");
             }
-            long imageSize = textureData.getWidth() * textureData.getHeight() * 4; // channels
-            mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(textureData.getWidth(), textureData.getHeight()))) + 1);
+            long imageBytes = ((long) textureData.getWidth()) * textureData.getHeight() * 4; // channels
 
-            LongBuffer pStagingBuffer = stack.mallocLong(1);
-            LongBuffer pStagingBufferMemory = stack.mallocLong(1);
-            application.getBufferManager().createBuffer(
-                imageSize,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                pStagingBuffer,
-                pStagingBufferMemory
-            );
-
-            PointerBuffer data = stack.mallocPointer(1);
-            int result = vkMapMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0), 0, imageSize, 0, data);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to map memory (result = " + result + ")");
-            }
-            BufferUtil.memcpy(textureData.getPixels(), data.getByteBuffer(0, (int) imageSize), imageSize);
-            vkUnmapMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0));
+            StagingResizableMemoryBuffer stagingBuffer = new StagingResizableMemoryBuffer();
+            stagingBuffer.update(application, 0);
+            stagingBuffer.write(imageBytes, byteBuffer -> {
+                BufferUtil.memcpy(textureData.getPixels(), byteBuffer, imageBytes);
+            });
 
             // Texture data is cleaned up from RAM immediately, will be read again if texture is cleanuped and reinitialized
             textureData.getCleanup().run();
 
+            mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(textureData.getWidth(), textureData.getHeight()))) + 1);
             LongBuffer pTextureImage = stack.mallocLong(1);
             LongBuffer pTextureImageMemory = stack.mallocLong(1);
             application.getImageManager().createImage(
@@ -93,7 +81,8 @@ public class BufferedTexture extends Texture {
                 mipLevels
             );
 
-            application.getImageManager().copyBufferToImage(pStagingBuffer.get(0), image, textureData.getWidth(), textureData.getHeight());
+            application.getImageManager().copyBufferToImage(stagingBuffer.getBuffer(), image, textureData.getWidth(), textureData.getHeight());
+            stagingBuffer.cleanup();
 
             application.getImageManager().generateMipmaps(
                 image,
@@ -107,9 +96,6 @@ public class BufferedTexture extends Texture {
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
             );
             imageViewLayout = layout;
-
-            vkDestroyBuffer(application.getLogicalDevice(), pStagingBuffer.get(0), null);
-            vkFreeMemory(application.getLogicalDevice(), pStagingBufferMemory.get(0), null);
         }
     }
 

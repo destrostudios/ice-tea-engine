@@ -4,9 +4,5 @@ import com.destrostudios.icetea.core.data.values.UniformValue;
 
 public interface FieldsDataListener {
 
-    void onFieldValueAdded(UniformValue<?> uniformValue);
-
-    void onFieldValueSet(UniformValue<?> uniformValue);
-
-    void onFieldValueRemoved(UniformValue<?> uniformValue);
+    void onFieldsDataModified(UniformValue<?> uniformValue);
 }

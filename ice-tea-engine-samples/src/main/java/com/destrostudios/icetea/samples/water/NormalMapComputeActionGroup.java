@@ -32,7 +32,7 @@ public class NormalMapComputeActionGroup extends ComputeActionGroup {
     public void record(VkCommandBuffer commandBuffer) {
         super.record(commandBuffer);
         try (MemoryStack stack = stackPush()) {
-            vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getByteBuffer());
+            vkCmdPushConstants(commandBuffer, computePipeline.getPipelineLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstants.getBuffer().getByteBuffer());
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, computeActions.get(0).getResourceDescriptorSet().getDescriptorSets(0, stack), null);
             vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
         }

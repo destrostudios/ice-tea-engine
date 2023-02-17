@@ -1,19 +1,22 @@
 package com.destrostudios.icetea.core.scene;
 
+import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.material.Material;
-import com.destrostudios.icetea.core.resource.descriptor.GeometryTransformDescriptor;
-import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
+import com.destrostudios.icetea.core.render.GeometryRenderer;
+import com.destrostudios.icetea.core.resource.ResourceDescriptor;
+import com.destrostudios.icetea.core.resource.descriptor.GeometryTransformDescriptor;
 import lombok.Getter;
+import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class Geometry extends Spatial {
@@ -29,12 +32,16 @@ public class Geometry extends Spatial {
         setMaterial(context.isCloneMaterials() ? context.cloneByReference(geometry.material) : geometry.material);
         transformUniformBuffer = geometry.transformUniformBuffer.clone(context);
     }
+    private static final GeometryRenderer DEFAULT_GEOMETRY_RENDERER = new GeometryRenderer();
     @Getter
     protected Mesh mesh;
     @Getter
     protected Material material;
     @Getter
     private UniformDataBuffer transformUniformBuffer;
+    @Getter
+    @Setter
+    protected GeometryRenderer renderer = DEFAULT_GEOMETRY_RENDERER;
 
     @Override
     protected void init() {

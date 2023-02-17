@@ -39,7 +39,7 @@ public class Texture extends Resource {
     }
 
     @Override
-    protected void updateResource() {
+    protected void updateResource(float tpf) {
         if (wasJustSet) {
             setWasOutdated();
             wasJustSet = false;

@@ -203,19 +203,19 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             // BoundingBox -> BoundingSphere
             Vector3f shadowMapBoundsCenter = shadowMapBounds.getCenter();
             float shadowMapBoundsRadius = (float) Math.sqrt(
-                    (shadowMapBounds.getExtent().x() * shadowMapBounds.getExtent().x()) +
-                            (shadowMapBounds.getExtent().y() * shadowMapBounds.getExtent().y()) +
-                            (shadowMapBounds.getExtent().z() * shadowMapBounds.getExtent().z())
+                (shadowMapBounds.getExtent().x() * shadowMapBounds.getExtent().x()) +
+                (shadowMapBounds.getExtent().y() * shadowMapBounds.getExtent().y()) +
+                (shadowMapBounds.getExtent().z() * shadowMapBounds.getExtent().z())
             );
 
             projectionMatrix.ortho(
-                    -1 * shadowMapBoundsRadius,
-                    shadowMapBoundsRadius,
-                    -1 * shadowMapBoundsRadius,
-                    shadowMapBoundsRadius,
-                    -1 * shadowMapBoundsRadius,
-                    shadowMapBoundsRadius,
-                    true
+                -1 * shadowMapBoundsRadius,
+                shadowMapBoundsRadius,
+                -1 * shadowMapBoundsRadius,
+                shadowMapBoundsRadius,
+                -1 * shadowMapBoundsRadius,
+                shadowMapBoundsRadius,
+                true
             );
             projectionMatrix.m11(projectionMatrix.m11() * -1);
 
@@ -257,22 +257,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         application.getRootNode().forEachGeometry(geometry -> {
             ShadowMapGeometryRenderContext renderContext = getRenderContext(geometry);
             if (renderContext != null) {
-                try (MemoryStack stack = stackPush()) {
-                    RenderPipeline<?> renderPipeline = renderContext.getRenderPipeline();
-                    actions.accept((cb, cbi) -> vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline()));
-                    LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
-                    LongBuffer offsets = stack.longs(0);
-                    actions.accept((cb, cbi) -> vkCmdBindVertexBuffers(cb, 0, vertexBuffers, offsets));
-                    if (geometry.getMesh().getIndexBuffer() != null) {
-                        actions.accept((cb, cbi) -> vkCmdBindIndexBuffer(cb, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32));
-                    }
-                    actions.accept((cb, cbi) -> vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, renderContext.getResourceDescriptorSet().getDescriptorSets(cbi, stack), null));
-                    if (geometry.getMesh().getIndices() != null) {
-                        actions.accept((cb, cbi) -> vkCmdDrawIndexed(cb, geometry.getMesh().getIndices().length, 1, 0, 0, 0));
-                    } else {
-                        actions.accept((cb, cbi) -> vkCmdDraw(cb, geometry.getMesh().getVertices().length, 1, 0, 0));
-                    }
-                }
+                geometry.getRenderer().render(geometry, renderContext, actions);
             }
         });
     }

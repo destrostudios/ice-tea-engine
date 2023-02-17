@@ -8,7 +8,7 @@ import lombok.Getter;
  */
 @AllArgsConstructor
 @Getter
-public class KeyEvent {
+public class KeyEvent extends Event {
     private int key;
     private int scanCode;
     private int action;

@@ -5,7 +5,6 @@ import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.render.RenderJob;
-import com.destrostudios.icetea.core.render.RenderPipeline;
 import lombok.Getter;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
@@ -312,22 +311,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
         application.getBucketRenderer().render(application.getRootNode(), geometry -> {
             SceneGeometryRenderContext renderContext = getRenderContext(geometry);
             if (renderContext != null) {
-                try (MemoryStack stack = stackPush()) {
-                    RenderPipeline<?> renderPipeline = renderContext.getRenderPipeline();
-                    actions.accept((cb, cbi) -> vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline()));
-                    LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer());
-                    LongBuffer offsets = stack.longs(0);
-                    actions.accept((cb, cbi) -> vkCmdBindVertexBuffers(cb, 0, vertexBuffers, offsets));
-                    if (geometry.getMesh().getIndexBuffer() != null) {
-                        actions.accept((cb, cbi) -> vkCmdBindIndexBuffer(cb, geometry.getMesh().getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32));
-                    }
-                    actions.accept((cb, cbi) -> vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, renderContext.getResourceDescriptorSet().getDescriptorSets(cbi, stack), null));
-                    if (geometry.getMesh().getIndices() != null) {
-                        actions.accept((cb, cbi) -> vkCmdDrawIndexed(cb, geometry.getMesh().getIndices().length, 1, 0, 0, 0));
-                    } else {
-                        actions.accept((cb, cbi) -> vkCmdDraw(cb, geometry.getMesh().getVertices().length, 1, 0, 0));
-                    }
-                }
+                geometry.getRenderer().render(geometry, renderContext, actions);
             }
         });
     }

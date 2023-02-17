@@ -19,6 +19,10 @@
         </dependency>
         <dependency>
             <groupId>com.destrostudios.icetea</groupId>
+            <artifactId>ice-tea-engine-imgui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.destrostudios.icetea</groupId>
             <artifactId>ice-tea-engine-samples</artifactId>
         </dependency>
         <dependency>

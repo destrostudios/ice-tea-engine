@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class MousePositionEvent {
+public class MousePositionEvent extends Event {
     private double x;
     private double y;
     private double deltaX;

@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.mesh;
 
+import com.destrostudios.icetea.core.buffer.StagedResizableMemoryBuffer;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.*;
@@ -13,14 +14,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.util.*;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements ContextCloneable {
@@ -49,13 +45,9 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
     @Setter
     protected int[] indices;
     @Getter
-    private Long vertexBuffer;
+    private StagedResizableMemoryBuffer vertexBuffer;
     @Getter
-    private Long vertexBufferMemory;
-    @Getter
-    private Long indexBuffer;
-    @Getter
-    private Long indexBufferMemory;
+    private StagedResizableMemoryBuffer indexBuffer;
     private boolean buffersOutdated;
     @Getter
     private boolean wereBuffersOutdated;
@@ -112,108 +104,47 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
     @Override
     protected void update(float tpf) {
         super.update(tpf);
+        updateVertexBuffer(tpf);
+        updateIndexBuffer(tpf);
         wereBuffersOutdated = buffersOutdated;
-        if (buffersOutdated) {
-            if (vertices.length == 0) {
-                throw new UnsupportedOperationException("Initializing a mesh without vertices would currently crash the application by trying to allocate a buffer with size 0.");
-            }
-            recreateVertexBuffer();
-            recreateIndexBuffer();
-            buffersOutdated = false;
-        }
+        buffersOutdated = false;
     }
 
-    private void recreateVertexBuffer() {
-        cleanupVertexBuffer();
-
-        try (MemoryStack stack = stackPush()) {
-            long bufferSize = 0;
-            for (VertexData vertex : vertices) {
-                bufferSize += vertex.getSize();
-            }
-
-            LongBuffer pBuffer = stack.mallocLong(1);
-            LongBuffer pBufferMemory = stack.mallocLong(1);
-            application.getBufferManager().createBuffer(
-                bufferSize,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                pBuffer,
-                pBufferMemory
-            );
-
-            long stagingBuffer = pBuffer.get(0);
-            long stagingBufferMemory = pBufferMemory.get(0);
-
-            PointerBuffer data = stack.mallocPointer(1);
-
-            vkMapMemory(application.getLogicalDevice(), stagingBufferMemory, 0, bufferSize, 0, data);
-            ByteBuffer byteBuffer = data.getByteBuffer(0, (int) bufferSize);
-            int index = 0;
-            for (VertexData vertex : vertices) {
-                for (UniformValue<?> uniformValue : vertex.getFields().values()) {
-                    uniformValue.write(byteBuffer, index);
-                    index += uniformValue.getSize();
+    private void updateVertexBuffer(float tpf) {
+        if (buffersOutdated && (vertexBuffer == null)) {
+            vertexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+        }
+        if (vertexBuffer != null) {
+            vertexBuffer.update(application, tpf);
+            if (buffersOutdated) {
+                long bufferSize = 0;
+                for (VertexData vertex : vertices) {
+                    bufferSize += vertex.getSize();
                 }
+                vertexBuffer.write(bufferSize, byteBuffer -> {
+                    int index = 0;
+                    for (VertexData vertex : vertices) {
+                        for (UniformValue<?> uniformValue : vertex.getFields().values()) {
+                            uniformValue.write(byteBuffer, index);
+                            index += uniformValue.getSize();
+                        }
+                    }
+                });
             }
-            vkUnmapMemory(application.getLogicalDevice(), stagingBufferMemory);
-
-            application.getBufferManager().createBuffer(
-                bufferSize,
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
-                pBuffer,
-                pBufferMemory
-            );
-
-            vertexBuffer = pBuffer.get(0);
-            vertexBufferMemory = pBufferMemory.get(0);
-
-            application.getBufferManager().copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-            vkDestroyBuffer(application.getLogicalDevice(), stagingBuffer, null);
-            vkFreeMemory(application.getLogicalDevice(), stagingBufferMemory, null);
         }
     }
 
-    private void recreateIndexBuffer() {
-        cleanupIndexBuffer();
-
-        if (indices != null) {
-            try (MemoryStack stack = stackPush()) {
-                long bufferSize = Integer.BYTES * indices.length;
-                LongBuffer pBuffer = stack.mallocLong(1);
-                LongBuffer pBufferMemory = stack.mallocLong(1);
-                application.getBufferManager().createBuffer(
-                        bufferSize,
-                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        pBuffer,
-                        pBufferMemory
-                );
-
-                long stagingBuffer = pBuffer.get(0);
-                long stagingBufferMemory = pBufferMemory.get(0);
-
-                PointerBuffer data = stack.mallocPointer(1);
-
-                vkMapMemory(application.getLogicalDevice(), stagingBufferMemory, 0, bufferSize, 0, data);
-                BufferUtil.memcpy(data.getByteBuffer(0, (int) bufferSize), indices);
-                vkUnmapMemory(application.getLogicalDevice(), stagingBufferMemory);
-
-                application.getBufferManager().createBuffer(
-                        bufferSize,
-                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                        VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
-                        pBuffer,
-                        pBufferMemory
-                );
-
-                indexBuffer = pBuffer.get(0);
-                indexBufferMemory = pBufferMemory.get(0);
-
-                application.getBufferManager().copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-                vkDestroyBuffer(application.getLogicalDevice(), stagingBuffer, null);
-                vkFreeMemory(application.getLogicalDevice(), stagingBufferMemory, null);
+    private void updateIndexBuffer(float tpf) {
+        if ((indices != null) && buffersOutdated && (indexBuffer == null)) {
+            indexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+        }
+        if (indexBuffer != null) {
+            indexBuffer.update(application, tpf);
+            if (buffersOutdated) {
+                long bufferSize = ((long) Integer.BYTES) * indices.length;
+                indexBuffer.write(bufferSize, byteBuffer -> {
+                    BufferUtil.memcpy(byteBuffer, indices);
+                });
             }
         }
     }
@@ -276,31 +207,15 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
 
     @Override
     protected void cleanupInternal() {
-        cleanupVertexBuffer();
-        cleanupIndexBuffer();
-        super.cleanupInternal();
-    }
-
-    private void cleanupVertexBuffer() {
         if (vertexBuffer != null) {
-            vkDestroyBuffer(application.getLogicalDevice(), vertexBuffer, null);
+            vertexBuffer.cleanup();
             vertexBuffer = null;
         }
-        if (vertexBufferMemory != null) {
-            vkFreeMemory(application.getLogicalDevice(), vertexBufferMemory, null);
-            vertexBufferMemory = null;
-        }
-    }
-
-    private void cleanupIndexBuffer() {
         if (indexBuffer != null) {
-            vkDestroyBuffer(application.getLogicalDevice(), indexBuffer, null);
+            indexBuffer.cleanup();
             indexBuffer = null;
         }
-        if (indexBufferMemory != null) {
-            vkFreeMemory(application.getLogicalDevice(), indexBufferMemory, null);
-            indexBufferMemory = null;
-        }
+        super.cleanupInternal();
     }
 
     @Override

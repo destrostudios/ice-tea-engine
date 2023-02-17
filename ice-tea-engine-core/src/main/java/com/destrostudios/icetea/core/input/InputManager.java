@@ -3,25 +3,26 @@ package com.destrostudios.icetea.core.input;
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import org.joml.Vector2f;
-import org.lwjgl.glfw.GLFWCharCallback;
-import org.lwjgl.glfw.GLFWCursorPosCallback;
-import org.lwjgl.glfw.GLFWKeyCallback;
-import org.lwjgl.glfw.GLFWMouseButtonCallback;
+import org.lwjgl.glfw.*;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 public class InputManager extends LifecycleObject {
 
     private LinkedList<KeyListener> keyListeners = new LinkedList<>();
-    private LinkedList<CharacterListener> characterListeners = new LinkedList<>();
     private LinkedList<KeyEvent> pendingKeyEvents = new LinkedList<>();
+    private LinkedList<CharacterListener> characterListeners = new LinkedList<>();
     private LinkedList<CharacterEvent> pendingCharacterEvents = new LinkedList<>();
-    private LinkedList<MouseButtonListener> mouseButtonListeners = new LinkedList<>();
-    private LinkedList<MousePositionEvent> pendingMousePositionEvents = new LinkedList<>();
     private LinkedList<MousePositionListener> mousePositionListeners = new LinkedList<>();
+    private LinkedList<MousePositionEvent> pendingMousePositionEvents = new LinkedList<>();
+    private LinkedList<MouseButtonListener> mouseButtonListeners = new LinkedList<>();
     private LinkedList<MouseButtonEvent> pendingMouseButtonEvents = new LinkedList<>();
+    private LinkedList<MouseScrollListener> mouseScrollListeners = new LinkedList<>();
+    private LinkedList<MouseScrollEvent> pendingMouseScrollEvents = new LinkedList<>();
     @Getter
     private Vector2f cursorPosition = new Vector2f();
 
@@ -42,20 +43,6 @@ public class InputManager extends LifecycleObject {
                 pendingCharacterEvents.add(new CharacterEvent(codepoint));
             }
         });
-        glfwSetCharCallback(application.getWindow(), new GLFWCharCallback() {
-
-            @Override
-            public void invoke(long window, int codepoint) {
-                pendingCharacterEvents.add(new CharacterEvent(codepoint));
-            }
-        });
-        glfwSetMouseButtonCallback(application.getWindow(), new GLFWMouseButtonCallback() {
-
-            @Override
-            public void invoke(long window, int button, int action, int mods) {
-                pendingMouseButtonEvents.add(new MouseButtonEvent(button, action, mods));
-            }
-        });
         glfwSetCursorPosCallback(application.getWindow(), new GLFWCursorPosCallback() {
 
             @Override
@@ -66,39 +53,43 @@ public class InputManager extends LifecycleObject {
                 pendingMousePositionEvents.add(new MousePositionEvent(x, y, deltaX, deltaY));
             }
         });
+        glfwSetMouseButtonCallback(application.getWindow(), new GLFWMouseButtonCallback() {
+
+            @Override
+            public void invoke(long window, int button, int action, int mods) {
+                pendingMouseButtonEvents.add(new MouseButtonEvent(button, action, mods));
+            }
+        });
+        glfwSetScrollCallback(application.getWindow(), new GLFWScrollCallback() {
+
+            @Override
+            public void invoke(long window, double xOffset, double yOffset) {
+                pendingMouseScrollEvents.add(new MouseScrollEvent(xOffset, yOffset));
+            }
+        });
     }
 
     @Override
     public void update(float tpf) {
         super.update(tpf);
-        // Keys
-        for (KeyEvent keyEvent : pendingKeyEvents) {
-            for (KeyListener keyListener : keyListeners.toArray(new KeyListener[0])) {
-                keyListener.onKeyEvent(keyEvent);
+        processEvents(pendingKeyEvents, keyListeners, KeyListener::onKeyEvent);
+        processEvents(pendingCharacterEvents, characterListeners, CharacterListener::onCharacterEvent);
+        processEvents(pendingMouseButtonEvents, mouseButtonListeners, MouseButtonListener::onMouseButtonEvent);
+        processEvents(pendingMousePositionEvents, mousePositionListeners, MousePositionListener::onMousePositionEvent);
+        processEvents(pendingMouseScrollEvents, mouseScrollListeners, MouseScrollListener::onMouseScrollEvent);
+    }
+
+    private <E extends Event, L> void processEvents(List<E> events, List<L> listeners, BiConsumer<L, E> onEvent) {
+        for (E event : events) {
+            // Copy listeners before iteration because they might add/remove listeners
+            for (Object listener : listeners.toArray()) {
+                if (event.isStopPropagating()) {
+                    break;
+                }
+                onEvent.accept((L) listener, event);
             }
         }
-        pendingKeyEvents.clear();
-        // Characters
-        for (CharacterEvent characterEvent : pendingCharacterEvents) {
-            for (CharacterListener characterListener : characterListeners.toArray(new CharacterListener[0])) {
-                characterListener.onCharacterEvent(characterEvent);
-            }
-        }
-        pendingCharacterEvents.clear();
-        // Mouse buttons
-        for (MouseButtonEvent mouseButtonEvent : pendingMouseButtonEvents.toArray(new MouseButtonEvent[0])) {
-            for (MouseButtonListener mouseButtonListener : mouseButtonListeners.toArray(new MouseButtonListener[0])) {
-                mouseButtonListener.onMouseButtonEvent(mouseButtonEvent);
-            }
-        }
-        pendingMouseButtonEvents.clear();
-        // Mouse positions
-        for (MousePositionEvent mousePositionEvent : pendingMousePositionEvents.toArray(new MousePositionEvent[0])) {
-            for (MousePositionListener mousePositionListener : mousePositionListeners.toArray(new MousePositionListener[0])) {
-                mousePositionListener.onMousePositionEvent(mousePositionEvent);
-            }
-        }
-        pendingMousePositionEvents.clear();
+        events.clear();
     }
 
     public void setCursorMode(int cursorMode) {
@@ -106,7 +97,11 @@ public class InputManager extends LifecycleObject {
     }
 
     public void addKeyListener(KeyListener keyListener) {
-        keyListeners.add(keyListener);
+        addKeyListener(keyListener, keyListeners.size());
+    }
+
+    public void addKeyListener(KeyListener keyListener, int index) {
+        keyListeners.add(index, keyListener);
     }
 
     public void removeKeyListener(KeyListener keyListener) {
@@ -114,35 +109,60 @@ public class InputManager extends LifecycleObject {
     }
 
     public void addCharacterListener(CharacterListener characterListener) {
-        characterListeners.add(characterListener);
+        addCharacterListener(characterListener, characterListeners.size());
+    }
+
+    public void addCharacterListener(CharacterListener characterListener, int index) {
+        characterListeners.add(index, characterListener);
     }
 
     public void removeCharacterListener(CharacterListener characterListener) {
         characterListeners.remove(characterListener);
     }
 
-    public void addMouseButtonListener(MouseButtonListener mouseButtonListener) {
-        mouseButtonListeners.add(mouseButtonListener);
-    }
-
-    public void removeMouseButtonListener(MouseButtonListener mouseButtonListener) {
-        mouseButtonListeners.remove(mouseButtonListener);
-    }
-
     public void addMousePositionListener(MousePositionListener mousePositionListener) {
-        mousePositionListeners.add(mousePositionListener);
+        addMousePositionListener(mousePositionListener, mousePositionListeners.size());
+    }
+
+    public void addMousePositionListener(MousePositionListener mousePositionListener, int index) {
+        mousePositionListeners.add(index, mousePositionListener);
     }
 
     public void removeMousePositionListener(MousePositionListener mousePositionListener) {
         mousePositionListeners.remove(mousePositionListener);
     }
 
+    public void addMouseButtonListener(MouseButtonListener mouseButtonListener) {
+        addMouseButtonListener(mouseButtonListener, mouseButtonListeners.size());
+    }
+
+    public void addMouseButtonListener(MouseButtonListener mouseButtonListener, int index) {
+        mouseButtonListeners.add(index, mouseButtonListener);
+    }
+
+    public void removeMouseButtonListener(MouseButtonListener mouseButtonListener) {
+        mouseButtonListeners.remove(mouseButtonListener);
+    }
+
+    public void addMouseScrollListener(MouseScrollListener mouseScrollListener) {
+        addMouseScrollListener(mouseScrollListener, mouseButtonListeners.size());
+    }
+
+    public void addMouseScrollListener(MouseScrollListener mouseScrollListener, int index) {
+        mouseScrollListeners.add(index, mouseScrollListener);
+    }
+
+    public void removeMouseScrollListener(MouseScrollListener mouseScrollListener) {
+        mouseScrollListeners.remove(mouseScrollListener);
+    }
+
     @Override
     protected void cleanupInternal() {
         glfwSetKeyCallback(application.getWindow(), null);
         glfwSetCharCallback(application.getWindow(), null);
-        glfwSetMouseButtonCallback(application.getWindow(), null);
         glfwSetCursorPosCallback(application.getWindow(), null);
+        glfwSetMouseButtonCallback(application.getWindow(), null);
+        glfwSetScrollCallback(application.getWindow(), null);
         super.cleanupInternal();
     }
 }

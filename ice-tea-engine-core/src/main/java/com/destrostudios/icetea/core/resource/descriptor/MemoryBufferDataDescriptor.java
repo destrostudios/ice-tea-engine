@@ -30,7 +30,7 @@ public abstract class MemoryBufferDataDescriptor<B extends MemoryDataBuffer> ext
     protected void initWriteDescriptorSet(VkWriteDescriptorSet descriptorWrite, MemoryStack stack) {
         super.initWriteDescriptorSet(descriptorWrite, stack);
         VkDescriptorBufferInfo.Buffer descriptorBufferInfo = VkDescriptorBufferInfo.callocStack(1, stack);
-        descriptorBufferInfo.buffer(resource.getBuffer());
+        descriptorBufferInfo.buffer(resource.getBuffer().getBuffer());
         descriptorBufferInfo.offset(0);
         descriptorBufferInfo.range(resource.getData().getSize());
         descriptorWrite.pBufferInfo(descriptorBufferInfo);

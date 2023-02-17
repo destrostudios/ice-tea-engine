@@ -33,7 +33,6 @@ public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener 
 
     @Override
     public void onKeyEvent(KeyEvent keyEvent) {
-        // Set camera move direction
         Integer axis = null;
         Integer value = null;
         switch (keyEvent.getKey()) {

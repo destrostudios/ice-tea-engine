@@ -8,6 +8,6 @@ import lombok.Getter;
  */
 @AllArgsConstructor
 @Getter
-public class CharacterEvent {
+public class CharacterEvent extends Event {
     private int codepoint;
 }

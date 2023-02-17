@@ -76,14 +76,11 @@ public class FieldsData extends LifecycleObject implements ContextCloneable {
             uniformValue.setValue(value);
             fields.put(name, uniformValue);
             size += getValueSize.apply(uniformValue);
-            if (listener != null) {
-                listener.onFieldValueAdded(uniformValue);
-            }
         } else {
             uniformValue.setValue(value);
         }
         if (listener != null) {
-            listener.onFieldValueSet(uniformValue);
+            listener.onFieldsDataModified(uniformValue);
         }
     }
 
@@ -91,7 +88,7 @@ public class FieldsData extends LifecycleObject implements ContextCloneable {
         UniformValue<?> uniformValue = fields.remove(name);
         size -= getValueSize.apply(uniformValue);
         if (listener != null) {
-            listener.onFieldValueRemoved(uniformValue);
+            listener.onFieldsDataModified(uniformValue);
         }
     }
 

@@ -129,6 +129,8 @@ public abstract class Application {
     private List<Filter> filters;
     @Getter
     private LinkedList<LifecycleObject> systems;
+    @Getter
+    private List<WindowResizeListener> windowResizeListeners;
 
     public void start() {
         create();
@@ -155,6 +157,7 @@ public abstract class Application {
         rootNode.add(guiNode);
         filters = new LinkedList<>();
         systems = new LinkedList<>();
+        windowResizeListeners = new LinkedList<>();
         initWindow();
         createInstance();
         initSurface();
@@ -163,7 +166,6 @@ public abstract class Application {
         initCommandPool();
         sceneCamera = new SceneCamera();
         guiCamera = new GuiCamera();
-        updateGuiCamera();
         bucketRenderer = new BucketRenderer(this);
         swapChain = new SwapChain();
         swapChain.update(this, 0);
@@ -192,16 +194,15 @@ public abstract class Application {
         LOGGER.debug("Created window.");
 
         LOGGER.debug("Creating resize callback...");
-        glfwSetFramebufferSizeCallback(window, this::onFrameBufferResized);
+        glfwSetFramebufferSizeCallback(window, this::onWindowResized);
         LOGGER.debug("Created resize callback.");
     }
 
-    private void onFrameBufferResized(long window, int width, int height) {
+    private void onWindowResized(long window, int width, int height) {
         LOGGER.debug("Window resized to {} x {}.", width, height);
         config.setWidth(width);
         config.setHeight(height);
-        swapChain.onResize();
-        updateGuiCamera();
+        windowResizeListeners.forEach(windowResizeListener -> windowResizeListener.onWindowResize(width, height));
     }
 
     private void createInstance() {
@@ -392,10 +393,6 @@ public abstract class Application {
         }
     }
 
-    private void updateGuiCamera() {
-        guiCamera.setWindowSize(config.getWidth(), config.getHeight());
-    }
-
     private void mainLoop() {
         LOGGER.debug("Started main loop.");
         while (!(glfwWindowShouldClose(window) || stop)) {
@@ -497,6 +494,14 @@ public abstract class Application {
     public void removeSystem(LifecycleObject system) {
         system.cleanup();
         systems.remove(system);
+    }
+
+    public void addWindowResizeListener(WindowResizeListener windowResizeListener) {
+        windowResizeListeners.add(windowResizeListener);
+    }
+
+    public void removeWindowResizeListener(WindowResizeListener windowResizeListener) {
+        windowResizeListeners.remove(windowResizeListener);
     }
 
     public Vector3f getWorldCoordinates(Vector2f screenPosition, float projectionZPos) {

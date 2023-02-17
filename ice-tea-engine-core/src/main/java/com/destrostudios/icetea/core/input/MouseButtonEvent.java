@@ -8,7 +8,7 @@ import lombok.Getter;
  */
 @AllArgsConstructor
 @Getter
-public class MouseButtonEvent {
+public class MouseButtonEvent extends Event {
     private int button;
     private int action;
     private int modifiers;

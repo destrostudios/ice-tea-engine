@@ -96,7 +96,17 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             inputAssembly.topology(mesh.getTopology());
             inputAssembly.primitiveRestartEnable(false);
 
-            // ===> VIEWPORT & SCISSOR
+            // ===> DYNAMIC <===
+
+            VkPipelineDynamicStateCreateInfo dynamic = null;
+            if (geometry.getRenderer().getDynamicStates() != null) {
+                dynamic = VkPipelineDynamicStateCreateInfo.callocStack(stack);
+                dynamic.sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+                dynamic.pDynamicStates(stack.ints(geometry.getRenderer().getDynamicStates()));
+            }
+
+            // ===> VIEWPORT & SCISSOR <===
+            // TODO: The viewport state is not needed if the dynamic state is set and the renderer provides all dynamic input
 
             VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
             viewport.x(0);
@@ -197,6 +207,7 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
             pipelineInfo.pStages(shaderStages);
             pipelineInfo.pVertexInputState(vertexInputInfo);
             pipelineInfo.pInputAssemblyState(inputAssembly);
+            pipelineInfo.pDynamicState(dynamic);
             pipelineInfo.pViewportState(viewportState);
             pipelineInfo.pRasterizationState(rasterizer);
             pipelineInfo.pMultisampleState(multisampling);

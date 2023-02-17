@@ -30,13 +30,13 @@ public abstract class Resource extends LifecycleObject implements ContextCloneab
     protected void update(float tpf) {
         super.update(tpf);
         wasOutdated = false;
-        updateResource();
+        updateResource(tpf);
         for (ResourceDescriptor<?> resourceDescriptor : descriptors.values()) {
             resourceDescriptor.update(application, tpf);
         }
     }
 
-    protected abstract void updateResource();
+    protected abstract void updateResource(float tpf);
 
     protected void setWasOutdated() {
         wasOutdated = true;
