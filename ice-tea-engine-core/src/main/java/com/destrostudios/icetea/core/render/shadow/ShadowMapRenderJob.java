@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core.render.shadow;
 import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
+import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.resource.descriptor.ShadowMapTextureDescriptor;
 import com.destrostudios.icetea.core.render.RenderJob;
@@ -228,20 +229,33 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         float farClip = camera.getZFar();
         float clipRange = farClip - nearClip;
 
-        float minZ = nearClip;
-        float maxZ = nearClip + clipRange;
-
-        float range = maxZ - minZ;
-        float ratio = maxZ / minZ;
-
-        // Calculate split depths based on view camera frustum (Based on https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html)
-        float[] cascadeSplits = new float[shadowConfig.getCascadesCount()];
-        for (int i = 0; i < shadowConfig.getCascadesCount(); i++) {
-            float p = (i + 1) / ((float) shadowConfig.getCascadesCount());
-            float log = minZ * (float) Math.pow(ratio, p);
-            float uniform = minZ + (range * p);
-            float d = (shadowConfig.getCascadeSplitLambda() * (log - uniform)) + uniform;
-            cascadeSplits[i] = (d - nearClip) / clipRange;
+        float[] cascadeSplits = shadowConfig.getCascadeSplits();
+        if (cascadeSplits != null) {
+            if (cascadeSplits.length != shadowConfig.getCascadesCount()) {
+                throw new IllegalArgumentException("Cascade splits length has to be equal to cascades count.");
+            }
+        } else {
+            cascadeSplits = new float[shadowConfig.getCascadesCount()];
+            if (camera.getProjection() instanceof PerspectiveProjection) {
+                // Calculate split depths based on view camera frustum (Based on https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html)
+                // This calculation assumes both zNear and zFar are positive (which should be true for perspective), as otherwise "ratio" might be negative, resulting in a lot of NaNs
+                float minZ = nearClip;
+                float maxZ = nearClip + clipRange;
+                float range = maxZ - minZ;
+                float ratio = maxZ / minZ;
+                for (int i = 0; i < shadowConfig.getCascadesCount(); i++) {
+                    float p = (i + 1) / ((float) shadowConfig.getCascadesCount());
+                    float log = minZ * (float) Math.pow(ratio, p);
+                    float uniform = minZ + (range * p);
+                    float d = (shadowConfig.getCascadeSplitLambda() * (log - uniform)) + uniform;
+                    cascadeSplits[i] = (d - nearClip) / clipRange;
+                }
+            } else {
+                // Actually ideal for orthographic projection
+                for (int i = 0; i < shadowConfig.getCascadesCount(); i++) {
+                    cascadeSplits[i] = ((i + 1) / ((float) shadowConfig.getCascadesCount()));
+                }
+            }
         }
 
         // Calculate orthographic projection matrix for each cascade
@@ -250,10 +264,10 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             float splitDist = cascadeSplits[i];
 
             Vector3f[] frustumCorners = new Vector3f[] {
-                new Vector3f(-1,  1, -1),
-                new Vector3f( 1,  1, -1),
-                new Vector3f( 1, -1, -1),
-                new Vector3f(-1, -1, -1),
+                new Vector3f(-1,  1, 0),
+                new Vector3f( 1,  1, 0),
+                new Vector3f( 1, -1, 0),
+                new Vector3f(-1, -1, 0),
                 new Vector3f(-1,  1,  1),
                 new Vector3f( 1,  1,  1),
                 new Vector3f( 1, -1,  1),
@@ -285,7 +299,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
                 float distance = frustumCorners[r].sub(frustumCenter, new Vector3f()).length();
                 radius = Math.max(radius, distance);
             }
-            radius = (float) Math.ceil((radius * 16) / 16);
+            radius = (float) (Math.ceil(radius * 16) / 16);
 
             Vector3f maxExtents = new Vector3f(radius);
             Vector3f minExtents = maxExtents.negate(new Vector3f());
@@ -310,7 +324,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             lightViewMatrix.lookAt(
                 frustumCenter.sub(directionalLight.getDirection().mul(-1 * minExtents.z(), new Vector3f()), new Vector3f()),
                 frustumCenter,
-                new Vector3f(0, 1, 1)
+                new Vector3f(0, 1, 0)
             );
 
             splitDepths[i] = -1 * (nearClip + (splitDist * clipRange));
