@@ -4,6 +4,7 @@ import com.destrostudios.icetea.core.asset.AssetManager;
 import com.destrostudios.icetea.core.asset.locator.ClasspathLocator;
 import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
+import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
 import com.destrostudios.icetea.core.lifecycle.LifecycleManager;
@@ -164,7 +165,7 @@ public abstract class Application {
         initPhysicalDevice();
         initLogicalDevice();
         initCommandPool();
-        sceneCamera = new SceneCamera();
+        initSceneCamera();
         guiCamera = new GuiCamera();
         bucketRenderer = new BucketRenderer(this);
         swapChain = new SwapChain();
@@ -391,6 +392,14 @@ public abstract class Application {
             commandPool = pCommandPool.get(0);
             LOGGER.debug("Initialized command pool.");
         }
+    }
+
+    private void initSceneCamera() {
+        sceneCamera = new SceneCamera();
+        float fieldOfViewY = (float) (Math.PI / 4);
+        float aspect = ((float) config.getWidth() / (float) config.getHeight());
+        sceneCamera.setProjection(new PerspectiveProjection(fieldOfViewY, aspect, 0.1f, 100));
+        // TODO: Offer possibility to automatically update projection when window resizes
     }
 
     private void mainLoop() {

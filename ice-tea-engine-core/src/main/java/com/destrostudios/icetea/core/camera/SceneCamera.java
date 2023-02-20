@@ -6,7 +6,6 @@ import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import org.lwjgl.vulkan.VkExtent2D;
 
 public class SceneCamera extends Camera {
 
@@ -16,51 +15,12 @@ public class SceneCamera extends Camera {
     @Getter
     private Quaternionf rotation;
     @Getter
-    private float fieldOfViewY;
-    @Getter
-    private float aspect;
-    @Getter
-    private float zNear;
-    @Getter
-    private float zFar;
-
-    @Override
-    protected void init() {
-        super.init();
-        setFieldOfViewY((float) (Math.PI / 4));
-        VkExtent2D swapchainExtent = application.getSwapChain().getExtent();
-        setAspect((float) swapchainExtent.width() / (float) swapchainExtent.height());
-        setZNear(0.1f);
-        setZFar(100);
-    }
+    private SceneCameraProjection projection;
 
     public void set(SceneCamera sceneCamera) {
         super.set(sceneCamera);
         rotation.set(sceneCamera.getRotation());
-        fieldOfViewY = sceneCamera.getFieldOfViewY();
-        aspect = sceneCamera.getAspect();
-        zNear = sceneCamera.getZNear();
-        zFar = sceneCamera.getZFar();
-    }
-
-    public void setFieldOfViewY(float fieldOfViewY) {
-        this.fieldOfViewY = fieldOfViewY;
-        updateProjectionMatrix();
-    }
-
-    public void setAspect(float aspect) {
-        this.aspect = aspect;
-        updateProjectionMatrix();
-    }
-
-    public void setZFar(float zFar) {
-        this.zFar = zFar;
-        updateProjectionMatrix();
-    }
-
-    public void setZNear(float zNear) {
-        this.zNear = zNear;
-        updateProjectionMatrix();
+        projection = sceneCamera.getProjection().clone();
     }
 
     public void setLocation(Vector3f location) {
@@ -69,28 +29,31 @@ public class SceneCamera extends Camera {
         updateUniform_Location();
     }
 
-    public void setRotation(Quaternionf rotation) {
-        this.rotation.set(rotation);
-        updateViewMatrix();
-    }
-
     public void setClipPlane(Vector4f clipPlane) {
         this.clipPlane = clipPlane;
         updateUniform_ClipPlane();
     }
 
+    public void setRotation(Quaternionf rotation) {
+        this.rotation.set(rotation);
+        updateViewMatrix();
+    }
+
+    public void setProjection(SceneCameraProjection projection) {
+        this.projection = projection;
+        updateProjectionMatrix();
+    }
+
     private void updateProjectionMatrix() {
-        projectionMatrix.identity();
-        projectionMatrix.perspective(fieldOfViewY, aspect, zNear, zFar, true);
-        projectionMatrix.m11(projectionMatrix.m11() * -1);
-        updateProjectionViewMatrix();
+        projection.updateProjectionMatrix(projectionMatrix);
         updateUniform_ProjectionMatrix();
+        updateProjectionViewMatrix();
     }
 
     private void updateViewMatrix() {
         MathUtil.setViewMatrix(viewMatrix, location, rotation);
-        updateProjectionViewMatrix();
         updateUniform_ViewMatrix();
+        updateProjectionViewMatrix();
     }
 
     public Vector3f getRight() {
