@@ -34,7 +34,6 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         shadowInfoUniformBuffer.setDescriptor("default", new UniformDescriptor(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
         pushConstants = new ByteDataBuffer();
     }
-    private static final int DEPTH_FORMAT = VK_FORMAT_D16_UNORM;
     @Getter
     private Light light;
     @Getter
@@ -68,7 +67,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
 
             // Depth attachment (shadow map)
             VkAttachmentDescription depthAttachment = attachments.get(0);
-            depthAttachment.format(DEPTH_FORMAT);
+            depthAttachment.format(shadowConfig.getShadowMapFormat());
             depthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
             depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
             depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
@@ -131,7 +130,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
                 shadowConfig.getShadowMapSize(),
                 1,
                 VK_SAMPLE_COUNT_1_BIT,
-                DEPTH_FORMAT,
+                shadowConfig.getShadowMapFormat(),
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 shadowConfig.getCascadesCount(),
@@ -144,7 +143,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             // Image view with all cascade layers, used to read the values inside the fragment shader (which calculates cascadeIndex and does lookup)
             long imageView = application.getImageManager().createImageView(
                 image,
-                DEPTH_FORMAT,
+                shadowConfig.getShadowMapFormat(),
                 VK_IMAGE_ASPECT_DEPTH_BIT,
                 1,
                 VK_IMAGE_VIEW_TYPE_2D_ARRAY,
@@ -157,7 +156,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             for (int i = 0; i < shadowMapCascadeImageViews.length; i++) {
                 shadowMapCascadeImageViews[i] = application.getImageManager().createImageView(
                     image,
-                    DEPTH_FORMAT,
+                    shadowConfig.getShadowMapFormat(),
                     VK_IMAGE_ASPECT_DEPTH_BIT,
                     1,
                     VK_IMAGE_VIEW_TYPE_2D_ARRAY,
