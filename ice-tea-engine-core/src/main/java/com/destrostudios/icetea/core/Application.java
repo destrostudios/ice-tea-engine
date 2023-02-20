@@ -398,7 +398,7 @@ public abstract class Application {
         sceneCamera = new SceneCamera();
         float fieldOfViewY = (float) (Math.PI / 4);
         float aspect = ((float) config.getWidth() / (float) config.getHeight());
-        sceneCamera.setProjection(new PerspectiveProjection(fieldOfViewY, aspect, 0.1f, 100));
+        sceneCamera.setProjection(new PerspectiveProjection(fieldOfViewY, aspect));
         // TODO: Offer possibility to automatically update projection when window resizes
     }
 

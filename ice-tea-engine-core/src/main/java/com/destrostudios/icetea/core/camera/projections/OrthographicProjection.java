@@ -10,23 +10,20 @@ import org.joml.Matrix4f;
 public class OrthographicProjection extends SceneCameraProjection {
 
     public OrthographicProjection(OrthographicProjection orthographicProjection) {
-        minX = orthographicProjection.minX;
-        maxX = orthographicProjection.maxX;
-        minY = orthographicProjection.minY;
-        minZ = orthographicProjection.minZ;
-        maxZ = orthographicProjection.maxZ;
+        left = orthographicProjection.left;
+        right = orthographicProjection.right;
+        bottom = orthographicProjection.bottom;
+        top = orthographicProjection.top;
     }
-    private float minX;
-    private float maxX;
-    private float minY;
-    private float maxY;
-    private float minZ;
-    private float maxZ;
+    private float left;
+    private float right;
+    private float bottom;
+    private float top;
 
     @Override
-    public void updateProjectionMatrix(Matrix4f projectionMatrix) {
+    public void updateProjectionMatrix(Matrix4f projectionMatrix, float zNear, float zFar) {
         projectionMatrix.identity();
-        projectionMatrix.ortho(minX, maxX, minY, maxY, minZ, maxZ, true);
+        projectionMatrix.ortho(left, right, bottom, top, zNear, zFar, true);
         projectionMatrix.m11(projectionMatrix.m11() * -1);
     }
 

@@ -11,15 +11,23 @@ public class SceneCamera extends Camera {
 
     public SceneCamera() {
         rotation = new Quaternionf();
+        zNear = 0.1f;
+        zFar = 100;
     }
     @Getter
     private Quaternionf rotation;
+    @Getter
+    private float zNear;
+    @Getter
+    private float zFar;
     @Getter
     private SceneCameraProjection projection;
 
     public void set(SceneCamera sceneCamera) {
         super.set(sceneCamera);
         rotation.set(sceneCamera.getRotation());
+        zNear = sceneCamera.getZNear();
+        zFar = sceneCamera.getZFar();
         projection = sceneCamera.getProjection().clone();
     }
 
@@ -39,13 +47,23 @@ public class SceneCamera extends Camera {
         updateViewMatrix();
     }
 
+    public void setZFar(float zFar) {
+        this.zFar = zFar;
+        updateProjectionMatrix();
+    }
+
+    public void setZNear(float zNear) {
+        this.zNear = zNear;
+        updateProjectionMatrix();
+    }
+
     public void setProjection(SceneCameraProjection projection) {
         this.projection = projection;
         updateProjectionMatrix();
     }
 
     private void updateProjectionMatrix() {
-        projection.updateProjectionMatrix(projectionMatrix);
+        projection.updateProjectionMatrix(projectionMatrix, zNear, zFar);
         updateUniform_ProjectionMatrix();
         updateProjectionViewMatrix();
     }
