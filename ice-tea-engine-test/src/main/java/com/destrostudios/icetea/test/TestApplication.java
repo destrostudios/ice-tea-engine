@@ -321,7 +321,7 @@ public class TestApplication extends Application {
         Geometry geometrySky = new Geometry();
         geometrySky.setMesh(meshSky);
         geometrySky.setMaterial(materialSky);
-        geometrySky.scale(new Vector3f(0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar()));
+        geometrySky.scale(new Vector3f(50, 50, 50));
         geometrySky.setRenderBucket(RenderBucketType.BACKGROUND);
         sceneNode.add(geometrySky);
 

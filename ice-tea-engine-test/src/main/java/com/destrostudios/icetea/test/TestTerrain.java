@@ -2,6 +2,7 @@ package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.asset.locator.FileLocator;
+import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
 import com.destrostudios.icetea.core.data.VertexData;
@@ -37,7 +38,7 @@ public class TestTerrain extends Application {
         assetManager.addLocator(new FileLocator("./assets"));
 
         sceneCamera.setLocation(new Vector3f(0, 6, 50));
-        sceneCamera.setZFar(200);
+        sceneCamera.setProjection(new PerspectiveProjection((float) (Math.PI / 4), ((float) config.getWidth() / (float) config.getHeight()), 0.1f, 200));
 
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
@@ -78,7 +79,7 @@ public class TestTerrain extends Application {
         Geometry geometrySky = new Geometry();
         geometrySky.setMesh(meshSky);
         geometrySky.setMaterial(materialSky);
-        geometrySky.scale(new Vector3f(0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar(), 0.5f * sceneCamera.getZFar()));
+        geometrySky.scale(new Vector3f(100, 100, 100));
         geometrySky.setRenderBucket(RenderBucketType.BACKGROUND);
         sceneNode.add(geometrySky);
 
