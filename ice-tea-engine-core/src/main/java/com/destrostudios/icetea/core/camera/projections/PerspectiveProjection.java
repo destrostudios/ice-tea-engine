@@ -12,16 +12,12 @@ public class PerspectiveProjection extends SceneCameraProjection {
     public PerspectiveProjection(PerspectiveProjection perspectiveProjection) {
         fieldOfViewY = perspectiveProjection.fieldOfViewY;
         aspect = perspectiveProjection.aspect;
-        zNear = perspectiveProjection.zNear;
-        zFar = perspectiveProjection.zFar;
     }
     private float fieldOfViewY;
     private float aspect;
-    private float zNear;
-    private float zFar;
 
     @Override
-    public void updateProjectionMatrix(Matrix4f projectionMatrix) {
+    public void updateProjectionMatrix(Matrix4f projectionMatrix, float zNear, float zFar) {
         projectionMatrix.identity();
         projectionMatrix.perspective(fieldOfViewY, aspect, zNear, zFar, true);
         projectionMatrix.m11(projectionMatrix.m11() * -1);
