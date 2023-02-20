@@ -59,6 +59,7 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
                 format,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                1,
                 pImage,
                 pImageMemory
             );

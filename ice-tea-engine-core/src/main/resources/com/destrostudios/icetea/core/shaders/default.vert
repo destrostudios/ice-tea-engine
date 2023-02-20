@@ -1,8 +1,9 @@
 #version 450
 
-layout(location = 0) out vec2 outVertexTexCoord;
-layout(location = 1) out LightVertexInfo lightVertexInfo;
-layout(location = 4) out vec4 shadowMapPosition;
+layout(location = 0) out vec4 worldPosition;
+layout(location = 1) out vec4 viewPosition;
+layout(location = 2) out vec2 outVertexTexCoord;
+layout(location = 3) out LightVertexInfo lightVertexInfo;
 
 void main() {
     vec4 modelSpacePosition = vec4(vertexPosition, 1);
@@ -15,8 +16,9 @@ void main() {
         modelSpacePosition = skinMatrix * modelSpacePosition;
     #endif
 
-    vec4 worldPosition = geometry.model * modelSpacePosition;
-    gl_Position = camera.proj * camera.view * worldPosition;
+    worldPosition = geometry.model * modelSpacePosition;
+    viewPosition = camera.view * worldPosition;
+    gl_Position = camera.proj * viewPosition;
 
     #ifdef CAMERA_CLIPPLANE
         if (camera.clipPlane.length() > 0) {
@@ -34,9 +36,5 @@ void main() {
         #elif LIGHT_TRANSLATION
             lightVertexInfo = shaderNode_light_getVertexInfo_SpotLight(camera.view, geometry.model, worldPosition, vertexNormal, light.translation);
         #endif
-    #endif
-
-    #ifdef SHADOWMAPLIGHT
-        shadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, worldPosition);
     #endif
 }

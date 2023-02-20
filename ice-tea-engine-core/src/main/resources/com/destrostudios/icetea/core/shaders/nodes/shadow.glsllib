@@ -1,20 +1,28 @@
-vec4 shaderNode_shadow_getShadowMapPosition(mat4 projectionMatrix, mat4 viewMatrix, vec4 worldSpaceVertexPosition) {
+vec4 shaderNode_shadow_getShadowMapPosition(mat4 projectionViewMatrix, vec4 worldSpaceVertexPosition) {
     mat4 biasMat = mat4(
         0.5, 0.0, 0.0, 0.0,
         0.0, 0.5, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.5, 0.5, 0.0, 1.0
     );
-    return (biasMat * projectionMatrix * viewMatrix * worldSpaceVertexPosition);
+    return (biasMat * projectionViewMatrix * worldSpaceVertexPosition);
 }
 
-float shaderNode_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2D shadowMap) {
+float shaderNode_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2DArray shadowMap, uint cascadeIndex, float shadowBrightness) {
     vec4 projectedShadowMapPosition = shadowMapPosition / shadowMapPosition.w;
     if ((projectedShadowMapPosition.z > -1) && (projectedShadowMapPosition.z < 1)) {
-        float dist = texture(shadowMap, projectedShadowMapPosition.st).r;
+        float dist = texture(shadowMap, vec3(projectedShadowMapPosition.xy, cascadeIndex)).r;
         if ((projectedShadowMapPosition.w > 0) && ((projectedShadowMapPosition.z - dist) > 0.01)) {
-            return 0.1;
+            return shadowBrightness;
         }
     }
     return 1;
+}
+
+vec4 shaderNode_shadow_getCascadeDebugColor(uint cascadeIndex) {
+    switch(cascadeIndex % 3) {
+        case 0: return vec4(1, 0.25, 0.25, 1);
+        case 1: return vec4(0.25, 1, 0.25, 1);
+        case 2: return vec4(0.25, 0.25, 1, 1);
+    }
 }

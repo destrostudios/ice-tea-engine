@@ -16,6 +16,6 @@ public class ShadowMapGeometryRenderContext extends EssentialGeometryRenderConte
 
     @Override
     protected void setDescriptors() {
-        resourceDescriptorSet.setDescriptor("camera", renderJob.getLightTransformUniformBuffer().getDescriptor("default"));
+        resourceDescriptorSet.setDescriptor("shadowInfo", renderJob.getShadowInfoUniformBuffer().getDescriptor("default"));
     }
 }

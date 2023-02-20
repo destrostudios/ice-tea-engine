@@ -8,15 +8,18 @@ import org.lwjgl.vulkan.*;
 
 public abstract class TextureDescriptor extends ResourceDescriptor<Texture> {
 
-    public TextureDescriptor(int stageFlags) {
+    public TextureDescriptor(int stageFlags, boolean isArray) {
         this.stageFlags = stageFlags;
+        this.isArray = isArray;
     }
 
     public TextureDescriptor(TextureDescriptor textureDescriptor, CloneContext context) {
         super(textureDescriptor, context);
         stageFlags = textureDescriptor.stageFlags;
+        isArray = textureDescriptor.isArray;
     }
     private int stageFlags;
+    private boolean isArray;
 
     @Override
     protected void initDescriptorSetLayoutBinding(VkDescriptorSetLayoutBinding.Buffer layoutBinding) {
@@ -36,7 +39,7 @@ public abstract class TextureDescriptor extends ResourceDescriptor<Texture> {
 
     @Override
     protected String getShaderDeclaration_Type(String name) {
-        return "uniform sampler2D";
+        return "uniform " + (isArray ? "sampler2DArray" : "sampler2D");
     }
 
     @Override

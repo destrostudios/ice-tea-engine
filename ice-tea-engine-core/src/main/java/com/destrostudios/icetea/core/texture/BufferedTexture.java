@@ -66,6 +66,7 @@ public class BufferedTexture extends Texture {
                 // TRANSFER_SRC and TRANSFER_DST are needed for the mipmap generation below
                 VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | usage,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                1,
                 pTextureImage,
                 pTextureImageMemory
             );

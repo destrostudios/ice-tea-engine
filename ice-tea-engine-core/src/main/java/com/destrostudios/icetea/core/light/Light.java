@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.light;
 
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.resource.descriptor.LightDescriptor;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
@@ -66,8 +67,8 @@ public abstract class Light extends LifecycleObject {
         modified = true;
     }
 
-    public void addShadows(int shadowMapSize) {
-        shadowMapRenderJobs.add(new ShadowMapRenderJob(this, shadowMapSize));
+    public void addShadows(ShadowConfig shadowConfig) {
+        shadowMapRenderJobs.add(new ShadowMapRenderJob(this, shadowConfig));
         modified = true;
     }
 

@@ -17,6 +17,7 @@ import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
 import com.destrostudios.icetea.core.profiler.ProfilerSystem;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
+import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.scene.gui.Panel;
@@ -79,14 +80,14 @@ public class TestApplication extends Application {
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
-        directionalLight.addShadows(4096);
+        directionalLight.addShadows(new ShadowConfig());
         setLight(directionalLight);
 
         SpotLight spotLight = new SpotLight();
         spotLight.setTranslation(new Vector3f(-2, 3.25f, 2.5f));
         spotLight.setRotation(new Quaternionf().rotateLocalX((float) (-0.3333f * Math.PI)));
         spotLight.addAffectedSpatial(sceneNode);
-        spotLight.addShadows(4096);
+        spotLight.addShadows(new ShadowConfig());
         // setLight(spotLight);
 
         nodeRotating = new Node();

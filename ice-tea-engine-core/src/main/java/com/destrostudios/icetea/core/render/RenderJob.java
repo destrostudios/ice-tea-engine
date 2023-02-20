@@ -9,11 +9,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -52,6 +48,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
                 imageFormat,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                1,
                 pColorImage,
                 pColorImageMemory
             );
@@ -95,6 +92,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
                 imageFormat,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                1,
                 pColorImage,
                 pColorImageMemory
             );
@@ -131,6 +129,11 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
     }
 
     protected void initFrameBuffers(Function<Integer, long[]> getAttachmentsByFrameBufferIndex) {
+        int frameBuffersCount = (isPresentingRenderJob() ? application.getSwapChain().getImages().size() : 1);
+        initFrameBuffers(getAttachmentsByFrameBufferIndex, frameBuffersCount);
+    }
+
+    protected void initFrameBuffers(Function<Integer, long[]> getAttachmentsByFrameBufferIndex, int frameBuffersCount) {
         try (MemoryStack stack = stackPush()) {
             VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.callocStack(stack);
             framebufferCreateInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
@@ -139,7 +142,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
             framebufferCreateInfo.height(extent.height());
             framebufferCreateInfo.layers(1);
 
-            int frameBuffersCount = (isPresentingRenderJob() ? application.getSwapChain().getImages().size() : 1);
             frameBuffers = new ArrayList<>(frameBuffersCount);
             for (int i = 0; i < frameBuffersCount; i++) {
                 framebufferCreateInfo.pAttachments(stack.longs(getAttachmentsByFrameBufferIndex.apply(i)));
@@ -154,8 +156,10 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
         }
     }
 
-    public long getFramebuffer(int commandBufferIndex) {
-        return frameBuffers.get(isPresentingRenderJob() ? commandBufferIndex : 0);
+    public Iterable<Long> getFrameBuffersToRender(int commandBufferIndex) {
+        LinkedList<Long> frameBuffersToRender = new LinkedList<>();
+        frameBuffersToRender.add(frameBuffers.get(isPresentingRenderJob() ? commandBufferIndex : 0));
+        return frameBuffersToRender;
     }
 
     protected boolean isPresentingRenderJob() {
@@ -171,7 +175,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
 
     public abstract VkClearValue.Buffer getClearValues(MemoryStack stack);
 
-    public abstract void render(Consumer<RenderAction> actions);
+    public abstract void render(VkCommandBuffer commandBuffer, int commandBufferIndex, int frameBufferIndex);
 
     @Override
     public void update(float tpf) {

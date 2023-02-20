@@ -37,6 +37,10 @@ public class FieldsData extends LifecycleObject implements ContextCloneable {
     @Setter
     private FieldsDataListener listener;
 
+    public void setBoolean(String name, Boolean value) {
+        set(name, value, BooleanUniformValue::new);
+    }
+
     public void setInt(String name, Integer value) {
         set(name, value, IntUniformValue::new);
     }
@@ -47,6 +51,10 @@ public class FieldsData extends LifecycleObject implements ContextCloneable {
 
     public void setFloat(String name, Float value) {
         set(name, value, FloatUniformValue::new);
+    }
+
+    public void setFloatArray(String name, float[] value) {
+        set(name, value, FloatArrayUniformValue::new);
     }
 
     public void setVector2f(String name, Vector2f value) {
@@ -92,6 +100,10 @@ public class FieldsData extends LifecycleObject implements ContextCloneable {
         }
     }
 
+    public Boolean getBoolean(String name) {
+        return get(name);
+    }
+
     public Integer getInt(String name) {
         return get(name);
     }
@@ -101,6 +113,10 @@ public class FieldsData extends LifecycleObject implements ContextCloneable {
     }
 
     public Float getFloat(String name) {
+        return get(name);
+    }
+
+    public float[] getFloatArray(String name) {
         return get(name);
     }
 

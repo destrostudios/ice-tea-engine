@@ -9,6 +9,7 @@ import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
+import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
@@ -42,7 +43,7 @@ public class TestTerrain extends Application {
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
-        directionalLight.addShadows(4096);
+        directionalLight.addShadows(new ShadowConfig());
         setLight(directionalLight);
 
         // Terrain

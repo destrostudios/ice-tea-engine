@@ -13,6 +13,7 @@ import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Quad;
 import com.destrostudios.icetea.core.profiler.ProfilerSystem;
+import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.scene.Spatial;
@@ -47,7 +48,7 @@ public class TestSimple extends Application {
         super.init();
         assetManager.addLocator(new FileLocator("./assets"));
 
-        sceneCamera.setLocation(new Vector3f(0, 0.3f, 5));
+        sceneCamera.setLocation(new Vector3f(0, 1, 13));
 
         Shader vertexShaderDefault = new Shader("com/destrostudios/icetea/core/shaders/default.vert", new String[] {
             "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
@@ -76,7 +77,7 @@ public class TestSimple extends Application {
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
         directionalLight.addAffectedSpatial(sceneNode);
-        directionalLight.addShadows(4096);
+        directionalLight.addShadows(new ShadowConfig());
         setLight(directionalLight);
 
         BitmapFont bitmapFont = assetManager.loadBitmapFont("com/destrostudios/icetea/core/fonts/Verdana_18.fnt");

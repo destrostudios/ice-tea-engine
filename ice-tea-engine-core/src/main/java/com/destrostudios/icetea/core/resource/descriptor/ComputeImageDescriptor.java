@@ -11,7 +11,7 @@ import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_COMPUTE_BIT;
 public class ComputeImageDescriptor extends TextureDescriptor {
 
     public ComputeImageDescriptor(String format, boolean writeOnly) {
-        super(VK_SHADER_STAGE_COMPUTE_BIT);
+        super(VK_SHADER_STAGE_COMPUTE_BIT, false);
         this.format = format;
         this.writeOnly = writeOnly;
     }

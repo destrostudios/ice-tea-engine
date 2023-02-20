@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.render.RenderPipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.mesh.Mesh;
+import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -51,7 +52,8 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             int shaderStageIndex = 0;
             LinkedList<Long> shaderModules = new LinkedList<>();
 
-            long vertShaderModule = createShaderModule_Vertex(material.getVertexShader(), resourceDescriptorSetShaderDeclaration, mesh);
+            Shader vertShader = new Shader("com/destrostudios/icetea/core/shaders/shadow.vert");
+            long vertShaderModule = createShaderModule_Vertex(vertShader, resourceDescriptorSetShaderDeclaration, mesh);
             createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
             shaderModules.add(vertShaderModule);
             shaderStageIndex++;
@@ -106,8 +108,8 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
             viewport.x(0);
             viewport.y(0);
-            viewport.width(renderJob.getShadowMapWidth());
-            viewport.height(renderJob.getShadowMapHeight());
+            viewport.width(renderJob.getShadowConfig().getShadowMapSize());
+            viewport.height(renderJob.getShadowConfig().getShadowMapSize());
             viewport.minDepth(0);
             viewport.maxDepth(1);
 
@@ -165,6 +167,11 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
             pipelineLayoutInfo.pSetLayouts(resourceDescriptorSet.getDescriptorSetLayouts(stack));
+            VkPushConstantRange.Buffer pushConstantRange = VkPushConstantRange.calloc(1)
+                    .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+                    .size(renderJob.getPushConstants().getData().getSize())
+                    .offset(0);
+            pipelineLayoutInfo.pPushConstantRanges(pushConstantRange);
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
             int result = vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout);

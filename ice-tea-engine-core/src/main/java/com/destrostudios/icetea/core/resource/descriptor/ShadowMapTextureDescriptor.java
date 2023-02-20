@@ -8,7 +8,7 @@ import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
 public class ShadowMapTextureDescriptor extends TextureDescriptor {
 
     public ShadowMapTextureDescriptor() {
-        super(VK_SHADER_STAGE_FRAGMENT_BIT);
+        super(VK_SHADER_STAGE_FRAGMENT_BIT, true);
     }
 
     public ShadowMapTextureDescriptor(ShadowMapTextureDescriptor shadowMapTextureDescriptor, CloneContext context) {

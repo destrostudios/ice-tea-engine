@@ -23,6 +23,7 @@ public class ImageManager {
         int format,
         int usage,
         int memProperties,
+        int arrayLayers,
         LongBuffer pTextureImage,
         LongBuffer pTextureImageMemory
     ) {
@@ -34,7 +35,7 @@ public class ImageManager {
             imageCreateInfo.extent().height(height);
             imageCreateInfo.extent().depth(1);
             imageCreateInfo.mipLevels(mipLevels);
-            imageCreateInfo.arrayLayers(1);
+            imageCreateInfo.arrayLayers(arrayLayers);
             imageCreateInfo.format(format);
             imageCreateInfo.tiling(VK_IMAGE_TILING_OPTIMAL);
             imageCreateInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
@@ -63,17 +64,21 @@ public class ImageManager {
     }
 
     public long createImageView(long image, int format, int aspectFlags, int mipLevels) {
+        return createImageView(image, format, aspectFlags, mipLevels, VK_IMAGE_VIEW_TYPE_2D, 1, 0);
+    }
+
+    public long createImageView(long image, int format, int aspectFlags, int mipLevels, int viewType, int layerCount, int baseArrayLayer) {
         try (MemoryStack stack = stackPush()) {
             VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.callocStack(stack);
             viewInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
             viewInfo.image(image);
-            viewInfo.viewType(VK_IMAGE_VIEW_TYPE_2D);
+            viewInfo.viewType(viewType);
             viewInfo.format(format);
             viewInfo.subresourceRange().aspectMask(aspectFlags);
             viewInfo.subresourceRange().baseMipLevel(0);
             viewInfo.subresourceRange().levelCount(mipLevels);
-            viewInfo.subresourceRange().baseArrayLayer(0);
-            viewInfo.subresourceRange().layerCount(1);
+            viewInfo.subresourceRange().baseArrayLayer(baseArrayLayer);
+            viewInfo.subresourceRange().layerCount(layerCount);
 
             LongBuffer pImageView = stack.mallocLong(1);
             int result = vkCreateImageView(application.getLogicalDevice(), viewInfo, null, pImageView);

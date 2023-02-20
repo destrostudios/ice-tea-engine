@@ -2,7 +2,6 @@ package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.resource.Resource;
-import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderJobManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
@@ -336,19 +335,16 @@ public class SwapChain extends LifecycleObject implements WindowResizeListener {
             renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
             renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
             for (int i = 0; i < commandBuffers.size(); i++) {
-                renderPassBeginInfo.framebuffer(renderJob.getFramebuffer(i));
-                vkCmdBeginRenderPass(commandBuffers.get(i), renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+                VkCommandBuffer commandBuffer = commandBuffers.get(i);
+                int r = 0;
+                for (long frameBuffer : renderJob.getFrameBuffersToRender(i)) {
+                    renderPassBeginInfo.framebuffer(frameBuffer);
+                    vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+                    renderJob.render(commandBuffer, i, r);
+                    vkCmdEndRenderPass(commandBuffer);
+                    r++;
+                }
             }
-        }
-        renderJob.render(this::render);
-        for (VkCommandBuffer commandBuffer : commandBuffers) {
-            vkCmdEndRenderPass(commandBuffer);
-        }
-    }
-
-    private void render(RenderAction renderAction) {
-        for (int i = 0; i < commandBuffers.size(); i++) {
-            renderAction.render(commandBuffers.get(i), i);
         }
     }
 

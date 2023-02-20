@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
-import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
 import com.destrostudios.icetea.core.scene.Geometry;
@@ -13,7 +12,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
-import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -136,13 +134,11 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     }
 
     @Override
-    public void render(Consumer<RenderAction> actions) {
+    public void render(VkCommandBuffer commandBuffer, int commandBufferIndex, int frameBufferIndex) {
         try (MemoryStack stack = stackPush()) {
-            actions.accept((cb, cbi) -> {
-                vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, resourceDescriptorSet.getDescriptorSets(cbi, stack), null);
-                vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
-                vkCmdDraw(cb, 3, 1, 0, 0);
-            });
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, resourceDescriptorSet.getDescriptorSets(commandBufferIndex, stack), null);
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
+            vkCmdDraw(commandBuffer, 3, 1, 0, 0);
         }
     }
 

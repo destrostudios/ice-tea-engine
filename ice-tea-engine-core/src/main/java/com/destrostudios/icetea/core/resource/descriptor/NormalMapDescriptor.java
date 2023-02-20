@@ -8,7 +8,7 @@ import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_COMPUTE_BIT;
 public class NormalMapDescriptor extends TextureDescriptor {
 
     public NormalMapDescriptor() {
-        super(VK_SHADER_STAGE_COMPUTE_BIT);
+        super(VK_SHADER_STAGE_COMPUTE_BIT, false);
     }
 
     public NormalMapDescriptor(NormalMapDescriptor normalMapDescriptor, CloneContext context) {

@@ -7,7 +7,7 @@ import static org.lwjgl.vulkan.VK10.*;
 public class SimpleTextureDescriptor extends TextureDescriptor {
 
     public SimpleTextureDescriptor() {
-        super(VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT);
+        super(VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, false);
     }
 
     public SimpleTextureDescriptor(SimpleTextureDescriptor simpleTextureDescriptor, CloneContext context) {
