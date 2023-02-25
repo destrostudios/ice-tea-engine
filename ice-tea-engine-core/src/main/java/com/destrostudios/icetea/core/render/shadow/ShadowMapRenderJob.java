@@ -376,6 +376,9 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     protected void cleanupInternal() {
         pushConstants.cleanup();
         shadowInfoUniformBuffer.cleanup();
+        for (long imageView : shadowMapCascadeImageViews) {
+            vkDestroyImageView(application.getLogicalDevice(), imageView, null);
+        }
         shadowMapTexture.cleanup();
         super.cleanupInternal();
     }
