@@ -3,14 +3,15 @@ struct ShadowResult {
     vec4 debugColor;
 };
 
+mat4 shadowBiasMatrix = mat4(
+    0.5, 0.0, 0.0, 0.0,
+    0.0, 0.5, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.5, 0.5, 0.0, 1.0
+);
+
 vec4 shaderNode_shadow_getShadowMapPosition(mat4 projectionViewMatrix, vec4 worldSpaceVertexPosition) {
-    mat4 biasMat = mat4(
-        0.5, 0.0, 0.0, 0.0,
-        0.0, 0.5, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.5, 0.5, 0.0, 1.0
-    );
-    return (biasMat * projectionViewMatrix * worldSpaceVertexPosition);
+    return (shadowBiasMatrix * projectionViewMatrix * worldSpaceVertexPosition);
 }
 
 float shaderNode_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2DArray shadowMap, uint shadowCascadeIndex, float shadowBrightness) {
