@@ -15,6 +15,6 @@ public class ShadowConfig {
 	private int cascadesCount = 4;
 	private float[] cascadeSplits;
 	private float cascadeSplitLambda = 0.8f;
-	private boolean cascadeDebugColors = true;
+	private boolean cascadeDebugColors = false;
 
 }

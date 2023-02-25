@@ -10,6 +10,7 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -156,7 +157,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
         }
     }
 
-    public Iterable<Long> getFrameBuffersToRender(int commandBufferIndex) {
+    public List<Long> getFrameBuffersToRender(int commandBufferIndex) {
         LinkedList<Long> frameBuffersToRender = new LinkedList<>();
         frameBuffersToRender.add(frameBuffers.get(isPresentingRenderJob() ? commandBufferIndex : 0));
         return frameBuffersToRender;
@@ -175,7 +176,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
 
     public abstract VkClearValue.Buffer getClearValues(MemoryStack stack);
 
-    public abstract void render(VkCommandBuffer commandBuffer, int commandBufferIndex, int frameBufferIndex);
+    public abstract void render(Consumer<RenderAction> actions);
 
     @Override
     public void update(float tpf) {

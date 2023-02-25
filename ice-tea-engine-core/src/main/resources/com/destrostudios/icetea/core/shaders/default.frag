@@ -27,18 +27,16 @@ void main() {
         #endif
 
         float shadowFactor;
-        #ifdef SHADOWMAPTEXTURE
-            uint cascadeIndex = 0;
+        #ifdef SHADOWINFO
+            uint shadowCascadeIndex = 0;
             for (uint i = 0; i < (shadowInfo.splitDepths.length() - 1); i++) {
                 if (viewPosition.z < shadowInfo.splitDepths[i]) {
-                    cascadeIndex = i + 1;
+                    shadowCascadeIndex = i + 1;
                 }
             }
-            if (shadowInfo.cascadeDebugColors == 1) {
-                outColor *= shaderNode_shadow_getCascadeDebugColor(cascadeIndex);
-            }
-            vec4 shadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowInfo.viewProjectionMatrices[cascadeIndex], worldPosition);
-            shadowFactor = shaderNode_shadow_getShadowFactor(shadowMapPosition, shadowMapTexture, cascadeIndex, shadowInfo.brightness);
+            ShadowResult shadowResult = shaderNode_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMapTexture);
+            shadowFactor = shadowResult.shadowFactor;
+            outColor *= shadowResult.debugColor;
         #else
             shadowFactor = 1;
         #endif

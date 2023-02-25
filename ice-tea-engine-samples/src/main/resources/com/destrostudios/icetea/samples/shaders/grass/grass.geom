@@ -6,9 +6,10 @@ layout(triangles) in;
 
 layout(triangle_strip, max_vertices = 9) out;
 
-layout(location = 0) out vec2 outTexCoord;
-layout(location = 1) out vec4 outShadowMapPosition;
-layout(location = 2) out LightVertexInfo outLightVertexInfo;
+layout(location = 0) out vec4 outWorldPosition;
+layout(location = 1) out vec4 outViewPosition;
+layout(location = 2) out vec2 outVertexTexCoord;
+layout(location = 3) out LightVertexInfo outLightVertexInfo;
 
 float rand(vec3 seed) {
 	return fract(sin(dot(seed, vec3(12.9898, 78.233, 53.539))) * 43758.5453);
@@ -31,19 +32,19 @@ mat3 angleAxis3x3(float angle, vec3 axis) {
 }
 
 void emitVertex(vec3 position, vec3 offset, mat3 transformationMatrix, vec2 texCoord) {
-	vec4 vertexPosition = vec4(position + (transformationMatrix * offset), 1);
-	gl_Position = camera.proj * camera.view * vertexPosition;
+	vec4 worldPosition = vec4(position + (transformationMatrix * offset), 1);
+	vec4 viewPosition = camera.view * worldPosition;
+	gl_Position = camera.proj * viewPosition;
 	#ifdef CAMERA_CLIPPLANE
 		if (camera.clipPlane.length() > 0) {
-			gl_ClipDistance[0] = dot(vertexPosition, camera.clipPlane);
+			gl_ClipDistance[0] = dot(worldPosition, camera.clipPlane);
 		}
 	#endif
-	outTexCoord = texCoord;
-	#ifdef SHADOWMAPLIGHT
-		outShadowMapPosition = shaderNode_shadow_getShadowMapPosition(shadowMapLight.proj, shadowMapLight.view, vertexPosition);
-	#endif
+	outWorldPosition = worldPosition;
+	outViewPosition = viewPosition;
+	outVertexTexCoord = texCoord;
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vertexPosition, vec3(0, 1, 0), light.direction);
+		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition, vec3(0, 1, 0), light.direction);
 	#endif
 	EmitVertex();
 }
