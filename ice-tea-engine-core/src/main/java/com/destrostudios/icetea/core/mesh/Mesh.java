@@ -5,7 +5,7 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.*;
 import com.destrostudios.icetea.core.data.VertexData;
-import com.destrostudios.icetea.core.data.values.UniformValue;
+import com.destrostudios.icetea.core.data.values.DataValue;
 import com.destrostudios.icetea.core.lifecycle.MultiConsumableLifecycleObject;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.util.BufferUtil;
@@ -124,9 +124,9 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
                 vertexBuffer.write(bufferSize, byteBuffer -> {
                     int index = 0;
                     for (VertexData vertex : vertices) {
-                        for (UniformValue<?> uniformValue : vertex.getFields().values()) {
-                            uniformValue.write(byteBuffer, index);
-                            index += uniformValue.getSize();
+                        for (DataValue<?> dataValue : vertex.getFields().values()) {
+                            vertex.write(byteBuffer, index, dataValue);
+                            index += vertex.getSize(dataValue);
                         }
                     }
                 });

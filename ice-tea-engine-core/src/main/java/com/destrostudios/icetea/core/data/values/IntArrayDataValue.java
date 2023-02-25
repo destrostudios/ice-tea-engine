@@ -4,31 +4,37 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 
 import java.nio.ByteBuffer;
 
-public class IntArrayUniformValue extends UniformValue<int[]> {
+public class IntArrayDataValue extends DataValue<int[]> {
 
-    public IntArrayUniformValue() { }
+    public IntArrayDataValue() { }
 
-    public IntArrayUniformValue(IntArrayUniformValue intArrayUniformValue) {
-        value = new int[intArrayUniformValue.value.length];
-        System.arraycopy(intArrayUniformValue.value, 0, value, 0, intArrayUniformValue.value.length);
+    public IntArrayDataValue(IntArrayDataValue intArrayDataValue) {
+        value = new int[intArrayDataValue.value.length];
+        System.arraycopy(intArrayDataValue.value, 0, value, 0, intArrayDataValue.value.length);
     }
 
     @Override
     public int getSize() {
-        // See FIXME comment below about the 16 bytes alignment
+        return value.length * Integer.BYTES;
+    }
+
+    @Override
+    public int getAlignedSize() {
         return value.length * 4 * Integer.BYTES;
     }
 
     @Override
-    public void write(ByteBuffer buffer, int index) {
+    public void write(ByteBuffer buffer, int index, boolean aligned) {
         int currentIndex = index;
         for (int integer : value) {
             buffer.putInt(currentIndex, integer);
             currentIndex += Integer.BYTES;
             // FIXME: Gross overkill: Fill up to 16 bytes (Uniform blocks require array elements to be aligned to 16 bytes - It should be a vec4 array with 4 actual elements in each vec4 instead)
-            for (int i = 0; i < 3; i++) {
-                buffer.putInt(currentIndex, 0);
-                currentIndex += Integer.BYTES;
+            if (aligned) {
+                for (int i = 0; i < 3; i++) {
+                    buffer.putInt(currentIndex, 0);
+                    currentIndex += Integer.BYTES;
+                }
             }
         }
     }
@@ -44,7 +50,7 @@ public class IntArrayUniformValue extends UniformValue<int[]> {
     }
 
     @Override
-    public IntArrayUniformValue clone(CloneContext context) {
-        return new IntArrayUniformValue(this);
+    public IntArrayDataValue clone(CloneContext context) {
+        return new IntArrayDataValue(this);
     }
 }

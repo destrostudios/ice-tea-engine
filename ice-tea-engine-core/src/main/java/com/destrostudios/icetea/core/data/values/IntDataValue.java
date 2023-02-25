@@ -4,12 +4,12 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 
 import java.nio.ByteBuffer;
 
-public class IntUniformValue extends UniformValue<Integer> {
+public class IntDataValue extends DataValue<Integer> {
 
-    public IntUniformValue() { }
+    public IntDataValue() { }
 
-    public IntUniformValue(IntUniformValue intUniformValue) {
-        value = intUniformValue.getValue();
+    public IntDataValue(IntDataValue intDataValue) {
+        value = intDataValue.getValue();
     }
 
     @Override
@@ -18,7 +18,7 @@ public class IntUniformValue extends UniformValue<Integer> {
     }
 
     @Override
-    public void write(ByteBuffer buffer, int index) {
+    public void write(ByteBuffer buffer, int index, boolean aligned) {
         buffer.putInt(index, value);
     }
 
@@ -33,7 +33,7 @@ public class IntUniformValue extends UniformValue<Integer> {
     }
 
     @Override
-    public IntUniformValue clone(CloneContext context) {
-        return new IntUniformValue(this);
+    public IntDataValue clone(CloneContext context) {
+        return new IntDataValue(this);
     }
 }

@@ -1,8 +1,8 @@
 package com.destrostudios.icetea.samples.water;
 
+import com.destrostudios.icetea.core.buffer.PushConstantsDataBuffer;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
-import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
 import com.destrostudios.icetea.core.resource.descriptor.ComputeImageDescriptor;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.texture.Texture;
@@ -23,14 +23,14 @@ public class NormalMapComputeJob extends ComputeJob {
     public NormalMapComputeJob(WaterConfig waterConfig, FftComputeJob fftComputeJob) {
         this.waterConfig = waterConfig;
         this.fftComputeJob = fftComputeJob;
-        pushConstants = new ByteDataBuffer();
+        pushConstants = new PushConstantsDataBuffer();
         normalMapTexture = new Texture();
         normalMapTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", true));
         normalMapTexture.setDescriptor("default", new SimpleTextureDescriptor());
     }
     private WaterConfig waterConfig;
     private FftComputeJob fftComputeJob;
-    private ByteDataBuffer pushConstants;
+    private PushConstantsDataBuffer pushConstants;
     @Getter
     private Texture normalMapTexture;
 

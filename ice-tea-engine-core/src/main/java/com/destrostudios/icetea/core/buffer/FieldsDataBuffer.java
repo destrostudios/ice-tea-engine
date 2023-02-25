@@ -3,14 +3,14 @@ package com.destrostudios.icetea.core.buffer;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.data.FieldsData;
 import com.destrostudios.icetea.core.data.FieldsDataListener;
-import com.destrostudios.icetea.core.data.values.UniformValue;
+import com.destrostudios.icetea.core.data.values.DataValue;
 import com.destrostudios.icetea.core.resource.Resource;
 import lombok.Getter;
 
 public abstract class FieldsDataBuffer<RB extends ResizableBuffer> extends Resource implements FieldsDataListener {
 
-    public FieldsDataBuffer(RB buffer) {
-        data = new FieldsData(UniformValue::getAlignedSize);
+    public FieldsDataBuffer(RB buffer, boolean aligned) {
+        data = new FieldsData(aligned);
         data.setListener(this);
         this.buffer = buffer;
     }
@@ -29,7 +29,7 @@ public abstract class FieldsDataBuffer<RB extends ResizableBuffer> extends Resou
     private boolean contentModified;
 
     @Override
-    public void onFieldsDataModified(UniformValue<?> uniformValue) {
+    public void onFieldsDataModified(DataValue<?> dataValue) {
         contentModified = true;
     }
 
@@ -39,9 +39,9 @@ public abstract class FieldsDataBuffer<RB extends ResizableBuffer> extends Resou
         if (contentModified) {
             boolean resized = buffer.write(data.getSize(), byteBuffer -> {
                 int index = 0;
-                for (UniformValue<?> value : data.getFields().values()) {
-                    value.write(byteBuffer, index);
-                    index += value.getAlignedSize();
+                for (DataValue<?> value : data.getFields().values()) {
+                    data.write(byteBuffer, index, value);
+                    index += data.getSize(value);
                 }
             });
             contentModified = false;

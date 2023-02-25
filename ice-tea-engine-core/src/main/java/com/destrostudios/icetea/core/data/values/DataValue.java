@@ -7,7 +7,7 @@ import lombok.Setter;
 
 import java.nio.ByteBuffer;
 
-public abstract class UniformValue<T> implements ContextCloneable {
+public abstract class DataValue<T> implements ContextCloneable {
 
     @Getter
     @Setter
@@ -19,11 +19,11 @@ public abstract class UniformValue<T> implements ContextCloneable {
 
     public abstract int getSize();
 
-    public abstract void write(ByteBuffer buffer, int offset);
+    public abstract void write(ByteBuffer buffer, int offset, boolean aligned);
 
     public abstract String getShaderDefinitionType();
 
     public abstract int getFormat();
 
-    public abstract UniformValue<T> clone(CloneContext context);
+    public abstract DataValue<T> clone(CloneContext context);
 }

@@ -7,12 +7,12 @@ import java.nio.ByteBuffer;
 
 import static org.lwjgl.vulkan.VK10.VK_FORMAT_R32G32B32A32_SFLOAT;
 
-public class Vector4fUniformValue extends UniformValue<Vector4f> {
+public class Vector4fDataValue extends DataValue<Vector4f> {
 
-    public Vector4fUniformValue() { }
+    public Vector4fDataValue() { }
 
-    public Vector4fUniformValue(Vector4fUniformValue vector4fUniformValue) {
-        value = new Vector4f(vector4fUniformValue.value);
+    public Vector4fDataValue(Vector4fDataValue vector4fDataValue) {
+        value = new Vector4f(vector4fDataValue.value);
     }
 
     @Override
@@ -21,7 +21,7 @@ public class Vector4fUniformValue extends UniformValue<Vector4f> {
     }
 
     @Override
-    public void write(ByteBuffer buffer, int index) {
+    public void write(ByteBuffer buffer, int index, boolean aligned) {
         value.get(index, buffer);
     }
 
@@ -36,7 +36,7 @@ public class Vector4fUniformValue extends UniformValue<Vector4f> {
     }
 
     @Override
-    public Vector4fUniformValue clone(CloneContext context) {
-        return new Vector4fUniformValue(this);
+    public Vector4fDataValue clone(CloneContext context) {
+        return new Vector4fDataValue(this);
     }
 }

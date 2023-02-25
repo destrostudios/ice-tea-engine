@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.render.shadow;
 
-import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
+import com.destrostudios.icetea.core.buffer.PushConstantsDataBuffer;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
@@ -35,7 +35,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
         shadowMapTexture.setDescriptor("default", new ShadowMapTextureDescriptor());
         shadowInfoUniformBuffer = new UniformDataBuffer();
         shadowInfoUniformBuffer.setDescriptor("default", new UniformDescriptor(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT));
-        pushConstants = new ByteDataBuffer();
+        pushConstants = new PushConstantsDataBuffer();
     }
     @Getter
     private Light light;
@@ -47,7 +47,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Getter
     private UniformDataBuffer shadowInfoUniformBuffer;
     @Getter
-    private ByteDataBuffer pushConstants;
+    private PushConstantsDataBuffer pushConstants;
 
     @Override
     protected void init() {

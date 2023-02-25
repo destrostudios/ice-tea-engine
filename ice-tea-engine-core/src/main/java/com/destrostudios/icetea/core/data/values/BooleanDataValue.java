@@ -4,12 +4,12 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 
 import java.nio.ByteBuffer;
 
-public class BooleanUniformValue extends UniformValue<Boolean> {
+public class BooleanDataValue extends DataValue<Boolean> {
 
-    public BooleanUniformValue() { }
+    public BooleanDataValue() { }
 
-    public BooleanUniformValue(BooleanUniformValue booleanUniformValue) {
-        value = booleanUniformValue.getValue();
+    public BooleanDataValue(BooleanDataValue booleanDataValue) {
+        value = booleanDataValue.getValue();
     }
 
     @Override
@@ -18,7 +18,7 @@ public class BooleanUniformValue extends UniformValue<Boolean> {
     }
 
     @Override
-    public void write(ByteBuffer buffer, int index) {
+    public void write(ByteBuffer buffer, int index, boolean aligned) {
         buffer.putInt(index, value ? 1 : 0);
     }
 
@@ -33,7 +33,7 @@ public class BooleanUniformValue extends UniformValue<Boolean> {
     }
 
     @Override
-    public BooleanUniformValue clone(CloneContext context) {
-        return new BooleanUniformValue(this);
+    public BooleanDataValue clone(CloneContext context) {
+        return new BooleanDataValue(this);
     }
 }

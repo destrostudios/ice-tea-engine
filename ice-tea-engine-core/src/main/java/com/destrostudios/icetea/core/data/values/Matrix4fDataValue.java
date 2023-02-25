@@ -5,12 +5,12 @@ import org.joml.Matrix4f;
 
 import java.nio.ByteBuffer;
 
-public class Matrix4fUniformValue extends UniformValue<Matrix4f> {
+public class Matrix4fDataValue extends DataValue<Matrix4f> {
 
-    public Matrix4fUniformValue() { }
+    public Matrix4fDataValue() { }
 
-    public Matrix4fUniformValue(Matrix4fUniformValue matrix4fUniformValue) {
-        value = new Matrix4f(matrix4fUniformValue.value);
+    public Matrix4fDataValue(Matrix4fDataValue matrix4fDataValue) {
+        value = new Matrix4f(matrix4fDataValue.value);
     }
 
     @Override
@@ -19,7 +19,7 @@ public class Matrix4fUniformValue extends UniformValue<Matrix4f> {
     }
 
     @Override
-    public void write(ByteBuffer buffer, int index) {
+    public void write(ByteBuffer buffer, int index, boolean aligned) {
         value.get(index, buffer);
     }
 
@@ -34,7 +34,7 @@ public class Matrix4fUniformValue extends UniformValue<Matrix4f> {
     }
 
     @Override
-    public Matrix4fUniformValue clone(CloneContext context) {
-        return new Matrix4fUniformValue(this);
+    public Matrix4fDataValue clone(CloneContext context) {
+        return new Matrix4fDataValue(this);
     }
 }

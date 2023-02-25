@@ -6,12 +6,12 @@ import java.nio.ByteBuffer;
 
 import static org.lwjgl.vulkan.VK10.VK_FORMAT_R32_SFLOAT;
 
-public class FloatUniformValue extends UniformValue<Float> {
+public class FloatDataValue extends DataValue<Float> {
 
-    public FloatUniformValue() { }
+    public FloatDataValue() { }
 
-    public FloatUniformValue(FloatUniformValue floatUniformValue) {
-        value = floatUniformValue.getValue();
+    public FloatDataValue(FloatDataValue floatDataValue) {
+        value = floatDataValue.getValue();
     }
 
     @Override
@@ -20,7 +20,7 @@ public class FloatUniformValue extends UniformValue<Float> {
     }
 
     @Override
-    public void write(ByteBuffer buffer, int index) {
+    public void write(ByteBuffer buffer, int index, boolean aligned) {
         buffer.putFloat(index, value);
     }
 
@@ -35,7 +35,7 @@ public class FloatUniformValue extends UniformValue<Float> {
     }
 
     @Override
-    public FloatUniformValue clone(CloneContext context) {
-        return new FloatUniformValue(this);
+    public FloatDataValue clone(CloneContext context) {
+        return new FloatDataValue(this);
     }
 }

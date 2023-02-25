@@ -1,8 +1,8 @@
 package com.destrostudios.icetea.samples.water;
 
+import com.destrostudios.icetea.core.buffer.PushConstantsDataBuffer;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.compute.ComputeJob;
-import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
 import com.destrostudios.icetea.core.resource.descriptor.ComputeImageDescriptor;
 import com.destrostudios.icetea.core.resource.descriptor.NormalMapDescriptor;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
@@ -25,7 +25,7 @@ public class FftComputeJob extends ComputeJob {
         this.n = n;
         this.twiddleFactorsComputeJob = twiddleFactorsComputeJob;
         this.hktComputeJob = hktComputeJob;
-        inversionPushConstants = new ByteDataBuffer();
+        inversionPushConstants = new PushConstantsDataBuffer();
         dxTexture = new Texture();
         dxTexture.setDescriptor("compute", new ComputeImageDescriptor("rgba32f", false));
         dxTexture.setDescriptor("default", new SimpleTextureDescriptor());
@@ -46,9 +46,9 @@ public class FftComputeJob extends ComputeJob {
     private int n;
     private TwiddleFactorsComputeJob twiddleFactorsComputeJob;
     private HktComputeJob hktComputeJob;
-    private ByteDataBuffer[] horizontalPushConstants;
-    private ByteDataBuffer[] verticalPushConstants;
-    private ByteDataBuffer inversionPushConstants;
+    private PushConstantsDataBuffer[] horizontalPushConstants;
+    private PushConstantsDataBuffer[] verticalPushConstants;
+    private PushConstantsDataBuffer inversionPushConstants;
     @Getter
     private Texture dxTexture;
     @Getter
@@ -149,11 +149,11 @@ public class FftComputeJob extends ComputeJob {
         LinkedList<ComputeActionGroup> computeActionGroups = new LinkedList<>();
 
         int stages = (int) MathUtil.log2(n);
-        horizontalPushConstants = new ByteDataBuffer[stages];
-        verticalPushConstants = new ByteDataBuffer[stages];
+        horizontalPushConstants = new PushConstantsDataBuffer[stages];
+        verticalPushConstants = new PushConstantsDataBuffer[stages];
         int pingPongIndex = 0;
         for (int i = 0; i < stages; i++) {
-            horizontalPushConstants[i] = new ByteDataBuffer();
+            horizontalPushConstants[i] = new PushConstantsDataBuffer();
             horizontalPushConstants[i].getData().setInt("stage", i);
             horizontalPushConstants[i].getData().setInt("pingpong", pingPongIndex);
             horizontalPushConstants[i].getData().setInt("direction", 0);
@@ -163,7 +163,7 @@ public class FftComputeJob extends ComputeJob {
             pingPongIndex %= 2;
         }
         for (int i = 0; i < stages; i++) {
-            verticalPushConstants[i] = new ByteDataBuffer();
+            verticalPushConstants[i] = new PushConstantsDataBuffer();
             verticalPushConstants[i].getData().setInt("stage", i);
             verticalPushConstants[i].getData().setInt("pingpong", pingPongIndex);
             verticalPushConstants[i].getData().setInt("direction", 1);
@@ -200,10 +200,10 @@ public class FftComputeJob extends ComputeJob {
     @Override
     protected void prepareResourcesUpdate() {
         super.prepareResourcesUpdate();
-        for (ByteDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
+        for (PushConstantsDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
             setResourceActive(horizontalPushConstantsBuffer);
         }
-        for (ByteDataBuffer verticalPushConstantsBuffer : verticalPushConstants) {
+        for (PushConstantsDataBuffer verticalPushConstantsBuffer : verticalPushConstants) {
             setResourceActive(verticalPushConstantsBuffer);
         }
         setResourceActive(inversionPushConstants);
@@ -223,10 +223,10 @@ public class FftComputeJob extends ComputeJob {
         dzTexture.cleanup();
         dyTexture.cleanup();
         dxTexture.cleanup();
-        for (ByteDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
+        for (PushConstantsDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
             horizontalPushConstantsBuffer.cleanup();
         }
-        for (ByteDataBuffer verticalPushConstantsBuffer : horizontalPushConstants) {
+        for (PushConstantsDataBuffer verticalPushConstantsBuffer : horizontalPushConstants) {
             verticalPushConstantsBuffer.cleanup();
         }
         super.cleanupInternal();

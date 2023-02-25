@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.samples.water;
 
-import com.destrostudios.icetea.core.buffer.ByteDataBuffer;
+import com.destrostudios.icetea.core.buffer.PushConstantsDataBuffer;
 import com.destrostudios.icetea.core.compute.ComputeAction;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
 import com.destrostudios.icetea.core.shader.Shader;
@@ -12,12 +12,12 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class FftInversionComputeActionGroup extends ComputeActionGroup {
 
-    public FftInversionComputeActionGroup(int n, ByteDataBuffer pushConstants) {
+    public FftInversionComputeActionGroup(int n, PushConstantsDataBuffer pushConstants) {
         this.n = n;
         this.pushConstants = pushConstants;
     }
     private int n;
-    private ByteDataBuffer pushConstants;
+    private PushConstantsDataBuffer pushConstants;
 
     @Override
     public Shader getComputeShader() {

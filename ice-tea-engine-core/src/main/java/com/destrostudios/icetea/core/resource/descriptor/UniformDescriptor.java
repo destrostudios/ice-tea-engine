@@ -2,7 +2,7 @@ package com.destrostudios.icetea.core.resource.descriptor;
 
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.clone.CloneContext;
-import com.destrostudios.icetea.core.data.values.UniformValue;
+import com.destrostudios.icetea.core.data.values.DataValue;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +27,7 @@ public class UniformDescriptor extends MemoryBufferDataDescriptor<UniformDataBuf
     @Override
     protected String getShaderDeclaration_Type(String name) {
         String type = "uniform " + name.toUpperCase() + "_TYPE {\n";
-        for (Map.Entry<String, UniformValue<?>> field : resource.getData().getFields().entrySet()) {
+        for (Map.Entry<String, DataValue<?>> field : resource.getData().getFields().entrySet()) {
             type += "    " + field.getValue().getShaderDefinitionType() + " " + field.getKey() + ";\n";
         }
         type += "}";

@@ -7,8 +7,8 @@ import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 public class MemoryDataBuffer extends FieldsDataBuffer<ResizableMemoryBuffer> {
 
-    public MemoryDataBuffer(int usage) {
-        super(new ResizableMemoryBuffer(usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
+    public MemoryDataBuffer(int usage, boolean aligned) {
+        super(new ResizableMemoryBuffer(usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT), aligned);
     }
 
     public MemoryDataBuffer(MemoryDataBuffer memoryDataBufferResource, CloneContext context) {

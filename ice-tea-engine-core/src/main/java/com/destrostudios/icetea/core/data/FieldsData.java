@@ -11,93 +11,101 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class FieldsData extends LifecycleObject implements ContextCloneable {
 
-    public FieldsData(Function<UniformValue<?>, Integer> getValueSize) {
-        this.getValueSize = getValueSize;
+    public FieldsData(boolean aligned) {
+        this.aligned = aligned;
     }
 
     public FieldsData(FieldsData fieldsData, CloneContext context) {
-        for (Map.Entry<String, UniformValue<?>> entry : fieldsData.fields.entrySet()) {
+        for (Map.Entry<String, DataValue<?>> entry : fieldsData.fields.entrySet()) {
             fields.put(entry.getKey(), entry.getValue().clone(context));
         }
-        getValueSize = fieldsData.getValueSize;
+        aligned = fieldsData.aligned;
         size = fieldsData.size;
     }
     @Getter
-    protected Map<String, UniformValue<?>> fields = new LinkedHashMap<>();
-    private Function<UniformValue<?>, Integer> getValueSize;
+    protected Map<String, DataValue<?>> fields = new LinkedHashMap<>();
+    private boolean aligned;
     @Getter
     protected int size;
     @Setter
     private FieldsDataListener listener;
 
     public void setBoolean(String name, Boolean value) {
-        set(name, value, BooleanUniformValue::new);
+        set(name, value, BooleanDataValue::new);
     }
 
     public void setInt(String name, Integer value) {
-        set(name, value, IntUniformValue::new);
+        set(name, value, IntDataValue::new);
     }
 
     public void setIntArray(String name, int[] value) {
-        set(name, value, IntArrayUniformValue::new);
+        set(name, value, IntArrayDataValue::new);
     }
 
     public void setFloat(String name, Float value) {
-        set(name, value, FloatUniformValue::new);
+        set(name, value, FloatDataValue::new);
     }
 
     public void setFloatArray(String name, float[] value) {
-        set(name, value, FloatArrayUniformValue::new);
+        set(name, value, FloatArrayDataValue::new);
     }
 
     public void setVector2f(String name, Vector2f value) {
-        set(name, value, Vector2fUniformValue::new);
+        set(name, value, Vector2fDataValue::new);
     }
 
     public void setVector3f(String name, Vector3f value) {
-        set(name, value, Vector3fUniformValue::new);
+        set(name, value, Vector3fDataValue::new);
     }
 
     public void setVector4f(String name, Vector4f value) {
-        set(name, value, Vector4fUniformValue::new);
+        set(name, value, Vector4fDataValue::new);
     }
 
     public void setMatrix4f(String name, Matrix4f value) {
-        set(name, value, Matrix4fUniformValue::new);
+        set(name, value, Matrix4fDataValue::new);
     }
 
     public void setMatrix4fArray(String name, Matrix4f[] value) {
-        set(name, value, Matrix4fArrayUniformValue::new);
+        set(name, value, Matrix4fArrayDataValue::new);
     }
 
-    private <T> void set(String name, T value, Supplier<UniformValue<T>> uniformValueSupplier) {
-        UniformValue<T> uniformValue = (UniformValue<T>) fields.get(name);
-        if (uniformValue == null) {
-            uniformValue = uniformValueSupplier.get();
-            uniformValue.setValue(value);
-            fields.put(name, uniformValue);
-            size += getValueSize.apply(uniformValue);
+    private <T> void set(String name, T value, Supplier<DataValue<T>> dataValueSupplier) {
+        DataValue<T> dataValue = (DataValue<T>) fields.get(name);
+        if (dataValue == null) {
+            dataValue = dataValueSupplier.get();
+            dataValue.setValue(value);
+            fields.put(name, dataValue);
+            size += getSize(dataValue);
         } else {
-            uniformValue.setValue(value);
+            dataValue.setValue(value);
         }
         if (listener != null) {
-            listener.onFieldsDataModified(uniformValue);
+            listener.onFieldsDataModified(dataValue);
         }
     }
 
     public void clear(String name) {
-        UniformValue<?> uniformValue = fields.remove(name);
-        size -= getValueSize.apply(uniformValue);
+        DataValue<?> dataValue = fields.remove(name);
+        size -= getSize(dataValue);
         if (listener != null) {
-            listener.onFieldsDataModified(uniformValue);
+            listener.onFieldsDataModified(dataValue);
         }
+    }
+
+    public int getSize(DataValue<?> dataValue) {
+        return (aligned ? dataValue.getAlignedSize() : dataValue.getSize());
+    }
+
+    public void write(ByteBuffer buffer, int offset, DataValue<?> dataValue) {
+        dataValue.write(buffer, offset, aligned);
     }
 
     public Boolean getBoolean(String name) {
@@ -141,8 +149,8 @@ public class FieldsData extends LifecycleObject implements ContextCloneable {
     }
 
     private <T> T get(String name) {
-        UniformValue<T> uniformValue = (UniformValue<T>) fields.get(name);
-        return ((uniformValue != null) ? uniformValue.getValue() : null);
+        DataValue<T> dataValue = (DataValue<T>) fields.get(name);
+        return ((dataValue != null) ? dataValue.getValue() : null);
     }
 
     @Override

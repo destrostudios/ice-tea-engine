@@ -7,7 +7,7 @@ import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 public class StorageDataBuffer extends MemoryDataBuffer {
 
     public StorageDataBuffer() {
-        super(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+        super(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, false);
     }
 
     public StorageDataBuffer(StorageDataBuffer storageBufferData, CloneContext context) {

@@ -2,7 +2,7 @@ package com.destrostudios.icetea.core.render;
 
 import com.destrostudios.icetea.core.Pipeline;
 import com.destrostudios.icetea.core.data.VertexData;
-import com.destrostudios.icetea.core.data.values.UniformValue;
+import com.destrostudios.icetea.core.data.values.DataValue;
 import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
@@ -28,7 +28,7 @@ public abstract class RenderPipeline<RJ extends RenderJob<?>> extends Pipeline {
         VertexData referenceVertex = getReferenceVertex(mesh);
         String text = "";
         int location = 0;
-        for (Map.Entry<String, UniformValue<?>> field : referenceVertex.getFields().entrySet()) {
+        for (Map.Entry<String, DataValue<?>> field : referenceVertex.getFields().entrySet()) {
             text += "#define VERTEX_" + field.getKey().toUpperCase() + " 1\n";
             text += "layout(location = " + location + ") in " + field.getValue().getShaderDefinitionType() + " " + field.getKey() + ";\n";
             location++;
@@ -50,14 +50,14 @@ public abstract class RenderPipeline<RJ extends RenderJob<?>> extends Pipeline {
         VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(referenceVertex.getFields().size());
         int offset = 0;
         int location = 0;
-        for (UniformValue<?> uniformValue : referenceVertex.getFields().values()) {
+        for (DataValue<?> dataValue : referenceVertex.getFields().values()) {
             VkVertexInputAttributeDescription attributeDescription = attributeDescriptions.get(location);
             attributeDescription.binding(0);
             attributeDescription.location(location);
-            attributeDescription.format(uniformValue.getFormat());
+            attributeDescription.format(dataValue.getFormat());
             attributeDescription.offset(offset);
             location++;
-            offset += uniformValue.getSize();
+            offset += referenceVertex.getSize(dataValue);
         }
         return attributeDescriptions.rewind();
     }

@@ -4,8 +4,8 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 
 public class ByteDataBuffer extends FieldsDataBuffer<ResizableByteBuffer> {
 
-    public ByteDataBuffer() {
-        super(new ResizableByteBuffer());
+    public ByteDataBuffer(boolean aligned) {
+        super(new ResizableByteBuffer(), aligned);
     }
 
     public ByteDataBuffer(ByteDataBuffer byteDataBuffer, CloneContext context) {

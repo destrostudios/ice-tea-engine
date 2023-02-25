@@ -7,7 +7,7 @@ import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 public class UniformDataBuffer extends MemoryDataBuffer {
 
     public UniformDataBuffer() {
-        super(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+        super(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
     }
 
     public UniformDataBuffer(UniformDataBuffer uniformDataBuffer, CloneContext context) {
