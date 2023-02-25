@@ -309,25 +309,28 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
             Matrix4f lightViewMatrix = new Matrix4f();
             Matrix4f lightOrthoMatrix = new Matrix4f();
 
-            // TODO: Support all lights here?
-            DirectionalLight directionalLight = (DirectionalLight) light;
+            if (light instanceof DirectionalLight directionalLight) {
+                lightOrthoMatrix.ortho(
+                    minExtents.x(),
+                    maxExtents.x(),
+                    minExtents.y(),
+                    maxExtents.y(),
+                    0,
+                    maxExtents.z() - minExtents.z(),
+                    true
+                );
+                lightOrthoMatrix.m11(lightOrthoMatrix.m11() * -1);
 
-            lightOrthoMatrix.ortho(
-                minExtents.x(),
-                maxExtents.x(),
-                minExtents.y(),
-                maxExtents.y(),
-                0,
-                maxExtents.z() - minExtents.z(),
-                true
-            );
-            lightOrthoMatrix.m11(lightOrthoMatrix.m11() * -1);
-
-            lightViewMatrix.lookAt(
-                frustumCenter.sub(directionalLight.getDirection().mul(-1 * minExtents.z(), new Vector3f()), new Vector3f()),
-                frustumCenter,
-                new Vector3f(0, 1, 0)
-            );
+                lightViewMatrix.lookAt(
+                    frustumCenter.sub(directionalLight.getDirection().mul(-1 * minExtents.z(), new Vector3f()), new Vector3f()),
+                    frustumCenter,
+                    // TODO: This doesn't work if the light direction is on the up axis
+                    new Vector3f(0, 0, 1)
+                );
+            } else {
+                // TODO: Support all lights
+                throw new IllegalArgumentException("Currently only directional lights support shadows.");
+            }
 
             splitDepths[i] = -1 * (nearClip + (splitDist * clipRange));
             viewProjectionMatrices[i] = lightOrthoMatrix.mul(lightViewMatrix, new Matrix4f());
