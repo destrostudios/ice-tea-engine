@@ -100,8 +100,7 @@ public class Transform implements ContextCloneable {
     public boolean updateMatrixIfNecessary() {
         if (modified) {
             if (matrixOutdated) {
-                matrix.identity();
-                matrix.rotate(rotation);
+                matrix.rotation(rotation);
                 matrix.setTranslation(translation);
                 matrix.scale(scale);
                 matrixOutdated = false;

@@ -19,8 +19,7 @@ public class MathUtil {
     }
 
     public static void setViewMatrix(Matrix4f viewMatrix, Vector3f translation, Quaternionf rotation) {
-        viewMatrix.identity();
-        viewMatrix.rotate(rotation);
+        viewMatrix.rotation(rotation);
         // TODO: Introduce TempVars
         viewMatrix.translate(translation.negate(new Vector3f()));
     }

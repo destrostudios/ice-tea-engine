@@ -22,8 +22,7 @@ public class OrthographicProjection extends SceneCameraProjection {
 
     @Override
     public void updateProjectionMatrix(Matrix4f projectionMatrix, float zNear, float zFar) {
-        projectionMatrix.identity();
-        projectionMatrix.ortho(left, right, bottom, top, zNear, zFar, true);
+        projectionMatrix.setOrtho(left, right, bottom, top, zNear, zFar, true);
         projectionMatrix.m11(projectionMatrix.m11() * -1);
     }
 
