@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.function.Supplier;
 
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
@@ -44,8 +43,7 @@ public class ShaderManager extends NativeObject {
     private String getShaderSource(String shaderFile) {
         return filesCache.computeIfAbsent(shaderFile, sf -> {
             try {
-                Supplier<InputStream> inputStreamSupplier = application.getAssetManager().load(shaderFile);
-                try (InputStream inputStream = inputStreamSupplier.get()) {
+                try (InputStream inputStream = application.getAssetManager().loadInputStream(shaderFile)) {
                     return new String(inputStream.readAllBytes());
                 }
             } catch (IOException ex) {

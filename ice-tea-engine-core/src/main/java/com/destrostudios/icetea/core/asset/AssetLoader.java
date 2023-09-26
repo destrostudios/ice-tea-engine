@@ -1,20 +1,18 @@
 package com.destrostudios.icetea.core.asset;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Supplier;
 
 public abstract class AssetLoader<T, S> {
 
     protected AssetManager assetManager;
-    protected String key;
+    protected AssetKey assetKey;
     protected S settings;
 
-    public void setContext(AssetManager assetManager, String key, S settings) {
+    public void setContext(AssetManager assetManager, AssetKey assetKey, S settings) {
         this.assetManager = assetManager;
-        this.key = key;
+        this.assetKey = assetKey;
         this.settings = settings;
     }
 
-    public abstract T load(Supplier<InputStream> inputStreamSupplier) throws IOException;
+    public abstract T load() throws IOException;
 }

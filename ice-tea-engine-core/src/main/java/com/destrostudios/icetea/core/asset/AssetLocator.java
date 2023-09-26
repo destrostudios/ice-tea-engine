@@ -1,9 +1,6 @@
 package com.destrostudios.icetea.core.asset;
 
-import java.io.InputStream;
-import java.util.function.Supplier;
+public interface AssetLocator<K extends AssetKey> {
 
-public interface AssetLocator {
-
-    Supplier<InputStream> getInputStream(String key);
+    K findAsset(String key);
 }

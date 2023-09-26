@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.function.Supplier;
 
 // TODO: Map extensions to loaders and combine cache with the one in ShaderManager
 // TODO: Settings should be in cache key, so that you don't get a wrongly configured asset
@@ -62,20 +61,29 @@ public class AssetManager {
     }
 
     private <T, S> T load(String key, AssetLoader<T, S> assetLoader, S settings) {
-        assetLoader.setContext(this, key, settings);
-        Supplier<InputStream> inputStreamSupplier = load(key);
+        AssetKey assetKey = findAsset(key);
+        assetLoader.setContext(this, assetKey, settings);
         try {
-            return assetLoader.load(inputStreamSupplier);
+            return assetLoader.load();
         } catch (IOException ex) {
             throw new RuntimeException("Error while loading asset", ex);
         }
     }
 
-    public Supplier<InputStream> load(String key) {
-        for (AssetLocator locator : locators) {
-            Supplier<InputStream> inputStreamSupplier = locator.getInputStream(key);
-            if (inputStreamSupplier != null) {
-                return inputStreamSupplier;
+    public InputStream loadInputStream(String key) {
+        AssetKey assetKey = findAsset(key);
+        try {
+            return assetKey.openInputStream();
+        } catch (IOException ex) {
+            throw new RuntimeException("Error while loading asset", ex);
+        }
+    }
+
+    private AssetKey findAsset(String key) {
+        for (AssetLocator<?> locator : locators) {
+            AssetKey assetKey = locator.findAsset(key);
+            if (assetKey != null) {
+                return assetKey;
             }
         }
         throw new AssetNotFoundException(key);

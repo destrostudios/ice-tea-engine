@@ -3,8 +3,10 @@ package com.destrostudios.icetea.core.asset.loader;
 import com.destrostudios.icetea.core.Transform;
 import com.destrostudios.icetea.core.animation.*;
 import com.destrostudios.icetea.core.animation.sampled.*;
+import com.destrostudios.icetea.core.asset.AssetKey;
 import com.destrostudios.icetea.core.asset.AssetLoader;
 import com.destrostudios.icetea.core.asset.AssetManager;
+import com.destrostudios.icetea.core.asset.locator.FileAssetKey;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
@@ -21,13 +23,12 @@ import com.destrostudios.icetea.core.util.LowEndianUtil;
 import com.destrostudios.icetea.core.util.SpatialUtil;
 import de.javagl.jgltf.model.*;
 import de.javagl.jgltf.model.io.GltfModelReader;
-import de.javagl.jgltf.model.v1.GltfModelV1;
-import de.javagl.jgltf.model.v2.GltfModelV2;
+import de.javagl.jgltf.model.v1.MaterialModelV1;
+import de.javagl.jgltf.model.v2.MaterialModelV2;
 import org.joml.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.Supplier;
 
 public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
@@ -51,21 +52,24 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
     private float[] tmpMatrix4f;
 
     @Override
-    public void setContext(AssetManager assetManager, String key, GltfLoaderSettings settings) {
-        super.setContext(assetManager, key, settings);
+    public void setContext(AssetManager assetManager, AssetKey assetKey, GltfLoaderSettings settings) {
+        super.setContext(assetManager, assetKey, settings);
         // TODO: Share code between different loaders that need the directory for references
-        int slashIndex = key.lastIndexOf("/");
+        int slashIndex = assetKey.getKey().lastIndexOf("/");
         if (slashIndex != -1) {
-            keyDirectory = key.substring(0, slashIndex + 1);
+            keyDirectory = assetKey.getKey().substring(0, slashIndex + 1);
         } else {
             keyDirectory = "";
         }
     }
 
     @Override
-    public Spatial load(Supplier<InputStream> inputStreamSupplier) throws IOException {
-        try (InputStream inputStream = inputStreamSupplier.get()) {
-            gltfModel = new GltfModelReader().readWithoutReferences(inputStream);
+    public Spatial load() throws IOException {
+        GltfModelReader gltfModelReader = new GltfModelReader();
+        if (assetKey instanceof FileAssetKey fileAssetKey) {
+            gltfModel = gltfModelReader.read(fileAssetKey.getPath());
+        } else {
+            gltfModel = gltfModelReader.readWithoutReferences(assetKey.openInputStream());
         }
         return loadScenes();
     }
@@ -94,27 +98,13 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
     private ArrayList<CombinedAnimation> loadAnimations(List<AnimationModel> animationModels) {
         ArrayList<CombinedAnimation> animations = new ArrayList<>(animationModels.size());
-        int animationIndex = 0;
         for (AnimationModel animationModel : animationModels) {
-            String name = getAnimationName(gltfModel, animationIndex);
-            animations.add(loadCombinedAnimation(animationModel, name));
-            animationIndex++;
+            animations.add(loadCombinedAnimation(animationModel));
         }
         return animations;
     }
 
-    // TODO: Workaround until new de.javagl.jgltf-model version is released that properly fills animationModel.getName()
-    private String getAnimationName(GltfModel gltfModel, int animationIndex) {
-        if (gltfModel instanceof GltfModelV2) {
-            GltfModelV2 gltfModelV2 = (GltfModelV2) gltfModel;
-            return gltfModelV2.getGltf().getAnimations().get(animationIndex).getName();
-        } else {
-            GltfModelV1 gltfModelV1 = (GltfModelV1) gltfModel;
-            return gltfModelV1.getGltf().getAnimations().get(animationIndex).getName();
-        }
-    }
-
-    private CombinedAnimation loadCombinedAnimation(AnimationModel animationModel, String name) {
+    private CombinedAnimation loadCombinedAnimation(AnimationModel animationModel) {
         List<AnimationModel.Channel> channels = animationModel.getChannels();
         Animation[] animations = new Animation[channels.size()];
         int animationIndex = 0;
@@ -122,7 +112,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
             animations[animationIndex++] = loadAnimation(channel);
         }
         CombinedAnimation combinedAnimation = new CombinedAnimation(animations);
-        combinedAnimation.setName(name);
+        combinedAnimation.setName(animationModel.getName());
         return combinedAnimation;
     }
 
@@ -344,8 +334,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         byte[] buffer = buffers.get(bufferViewModel.getBufferModel());
         try {
             if (buffer == null) {
-                Supplier<InputStream> inputStreamSupplier = assetManager.load(keyDirectory + bufferViewModel.getBufferModel().getUri());
-                try (InputStream inputStream = inputStreamSupplier.get()) {
+                try (InputStream inputStream = assetManager.loadInputStream(keyDirectory + bufferViewModel.getBufferModel().getUri())) {
                     buffer = inputStream.readAllBytes();
                 }
                 buffers.put(bufferViewModel.getBufferModel(), buffer);
@@ -522,17 +511,28 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                 "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
                 "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
             }));
-            Object baseColorTextureValue = materialModel.getValues().get("baseColorTexture");
-            if (baseColorTextureValue != null) {
-                int baseColorTextureIndex = (int) baseColorTextureValue;
-                TextureModel baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
+            TextureModel baseColorTextureModel = null;
+            float[] baseColorFactor = null;
+            if (materialModel instanceof MaterialModelV2 materialModelV2) {
+                baseColorTextureModel = materialModelV2.getBaseColorTexture();
+                baseColorFactor = materialModelV2.getBaseColorFactor();
+            } else if (materialModel instanceof MaterialModelV1 materialModelV1) {
+                Object baseColorTextureValue = materialModelV1.getValues().get("baseColorTexture");
+                if (baseColorTextureValue != null) {
+                    int baseColorTextureIndex = (int) baseColorTextureValue;
+                    baseColorTextureModel = gltfModel.getTextureModels().get(baseColorTextureIndex);
+                }
+                Object baseColorFactorValue = materialModelV1.getValues().get("baseColorFactor");
+                if (baseColorFactorValue != null) {
+                    baseColorFactor = (float[]) baseColorFactorValue;
+                }
+            }
+            if (baseColorTextureModel != null) {
                 String textureFilePath = keyDirectory + baseColorTextureModel.getImageModel().getUri();
                 Texture texture = assetManager.loadTexture(textureFilePath);
                 material.setTexture("diffuseMap", texture);
             }
-            Object baseColorFactorValue = materialModel.getValues().get("baseColorFactor");
-            if (baseColorFactorValue != null) {
-                float[] baseColorFactor = (float[]) baseColorFactorValue;
+            if (baseColorFactor != null) {
                 material.getParameters().setVector4f("color", new Vector4f(baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]));
             }
             return material;

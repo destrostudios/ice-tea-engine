@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.asset.loader;
 
+import com.destrostudios.icetea.core.asset.AssetKey;
 import com.destrostudios.icetea.core.asset.AssetLoader;
 import com.destrostudios.icetea.core.asset.AssetManager;
 import com.destrostudios.icetea.core.font.BitmapFont;
@@ -11,30 +12,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.function.Supplier;
 
 public class BitmapFontLoader extends AssetLoader<BitmapFont, Void> {
 
     private String keyDirectory;
 
     @Override
-    public void setContext(AssetManager assetManager, String key, Void settings) {
-        super.setContext(assetManager, key, settings);
+    public void setContext(AssetManager assetManager, AssetKey assetKey, Void settings) {
+        super.setContext(assetManager, assetKey, settings);
         // TODO: Share code between different loaders that need the directory for references
-        int slashIndex = key.lastIndexOf("/");
+        int slashIndex = assetKey.getKey().lastIndexOf("/");
         if (slashIndex != -1) {
-            keyDirectory = key.substring(0, slashIndex + 1);
+            keyDirectory = assetKey.getKey().substring(0, slashIndex + 1);
         } else {
             keyDirectory = "";
         }
     }
 
     @Override
-    public BitmapFont load(Supplier<InputStream> inputStreamSupplier) throws IOException {
+    public BitmapFont load() throws IOException {
         int lineHeight = 0;
         HashMap<Character, BitmapFontCharacter> characters = new HashMap<>();
         HashMap<String, Texture> textures = new HashMap<>();
-        try (InputStream inputStream = inputStreamSupplier.get()) {
+        try (InputStream inputStream = assetKey.openInputStream()) {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
             while ((line = bufferedReader.readLine()) != null) {

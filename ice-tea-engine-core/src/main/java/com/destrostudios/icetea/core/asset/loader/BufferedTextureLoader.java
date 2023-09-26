@@ -10,7 +10,6 @@ import org.lwjgl.system.MemoryStack;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.function.Supplier;
 
 import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -18,10 +17,10 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 public class BufferedTextureLoader extends AssetLoader<BufferedTexture, BufferedTextureLoaderSettings> {
 
     @Override
-    public BufferedTexture load(Supplier<InputStream> inputStreamSupplier) {
+    public BufferedTexture load() {
         try (MemoryStack stack = stackPush()) {
             BufferedTexture bufferedTexture = new BufferedTexture(() -> {
-                try (InputStream inputStream = inputStreamSupplier.get()) {
+                try (InputStream inputStream = assetKey.openInputStream()) {
                     byte[] imageData = inputStream.readAllBytes();
                     ByteBuffer imageBuffer = BufferUtils.createByteBuffer(imageData.length);
                     imageBuffer.put(imageData);

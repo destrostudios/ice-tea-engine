@@ -14,15 +14,15 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.ice-tea-engine>0.0.1</version.ice-tea-engine>
-        <version.jgltf>2.0.1</version.jgltf>
-        <version.joml>1.9.20</version.joml>
-        <version.imgui-java>1.86.7</version.imgui-java>
-        <version.lwjgl>3.3.1</version.lwjgl>
-        <version.lombok>1.18.26</version.lombok>
-        <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
-        <version.maven-source-plugin>3.2.1</version.maven-source-plugin>
-        <version.obj>0.3.0</version.obj>
-        <version.slf4j>1.7.36</version.slf4j>
+        <version.jgltf>2.0.3</version.jgltf>
+        <version.joml>1.10.5</version.joml>
+        <version.imgui-java>1.86.10</version.imgui-java>
+        <version.lwjgl>3.3.3</version.lwjgl>
+        <version.lombok>1.18.30</version.lombok>
+        <version.maven-compiler-plugin>3.11.0</version.maven-compiler-plugin>
+        <version.maven-source-plugin>3.3.0</version.maven-source-plugin>
+        <version.obj>0.4.0</version.obj>
+        <version.slf4j>2.0.9</version.slf4j>
     </properties>
     <build>
         <plugins>
