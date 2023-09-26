@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.core.filter;
 
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.resource.descriptor.UniformDescriptor;
 import com.destrostudios.icetea.core.render.filter.FilterRenderJob;
 import com.destrostudios.icetea.core.shader.Shader;
@@ -9,7 +9,7 @@ import lombok.Getter;
 
 import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
 
-public class Filter extends LifecycleObject {
+public class Filter extends NativeObject {
 
     public Filter() {
         uniformBuffer = new UniformDataBuffer();
@@ -24,10 +24,10 @@ public class Filter extends LifecycleObject {
     private FilterRenderJob filterRenderJob;
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    protected void updateNative() {
+        super.updateNative();
         updateUniformBuffer();
-        application.getSwapChain().setResourceActive(uniformBuffer);
+        uniformBuffer.updateNative(application);
     }
 
     protected void updateUniformBuffer() {
@@ -35,8 +35,8 @@ public class Filter extends LifecycleObject {
     }
 
     @Override
-    protected void cleanupInternal() {
-        uniformBuffer.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        uniformBuffer.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

@@ -35,10 +35,10 @@ public class NormalMapComputeJob extends ComputeJob {
     private Texture normalMapTexture;
 
     @Override
-    protected void init() {
+    protected void initNative() {
         initNormalMapTexture();
-        normalMapTexture.update(application, 0);
-        super.init();
+        normalMapTexture.updateNative(application);
+        super.initNative();
     }
 
     private void initNormalMapTexture() {
@@ -111,7 +111,7 @@ public class NormalMapComputeJob extends ComputeJob {
 
         pushConstants.getData().setInt("n", waterConfig.getN());
         pushConstants.getData().setFloat("strength", waterConfig.getNormalStrength());
-        pushConstants.update(application, 0);
+        pushConstants.updateNative(application);
 
         NormalMapComputeActionGroup normalMapComputeActionGroup = new NormalMapComputeActionGroup(waterConfig.getN(), pushConstants);
         normalMapComputeActionGroup.addComputeAction(new NormalMapComputeAction(normalMapTexture.getDescriptor("compute"), fftComputeJob.getDyTexture().getDescriptor("normalMap")));
@@ -152,8 +152,8 @@ public class NormalMapComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void cleanupInternal() {
-        normalMapTexture.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        normalMapTexture.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

@@ -14,16 +14,16 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     private Filter filter;
 
     @Override
-    protected void init() {
+    protected void initNative() {
         // FullScreenQuadRenderJob needs the filter config material descriptor already in init
-        filter.update(application, 0);
-        super.init();
+        filter.updateNative(application);
+        super.initNative();
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        filter.update(application, tpf);
+    public void updateNative() {
+        super.updateNative();
+        filter.updateNative(application);
     }
 
     @Override
@@ -43,8 +43,8 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
     }
 
     @Override
-    protected void cleanupInternal() {
-        filter.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        filter.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

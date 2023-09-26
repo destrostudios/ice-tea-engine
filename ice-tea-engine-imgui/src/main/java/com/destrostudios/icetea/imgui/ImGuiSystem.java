@@ -1,8 +1,8 @@
 package com.destrostudios.icetea.imgui;
 
+import com.destrostudios.icetea.core.AppSystem;
 import com.destrostudios.icetea.core.WindowResizeListener;
 import com.destrostudios.icetea.core.input.*;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class ImGuiSystem extends LifecycleObject implements WindowResizeListener, KeyListener, CharacterListener, MousePositionListener, MouseButtonListener, MouseScrollListener {
+public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyListener, CharacterListener, MousePositionListener, MouseButtonListener, MouseScrollListener {
 
     public ImGuiSystem(Runnable updateImGuiFrame) {
         this.updateImGuiFrame = updateImGuiFrame;
@@ -37,8 +37,8 @@ public class ImGuiSystem extends LifecycleObject implements WindowResizeListener
     private final long[] mouseCursors = new long[ImGuiMouseCursor.COUNT];
 
     @Override
-    protected void init() {
-        super.init();
+    public void onAttached() {
+        super.onAttached();
         initImGui();
         fontsTexture = createFontsTexture();
         geometry = createGeometry();
@@ -147,7 +147,7 @@ public class ImGuiSystem extends LifecycleObject implements WindowResizeListener
     }
 
     @Override
-    protected void update(float tpf) {
+    public void update(float tpf) {
         super.update(tpf);
         renderImGui();
         updateMouseCursor();
@@ -237,7 +237,8 @@ public class ImGuiSystem extends LifecycleObject implements WindowResizeListener
     }
 
     @Override
-    protected void cleanupInternal() {
+    public void onDetached() {
+        super.onDetached();
         application.getInputManager().removeKeyListener(this);
         application.getInputManager().removeCharacterListener(this);
         application.getInputManager().removeMousePositionListener(this);
@@ -245,12 +246,11 @@ public class ImGuiSystem extends LifecycleObject implements WindowResizeListener
         application.getInputManager().removeMouseScrollListener(this);
         application.removeWindowResizeListener(this);
         application.getGuiNode().remove(geometry);
-        geometry.cleanup();
-        fontsTexture.cleanup();
+        geometry.cleanupNativeState();
+        fontsTexture.cleanupNative();
         ImGui.destroyContext();
         for (long mouseCursor : mouseCursors) {
             glfwDestroyCursor(mouseCursor);
         }
-        super.cleanupInternal();
     }
 }

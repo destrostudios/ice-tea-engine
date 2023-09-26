@@ -31,7 +31,7 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.font;
     exports com.destrostudios.icetea.core.input;
     exports com.destrostudios.icetea.core.light;
-    exports com.destrostudios.icetea.core.lifecycle;
+    exports com.destrostudios.icetea.core.object;
     exports com.destrostudios.icetea.core.material;
     exports com.destrostudios.icetea.core.mesh;
     exports com.destrostudios.icetea.core.model;

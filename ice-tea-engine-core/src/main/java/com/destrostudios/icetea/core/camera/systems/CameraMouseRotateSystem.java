@@ -1,9 +1,9 @@
 package com.destrostudios.icetea.core.camera.systems;
 
+import com.destrostudios.icetea.core.AppSystem;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.input.MousePositionEvent;
 import com.destrostudios.icetea.core.input.MousePositionListener;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Matrix3f;
@@ -13,7 +13,7 @@ import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL;
 
-public class CameraMouseRotateSystem extends LifecycleObject implements MousePositionListener {
+public class CameraMouseRotateSystem extends AppSystem implements MousePositionListener {
 
     public CameraMouseRotateSystem(SceneCamera sceneCamera) {
         this.sceneCamera = sceneCamera;
@@ -26,8 +26,8 @@ public class CameraMouseRotateSystem extends LifecycleObject implements MousePos
     private float rotationSpeed = ((-1 / 1024f) * (float) Math.PI);
 
     @Override
-    protected void init() {
-        super.init();
+    public void onAttached() {
+        super.onAttached();
         application.getInputManager().addMousePositionListener(this);
         application.getInputManager().setCursorMode(GLFW_CURSOR_DISABLED);
     }
@@ -71,9 +71,9 @@ public class CameraMouseRotateSystem extends LifecycleObject implements MousePos
     }
 
     @Override
-    protected void cleanupInternal() {
+    public void onDetached() {
+        super.onDetached();
         application.getInputManager().removeMousePositionListener(this);
         application.getInputManager().setCursorMode(GLFW_CURSOR_NORMAL);
-        super.cleanupInternal();
     }
 }

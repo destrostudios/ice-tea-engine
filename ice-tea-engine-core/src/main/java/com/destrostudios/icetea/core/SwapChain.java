@@ -1,9 +1,8 @@
 package com.destrostudios.icetea.core;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderTarget;
-import com.destrostudios.icetea.core.resource.Resource;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderJobManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
@@ -28,13 +27,12 @@ import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class SwapChain extends LifecycleObject implements WindowResizeListener {
+public class SwapChain extends NativeObject implements WindowResizeListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SwapChain.class);
 
     public SwapChain() {
         renderJobManager = new RenderJobManager();
-        activeResources = new HashSet<>();
     }
     private static final int FRAMES_IN_FLIGHT = 2;
     @Getter
@@ -46,7 +44,6 @@ public class SwapChain extends LifecycleObject implements WindowResizeListener {
     private int imageFormat;
     @Getter
     private ArrayList<Long> imageViews;
-    private HashSet<Resource> activeResources;
     private ArrayList<VkCommandBuffer> commandBuffers;
     private boolean commandBuffersOutdated;
     @Getter
@@ -57,7 +54,7 @@ public class SwapChain extends LifecycleObject implements WindowResizeListener {
     private boolean wasResized;
     private boolean isDuringRecreation;
 
-    public void recreate() {
+    private void recreate() {
         // Wait if minimized
         try (MemoryStack stack = stackPush()) {
             IntBuffer width = stack.ints(0);
@@ -71,16 +68,16 @@ public class SwapChain extends LifecycleObject implements WindowResizeListener {
         Application tmpApplication = application;
         // TODO: This is a workaround to prevent inFlightFrame recreation (not allowed while actively rendering) during swapchain recreation
         isDuringRecreation = true;
-        cleanup();
+        cleanupNative();
         isDuringRecreation = false;
-        update(tmpApplication, 0);
+        updateNative(tmpApplication);
         recordCommandBuffers();
     }
 
     @Override
-    protected void init() {
+    protected void initNative() {
         LOGGER.debug("Initializing swapchain...");
-        super.init();
+        super.initNative();
         initSwapChain();
         initImageViews();
         initCommandBuffers();
@@ -279,23 +276,21 @@ public class SwapChain extends LifecycleObject implements WindowResizeListener {
         LOGGER.debug("Initialized sync objects.");
     }
 
-    public void setResourceActive(Resource resource) {
-        activeResources.add(resource);
-    }
-
     public void setCommandBuffersOutdated() {
         commandBuffersOutdated = true;
     }
 
-    @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        renderJobManager.forEachRenderJob(renderJob -> renderJob.update(application, tpf));
-        for (Resource resource : activeResources) {
-            resource.update(application, tpf);
+    public void drawNextFrame() {
+        int imageIndex = acquireNextImageIndex();
+        if (imageIndex != -1) {
+            drawFrame(imageIndex);
         }
-        renderJobManager.forEachRenderJob(renderJob -> renderJob.updateRenderContexts(tpf));
-        activeResources.clear();
+    }
+
+    @Override
+    public void updateNative() {
+        super.updateNative();
+        renderJobManager.updateNative(application);
         if (commandBuffersOutdated) {
             recordCommandBuffers();
             commandBuffersOutdated = false;
@@ -454,16 +449,16 @@ public class SwapChain extends LifecycleObject implements WindowResizeListener {
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         application.removeWindowResizeListener(this);
         if (!isDuringRecreation) {
             cleanupInFlightFrames();
         }
-        cleanupRenderJobs();
+        renderJobManager.cleanupNative();
         cleanupCommandBuffers();
         imageViews.forEach(imageView -> vkDestroyImageView(application.getLogicalDevice(), imageView, null));
         vkDestroySwapchainKHR(application.getLogicalDevice(), swapChain, null);
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 
     private void cleanupInFlightFrames() {
@@ -472,10 +467,6 @@ public class SwapChain extends LifecycleObject implements WindowResizeListener {
             vkDestroySemaphore(application.getLogicalDevice(), frame.getImageAvailableSemaphore(), null);
             vkDestroyFence(application.getLogicalDevice(), frame.getFence(), null);
         }
-    }
-
-    public void cleanupRenderJobs() {
-        renderJobManager.forEachRenderJob(RenderJob::cleanup);
     }
 
     private void cleanupCommandBuffers() {

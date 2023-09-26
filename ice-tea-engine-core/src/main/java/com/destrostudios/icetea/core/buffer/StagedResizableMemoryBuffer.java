@@ -14,9 +14,9 @@ public class StagedResizableMemoryBuffer extends ResizableMemoryBuffer {
     private StagingResizableMemoryBuffer stagingBuffer;
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
-        stagingBuffer.update(application, tpf);
+    public void updateNative() {
+        super.updateNative();
+        stagingBuffer.updateNative(application);
     }
 
     @Override
@@ -32,8 +32,8 @@ public class StagedResizableMemoryBuffer extends ResizableMemoryBuffer {
     }
 
     @Override
-    protected void cleanupInternal() {
-        stagingBuffer.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        stagingBuffer.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

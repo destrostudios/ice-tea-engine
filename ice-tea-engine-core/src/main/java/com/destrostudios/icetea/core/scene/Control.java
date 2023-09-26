@@ -1,48 +1,49 @@
 package com.destrostudios.icetea.core.scene;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.LogicalObject;
 import lombok.Getter;
 
-public abstract class Control extends LifecycleObject implements ContextCloneable {
+public abstract class Control extends LogicalObject implements ContextCloneable {
 
     protected Control() { }
 
     @Getter
     protected Spatial spatial;
+    private Spatial spatialToSet;
 
     public void setSpatial(Spatial spatial) {
-        if (spatial != this.spatial) {
-            if (spatial != null) {
-                if (application != null) {
-                    onAdd();
-                }
-            } else {
-                onRemove();
-            }
-            this.spatial = spatial;
+        this.spatialToSet = spatial;
+        if (spatial == null) {
+            checkSpatialChange();
         }
     }
 
     @Override
-    protected void init() {
-        super.init();
-        initControl();
-        if (spatial != null) {
-            onAdd();
+    public void updateLogicalState(Application application, float tpf) {
+        super.updateLogicalState(application, tpf);
+        checkSpatialChange();
+    }
+
+    private void checkSpatialChange() {
+        if ((spatialToSet != spatial) && (application != null)) {
+            if (spatial != null) {
+                onDetached();
+            }
+            spatial = spatialToSet;
+            if (spatial != null) {
+                onAttached();
+            }
         }
     }
 
-    protected void initControl() {
+    protected void onAttached() {
 
     }
 
-    protected void onAdd() {
-
-    }
-
-    protected void onRemove() {
+    protected void onDetached() {
 
     }
 

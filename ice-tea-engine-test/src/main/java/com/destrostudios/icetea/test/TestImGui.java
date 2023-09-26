@@ -1,9 +1,9 @@
 package com.destrostudios.icetea.test;
 
+import com.destrostudios.icetea.core.AppSystem;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.input.Event;
 import com.destrostudios.icetea.core.input.KeyEvent;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import com.destrostudios.icetea.imgui.ImGuiSystem;
 import imgui.ImGui;
 
@@ -26,11 +26,11 @@ public class TestImGui extends Application {
         super.init();
         ImGuiSystem imGuiSystem = new ImGuiSystem(ImGui::showDemoWindow);
         addSystem(imGuiSystem);
-        addSystem(new LifecycleObject() {
+        addSystem(new AppSystem() {
 
             @Override
-            protected void init() {
-                super.init();
+            public void onAttached() {
+                super.onAttached();
                 inputManager.addMouseScrollListener(this::onEvent);
                 inputManager.addMouseButtonListener(this::onEvent);
                 inputManager.addKeyListener(this::onEvent);
@@ -39,8 +39,7 @@ public class TestImGui extends Application {
 
             private void onEvent(Event event) {
                 System.out.println("Event: " + event.getClass().getSimpleName());
-                if (event instanceof KeyEvent) {
-                    KeyEvent keyEvent = (KeyEvent) event;
+                if (event instanceof KeyEvent keyEvent) {
                     if (keyEvent.getKey() == GLFW_KEY_INSERT) {
                         if (keyEvent.getAction() == GLFW_PRESS) {
                             if (hasSystem(imGuiSystem)) {

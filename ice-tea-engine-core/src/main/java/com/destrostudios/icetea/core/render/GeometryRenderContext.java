@@ -1,11 +1,11 @@
 package com.destrostudios.icetea.core.render;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
 
-public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> extends LifecycleObject {
+public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> extends NativeObject {
 
     public GeometryRenderContext(Geometry geometry, RJ renderJob) {
         this.geometry = geometry;
@@ -23,28 +23,28 @@ public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends 
     protected abstract RP createRenderPipeline();
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         resourceDescriptorSet = new ResourceDescriptorSet();
     }
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
+    public void updateNative() {
+        super.updateNative();
         setDescriptors();
         if (geometry.getMesh().isWereBuffersOutdated() || resourceDescriptorSet.isChanged()) {
-            resourceDescriptorSet.onApplied();
-            renderPipeline.cleanup();
+            resourceDescriptorSet.onChangeApplied();
+            renderPipeline.cleanupNative();
             application.getSwapChain().setCommandBuffersOutdated();
         }
-        renderPipeline.update(application, tpf);
+        renderPipeline.updateNative(application);
     }
 
     protected abstract void setDescriptors();
 
     @Override
-    protected void cleanupInternal() {
-        renderPipeline.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        renderPipeline.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

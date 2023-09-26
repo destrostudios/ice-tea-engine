@@ -3,7 +3,7 @@ package com.destrostudios.icetea.core.material;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.data.FieldsData;
-import com.destrostudios.icetea.core.lifecycle.MultiConsumableLifecycleObject;
+import com.destrostudios.icetea.core.object.MultiConsumableNativeObject;
 import com.destrostudios.icetea.core.resource.descriptor.MaterialParamsDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
@@ -17,7 +17,7 @@ import java.util.HashMap;
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
 import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
 
-public class Material extends MultiConsumableLifecycleObject<Geometry> implements ContextCloneable {
+public class Material extends MultiConsumableNativeObject<Geometry> implements ContextCloneable {
 
     public Material() {
         parametersBuffer = new UniformDataBuffer();
@@ -78,11 +78,11 @@ public class Material extends MultiConsumableLifecycleObject<Geometry> implement
     private int fillMode = VK_POLYGON_MODE_FILL;
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
-        application.getSwapChain().setResourceActive(parametersBuffer);
+    protected void updateNative() {
+        super.updateNative();
+        parametersBuffer.updateNative(application);
         for (Texture texture : textures.values()) {
-            application.getSwapChain().setResourceActive(texture);
+            texture.updateNative(application);
         }
     }
 
@@ -95,12 +95,12 @@ public class Material extends MultiConsumableLifecycleObject<Geometry> implement
     }
 
     @Override
-    protected void cleanupInternal() {
-        parametersBuffer.cleanup();
+    protected void cleanupNativeInternal() {
+        parametersBuffer.cleanupNative();
         for (Texture texture : textures.values()) {
-            texture.cleanup();
+            texture.cleanupNative();
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.shader;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
-public class ShaderManager extends LifecycleObject {
+public class ShaderManager extends NativeObject {
 
     private HashMap<String, String> filesCache = new HashMap<>();
     private LinkedHashMap<String, SPIRV> spirvCache = new LinkedHashMap<>();
@@ -91,12 +91,12 @@ public class ShaderManager extends LifecycleObject {
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         for (SPIRV spirv : spirvCache.values()) {
             spirv.free();
         }
         spirvCache.clear();
         filesCache.clear();
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 }

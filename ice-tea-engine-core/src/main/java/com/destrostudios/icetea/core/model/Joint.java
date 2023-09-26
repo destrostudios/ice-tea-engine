@@ -65,7 +65,7 @@ public class Joint implements ContextCloneable {
         localPoseTransform.setScale(scale);
     }
 
-    public void update() {
+    public void applyLogicalState() {
         if (localPoseTransform.updateMatrixIfNecessary()) {
             setWorldTransformOutdated();
         }
@@ -73,7 +73,7 @@ public class Joint implements ContextCloneable {
             updateWorldTransform();
             // We have to make sure that the children are (at least once) updated after the parent, so they have the correct world transform
             for (Joint child : children) {
-                child.update();
+                child.applyLogicalState();
             }
         }
     }

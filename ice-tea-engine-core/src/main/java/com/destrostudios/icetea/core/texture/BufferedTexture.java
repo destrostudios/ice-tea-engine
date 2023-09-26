@@ -27,8 +27,8 @@ public class BufferedTexture extends Texture {
     private int mipLevels;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         initImage();
         initImageView();
         initImageSampler();
@@ -46,7 +46,7 @@ public class BufferedTexture extends Texture {
             long imageBytes = ((long) textureData.getWidth()) * textureData.getHeight() * 4; // channels
 
             StagingResizableMemoryBuffer stagingBuffer = new StagingResizableMemoryBuffer();
-            stagingBuffer.update(application, 0);
+            stagingBuffer.updateNative(application);
             stagingBuffer.write(imageBytes, byteBuffer -> {
                 BufferUtil.memcpy(textureData.getPixels(), byteBuffer, imageBytes);
             });
@@ -83,7 +83,7 @@ public class BufferedTexture extends Texture {
             );
 
             application.getImageManager().copyBufferToImage(stagingBuffer.getBuffer(), image, textureData.getWidth(), textureData.getHeight());
-            stagingBuffer.cleanup();
+            stagingBuffer.cleanupNative();
 
             application.getImageManager().generateMipmaps(
                 image,

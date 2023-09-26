@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.scene;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Transform;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
@@ -7,7 +8,7 @@ import com.destrostudios.icetea.core.collision.BoundingBox;
 import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.CollisionResult_AABB_Ray;
 import com.destrostudios.icetea.core.collision.Ray;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.LogicalObject;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.resource.AdditionalResourceDescriptorProvider;
 import com.destrostudios.icetea.core.resource.ResourceDescriptor;
@@ -21,7 +22,7 @@ import org.joml.*;
 import java.util.*;
 import java.util.function.Predicate;
 
-public abstract class Spatial extends LifecycleObject implements ContextCloneable {
+public abstract class Spatial extends LogicalObject implements ContextCloneable {
 
     protected Spatial() {
         localTransform = new Transform();
@@ -66,14 +67,29 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     private LinkedList<VertexPositionModifier> tmpVertexPositionModifiers = new LinkedList<>();
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateLogicalState(Application application, float tpf) {
+        super.updateLogicalState(application, tpf);
         for (Control control : controls) {
-            control.setSpatial(this);
-            control.update(application, tpf);
+            control.updateLogicalState(application, tpf);
+        }
+    }
+
+    @Override
+    public void applyLogicalState() {
+        super.applyLogicalState();
+        for (Control control : controls) {
+            control.applyLogicalState();
         }
         localTransform.updateMatrixIfNecessary();
         updateWorldTransform();
+    }
+
+    @Override
+    public void updateNativeState(Application application) {
+        super.updateNativeState(application);
+        for (Control control : controls) {
+            control.updateNativeState(application);
+        }
     }
 
     public void updateWorldTransform() {
@@ -157,6 +173,7 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     }
 
     public void addControl(Control control) {
+        control.setSpatial(this);
         controls.add(control);
     }
 
@@ -228,11 +245,11 @@ public abstract class Spatial extends LifecycleObject implements ContextCloneabl
     }
 
     @Override
-    protected void cleanupInternal() {
+    public void cleanupNativeStateInternal() {
         for (Control control : controls) {
-            control.cleanup();
+            control.cleanupNativeState();
         }
-        super.cleanupInternal();
+        super.cleanupNativeStateInternal();
     }
 
     @Override

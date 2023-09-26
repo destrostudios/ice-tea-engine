@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.compute;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.resource.Resource;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
@@ -17,7 +17,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class ComputeJob extends LifecycleObject {
+public abstract class ComputeJob extends NativeObject {
 
     protected ComputeJob() {
         activeResources = new HashSet<>();
@@ -32,11 +32,11 @@ public abstract class ComputeJob extends LifecycleObject {
     private HashSet<Resource> activeResources;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         computeActionGroups = createComputeActionGroups();
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
-            computeActionGroup.update(application, 0);
+            computeActionGroup.updateNative(application);
         }
         initCommandBuffer();
         initFence();
@@ -113,14 +113,14 @@ public abstract class ComputeJob extends LifecycleObject {
     }
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
+    public void updateNative() {
+        super.updateNative();
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
-            computeActionGroup.update(application, 0);
+            computeActionGroup.updateNative(application);
         }
         prepareResourcesUpdate();
         for (Resource resource : activeResources) {
-            resource.update(application, tpf);
+            resource.updateNative(application);
         }
         activeResources.clear();
     }
@@ -167,15 +167,15 @@ public abstract class ComputeJob extends LifecycleObject {
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         if (signalSemaphore != null) {
             vkDestroySemaphore(application.getLogicalDevice(), signalSemaphore, null);
         }
         vkDestroyFence(application.getLogicalDevice(), fence, null);
         vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), commandBuffer);
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
-            computeActionGroup.cleanup();
+            computeActionGroup.cleanupNative();
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 }

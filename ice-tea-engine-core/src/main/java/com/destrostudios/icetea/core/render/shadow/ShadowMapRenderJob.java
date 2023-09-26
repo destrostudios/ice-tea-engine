@@ -50,8 +50,8 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     private PushConstantsDataBuffer pushConstants;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         initRenderPass();
         initShadowMapTexture();
         initFrameBuffer();
@@ -197,14 +197,13 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     private void initFrameBuffer() {
-        initFrameBuffers(frameBufferIndex -> new long[]{
+        initFrameBuffers(frameBufferIndex -> new long[] {
             shadowMapCascadeImageViews[frameBufferIndex]
         }, shadowConfig.getCascadesCount());
     }
 
     private void initPushConstants() {
         pushConstants.getData().setInt("cascadeIndex", 0);
-        pushConstants.update(application, 0);
     }
 
     @Override
@@ -213,12 +212,12 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateNative() {
+        super.updateNative();
+        shadowMapTexture.updateNative(application);
         updateShadowInfoUniformBuffer();
-        application.getSwapChain().setResourceActive(shadowMapTexture);
-        application.getSwapChain().setResourceActive(shadowInfoUniformBuffer);
-        application.getSwapChain().setResourceActive(pushConstants);
+        shadowInfoUniformBuffer.updateNative(application);
+        pushConstants.updateNative(application);
     }
 
     private void updateShadowInfoUniformBuffer() {
@@ -364,7 +363,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     public void render(Consumer<RenderAction> actions) {
         actions.accept(rt -> pushConstants.getData().setInt("cascadeIndex", rt.getFrameBufferIndex()));
-        pushConstants.update(application, 0);
+        pushConstants.updateNative(application);
 
         application.getRootNode().forEachGeometry(geometry -> {
             ShadowMapGeometryRenderContext renderContext = getRenderContext(geometry);
@@ -376,13 +375,13 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    protected void cleanupInternal() {
-        pushConstants.cleanup();
-        shadowInfoUniformBuffer.cleanup();
+    protected void cleanupNativeInternal() {
+        pushConstants.cleanupNative();
+        shadowInfoUniformBuffer.cleanupNative();
         for (long imageView : shadowMapCascadeImageViews) {
             vkDestroyImageView(application.getLogicalDevice(), imageView, null);
         }
-        shadowMapTexture.cleanup();
-        super.cleanupInternal();
+        shadowMapTexture.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

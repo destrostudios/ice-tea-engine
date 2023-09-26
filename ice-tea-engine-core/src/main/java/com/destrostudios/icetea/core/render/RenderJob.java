@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.render;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
@@ -16,7 +16,7 @@ import java.util.function.Function;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends LifecycleObject {
+public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends NativeObject {
 
     @Getter
     protected VkExtent2D extent;
@@ -28,8 +28,8 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
     protected List<Long> frameBuffers;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         extent = calculateExtent();
     }
 
@@ -179,19 +179,20 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
     public abstract void render(Consumer<RenderAction> actions);
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateNative() {
+        super.updateNative();
         if (resolvedColorTexture != null) {
-            application.getSwapChain().setResourceActive(resolvedColorTexture);
+            resolvedColorTexture.updateNative(application);
         }
         synchronizeRenderContextsWithRootNode();
     }
 
     private void synchronizeRenderContextsWithRootNode() {
-        for (Map.Entry<Geometry, GRC> entry : renderContexts.entrySet().toArray(new Map.Entry[0])) {
+        // TODO: Performance can be improved here
+        for (Map.Entry<Geometry, GRC> entry : renderContexts.entrySet().toArray(Map.Entry[]::new)) {
             Geometry geometry = entry.getKey();
             if ((!geometry.hasParent(application.getRootNode())) || (!isRendering(geometry))) {
-                entry.getValue().cleanup();
+                entry.getValue().cleanupNative();
                 renderContexts.remove(geometry);
             }
         }
@@ -204,9 +205,9 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
         });
     }
 
-    public void updateRenderContexts(float tpf) {
+    public void updateRenderContextsNative() {
         for (GRC renderContext : renderContexts.values()) {
-            renderContext.update(application, tpf);
+            renderContext.updateNative(application);
         }
     }
 
@@ -215,16 +216,16 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
     protected abstract GRC createGeometryRenderContext(Geometry geometry);
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         for (GRC renderContext : renderContexts.values()) {
-            renderContext.cleanup();
+            renderContext.cleanupNative();
         }
         if (resolvedColorTexture != null) {
-            resolvedColorTexture.cleanup();
+            resolvedColorTexture.cleanupNative();
         }
         frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
         vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 
     protected GRC getRenderContext(Geometry geometry) {

@@ -35,11 +35,11 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
     private UniformDataBuffer uniformBuffer;
 
     @Override
-    protected void init() {
+    protected void initNative() {
         initTwiddleFactorsTexture();
         initStorageBuffer();
         initUniformBuffer();
-        super.init();
+        super.initNative();
     }
 
     private void initTwiddleFactorsTexture() {
@@ -98,7 +98,7 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
             long imageSampler = pImageSampler.get(0);
 
             twiddleFactorsTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
-            twiddleFactorsTexture.update(application, 0);
+            twiddleFactorsTexture.updateNative(application);
         }
     }
 
@@ -106,7 +106,7 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
         storageBuffer = new StorageDataBuffer();
         storageBuffer.getData().setIntArray("bitReversedIndices", getBitReversedIndices(n));
         storageBuffer.setDescriptor("default", new StorageBufferDescriptor(VK_SHADER_STAGE_COMPUTE_BIT));
-        storageBuffer.update(application, 0);
+        storageBuffer.updateNative(application);
     }
 
     public static int[] getBitReversedIndices(int n) {
@@ -124,7 +124,7 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
         uniformBuffer = new UniformDataBuffer();
         uniformBuffer.getData().setInt("n", n);
         uniformBuffer.setDescriptor("default", new UniformDescriptor(VK_SHADER_STAGE_COMPUTE_BIT));
-        uniformBuffer.update(application, 0);
+        uniformBuffer.updateNative(application);
     }
 
     @Override
@@ -147,10 +147,10 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void cleanupInternal() {
-        uniformBuffer.cleanup();
-        storageBuffer.cleanup();
-        twiddleFactorsTexture.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        uniformBuffer.cleanupNative();
+        storageBuffer.cleanupNative();
+        twiddleFactorsTexture.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

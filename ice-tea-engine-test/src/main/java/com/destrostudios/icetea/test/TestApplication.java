@@ -15,7 +15,6 @@ import com.destrostudios.icetea.core.font.BitmapText;
 import com.destrostudios.icetea.core.light.*;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
-import com.destrostudios.icetea.core.profiler.ProfilerSystem;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
@@ -379,7 +378,6 @@ public class TestApplication extends Application {
         CameraMouseRotateSystem cameraMouseRotateSystem = new CameraMouseRotateSystem(sceneCamera);
         CameraKeyMoveSystem cameraKeyMoveSystem = new CameraKeyMoveSystem(sceneCamera);
         ImGuiSystem imGuiSystem = new ImGuiSystem(ImGui::showDemoWindow);
-        ProfilerSystem profilerSystem = new ProfilerSystem();
         inputManager.addKeyListener(keyEvent -> {
             switch (keyEvent.getKey()) {
                 case GLFW_KEY_1:
@@ -472,19 +470,7 @@ public class TestApplication extends Application {
                     break;
                 case GLFW_KEY_DELETE:
                     if (keyEvent.getAction() == GLFW_PRESS) {
-                        assetManager.cleanup();
-                        cleanupRenderDependencies();
-                    }
-                    break;
-                case GLFW_KEY_INSERT:
-                    if (keyEvent.getAction() == GLFW_PRESS) {
-                        if (hasSystem(profilerSystem)) {
-                            config.setEnableProfiler(false);
-                            removeSystem(profilerSystem);
-                        } else {
-                            config.setEnableProfiler(true);
-                            addSystem(profilerSystem);
-                        }
+                        cleanupNativeState();
                     }
                     break;
                 case GLFW_KEY_F12:
@@ -535,7 +521,6 @@ public class TestApplication extends Application {
         bitmapTextDynamic.setText("Hi");
         materialCool.getParameters().setFloat("time", time);
         materialGrass.getParameters().setFloat("time", time);
-        updateRenderDependencies();
     }
 
     @Override
@@ -546,7 +531,7 @@ public class TestApplication extends Application {
             hasAddedDennis = true;
         } else if ((time > 24) && (!hasRemovedDennis)) {
             nodeRotating.remove(nodeDennis);
-            nodeDennis.cleanup();
+            nodeDennis.cleanupNativeState();
             hasRemovedDennis = true;
         }
 
@@ -568,18 +553,12 @@ public class TestApplication extends Application {
     }
 
     @Override
-    protected void onLifecycle() {
-        super.onLifecycle();
-        // System.out.println(lifecycleManager.getInactiveObjects().size());
-    }
-
-    @Override
     protected void cleanup() {
         super.cleanup();
-        radialBlurFilter.getFilterRenderJob().cleanup();
-        sepiaFilter.getFilterRenderJob().cleanup();
-        geometryGrass.cleanup();
-        geometryGround.cleanup();
-        geometryWater.cleanup();
+        radialBlurFilter.getFilterRenderJob().cleanupNative();
+        sepiaFilter.getFilterRenderJob().cleanupNative();
+        geometryGrass.cleanupNativeState();
+        geometryGround.cleanupNativeState();
+        geometryWater.cleanupNativeState();
     }
 }

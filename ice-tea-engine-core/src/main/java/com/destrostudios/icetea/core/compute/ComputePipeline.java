@@ -22,8 +22,8 @@ public class ComputePipeline extends Pipeline {
     private ComputeActionGroup computeActionGroup;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         try (MemoryStack stack = stackPush()) {
             ComputeAction referenceComputeAction = computeActionGroup.getComputeActions().get(0);
             Shader compShader = computeActionGroup.getComputeShader();

@@ -39,15 +39,15 @@ public class Texture extends Resource {
     }
 
     @Override
-    protected void updateResource(float tpf) {
+    protected void updateResource() {
         if (wasJustSet) {
-            setWasOutdated();
+            setOutdated();
             wasJustSet = false;
         }
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         if (imageSampler != null) {
             vkDestroySampler(application.getLogicalDevice(), imageSampler, null);
             imageSampler = null;
@@ -64,7 +64,7 @@ public class Texture extends Resource {
             vkFreeMemory(application.getLogicalDevice(), imageMemory, null);
             imageMemory = null;
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 
     @Override

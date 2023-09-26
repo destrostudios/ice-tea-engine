@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import lombok.Getter;
@@ -14,7 +14,7 @@ import java.nio.LongBuffer;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class Pipeline extends LifecycleObject {
+public abstract class Pipeline extends NativeObject {
 
     @Getter
     protected long pipelineLayout;
@@ -47,9 +47,9 @@ public abstract class Pipeline extends LifecycleObject {
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         vkDestroyPipeline(application.getLogicalDevice(), pipeline, null);
         vkDestroyPipelineLayout(application.getLogicalDevice(), pipelineLayout, null);
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 }

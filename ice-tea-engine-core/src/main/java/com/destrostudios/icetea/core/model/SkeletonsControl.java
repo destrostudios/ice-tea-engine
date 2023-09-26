@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.model;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.scene.Control;
 import lombok.Getter;
@@ -23,19 +24,35 @@ public class SkeletonsControl extends Control {
     private Collection<Skeleton> skeletons;
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateLogicalState(Application application, float tpf) {
+        super.updateLogicalState(application, tpf);
         for (Skeleton skeleton : skeletons) {
-            skeleton.update(application, tpf);
+            skeleton.updateLogicalState(application, tpf);
         }
     }
 
     @Override
-    protected void cleanupInternal() {
+    public void applyLogicalState() {
+        super.applyLogicalState();
         for (Skeleton skeleton : skeletons) {
-            skeleton.cleanup();
+            skeleton.applyLogicalState();
         }
-        super.cleanupInternal();
+    }
+
+    @Override
+    public void updateNativeState(Application application) {
+        super.updateNativeState(application);
+        for (Skeleton skeleton : skeletons) {
+            skeleton.updateNativeState(application);
+        }
+    }
+
+    @Override
+    public void cleanupNativeStateInternal() {
+        for (Skeleton skeleton : skeletons) {
+            skeleton.cleanupNativeState();
+        }
+        super.cleanupNativeStateInternal();
     }
 
     @Override

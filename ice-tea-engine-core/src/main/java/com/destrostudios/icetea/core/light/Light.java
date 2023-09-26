@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.light;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.object.LogicalObject;
 import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.resource.descriptor.LightDescriptor;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
@@ -14,7 +15,7 @@ import org.joml.Vector4f;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class Light extends LifecycleObject {
+public abstract class Light extends LogicalObject {
 
     public Light() {
         affectedSpatials = new LinkedList<>();
@@ -40,21 +41,35 @@ public abstract class Light extends LifecycleObject {
     private Vector4f specularColor;
     @Getter
     protected UniformDataBuffer uniformBuffer;
-    @Getter
     @Setter
     private boolean modified;
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateLogicalState(Application application, float tpf) {
+        super.updateLogicalState(application, tpf);
+        if (modified) {
+            // TODO: Solve this properly, including updates
+            application.getSwapChain().getRenderJobManager().addPreSceneRenderJobs(shadowMapRenderJobs);
+            modified = false;
+        }
+    }
+
+    @Override
+    public void applyLogicalState() {
+        super.applyLogicalState();
         updateUniformBufferFields();
-        application.getSwapChain().setResourceActive(uniformBuffer);
     }
 
     protected void updateUniformBufferFields() {
         uniformBuffer.getData().setVector4f("lightColor", lightColor);
         uniformBuffer.getData().setVector4f("ambientColor", ambientColor);
         uniformBuffer.getData().setVector4f("specularColor", specularColor);
+    }
+
+    @Override
+    public void updateNativeState(Application application) {
+        super.updateNativeState(application);
+        uniformBuffer.updateNative(application);
     }
 
     public void addAffectedSpatial(Spatial spatial) {
@@ -88,8 +103,8 @@ public abstract class Light extends LifecycleObject {
     }
 
     @Override
-    protected void cleanupInternal() {
-        uniformBuffer.cleanup();
-        super.cleanupInternal();
+    public void cleanupNativeStateInternal() {
+        uniformBuffer.cleanupNative();
+        super.cleanupNativeStateInternal();
     }
 }

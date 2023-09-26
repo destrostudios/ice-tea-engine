@@ -48,18 +48,18 @@ public class HktComputeJob extends ComputeJob {
     private float time;
 
     @Override
-    protected void init() {
+    protected void initNative() {
         initTargetTexture(dxCoefficientsTexture);
-        dxCoefficientsTexture.update(application, 0);
+        dxCoefficientsTexture.updateNative(application);
 
         initTargetTexture(dyCoefficientsTexture);
-        dyCoefficientsTexture.update(application, 0);
+        dyCoefficientsTexture.updateNative(application);
 
         initTargetTexture(dzCoefficientsTexture);
-        dzCoefficientsTexture.update(application, 0);
+        dzCoefficientsTexture.updateNative(application);
 
         initUniformBuffer();
-        super.init();
+        super.initNative();
     }
 
     private void initTargetTexture(Texture texture) {
@@ -127,7 +127,7 @@ public class HktComputeJob extends ComputeJob {
         uniformBuffer.getData().setInt("L", waterConfig.getL());
         uniformBuffer.getData().setFloat("t", 0f);
         uniformBuffer.setDescriptor("default", new UniformDescriptor(VK_SHADER_STAGE_COMPUTE_BIT));
-        uniformBuffer.update(application, 0);
+        uniformBuffer.updateNative(application);
     }
 
     @Override
@@ -157,11 +157,11 @@ public class HktComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void cleanupInternal() {
-        uniformBuffer.cleanup();
-        dzCoefficientsTexture.cleanup();
-        dyCoefficientsTexture.cleanup();
-        dxCoefficientsTexture.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        uniformBuffer.cleanupNative();
+        dzCoefficientsTexture.cleanupNative();
+        dyCoefficientsTexture.cleanupNative();
+        dxCoefficientsTexture.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

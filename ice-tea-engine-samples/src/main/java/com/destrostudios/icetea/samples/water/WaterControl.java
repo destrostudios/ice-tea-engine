@@ -1,13 +1,12 @@
 package com.destrostudios.icetea.samples.water;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.material.Material;
-import com.destrostudios.icetea.core.render.RenderJob;
+import com.destrostudios.icetea.core.render.RenderJobManager;
 import com.destrostudios.icetea.core.scene.Control;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
-
-import java.util.LinkedList;
 
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -15,6 +14,11 @@ public class WaterControl extends Control {
 
     public WaterControl(WaterConfig waterConfig) {
         this.waterConfig = waterConfig;
+        twiddleFactorsComputeJob = new TwiddleFactorsComputeJob(waterConfig.getN());
+        h0kComputeJob = new H0kComputeJob(waterConfig);
+        hktComputeJob = new HktComputeJob(waterConfig, h0kComputeJob);
+        fftComputeJob = new FftComputeJob(waterConfig.getN(), twiddleFactorsComputeJob, hktComputeJob);
+        normalMapComputeJob = new NormalMapComputeJob(waterConfig, fftComputeJob);
     }
     private WaterConfig waterConfig;
     private TwiddleFactorsComputeJob twiddleFactorsComputeJob;
@@ -27,53 +31,22 @@ public class WaterControl extends Control {
     private float time;
     private float motion;
     private float distortion;
+    private boolean computedStaticTextures;
 
     @Override
-    protected void initControl() {
-        super.initControl();
-        twiddleFactorsComputeJob = new TwiddleFactorsComputeJob(waterConfig.getN());
-        twiddleFactorsComputeJob.update(application, 0);
-        twiddleFactorsComputeJob.submit();
-
-        h0kComputeJob = new H0kComputeJob(waterConfig);
-        h0kComputeJob.update(application, 0);
-        h0kComputeJob.submit();
-
-        hktComputeJob = new HktComputeJob(waterConfig, h0kComputeJob);
-        hktComputeJob.update(application, 0);
-        hktComputeJob.submit();
-
-        fftComputeJob = new FftComputeJob(waterConfig.getN(), twiddleFactorsComputeJob, hktComputeJob);
-        fftComputeJob.setWait(hktComputeJob.getSignalSemaphore(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-        fftComputeJob.update(application, 0);
-        fftComputeJob.submit();
-
-        normalMapComputeJob = new NormalMapComputeJob(waterConfig, fftComputeJob);
-        normalMapComputeJob.setWait(fftComputeJob.getSignalSemaphore(), VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-        normalMapComputeJob.update(application, 0);
-        normalMapComputeJob.submit();
-    }
-
-    @Override
-    protected void onAdd() {
-        super.onAdd();
+    protected void onAttached() {
+        super.onAttached();
         Geometry geometry = (Geometry) spatial;
 
-        LinkedList<RenderJob<?>> queuePreScene = application.getSwapChain().getRenderJobManager().getQueuePreScene();
-        if (reflectionRenderJob != null) {
-            cleanupRenderJobs();
-            queuePreScene.remove(reflectionRenderJob);
-            queuePreScene.remove(refractionRenderJob);
-        }
+        RenderJobManager renderJobManager = application.getSwapChain().getRenderJobManager();
         reflectionRenderJob = new ReflectionRenderJob(geometry);
         refractionRenderJob = new RefractionRenderJob(geometry);
-        queuePreScene.add(reflectionRenderJob);
-        queuePreScene.add(refractionRenderJob);
-        application.getSwapChain().cleanupRenderJobs();
+        renderJobManager.addPreSceneRenderJob(reflectionRenderJob);
+        renderJobManager.addPreSceneRenderJob(refractionRenderJob);
 
         // The material immediately needs the textures (before SwapChain.update)
-        reflectionRenderJob.update(application, 0);
-        refractionRenderJob.update(application, 0);
+        reflectionRenderJob.updateNative(application);
+        refractionRenderJob.updateNative(application);
         geometry.setMaterial(createMaterial());
     }
 
@@ -125,25 +98,13 @@ public class WaterControl extends Control {
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateLogicalState(Application application, float tpf) {
+        super.updateLogicalState(application, tpf);
         time += tpf * waterConfig.getTimeSpeed();
         motion += tpf * waterConfig.getMotionSpeed();
         distortion += tpf * waterConfig.getDistortionSpeed();
 
-        twiddleFactorsComputeJob.update(application, tpf);
-
-        h0kComputeJob.update(application, tpf);
-
         hktComputeJob.setTime(time);
-        hktComputeJob.update(application, tpf);
-        hktComputeJob.submit();
-
-        fftComputeJob.update(application, tpf);
-        fftComputeJob.submit();
-
-        normalMapComputeJob.update(application, tpf);
-        normalMapComputeJob.submit();
 
         Geometry geometry = (Geometry) spatial;
         geometry.getMaterial().getParameters().setFloat("motion", motion);
@@ -151,28 +112,58 @@ public class WaterControl extends Control {
     }
 
     @Override
-    protected void onRemove() {
-        super.onRemove();
-        LinkedList<RenderJob<?>> queuePreScene = application.getSwapChain().getRenderJobManager().getQueuePreScene();
-        queuePreScene.remove(reflectionRenderJob);
-        queuePreScene.remove(refractionRenderJob);
-        application.getSwapChain().cleanupRenderJobs();
+    public void updateNativeState(Application application) {
+        super.updateNativeState(application);
+
+        // Static textures
+
+        twiddleFactorsComputeJob.updateNative(application);
+        h0kComputeJob.updateNative(application);
+
+        if (!computedStaticTextures) {
+            twiddleFactorsComputeJob.submit();
+            h0kComputeJob.submit();
+            computedStaticTextures = true;
+        }
+
+        // Dynamic textures
+
+        hktComputeJob.updateNative(application);
+        hktComputeJob.submit();
+
+        fftComputeJob.updateNative(application);
+        fftComputeJob.setWait(hktComputeJob.getSignalSemaphore(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+        fftComputeJob.submit();
+
+        normalMapComputeJob.updateNative(application);
+        normalMapComputeJob.setWait(fftComputeJob.getSignalSemaphore(), VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+        normalMapComputeJob.submit();
     }
 
     @Override
-    protected void cleanupInternal() {
-        twiddleFactorsComputeJob.cleanup();
-        h0kComputeJob.cleanup();
-        hktComputeJob.cleanup();
-        fftComputeJob.cleanup();
-        normalMapComputeJob.cleanup();
+    public void onDetached() {
+        super.onDetached();
+        RenderJobManager renderJobManager = application.getSwapChain().getRenderJobManager();
+        renderJobManager.removePostSceneRenderJob(reflectionRenderJob);
+        renderJobManager.removePostSceneRenderJob(refractionRenderJob);
         cleanupRenderJobs();
-        super.cleanupInternal();
+    }
+
+    @Override
+    public void cleanupNativeStateInternal() {
+        twiddleFactorsComputeJob.cleanupNative();
+        h0kComputeJob.cleanupNative();
+        hktComputeJob.cleanupNative();
+        fftComputeJob.cleanupNative();
+        normalMapComputeJob.cleanupNative();
+        computedStaticTextures = false;
+        cleanupRenderJobs();
+        super.cleanupNativeStateInternal();
     }
 
     private void cleanupRenderJobs() {
-        reflectionRenderJob.cleanup();
-        refractionRenderJob.cleanup();
+        reflectionRenderJob.cleanupNative();
+        refractionRenderJob.cleanupNative();
     }
 
     @Override

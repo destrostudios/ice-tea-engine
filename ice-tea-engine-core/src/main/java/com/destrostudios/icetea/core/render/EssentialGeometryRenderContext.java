@@ -16,8 +16,8 @@ public abstract class EssentialGeometryRenderContext<RJ extends RenderJob<?>, RP
     private HashMap<String, ResourceDescriptor<?>> tmpAdditionalResourceDescriptors = new HashMap<>();
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         resourceDescriptorSet.setDescriptor("geometry", geometry.getTransformUniformBuffer().getDescriptor("default"));
         tmpAdditionalResourceDescriptors.clear();
         geometry.addAdditionalResourceDescriptors(tmpAdditionalResourceDescriptors);

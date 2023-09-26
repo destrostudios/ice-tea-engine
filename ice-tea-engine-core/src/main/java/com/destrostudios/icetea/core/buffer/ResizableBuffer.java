@@ -2,12 +2,12 @@ package com.destrostudios.icetea.core.buffer;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
-public abstract class ResizableBuffer extends LifecycleObject implements ContextCloneable {
+public abstract class ResizableBuffer extends NativeObject implements ContextCloneable {
 
     public ResizableBuffer() { }
 
@@ -45,10 +45,10 @@ public abstract class ResizableBuffer extends LifecycleObject implements Context
     protected abstract void write(Consumer<ByteBuffer> write);
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         cleanupBuffer();
         size = 0;
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 
     protected abstract void cleanupBuffer();

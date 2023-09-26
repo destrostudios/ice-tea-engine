@@ -13,6 +13,6 @@ public class Vector3fAnimationSampler extends AnimationSampler<Vector3f> {
     @Override
     protected Vector3f interpolate(Vector3f value1, Vector3f value2, float progress) {
         // TODO: Introduce TempVars
-        return value1.add(value2.sub(value1, new Vector3f()).mul(progress), new Vector3f());
+        return value1.lerp(value2, progress, new Vector3f());
     }
 }

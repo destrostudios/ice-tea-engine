@@ -2,7 +2,7 @@ package com.destrostudios.icetea.core.resource;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.lwjgl.system.MemoryStack;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class ResourceDescriptor<R extends Resource> extends LifecycleObject implements ContextCloneable {
+public abstract class ResourceDescriptor<R extends Resource> extends NativeObject implements ContextCloneable {
 
     public ResourceDescriptor() { }
 
@@ -25,14 +25,14 @@ public abstract class ResourceDescriptor<R extends Resource> extends LifecycleOb
     @Setter
     protected R resource;
     @Getter
-    private long descriptorSetLayout;
-    private long descriptorPool;
+    private Long descriptorSetLayout;
+    private Long descriptorPool;
     @Getter
     private long[] descriptorSets;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         // FIXME: Let the Resource or the ResourceDescriptorSet specify the amount of descriptorSets - Compute jobs only needs 1
         descriptorSets = new long[application.getSwapChain().getImages().size()];
         initDescriptorSetLayout();
@@ -110,9 +110,9 @@ public abstract class ResourceDescriptor<R extends Resource> extends LifecycleOb
     }
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
-        if (resource.isWasOutdated()) {
+    public void updateNative() {
+        super.updateNative();
+        if (resource.isOutdated()) {
             updateDescriptorSets();
             application.getSwapChain().setCommandBuffersOutdated();
         }
@@ -177,10 +177,17 @@ public abstract class ResourceDescriptor<R extends Resource> extends LifecycleOb
     protected abstract String getShaderDeclaration_Type(String name);
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
+        // TODO: Check if we need to do descriptorSets cleanup here
+        descriptorSets = null;
+
         vkDestroyDescriptorPool(application.getLogicalDevice(), descriptorPool, null);
+        descriptorPool = null;
+
         vkDestroyDescriptorSetLayout(application.getLogicalDevice(), descriptorSetLayout, null);
-        super.cleanupInternal();
+        descriptorSetLayout = null;
+
+        super.cleanupNativeInternal();
     }
 
     @Override

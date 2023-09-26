@@ -1,14 +1,14 @@
 package com.destrostudios.icetea.core.camera;
 
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.resource.descriptor.CameraTransformDescriptor;
 import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-public class Camera extends LifecycleObject {
+public class Camera extends NativeObject {
 
     public Camera() {
         location = new Vector3f();
@@ -33,8 +33,8 @@ public class Camera extends LifecycleObject {
     private UniformDataBuffer transformUniformBuffer;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         updateUniform_Location();
         updateUniform_ProjectionMatrix();
         updateUniform_ViewMatrix();
@@ -42,9 +42,9 @@ public class Camera extends LifecycleObject {
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        application.getSwapChain().setResourceActive(transformUniformBuffer);
+    protected void updateNative() {
+        super.updateNative();
+        transformUniformBuffer.updateNative(application);
     }
 
     protected void set(Camera camera) {
@@ -80,8 +80,8 @@ public class Camera extends LifecycleObject {
     }
 
     @Override
-    protected void cleanupInternal() {
-        transformUniformBuffer.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        transformUniformBuffer.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

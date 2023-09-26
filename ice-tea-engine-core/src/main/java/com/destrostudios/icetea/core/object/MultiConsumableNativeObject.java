@@ -1,13 +1,14 @@
-package com.destrostudios.icetea.core.lifecycle;
+package com.destrostudios.icetea.core.object;
 
+import com.destrostudios.icetea.core.Application;
 import lombok.Getter;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class MultiConsumableLifecycleObject<C> extends LifecycleObject {
+public class MultiConsumableNativeObject<C> extends NativeObject {
 
-    public MultiConsumableLifecycleObject() {
+    public MultiConsumableNativeObject() {
         consumers = new HashSet<>();
         initializedConsumers = new HashSet<>();
     }
@@ -24,14 +25,15 @@ public class MultiConsumableLifecycleObject<C> extends LifecycleObject {
         consumers.remove(consumer);
     }
 
-    public void onConsumerInit(C consumer) {
+    public void updateNative(Application application, C consumer) {
         initializedConsumers.add(consumer);
+        updateNative(application);
     }
 
     public void onConsumerCleanup(C consumer) {
         initializedConsumers.remove(consumer);
         if (initializedConsumers.isEmpty()) {
-            cleanup();
+            cleanupNative();
         }
     }
 }

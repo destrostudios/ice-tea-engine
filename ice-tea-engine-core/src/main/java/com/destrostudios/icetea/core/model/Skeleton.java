@@ -1,14 +1,15 @@
 package com.destrostudios.icetea.core.model;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.LogicalObject;
 import com.destrostudios.icetea.core.resource.descriptor.SkeletonDescriptor;
 import lombok.Getter;
 import org.joml.Matrix4f;
 
-public class Skeleton extends LifecycleObject implements ContextCloneable {
+public class Skeleton extends LogicalObject implements ContextCloneable {
 
     public Skeleton(Joint[] joints) {
         this.joints = joints;
@@ -42,17 +43,11 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
     private UniformDataBuffer uniformBuffer;
 
     @Override
-    protected void init() {
-        super.init();
-        updateUniformBuffer();
-    }
-
-    @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void applyLogicalState() {
+        super.applyLogicalState();
         boolean jointMatricesUpdated = false;
         for (Joint joint : joints) {
-            joint.update();
+            joint.applyLogicalState();
         }
         // Check the joints after all were updated because a child might be in the array before its parent and would otherwise have a wrong world transform
         for (int i = 0; i < joints.length; i++) {
@@ -63,13 +58,14 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
             }
         }
         if (jointMatricesUpdated) {
-            updateUniformBuffer();
+            uniformBuffer.getData().setMatrix4fArray("jointMatrices", jointMatrices);
         }
-        application.getSwapChain().setResourceActive(uniformBuffer);
     }
 
-    private void updateUniformBuffer() {
-        uniformBuffer.getData().setMatrix4fArray("jointMatrices", jointMatrices);
+    @Override
+    public void updateNativeState(Application application) {
+        super.updateNativeState(application);
+        uniformBuffer.updateNative(application);
     }
 
     public void resetPose() {
@@ -79,9 +75,9 @@ public class Skeleton extends LifecycleObject implements ContextCloneable {
     }
 
     @Override
-    protected void cleanupInternal() {
-        uniformBuffer.cleanup();
-        super.cleanupInternal();
+    public void cleanupNativeStateInternal() {
+        uniformBuffer.cleanupNative();
+        super.cleanupNativeStateInternal();
     }
 
     @Override

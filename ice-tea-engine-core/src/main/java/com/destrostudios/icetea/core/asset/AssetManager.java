@@ -82,14 +82,21 @@ public class AssetManager {
     }
 
     public void cleanup() {
+        cleanupNative();
+        cachedMeshes.clear();
+        cachedModels.clear();
+        cachedTextures.clear();
+    }
+
+    public void cleanupNative() {
         for (Mesh mesh : cachedMeshes.values()) {
-            mesh.cleanup();
+            mesh.cleanupNative();
         }
         for (Spatial spatial : cachedModels.values()) {
-            spatial.cleanup();
+            spatial.cleanupNativeState();
         }
         for (BufferedTexture texture : cachedTextures.values()) {
-            texture.cleanup();
+            texture.cleanupNative();
         }
     }
 }

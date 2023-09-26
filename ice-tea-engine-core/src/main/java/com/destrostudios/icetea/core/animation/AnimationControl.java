@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.animation;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.scene.Control;
 import lombok.Getter;
@@ -64,8 +65,8 @@ public class AnimationControl extends Control {
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateLogicalState(Application application, float tpf) {
+        super.updateLogicalState(application, tpf);
         if (playing) {
             time += tpf * speed;
             needsUpdate = true;

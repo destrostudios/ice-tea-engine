@@ -79,13 +79,13 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         for (PushConstantsDataBuffer horizontalPushConstantsData : horizontalPushConstants) {
-            horizontalPushConstantsData.cleanup();
+            horizontalPushConstantsData.cleanupNative();
         }
         for (PushConstantsDataBuffer verticalPushConstantsData : verticalPushConstants) {
-            verticalPushConstantsData.cleanup();
+            verticalPushConstantsData.cleanupNative();
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 }

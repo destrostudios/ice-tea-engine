@@ -26,8 +26,8 @@ public class SceneRenderPipeline extends RenderPipeline<SceneRenderJob> {
     private SceneGeometryRenderContext sceneGeometryRenderContext;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         try (MemoryStack stack = stackPush()) {
             Mesh mesh = geometry.getMesh();
             Material material = geometry.getMaterial();

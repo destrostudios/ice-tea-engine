@@ -3,7 +3,7 @@ package com.destrostudios.icetea.core.data;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.data.values.*;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Matrix4f;
@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class FieldsData extends LifecycleObject implements ContextCloneable {
+public class FieldsData extends NativeObject implements ContextCloneable {
 
     public FieldsData(boolean aligned) {
         this.aligned = aligned;

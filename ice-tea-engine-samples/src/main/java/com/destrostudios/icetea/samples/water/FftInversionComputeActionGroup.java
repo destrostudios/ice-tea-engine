@@ -57,8 +57,8 @@ public class FftInversionComputeActionGroup extends ComputeActionGroup {
     }
 
     @Override
-    protected void cleanupInternal() {
-        pushConstants.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        pushConstants.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

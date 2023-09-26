@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.scene;
 
+import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.collision.BoundingBox;
@@ -44,29 +45,23 @@ public class Geometry extends Spatial {
     protected GeometryRenderer renderer = DEFAULT_GEOMETRY_RENDERER;
 
     @Override
-    protected void init() {
-        super.init();
-        if (mesh != null) {
-            mesh.onConsumerInit(this);
-        }
-        if (material != null) {
-            material.onConsumerInit(this);
-        }
+    public void applyLogicalState() {
+        super.applyLogicalState();
+        updateWorldBounds();
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        updateWorldBounds();
-        mesh.update(application, tpf);
-        material.update(application, tpf);
-        application.getSwapChain().setResourceActive(transformUniformBuffer);
+    public void updateNativeState(Application application) {
+        super.updateNativeState(application);
+        mesh.updateNative(application, this);
+        material.updateNative(application, this);
+        transformUniformBuffer.updateNative(application);
     }
 
     @Override
     public void updateWorldTransform() {
         super.updateWorldTransform();
-        updateWorldTransformUniform();
+        transformUniformBuffer.getData().setMatrix4f("model", worldTransform.getMatrix());
     }
 
     @Override
@@ -77,10 +72,6 @@ public class Geometry extends Spatial {
         } else {
             destinationWorldBounds.setMinMax(new Vector3f(), new Vector3f());
         }
-    }
-
-    private void updateWorldTransformUniform() {
-        transformUniformBuffer.getData().setMatrix4f("model", worldTransform.getMatrix());
     }
 
     public void setMesh(Mesh mesh) {
@@ -124,15 +115,15 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    protected void cleanupInternal() {
-        transformUniformBuffer.cleanup();
+    public void cleanupNativeStateInternal() {
+        transformUniformBuffer.cleanupNative();
         if (mesh != null) {
             mesh.onConsumerCleanup(this);
         }
         if (material != null) {
             material.onConsumerCleanup(this);
         }
-        super.cleanupInternal();
+        super.cleanupNativeStateInternal();
     }
 
     @Override

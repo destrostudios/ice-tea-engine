@@ -12,7 +12,6 @@ import com.destrostudios.icetea.core.font.BitmapText;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Quad;
-import com.destrostudios.icetea.core.profiler.ProfilerSystem;
 import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
@@ -92,14 +91,11 @@ public class TestSimple extends Application {
         AnimationControl animationControl = model.getFirstControl(AnimationControl.class);
         animationControl.play("cast_spell");
         sceneNode.add(model);
-        updateRenderDependencies();
+        updateInternalState();
         sceneNode.remove(model);
 
         addSystem(new CameraMouseRotateSystem(sceneCamera));
         addSystem(new CameraKeyMoveSystem(sceneCamera));
-
-        ProfilerSystem profilerSystem = new ProfilerSystem();
-        profilerSystem.setInterval(1);
 
         inputManager.addKeyListener(keyEvent -> {
             switch (keyEvent.getKey()) {
@@ -112,22 +108,10 @@ public class TestSimple extends Application {
                         }
                     }
                     break;
-                case GLFW_KEY_INSERT:
-                    if (keyEvent.getAction() == GLFW_PRESS) {
-                        if (hasSystem(profilerSystem)) {
-                            config.setEnableProfiler(false);
-                            removeSystem(profilerSystem);
-                        } else {
-                            config.setEnableProfiler(true);
-                            addSystem(profilerSystem);
-                        }
-                    }
-                    break;
                 case GLFW_KEY_DELETE:
                     if (keyEvent.getAction() == GLFW_PRESS) {
-                        assetManager.cleanup();
-                        cleanupRenderDependencies();
-                        model.cleanup();
+                        cleanupNativeState();
+                        model.cleanupNativeState();
                     }
                     break;
             }
@@ -155,6 +139,6 @@ public class TestSimple extends Application {
     @Override
     protected void cleanup() {
         super.cleanup();
-        model.cleanup();
+        model.cleanupNativeState();
     }
 }

@@ -6,7 +6,7 @@ import com.destrostudios.icetea.core.clone.ContextCloneable;
 import com.destrostudios.icetea.core.collision.*;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.DataValue;
-import com.destrostudios.icetea.core.lifecycle.MultiConsumableLifecycleObject;
+import com.destrostudios.icetea.core.object.MultiConsumableNativeObject;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
@@ -19,7 +19,7 @@ import java.util.*;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements ContextCloneable {
+public class Mesh extends MultiConsumableNativeObject<Geometry> implements ContextCloneable {
 
     public Mesh() {
         bounds = new BoundingBox();
@@ -92,8 +92,8 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
     }
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         setBuffersOutdated();
     }
 
@@ -102,20 +102,25 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
     }
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
-        updateVertexBuffer(tpf);
-        updateIndexBuffer(tpf);
+    protected void updateNative() {
+        super.updateNative();
+        if (buffersOutdated) {
+            if (vertexBuffer == null) {
+                vertexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+            }
+            if ((indices != null) && (indexBuffer == null)) {
+                indexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+            }
+        }
+        updateVertexBufferNative();
+        updateIndexBufferNative();
         wereBuffersOutdated = buffersOutdated;
         buffersOutdated = false;
     }
 
-    private void updateVertexBuffer(float tpf) {
-        if (buffersOutdated && (vertexBuffer == null)) {
-            vertexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
-        }
+    private void updateVertexBufferNative() {
         if (vertexBuffer != null) {
-            vertexBuffer.update(application, tpf);
+            vertexBuffer.updateNative(application);
             if (buffersOutdated) {
                 long bufferSize = 0;
                 for (VertexData vertex : vertices) {
@@ -134,12 +139,9 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
         }
     }
 
-    private void updateIndexBuffer(float tpf) {
-        if ((indices != null) && buffersOutdated && (indexBuffer == null)) {
-            indexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
-        }
+    private void updateIndexBufferNative() {
         if (indexBuffer != null) {
-            indexBuffer.update(application, tpf);
+            indexBuffer.updateNative(application);
             if (buffersOutdated) {
                 long bufferSize = ((long) Integer.BYTES) * indices.length;
                 indexBuffer.write(bufferSize, byteBuffer -> {
@@ -206,16 +208,16 @@ public class Mesh extends MultiConsumableLifecycleObject<Geometry> implements Co
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         if (vertexBuffer != null) {
-            vertexBuffer.cleanup();
+            vertexBuffer.cleanupNative();
             vertexBuffer = null;
         }
         if (indexBuffer != null) {
-            indexBuffer.cleanup();
+            indexBuffer.cleanupNative();
             indexBuffer = null;
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 
     @Override

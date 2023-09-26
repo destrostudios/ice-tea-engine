@@ -2,13 +2,13 @@ package com.destrostudios.icetea.core.resource;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class Resource extends LifecycleObject implements ContextCloneable {
+public abstract class Resource extends NativeObject implements ContextCloneable {
 
     public Resource() { }
 
@@ -18,7 +18,7 @@ public abstract class Resource extends LifecycleObject implements ContextCloneab
         }
     }
     @Getter
-    private boolean wasOutdated;
+    private boolean outdated;
     private HashMap<String, ResourceDescriptor<?>> descriptors = new HashMap<>();
 
     public void setDescriptor(String key, ResourceDescriptor descriptor) {
@@ -27,19 +27,19 @@ public abstract class Resource extends LifecycleObject implements ContextCloneab
     }
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
-        wasOutdated = false;
-        updateResource(tpf);
+    public void updateNative() {
+        super.updateNative();
+        updateResource();
         for (ResourceDescriptor<?> resourceDescriptor : descriptors.values()) {
-            resourceDescriptor.update(application, tpf);
+            resourceDescriptor.updateNative(application);
         }
+        outdated = false;
     }
 
-    protected abstract void updateResource(float tpf);
+    protected abstract void updateResource();
 
-    protected void setWasOutdated() {
-        wasOutdated = true;
+    protected void setOutdated() {
+        outdated = true;
     }
 
     public ResourceDescriptor<?> getDescriptor(String key) {
@@ -47,11 +47,11 @@ public abstract class Resource extends LifecycleObject implements ContextCloneab
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         for (ResourceDescriptor<?> resourceDescriptor : descriptors.values()) {
-            resourceDescriptor.cleanup();
+            resourceDescriptor.cleanupNative();
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 
     @Override

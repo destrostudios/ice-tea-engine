@@ -12,9 +12,8 @@ public class SpatialUtil {
     // Careful - This is not covering controls
     public static Spatial bakeGeometries(Spatial spatial) {
         updateWorldTransformRecursive(spatial);
-        if (spatial instanceof Node) {
+        if (spatial instanceof Node node) {
             HashMap<String, LinkedList<Geometry>> groupedGeometries = new HashMap<>();
-            Node node = (Node) spatial;
             node.forEachGeometry(geometry -> {
                 geometry.setLocalTransform(geometry.getWorldTransform());
                 String key = geometry.getShadowMode().name();
@@ -50,8 +49,7 @@ public class SpatialUtil {
 
     public static void updateWorldTransformRecursive(Spatial spatial) {
         spatial.updateWorldTransform();
-        if (spatial instanceof Node) {
-            Node node = (Node) spatial;
+        if (spatial instanceof Node node) {
             for (Spatial child : node.getChildren()) {
                 updateWorldTransformRecursive(child);
             }

@@ -27,8 +27,8 @@ public class ShadowMapRenderPipeline extends RenderPipeline<ShadowMapRenderJob> 
     private ShadowMapGeometryRenderContext shadowMapGeometryRenderContext;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         try (MemoryStack stack = stackPush()) {
             Mesh mesh = geometry.getMesh();
             Material material = geometry.getMaterial();

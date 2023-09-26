@@ -18,8 +18,8 @@ public class ReflectionRenderJob extends SceneRenderJob {
     private SceneCamera reflectionCamera;
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void updateNative() {
+        super.updateNative();
         reflectionCamera.set(application.getSceneCamera());
         Vector3f location = reflectionCamera.getLocation();
         float waterHeight = geometryWater.getWorldTransform().getTranslation().y();
@@ -32,7 +32,7 @@ public class ReflectionRenderJob extends SceneRenderJob {
         rotation.rotateAxis((float) Math.PI, flatWaterLine);
         reflectionCamera.setRotation(rotation);
         reflectionCamera.setClipPlane(new Vector4f(0, 1, 0, waterHeight));
-        reflectionCamera.update(application, tpf);
+        reflectionCamera.updateNative(application);
     }
 
     @Override
@@ -46,8 +46,8 @@ public class ReflectionRenderJob extends SceneRenderJob {
     }
 
     @Override
-    protected void cleanupInternal() {
-        reflectionCamera.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        reflectionCamera.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

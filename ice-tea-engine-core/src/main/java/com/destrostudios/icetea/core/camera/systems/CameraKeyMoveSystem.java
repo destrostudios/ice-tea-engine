@@ -1,9 +1,9 @@
 package com.destrostudios.icetea.core.camera.systems;
 
+import com.destrostudios.icetea.core.AppSystem;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.input.KeyEvent;
 import com.destrostudios.icetea.core.input.KeyListener;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector2f;
@@ -12,7 +12,7 @@ import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
-public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener {
+public class CameraKeyMoveSystem extends AppSystem implements KeyListener {
 
     public CameraKeyMoveSystem(SceneCamera sceneCamera) {
         this.sceneCamera = sceneCamera;
@@ -26,8 +26,8 @@ public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener 
     private Vector2f moveDirection;
 
     @Override
-    public void init() {
-        super.init();
+    public void onAttached() {
+        super.onAttached();
         application.getInputManager().addKeyListener(this);
     }
 
@@ -78,8 +78,8 @@ public class CameraKeyMoveSystem extends LifecycleObject implements KeyListener 
     }
 
     @Override
-    protected void cleanupInternal() {
+    public void onDetached() {
+        super.onDetached();
         application.getInputManager().removeKeyListener(this);
-        super.cleanupInternal();
     }
 }

@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.compute;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.shader.Shader;
 import lombok.Getter;
 import org.lwjgl.vulkan.VkCommandBuffer;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class ComputeActionGroup extends LifecycleObject {
+public abstract class ComputeActionGroup extends NativeObject {
 
     public ComputeActionGroup() {
         computeActions = new LinkedList<>();
@@ -20,8 +20,8 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     protected List<ComputeAction> computeActions;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         computePipeline = new ComputePipeline(this);
     }
 
@@ -46,20 +46,20 @@ public abstract class ComputeActionGroup extends LifecycleObject {
     protected abstract int getGroupCountZ();
 
     @Override
-    protected void update(float tpf) {
-        super.update(tpf);
+    public void updateNative() {
+        super.updateNative();
         for (ComputeAction computeAction : computeActions) {
-            computeAction.update(application, tpf);
+            computeAction.updateNative(application);
         }
-        computePipeline.update(application, tpf);
+        computePipeline.updateNative(application);
     }
 
     @Override
-    protected void cleanupInternal() {
-        computePipeline.cleanup();
+    protected void cleanupNativeInternal() {
+        computePipeline.cleanupNative();
         for (ComputeAction computeAction : computeActions) {
-            computeAction.cleanup();
+            computeAction.cleanupNative();
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 }

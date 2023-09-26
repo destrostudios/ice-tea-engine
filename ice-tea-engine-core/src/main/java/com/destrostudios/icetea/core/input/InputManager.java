@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.input;
 
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
+import com.destrostudios.icetea.core.Application;
 import lombok.Getter;
 import org.joml.Vector2f;
 import org.lwjgl.glfw.*;
@@ -11,8 +11,12 @@ import java.util.function.BiConsumer;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class InputManager extends LifecycleObject {
+public class InputManager {
 
+    public InputManager(Application application) {
+        this.application = application;
+    }
+    private Application application;
     private LinkedList<KeyListener> keyListeners = new LinkedList<>();
     private LinkedList<KeyEvent> pendingKeyEvents = new LinkedList<>();
     private LinkedList<CharacterListener> characterListeners = new LinkedList<>();
@@ -26,9 +30,7 @@ public class InputManager extends LifecycleObject {
     @Getter
     private Vector2f cursorPosition = new Vector2f();
 
-    @Override
-    protected void init() {
-        super.init();
+    public void registerCallbacks() {
         glfwSetKeyCallback(application.getWindow(), new GLFWKeyCallback() {
 
             @Override
@@ -69,9 +71,7 @@ public class InputManager extends LifecycleObject {
         });
     }
 
-    @Override
-    public void update(float tpf) {
-        super.update(tpf);
+    public void processEvents() {
         processEvents(pendingKeyEvents, keyListeners, KeyListener::onKeyEvent);
         processEvents(pendingCharacterEvents, characterListeners, CharacterListener::onCharacterEvent);
         processEvents(pendingMouseButtonEvents, mouseButtonListeners, MouseButtonListener::onMouseButtonEvent);
@@ -156,13 +156,11 @@ public class InputManager extends LifecycleObject {
         mouseScrollListeners.remove(mouseScrollListener);
     }
 
-    @Override
-    protected void cleanupInternal() {
+    public void cleanup() {
         glfwSetKeyCallback(application.getWindow(), null);
         glfwSetCharCallback(application.getWindow(), null);
         glfwSetCursorPosCallback(application.getWindow(), null);
         glfwSetMouseButtonCallback(application.getWindow(), null);
         glfwSetScrollCallback(application.getWindow(), null);
-        super.cleanupInternal();
     }
 }

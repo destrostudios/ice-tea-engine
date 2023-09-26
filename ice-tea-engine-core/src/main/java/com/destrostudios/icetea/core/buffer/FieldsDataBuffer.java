@@ -34,8 +34,8 @@ public abstract class FieldsDataBuffer<RB extends ResizableBuffer> extends Resou
     }
 
     @Override
-    protected void updateResource(float tpf) {
-        buffer.update(application, tpf);
+    protected void updateResource() {
+        buffer.updateNative(application);
         if (contentModified) {
             boolean resized = buffer.write(data.getSize(), byteBuffer -> {
                 int index = 0;
@@ -46,17 +46,17 @@ public abstract class FieldsDataBuffer<RB extends ResizableBuffer> extends Resou
             });
             contentModified = false;
             if (resized) {
-                setWasOutdated();
+                setOutdated();
             }
         }
     }
 
     @Override
-    protected void cleanupInternal() {
+    protected void cleanupNativeInternal() {
         contentModified = true;
-        buffer.cleanup();
-        data.cleanup();
-        super.cleanupInternal();
+        buffer.cleanupNative();
+        data.cleanupNative();
+        super.cleanupNativeInternal();
     }
 
     public abstract FieldsDataBuffer<RB> clone(CloneContext context);

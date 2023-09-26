@@ -60,25 +60,26 @@ public class FftComputeJob extends ComputeJob {
     private Texture dzPingPongTexture;
 
     @Override
-    protected void init() {
+    protected void initNative() {
         initTargetTexture(dxTexture);
-        dxTexture.update(application, 0);
+        dxTexture.updateNative(application);
 
         initTargetTexture(dyTexture);
-        dyTexture.update(application, 0);
+        dyTexture.updateNative(application);
 
         initTargetTexture(dzTexture);
-        dzTexture.update(application, 0);
+        dzTexture.updateNative(application);
 
         initTargetTexture(dxPingPongTexture);
-        dxPingPongTexture.update(application, 0);
+        dxPingPongTexture.updateNative(application);
 
         initTargetTexture(dyPingPongTexture);
-        dyPingPongTexture.update(application, 0);
+        dyPingPongTexture.updateNative(application);
 
         initTargetTexture(dzPingPongTexture);
-        dzPingPongTexture.update(application, 0);
-        super.init();
+        dzPingPongTexture.updateNative(application);
+
+        super.initNative();
     }
 
     private void initTargetTexture(Texture texture) {
@@ -157,7 +158,7 @@ public class FftComputeJob extends ComputeJob {
             horizontalPushConstants[i].getData().setInt("stage", i);
             horizontalPushConstants[i].getData().setInt("pingpong", pingPongIndex);
             horizontalPushConstants[i].getData().setInt("direction", 0);
-            horizontalPushConstants[i].update(application, 0);
+            horizontalPushConstants[i].updateNative(application);
 
             pingPongIndex++;
             pingPongIndex %= 2;
@@ -167,7 +168,7 @@ public class FftComputeJob extends ComputeJob {
             verticalPushConstants[i].getData().setInt("stage", i);
             verticalPushConstants[i].getData().setInt("pingpong", pingPongIndex);
             verticalPushConstants[i].getData().setInt("direction", 1);
-            verticalPushConstants[i].update(application, 0);
+            verticalPushConstants[i].updateNative(application);
 
             pingPongIndex++;
             pingPongIndex %= 2;
@@ -175,7 +176,7 @@ public class FftComputeJob extends ComputeJob {
 
         inversionPushConstants.getData().setInt("n", n);
         inversionPushConstants.getData().setInt("pingPongIndex", pingPongIndex);
-        inversionPushConstants.update(application, 0);
+        inversionPushConstants.updateNative(application);
 
         FftButterflyComputeActionGroup butterflyComputeActionGroup = new FftButterflyComputeActionGroup(n, horizontalPushConstants, verticalPushConstants);
         butterflyComputeActionGroup.addComputeAction(new FftButterflyComputeAction(twiddleFactorsComputeJob.getTwiddleFactorsTexture().getDescriptor("read"), hktComputeJob.getDxCoefficientsTexture().getDescriptor("read"), dxPingPongTexture.getDescriptor("compute")));
@@ -216,19 +217,19 @@ public class FftComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void cleanupInternal() {
-        dzPingPongTexture.cleanup();
-        dyPingPongTexture.cleanup();
-        dxPingPongTexture.cleanup();
-        dzTexture.cleanup();
-        dyTexture.cleanup();
-        dxTexture.cleanup();
+    protected void cleanupNativeInternal() {
+        dzPingPongTexture.cleanupNative();
+        dyPingPongTexture.cleanupNative();
+        dxPingPongTexture.cleanupNative();
+        dzTexture.cleanupNative();
+        dyTexture.cleanupNative();
+        dxTexture.cleanupNative();
         for (PushConstantsDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
-            horizontalPushConstantsBuffer.cleanup();
+            horizontalPushConstantsBuffer.cleanupNative();
         }
         for (PushConstantsDataBuffer verticalPushConstantsBuffer : horizontalPushConstants) {
-            verticalPushConstantsBuffer.cleanup();
+            verticalPushConstantsBuffer.cleanupNative();
         }
-        super.cleanupInternal();
+        super.cleanupNativeInternal();
     }
 }

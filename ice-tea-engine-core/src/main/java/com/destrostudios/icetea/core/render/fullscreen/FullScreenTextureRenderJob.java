@@ -17,9 +17,9 @@ public class FullScreenTextureRenderJob extends FullScreenQuadRenderJob {
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        application.getSwapChain().setResourceActive(texture);
+    public void updateNative() {
+        super.updateNative();
+        texture.updateNative(application);
     }
 
     @Override

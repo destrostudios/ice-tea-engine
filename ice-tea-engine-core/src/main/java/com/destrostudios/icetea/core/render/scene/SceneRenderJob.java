@@ -35,8 +35,8 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     private Texture resolvedDepthTexture;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         initRenderPass();
         initMultisampledColorTexture(multisampledColorTexture);
         initMultisampledDepthTexture();
@@ -319,18 +319,18 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        multisampledColorTexture.update(application, tpf);
-        multisampledDepthTexture.update(application, tpf);
-        application.getSwapChain().setResourceActive(resolvedDepthTexture);
+    public void updateNative() {
+        super.updateNative();
+        multisampledColorTexture.updateNative(application);
+        multisampledDepthTexture.updateNative(application);
+        resolvedDepthTexture.updateNative(application);
     }
 
     @Override
-    protected void cleanupInternal() {
-        resolvedDepthTexture.cleanup();
-        multisampledDepthTexture.cleanup();
-        multisampledColorTexture.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        resolvedDepthTexture.cleanupNative();
+        multisampledDepthTexture.cleanupNative();
+        multisampledColorTexture.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }

@@ -7,9 +7,6 @@ import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
-import com.destrostudios.icetea.core.lifecycle.LifecycleManager;
-import com.destrostudios.icetea.core.lifecycle.LifecycleObject;
-import com.destrostudios.icetea.core.profiler.Profiler;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
@@ -67,10 +64,6 @@ public abstract class Application {
     }
     @Getter
     protected ApplicationConfig config;
-    @Getter
-    protected Profiler profiler;
-    @Getter
-    protected LifecycleManager lifecycleManager;
 
     @Getter
     private PhysicalDeviceManager physicalDeviceManager;
@@ -129,7 +122,7 @@ public abstract class Application {
     @Getter
     private List<Filter> filters;
     @Getter
-    private LinkedList<LifecycleObject> systems;
+    private LinkedList<AppSystem> systems;
     @Getter
     private List<WindowResizeListener> windowResizeListeners;
 
@@ -141,12 +134,10 @@ public abstract class Application {
 
     private void create() {
         LOGGER.debug("Creating application...");
-        profiler = new Profiler();
-        lifecycleManager = new LifecycleManager();
         physicalDeviceManager = new PhysicalDeviceManager(this);
         bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
-        inputManager = new InputManager();
+        inputManager = new InputManager(this);
         assetManager = new AssetManager();
         assetManager.addLocator(new ClasspathLocator());
         shaderManager = new ShaderManager();
@@ -166,13 +157,10 @@ public abstract class Application {
         initLogicalDevice();
         initCommandPool();
         initSceneCamera();
-        guiCamera = new GuiCamera();
+        initGuiCamera();
         bucketRenderer = new BucketRenderer(this);
         swapChain = new SwapChain();
-        swapChain.update(this, 0);
-        LOGGER.debug("Preloading render dependencies...");
-        updateRenderDependencies();
-        LOGGER.debug("Preloaded render dependencies.");
+        swapChain.updateNative(this);
         LOGGER.debug("Created application.");
     }
 
@@ -194,9 +182,10 @@ public abstract class Application {
         }
         LOGGER.debug("Created window.");
 
-        LOGGER.debug("Creating resize callback...");
+        LOGGER.debug("Registering GLFW callbacks...");
         glfwSetFramebufferSizeCallback(window, this::onWindowResized);
-        LOGGER.debug("Created resize callback.");
+        inputManager.registerCallbacks();
+        LOGGER.debug("Registered GLFW callbacks.");
     }
 
     private void onWindowResized(long window, int width, int height) {
@@ -402,20 +391,26 @@ public abstract class Application {
         // TODO: Offer possibility to automatically update projection when window resizes
     }
 
+    private void initGuiCamera() {
+        guiCamera = new GuiCamera();
+        addWindowResizeListener(guiCamera);
+        guiCamera.onWindowResize(config.getWidth(), config.getHeight());
+    }
+
     private void mainLoop() {
         LOGGER.debug("Started main loop.");
         while (!(glfwWindowShouldClose(window) || stop)) {
             glfwPollEvents();
             float tpf = calculateNextTpf();
-            lifecycleManager.onNewCycle();
-            inputManager.update(this, tpf);
-            update(tpf);
-            updateRenderDependencies(tpf);
-            onLifecycle();
-            int imageIndex = swapChain.acquireNextImageIndex();
-            if (imageIndex != -1) {
-                swapChain.drawFrame(imageIndex);
+            if (!isInitialized) {
+                init();
+                isInitialized = true;
             }
+            inputManager.processEvents();
+            systems.forEach(system -> system.update(tpf));
+            update(tpf);
+            updateInternalState(tpf);
+            swapChain.drawNextFrame();
         }
         LOGGER.debug("Finished main loop.");
         vkDeviceWaitIdle(logicalDevice);
@@ -428,40 +423,47 @@ public abstract class Application {
         return tpf;
     }
 
-    protected void update(float tpf) {
-        if (!isInitialized) {
-            init();
-            isInitialized = true;
-        }
-        systems.forEach(system -> system.update(this, tpf));
-    }
-
     protected void init() {
 
     }
 
-    public void updateRenderDependencies() {
-        updateRenderDependencies(0);
+    protected void update(float tpf) {
+
     }
 
-    private void updateRenderDependencies(float tpf) {
-        shaderManager.update(this, tpf);
-        sceneCamera.update(this, tpf);
-        guiCamera.update(this, tpf);
+    protected void updateInternalState() {
+        updateInternalState(0);
+    }
+
+    private void updateInternalState(float tpf) {
+        updateLogicalState(tpf);
+        applyLogicalState();
+        updateNativeState();
+    }
+
+    private void updateLogicalState(float tpf) {
         if (light != null) {
-            light.update(this, tpf);
-            if (light.isModified()) {
-                swapChain.getRenderJobManager().getQueuePreScene().addAll(light.getShadowMapRenderJobs());
-                swapChain.cleanupRenderJobs();
-                light.setModified(false);
-            }
+            light.updateLogicalState(this, tpf);
         }
-        rootNode.update(this, tpf);
-        swapChain.update(this, tpf);
+        rootNode.updateLogicalState(this, tpf);
     }
 
-    protected void onLifecycle() {
+    private void applyLogicalState() {
+        if (light != null) {
+            light.applyLogicalState();
+        }
+        rootNode.applyLogicalState();
+    }
 
+    private void updateNativeState() {
+        shaderManager.updateNative(this);
+        sceneCamera.updateNative(this);
+        guiCamera.updateNative(this);
+        if (light != null) {
+            light.updateNativeState(this);
+        }
+        rootNode.updateNativeState(this);
+        swapChain.updateNative(this);
     }
 
     public int findMemoryType(int typeFilter, int properties) {
@@ -482,27 +484,29 @@ public abstract class Application {
 
     public void addFilter(Filter filter) {
         filters.add(filter);
-        swapChain.getRenderJobManager().getQueuePostScene().add(filter.getFilterRenderJob());
-        swapChain.cleanupRenderJobs();
+        swapChain.getRenderJobManager().addPostSceneRenderJob(filter.getFilterRenderJob());
     }
 
     public void removeFilter(Filter filter) {
         filters.remove(filter);
-        swapChain.getRenderJobManager().getQueuePostScene().remove(filter.getFilterRenderJob());
-        swapChain.cleanupRenderJobs();
+        swapChain.getRenderJobManager().removePostSceneRenderJob(filter.getFilterRenderJob());
     }
 
-    public void addSystem(LifecycleObject system) {
+    public void addSystem(AppSystem system) {
+        system.setApplication(this);
         systems.add(system);
+        system.onAttached();
     }
 
-    public boolean hasSystem(LifecycleObject system) {
+    public boolean hasSystem(AppSystem system) {
         return systems.contains(system);
     }
 
-    public void removeSystem(LifecycleObject system) {
-        system.cleanup();
-        systems.remove(system);
+    public void removeSystem(AppSystem system) {
+        if (systems.remove(system)) {
+            system.onDetached();
+            system.setApplication(null);
+        }
     }
 
     public void addWindowResizeListener(WindowResizeListener windowResizeListener) {
@@ -551,13 +555,10 @@ public abstract class Application {
 
     private void cleanupAndClose() {
         LOGGER.debug("Cleaning up application...");
-        for (LifecycleObject system : systems) {
-            system.cleanup();
-        }
         cleanup();
         inputManager.cleanup();
         assetManager.cleanup();
-        cleanupRenderDependencies();
+        cleanupNativeState();
         vkDestroyCommandPool(logicalDevice, commandPool, null);
         vkDestroyDevice(logicalDevice, null);
         vkDestroySurfaceKHR(instance, surface, null);
@@ -568,25 +569,21 @@ public abstract class Application {
         glfwDestroyWindow(window);
         glfwTerminate();
         LOGGER.debug("Cleaned up application.");
-
-        int initializedObjectsCount = lifecycleManager.getInitializedObjects().size();
-        if (initializedObjectsCount > 0) {
-            LOGGER.warn("There are still {} initialized lifecycle objects after cleaning up the whole application.", initializedObjectsCount);
-        }
     }
 
     protected void cleanup() {
 
     }
 
-    public void cleanupRenderDependencies() {
-        swapChain.cleanup();
-        shaderManager.cleanup();
-        sceneCamera.cleanup();
-        guiCamera.cleanup();
-        rootNode.cleanup();
+    public void cleanupNativeState() {
+        assetManager.cleanupNative();
+        swapChain.cleanupNative();
+        shaderManager.cleanupNative();
+        sceneCamera.cleanupNative();
+        guiCamera.cleanupNative();
+        rootNode.cleanupNativeState();
         if (light != null) {
-            light.cleanup();
+            light.cleanupNativeState();
         }
     }
 }

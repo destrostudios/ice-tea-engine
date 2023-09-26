@@ -20,8 +20,8 @@ public class FullScreenQuadRenderPipeline extends RenderPipeline<FullScreenQuadR
     }
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         try (MemoryStack stack = stackPush()) {
             ResourceDescriptorSet resourceDescriptorSet = renderJob.getResourceDescriptorSet();
             String resourceDescriptorSetShaderDeclaration = resourceDescriptorSet.getShaderDeclaration();

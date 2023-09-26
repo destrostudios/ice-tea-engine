@@ -30,8 +30,8 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     private Texture multisampledColorTexture;
 
     @Override
-    protected void init() {
-        super.init();
+    protected void initNative() {
+        super.initNative();
         initRenderPass();
         initResourceDescriptorSet();
         renderPipeline = new FullScreenQuadRenderPipeline(this);
@@ -147,21 +147,16 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     }
 
     @Override
-    public void update(float tpf) {
-        super.update(tpf);
-        multisampledColorTexture.update(application, tpf);
+    public void updateNative() {
+        super.updateNative();
+        multisampledColorTexture.updateNative(application);
+        renderPipeline.updateNative(application);
     }
 
     @Override
-    public void updateRenderContexts(float tpf) {
-        super.updateRenderContexts(tpf);
-        renderPipeline.update(application, tpf);
-    }
-
-    @Override
-    protected void cleanupInternal() {
-        renderPipeline.cleanup();
-        multisampledColorTexture.cleanup();
-        super.cleanupInternal();
+    protected void cleanupNativeInternal() {
+        renderPipeline.cleanupNative();
+        multisampledColorTexture.cleanupNative();
+        super.cleanupNativeInternal();
     }
 }
