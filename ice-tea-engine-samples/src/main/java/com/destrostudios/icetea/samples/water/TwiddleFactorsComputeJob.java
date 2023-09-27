@@ -139,11 +139,11 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void prepareResourcesUpdate() {
-        super.prepareResourcesUpdate();
-        setResourceActive(twiddleFactorsTexture);
-        setResourceActive(storageBuffer);
-        setResourceActive(uniformBuffer);
+    public void updateNative() {
+        super.updateNative();
+        twiddleFactorsTexture.updateNative(application);
+        storageBuffer.updateNative(application);
+        uniformBuffer.updateNative(application);
     }
 
     @Override

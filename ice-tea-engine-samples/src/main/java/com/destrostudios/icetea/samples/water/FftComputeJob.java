@@ -199,21 +199,21 @@ public class FftComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void prepareResourcesUpdate() {
-        super.prepareResourcesUpdate();
+    public void updateNative() {
+        super.updateNative();
         for (PushConstantsDataBuffer horizontalPushConstantsBuffer : horizontalPushConstants) {
-            setResourceActive(horizontalPushConstantsBuffer);
+            horizontalPushConstantsBuffer.updateNative(application);
         }
         for (PushConstantsDataBuffer verticalPushConstantsBuffer : verticalPushConstants) {
-            setResourceActive(verticalPushConstantsBuffer);
+            verticalPushConstantsBuffer.updateNative(application);
         }
-        setResourceActive(inversionPushConstants);
-        setResourceActive(dxTexture);
-        setResourceActive(dyTexture);
-        setResourceActive(dzTexture);
-        setResourceActive(dxPingPongTexture);
-        setResourceActive(dyPingPongTexture);
-        setResourceActive(dzPingPongTexture);
+        inversionPushConstants.updateNative(application);
+        dxTexture.updateNative(application);
+        dyTexture.updateNative(application);
+        dzTexture.updateNative(application);
+        dxPingPongTexture.updateNative(application);
+        dyPingPongTexture.updateNative(application);
+        dzPingPongTexture.updateNative(application);
     }
 
     @Override

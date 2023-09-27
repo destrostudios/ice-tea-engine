@@ -121,10 +121,10 @@ public class NormalMapComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void prepareResourcesUpdate() {
-        super.prepareResourcesUpdate();
-        setResourceActive(pushConstants);
-        setResourceActive(normalMapTexture);
+    public void updateNative() {
+        super.updateNative();
+        pushConstants.updateNative(application);
+        normalMapTexture.updateNative(application);
     }
 
     @Override

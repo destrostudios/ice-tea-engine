@@ -147,13 +147,13 @@ public class HktComputeJob extends ComputeJob {
     }
 
     @Override
-    protected void prepareResourcesUpdate() {
-        super.prepareResourcesUpdate();
-        setResourceActive(dxCoefficientsTexture);
-        setResourceActive(dyCoefficientsTexture);
-        setResourceActive(dzCoefficientsTexture);
+    public void updateNative() {
+        super.updateNative();
+        dxCoefficientsTexture.updateNative(application);
+        dyCoefficientsTexture.updateNative(application);
+        dzCoefficientsTexture.updateNative(application);
         uniformBuffer.getData().setFloat("t", time);
-        setResourceActive(uniformBuffer);
+        uniformBuffer.updateNative(application);
     }
 
     @Override

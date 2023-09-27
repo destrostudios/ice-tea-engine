@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core.compute;
 
 import com.destrostudios.icetea.core.object.NativeObject;
-import com.destrostudios.icetea.core.resource.Resource;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.lwjgl.PointerBuffer;
@@ -10,7 +9,6 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.HashSet;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -19,9 +17,6 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class ComputeJob extends NativeObject {
 
-    protected ComputeJob() {
-        activeResources = new HashSet<>();
-    }
     private List<ComputeActionGroup> computeActionGroups;
     private VkCommandBuffer commandBuffer;
     @Getter
@@ -29,7 +24,6 @@ public abstract class ComputeJob extends NativeObject {
     private long fence;
     private Long waitSemaphore;
     private Integer waitDstStage;
-    private HashSet<Resource> activeResources;
 
     @Override
     protected void initNative() {
@@ -118,19 +112,6 @@ public abstract class ComputeJob extends NativeObject {
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
             computeActionGroup.updateNative(application);
         }
-        prepareResourcesUpdate();
-        for (Resource resource : activeResources) {
-            resource.updateNative(application);
-        }
-        activeResources.clear();
-    }
-
-    protected void prepareResourcesUpdate() {
-
-    }
-
-    protected void setResourceActive(Resource resource) {
-        activeResources.add(resource);
     }
 
     public void submit() {
