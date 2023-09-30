@@ -431,7 +431,7 @@ public abstract class Application {
 
     }
 
-    protected void updateInternalState() {
+    public void updateInternalState() {
         updateInternalState(0);
     }
 
