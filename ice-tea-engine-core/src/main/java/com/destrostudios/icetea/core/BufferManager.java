@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core;
 
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -56,20 +55,15 @@ public class BufferManager {
 
     public VkCommandBuffer beginSingleTimeCommands() {
         try (MemoryStack stack = stackPush()) {
-            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.callocStack(stack);
-            allocateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocateInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            allocateInfo.commandPool(application.getCommandPool());
-            allocateInfo.commandBufferCount(1);
-
-            PointerBuffer pCommandBuffer = stack.mallocPointer(1);
-            vkAllocateCommandBuffers(application.getLogicalDevice(), allocateInfo, pCommandBuffer);
-            VkCommandBuffer commandBuffer = new VkCommandBuffer(pCommandBuffer.get(0), application.getLogicalDevice());
+            VkCommandBuffer commandBuffer = application.getCommandPool().allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.callocStack(stack);
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
             beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-            vkBeginCommandBuffer(commandBuffer, beginInfo);
+            int result = vkBeginCommandBuffer(commandBuffer, beginInfo);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to begin command buffer (result = " + result + ")");
+            }
 
             return commandBuffer;
         }
@@ -86,7 +80,7 @@ public class BufferManager {
 
             vkQueueWaitIdle(application.getGraphicsQueue());
 
-            vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), commandBuffer);
+            application.getCommandPool().freeCommandBuffer(commandBuffer);
         }
     }
 }

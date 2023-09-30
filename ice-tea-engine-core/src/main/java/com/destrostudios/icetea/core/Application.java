@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.asset.locator.ClasspathLocator;
 import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
+import com.destrostudios.icetea.core.command.CommandPool;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
@@ -98,7 +99,7 @@ public abstract class Application {
     @Getter
     private VkQueue presentQueue;
     @Getter
-    private long commandPool;
+    private CommandPool commandPool;
     @Getter
     private BucketRenderer bucketRenderer;
     @Getter
@@ -155,9 +156,10 @@ public abstract class Application {
         initSurface();
         initPhysicalDevice();
         initLogicalDevice();
-        initCommandPool();
         initSceneCamera();
         initGuiCamera();
+        commandPool = new CommandPool(this);
+        commandPool.updateNative(this);
         bucketRenderer = new BucketRenderer(this);
         swapChain = new SwapChain();
         swapChain.updateNative(this);
@@ -365,24 +367,6 @@ public abstract class Application {
         }
     }
 
-    private void initCommandPool() {
-        try (MemoryStack stack = stackPush()) {
-            LOGGER.debug("Initializing command pool...");
-            VkCommandPoolCreateInfo poolCreateInfo = VkCommandPoolCreateInfo.callocStack(stack);
-            poolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
-            poolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-            poolCreateInfo.queueFamilyIndex(physicalDeviceInformation.getQueueFamilyIndexGraphics());
-
-            LongBuffer pCommandPool = stack.mallocLong(1);
-            int result = vkCreateCommandPool(logicalDevice, poolCreateInfo, null, pCommandPool);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create command pool (result = " + result + ")");
-            }
-            commandPool = pCommandPool.get(0);
-            LOGGER.debug("Initialized command pool.");
-        }
-    }
-
     private void initSceneCamera() {
         sceneCamera = new SceneCamera();
         float fieldOfViewY = (float) (Math.PI / 4);
@@ -463,6 +447,7 @@ public abstract class Application {
             light.updateNativeState(this);
         }
         rootNode.updateNativeState(this);
+        commandPool.updateNative(this);
         swapChain.updateNative(this);
     }
 
@@ -559,7 +544,6 @@ public abstract class Application {
         inputManager.cleanup();
         assetManager.cleanup();
         cleanupNativeState();
-        vkDestroyCommandPool(logicalDevice, commandPool, null);
         vkDestroyDevice(logicalDevice, null);
         vkDestroySurfaceKHR(instance, surface, null);
         if (debugMessenger != null) {
@@ -585,5 +569,6 @@ public abstract class Application {
         if (light != null) {
             light.cleanupNativeState();
         }
+        commandPool.cleanupNative();
     }
 }

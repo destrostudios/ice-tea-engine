@@ -3,7 +3,6 @@ package com.destrostudios.icetea.core.compute;
 import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -43,23 +42,12 @@ public abstract class ComputeJob extends NativeObject {
 
     private void initCommandBuffer() {
         try (MemoryStack stack = stackPush()) {
-            VkCommandBufferAllocateInfo commandBufferAllocateInfo = VkCommandBufferAllocateInfo.calloc()
-                    .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                    .commandPool(application.getCommandPool())
-                    .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                    .commandBufferCount(1);
-
-            PointerBuffer pCommandBuffers = stack.mallocPointer(1);
-            int result = vkAllocateCommandBuffers(application.getLogicalDevice(), commandBufferAllocateInfo, pCommandBuffers);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate command buffers (result = " + result + ")");
-            }
-            commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), application.getLogicalDevice());
+            commandBuffer = application.getCommandPool().allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
             VkCommandBufferBeginInfo bufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
             bufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
             bufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT);
-            result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
+            int result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
             }
@@ -153,7 +141,7 @@ public abstract class ComputeJob extends NativeObject {
             vkDestroySemaphore(application.getLogicalDevice(), signalSemaphore, null);
         }
         vkDestroyFence(application.getLogicalDevice(), fence, null);
-        vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), commandBuffer);
+        application.getCommandPool().freeCommandBuffer(commandBuffer);
         for (ComputeActionGroup computeActionGroup : computeActionGroups) {
             computeActionGroup.cleanupNative();
         }

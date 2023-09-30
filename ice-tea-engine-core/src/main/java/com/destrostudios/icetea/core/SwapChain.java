@@ -1,13 +1,12 @@
 package com.destrostudios.icetea.core;
 
+import com.destrostudios.icetea.core.command.CommandPool;
 import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.render.RenderTarget;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderJobManager;
-import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import org.slf4j.Logger;
@@ -43,6 +42,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     private int imageFormat;
     @Getter
     private ArrayList<Long> imageViews;
+    private CommandPool commandPool;
     private ArrayList<VkCommandBuffer> commandBuffers;
     @Getter
     private RenderJobManager renderJobManager;
@@ -77,7 +77,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         super.initNative();
         initSwapChain();
         initImageViews();
-        initCommandBuffers();
+        initCommandPoolAndBuffers();
         initSyncObjects();
         application.addWindowResizeListener(this);
         LOGGER.debug("Initialized swapchain.");
@@ -214,28 +214,12 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         LOGGER.debug("Initialized image views.");
     }
 
-    private void initCommandBuffers() {
-        try (MemoryStack stack = stackPush()) {
-            LOGGER.debug("Initializing command buffers...");
-            int commandBuffersCount = images.size();
-            commandBuffers = new ArrayList<>(commandBuffersCount);
-            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.callocStack(stack);
-            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocInfo.commandPool(application.getCommandPool());
-            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            allocInfo.commandBufferCount(commandBuffersCount);
-
-            PointerBuffer pCommandBuffers = stack.mallocPointer(commandBuffersCount);
-            int result = vkAllocateCommandBuffers(application.getLogicalDevice(), allocInfo, pCommandBuffers);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate command buffers (result = " + result + ")");
-            }
-
-            for (int i = 0; i < commandBuffersCount; i++) {
-                commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), application.getLogicalDevice()));
-            }
-            LOGGER.debug("Initialized command buffers.");
-        }
+    private void initCommandPoolAndBuffers() {
+        LOGGER.debug("Initializing swapchain command pool and buffers...");
+        commandPool = new CommandPool(application);
+        commandPool.updateNative(application);
+        commandBuffers = commandPool.allocateCommandBuffers(VK_COMMAND_BUFFER_LEVEL_PRIMARY, images.size());
+        LOGGER.debug("Initialized swapchain command pool and buffers.");
     }
 
     private void initSyncObjects() {
@@ -276,6 +260,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     @Override
     public void updateNative() {
         super.updateNative();
+        commandPool.updateNative(application);
         renderJobManager.updateNative(application);
     }
 
@@ -415,7 +400,8 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             cleanupInFlightFrames();
         }
         renderJobManager.cleanupNative();
-        cleanupCommandBuffers();
+        commandPool.freeCommandBuffers(commandBuffers);
+        commandPool.cleanupNative();
         imageViews.forEach(imageView -> vkDestroyImageView(application.getLogicalDevice(), imageView, null));
         vkDestroySwapchainKHR(application.getLogicalDevice(), swapChain, null);
         super.cleanupNativeInternal();
@@ -426,15 +412,6 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             vkDestroySemaphore(application.getLogicalDevice(), frame.getRenderFinishedSemaphore(), null);
             vkDestroySemaphore(application.getLogicalDevice(), frame.getImageAvailableSemaphore(), null);
             vkDestroyFence(application.getLogicalDevice(), frame.getFence(), null);
-        }
-    }
-
-    private void cleanupCommandBuffers() {
-        if (commandBuffers != null) {
-            try (MemoryStack stack = stackPush()) {
-                vkFreeCommandBuffers(application.getLogicalDevice(), application.getCommandPool(), BufferUtil.asPointerBuffer(commandBuffers, stack));
-            }
-            commandBuffers = null;
         }
     }
 }
