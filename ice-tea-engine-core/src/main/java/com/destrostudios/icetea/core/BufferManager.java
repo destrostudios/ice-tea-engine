@@ -47,40 +47,9 @@ public class BufferManager {
         try (MemoryStack stack = stackPush()) {
             VkBufferCopy.Buffer copyRegion = VkBufferCopy.callocStack(1, stack);
             copyRegion.size(size);
-            VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+            VkCommandBuffer commandBuffer = application.getCommandPool().beginSingleTimeCommands();
             vkCmdCopyBuffer(commandBuffer, sourceBuffer, destinationBuffer, copyRegion);
-            endSingleTimeCommands(commandBuffer);
-        }
-    }
-
-    public VkCommandBuffer beginSingleTimeCommands() {
-        try (MemoryStack stack = stackPush()) {
-            VkCommandBuffer commandBuffer = application.getCommandPool().allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.callocStack(stack);
-            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-            beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-            int result = vkBeginCommandBuffer(commandBuffer, beginInfo);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to begin command buffer (result = " + result + ")");
-            }
-
-            return commandBuffer;
-        }
-    }
-
-    public void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
-        try (MemoryStack stack = stackPush()) {
-            vkEndCommandBuffer(commandBuffer);
-
-            VkSubmitInfo.Buffer submitInfo = VkSubmitInfo.callocStack(1, stack);
-            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-            submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
-            vkQueueSubmit(application.getGraphicsQueue(), submitInfo, VK_NULL_HANDLE);
-
-            vkQueueWaitIdle(application.getGraphicsQueue());
-
-            application.getCommandPool().freeCommandBuffer(commandBuffer);
+            application.getCommandPool().endSingleTimeCommands(commandBuffer);
         }
     }
 }

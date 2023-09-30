@@ -150,7 +150,7 @@ public class ImageManager {
                 throw new IllegalArgumentException("Unsupported layout transition");
             }
 
-            VkCommandBuffer commandBuffer = application.getBufferManager().beginSingleTimeCommands();
+            VkCommandBuffer commandBuffer = application.getCommandPool().beginSingleTimeCommands();
             vkCmdPipelineBarrier(
                 commandBuffer,
                 sourceStage,
@@ -160,7 +160,7 @@ public class ImageManager {
                 null,
                 barrier
             );
-            application.getBufferManager().endSingleTimeCommands(commandBuffer);
+            application.getCommandPool().endSingleTimeCommands(commandBuffer);
         }
     }
 
@@ -181,9 +181,9 @@ public class ImageManager {
             region.imageOffset().set(0, 0, 0);
             region.imageExtent(VkExtent3D.callocStack(stack).set(width, height, 1));
 
-            VkCommandBuffer commandBuffer = application.getBufferManager().beginSingleTimeCommands();
+            VkCommandBuffer commandBuffer = application.getCommandPool().beginSingleTimeCommands();
             vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region);
-            application.getBufferManager().endSingleTimeCommands(commandBuffer);
+            application.getCommandPool().endSingleTimeCommands(commandBuffer);
         }
     }
 
@@ -197,7 +197,7 @@ public class ImageManager {
                 throw new RuntimeException("Texture image format does not support linear blitting");
             }
 
-            VkCommandBuffer commandBuffer = application.getBufferManager().beginSingleTimeCommands();
+            VkCommandBuffer commandBuffer = application.getCommandPool().beginSingleTimeCommands();
 
             int mipWidth = width;
             int mipHeight = height;
@@ -290,7 +290,7 @@ public class ImageManager {
                 null,
                 barrier
             );
-            application.getBufferManager().endSingleTimeCommands(commandBuffer);
+            application.getCommandPool().endSingleTimeCommands(commandBuffer);
         }
     }
 }

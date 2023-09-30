@@ -5,9 +5,7 @@ import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
-import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
+import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 import java.util.ArrayList;
@@ -44,6 +42,37 @@ public class CommandPool extends NativeObject {
                 throw new RuntimeException("Failed to create command pool (result = " + result + ")");
             }
             commandPool = pCommandPool.get(0);
+        }
+    }
+
+    public VkCommandBuffer beginSingleTimeCommands() {
+        try (MemoryStack stack = stackPush()) {
+            VkCommandBuffer commandBuffer = allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+            int result = vkBeginCommandBuffer(commandBuffer, beginInfo);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to begin command buffer (result = " + result + ")");
+            }
+
+            return commandBuffer;
+        }
+    }
+
+    public void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+        try (MemoryStack stack = stackPush()) {
+            vkEndCommandBuffer(commandBuffer);
+
+            VkSubmitInfo.Buffer submitInfo = VkSubmitInfo.callocStack(1, stack);
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
+            vkQueueSubmit(application.getGraphicsQueue(), submitInfo, VK_NULL_HANDLE);
+
+            vkQueueWaitIdle(application.getGraphicsQueue());
+
+            freeCommandBuffer(commandBuffer);
         }
     }
 
