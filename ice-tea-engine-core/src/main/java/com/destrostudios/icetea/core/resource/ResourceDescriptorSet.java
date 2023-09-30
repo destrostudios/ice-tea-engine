@@ -35,11 +35,11 @@ public class ResourceDescriptorSet {
         return descriptorSetLayouts;
     }
 
-    public LongBuffer getDescriptorSets(int commandBufferIndex, MemoryStack stack) {
+    public LongBuffer getDescriptorSets(int imageIndex, MemoryStack stack) {
         LongBuffer descriptorSets = stack.mallocLong(descriptors.size());
         int i = 0;
         for (ResourceDescriptor<?> descriptor : descriptors.values()) {
-            long descriptorSet = descriptor.getDescriptorSets()[commandBufferIndex];
+            long descriptorSet = descriptor.getDescriptorSets()[imageIndex];
             descriptorSets.put(i, descriptorSet);
             i++;
         }

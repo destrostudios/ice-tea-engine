@@ -207,7 +207,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public List<Long> getFrameBuffersToRender(int commandBufferIndex) {
+    public List<Long> getFrameBuffersToRender(int imageIndex) {
         return frameBuffers;
     }
 

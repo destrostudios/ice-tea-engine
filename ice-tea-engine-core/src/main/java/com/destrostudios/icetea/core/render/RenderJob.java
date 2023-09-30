@@ -157,9 +157,9 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
         }
     }
 
-    public List<Long> getFrameBuffersToRender(int commandBufferIndex) {
+    public List<Long> getFrameBuffersToRender(int imageIndex) {
         LinkedList<Long> frameBuffersToRender = new LinkedList<>();
-        frameBuffersToRender.add(frameBuffers.get(isPresentingRenderJob() ? commandBufferIndex : 0));
+        frameBuffersToRender.add(frameBuffers.get(isPresentingRenderJob() ? imageIndex : 0));
         return frameBuffersToRender;
     }
 

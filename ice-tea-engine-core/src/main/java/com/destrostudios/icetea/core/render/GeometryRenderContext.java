@@ -35,7 +35,6 @@ public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends 
         if (geometry.getMesh().isWereBuffersOutdated() || resourceDescriptorSet.isChanged()) {
             resourceDescriptorSet.onChangeApplied();
             renderPipeline.cleanupNative();
-            application.getSwapChain().setCommandBuffersOutdated();
         }
         renderPipeline.updateNative(application);
     }

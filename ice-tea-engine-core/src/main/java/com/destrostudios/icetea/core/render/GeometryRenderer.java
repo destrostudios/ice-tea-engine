@@ -25,7 +25,7 @@ public class GeometryRenderer {
             if (geometry.getMesh().getIndexBuffer() != null) {
                 actions.accept(rt -> vkCmdBindIndexBuffer(rt.getCommandBuffer(), geometry.getMesh().getIndexBuffer().getBuffer(), 0, VK_INDEX_TYPE_UINT32));
             }
-            actions.accept(rt -> vkCmdBindDescriptorSets(rt.getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, renderContext.getResourceDescriptorSet().getDescriptorSets(rt.getCommandBufferIndex(), stack), null));
+            actions.accept(rt -> vkCmdBindDescriptorSets(rt.getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, renderContext.getResourceDescriptorSet().getDescriptorSets(rt.getImageIndex(), stack), null));
             drawVertices(geometry, actions, stack);
         }
     }

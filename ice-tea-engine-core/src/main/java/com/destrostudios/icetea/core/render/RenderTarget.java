@@ -8,7 +8,7 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 @Getter
 public class RenderTarget {
 	private VkCommandBuffer commandBuffer;
-	private int commandBufferIndex;
+	private int imageIndex;
 	private long frameBuffer;
 	private int frameBufferIndex;
 }

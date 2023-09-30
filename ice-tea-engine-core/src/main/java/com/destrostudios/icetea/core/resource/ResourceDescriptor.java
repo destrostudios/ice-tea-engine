@@ -114,7 +114,6 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
         super.updateNative();
         if (resource.isOutdated()) {
             updateDescriptorSets();
-            application.getSwapChain().setCommandBuffersOutdated();
         }
     }
 

@@ -29,7 +29,6 @@ public class Node extends Spatial {
     }
     @Getter
     private List<Spatial> children = new LinkedList<>();
-    private boolean childrenModified;
 
     @Override
     public void updateLogicalState(Application application, float tpf) {
@@ -53,10 +52,6 @@ public class Node extends Spatial {
         super.updateNativeState(application);
         for (Spatial child : children) {
             child.updateNativeState(application);
-        }
-        if (childrenModified) {
-            application.getSwapChain().setCommandBuffersOutdated();
-            childrenModified = false;
         }
     }
 
@@ -100,13 +95,11 @@ public class Node extends Spatial {
         }
         spatial.setParent(this);
         children.add(spatial);
-        childrenModified = true;
     }
 
     public void remove(Spatial spatial) {
         spatial.setParent(null);
         children.remove(spatial);
-        childrenModified = true;
     }
 
     public void removeAll() {
@@ -114,7 +107,6 @@ public class Node extends Spatial {
             spatial.setParent(null);
         }
         children.clear();
-        childrenModified = true;
     }
 
     public void forEachGeometry(Consumer<Geometry> geometryConsumer) {

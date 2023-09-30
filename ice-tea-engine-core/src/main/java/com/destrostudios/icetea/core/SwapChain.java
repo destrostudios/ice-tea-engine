@@ -45,7 +45,6 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     @Getter
     private ArrayList<Long> imageViews;
     private ArrayList<VkCommandBuffer> commandBuffers;
-    private boolean commandBuffersOutdated;
     @Getter
     private RenderJobManager renderJobManager;
     private Frame[] inFlightFrames;
@@ -71,7 +70,6 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         cleanupNative();
         isDuringRecreation = false;
         updateNative(tmpApplication);
-        recordCommandBuffers();
     }
 
     @Override
@@ -276,58 +274,52 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         LOGGER.debug("Initialized sync objects.");
     }
 
-    public void setCommandBuffersOutdated() {
-        commandBuffersOutdated = true;
+    @Override
+    public void updateNative() {
+        super.updateNative();
+        renderJobManager.updateNative(application);
     }
 
     public void drawNextFrame() {
         int imageIndex = acquireNextImageIndex();
         if (imageIndex != -1) {
+            recordCommandBuffers(imageIndex);
             drawFrame(imageIndex);
         }
     }
 
-    @Override
-    public void updateNative() {
-        super.updateNative();
-        renderJobManager.updateNative(application);
-        if (commandBuffersOutdated) {
-            recordCommandBuffers();
-            commandBuffersOutdated = false;
-        }
-    }
-
-    private void recordCommandBuffers() {
+    private void recordCommandBuffers(int imageIndex) {
         try (MemoryStack stack = stackPush()) {
-            VkCommandBufferBeginInfo bufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
-            bufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            VkCommandBuffer commandBuffer = commandBuffers.get(imageIndex);
+
+            VkCommandBufferBeginInfo commandBufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+            commandBufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            commandBufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+            int result = vkBeginCommandBuffer(commandBuffer, commandBufferBeginInfo);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
+            }
 
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.callocStack(stack);
             renderPassBeginInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-            for (VkCommandBuffer commandBuffer : commandBuffers) {
-                int result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
-                if (result != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
-                }
-            }
-            render(renderJobManager.getQueuePreScene(), renderPassBeginInfo);
-            render(renderJobManager.getSceneRenderJob(), renderPassBeginInfo);
-            render(renderJobManager.getQueuePostScene(), renderPassBeginInfo);
-            for (VkCommandBuffer commandBuffer : commandBuffers) {
-                int result = vkEndCommandBuffer(commandBuffer);
-                if (result != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to end recording command buffer (result = " + result + ")");
-                }
+            render(renderJobManager.getQueuePreScene(), renderPassBeginInfo, imageIndex);
+            render(renderJobManager.getSceneRenderJob(), renderPassBeginInfo, imageIndex);
+            render(renderJobManager.getQueuePostScene(), renderPassBeginInfo, imageIndex);
+
+            result = vkEndCommandBuffer(commandBuffer);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to end recording command buffer (result = " + result + ")");
             }
         }
     }
 
-    private void render(List<RenderJob<?>> renderJobBucket, VkRenderPassBeginInfo renderPassBeginInfo) {
-        renderJobBucket.forEach(renderJob -> render(renderJob, renderPassBeginInfo));
+    private void render(List<RenderJob<?>> renderJobBucket, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
+        renderJobBucket.forEach(renderJob -> render(renderJob, renderPassBeginInfo, imageIndex));
     }
 
-    private void render(RenderJob<?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo) {
+    private void render(RenderJob<?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
         try (MemoryStack stack = stackPush()) {
+
             renderPassBeginInfo.renderPass(renderJob.getRenderPass());
             renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
             renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
@@ -336,22 +328,21 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             LinkedList<RenderTarget> singleFrameBufferRenderJobsTargets = new LinkedList<>();
             sequentialRenderPassTargets.add(singleFrameBufferRenderJobsTargets);
 
-            for (int cbi = 0; cbi < commandBuffers.size(); cbi++) {
-                List<Long> frameBuffers = renderJob.getFrameBuffersToRender(cbi);
-                int fbi = 0;
-                for (long frameBuffer : frameBuffers) {
-                    RenderTarget renderTarget = new RenderTarget(commandBuffers.get(cbi), cbi, frameBuffer, fbi);
-                    if (frameBuffers.size() == 1) {
-                        // For render jobs with only one framebuffer (-> render pass), all command buffers can be handled in a single renderJob.render call, which improves performance
-                        singleFrameBufferRenderJobsTargets.add(renderTarget);
-                    } else {
-                        // For render jobs with multiple framebuffers (-> render passes), multiple renderJob.render calls are needed since they might need to differentiate between frame buffers (e.g. for push constants)
-                        LinkedList<RenderTarget> ownRenderPassTargets = new LinkedList<>();
-                        ownRenderPassTargets.add(renderTarget);
-                        sequentialRenderPassTargets.add(ownRenderPassTargets);
-                    }
-                    fbi++;
+            VkCommandBuffer commandBuffer = commandBuffers.get(imageIndex);
+            List<Long> frameBuffers = renderJob.getFrameBuffersToRender(imageIndex);
+            int fbi = 0;
+            for (long frameBuffer : frameBuffers) {
+                RenderTarget renderTarget = new RenderTarget(commandBuffer, imageIndex, frameBuffer, fbi);
+                if (frameBuffers.size() == 1) {
+                    // For render jobs with only one target framebuffer (-> render pass), e.g. one scene texture, all command buffers can be handled in a single renderJob.render call, which improves performance
+                    singleFrameBufferRenderJobsTargets.add(renderTarget);
+                } else {
+                    // For render jobs with multiple target framebuffers (-> render passes), e.g. multiple cascade shadow maps, multiple renderJob.render calls are needed since they might need to differentiate between frame buffers (e.g. for push constants)
+                    LinkedList<RenderTarget> ownRenderPassTargets = new LinkedList<>();
+                    ownRenderPassTargets.add(renderTarget);
+                    sequentialRenderPassTargets.add(ownRenderPassTargets);
                 }
+                fbi++;
             }
 
             for (LinkedList<RenderTarget> parallelRenderTargets : sequentialRenderPassTargets) {

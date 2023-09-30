@@ -139,7 +139,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     public void render(Consumer<RenderAction> actions) {
         try (MemoryStack stack = stackPush()) {
             actions.accept(rt -> {
-                vkCmdBindDescriptorSets(rt.getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, resourceDescriptorSet.getDescriptorSets(rt.getCommandBufferIndex(), stack), null);
+                vkCmdBindDescriptorSets(rt.getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, resourceDescriptorSet.getDescriptorSets(rt.getImageIndex(), stack), null);
                 vkCmdBindPipeline(rt.getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
                 vkCmdDraw(rt.getCommandBuffer(), 3, 1, 0, 0);
             });
