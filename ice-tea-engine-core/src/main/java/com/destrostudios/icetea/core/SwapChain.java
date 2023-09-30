@@ -47,7 +47,6 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     @Getter
     private RenderJobManager renderJobManager;
     private Frame[] inFlightFrames;
-    private Map<Integer, Frame> imagesInFlight;
     private int currentFrame;
     private boolean wasResized;
     private boolean isDuringRecreation;
@@ -225,7 +224,6 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     private void initSyncObjects() {
         LOGGER.debug("Initializing sync objects...");
         inFlightFrames = new Frame[FRAMES_IN_FLIGHT];
-        imagesInFlight = new HashMap<>(images.size());
         try (MemoryStack stack = stackPush()) {
             VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.callocStack(stack);
             semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
@@ -352,10 +350,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         try (MemoryStack stack = stackPush()) {
             Frame thisFrame = inFlightFrames[currentFrame];
 
-            if (imagesInFlight.containsKey(imageIndex)) {
-                vkWaitForFences(application.getLogicalDevice(), imagesInFlight.get(imageIndex).getFence(), true, MathUtil.UINT64_MAX);
-            }
-            imagesInFlight.put(imageIndex, thisFrame);
+            vkWaitForFences(application.getLogicalDevice(), thisFrame.getFence(), true, MathUtil.UINT64_MAX);
 
             VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
