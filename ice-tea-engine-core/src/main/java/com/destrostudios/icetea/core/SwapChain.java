@@ -1,7 +1,6 @@
 package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.object.NativeObject;
-import com.destrostudios.icetea.core.render.RenderAction;
 import com.destrostudios.icetea.core.render.RenderTarget;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderJobManager;
@@ -324,46 +323,16 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
             renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
 
-            LinkedList<LinkedList<RenderTarget>> sequentialRenderPassTargets = new LinkedList<>();
-            LinkedList<RenderTarget> singleFrameBufferRenderJobsTargets = new LinkedList<>();
-            sequentialRenderPassTargets.add(singleFrameBufferRenderJobsTargets);
-
             VkCommandBuffer commandBuffer = commandBuffers.get(imageIndex);
-            List<Long> frameBuffers = renderJob.getFrameBuffersToRender(imageIndex);
-            int fbi = 0;
-            for (long frameBuffer : frameBuffers) {
-                RenderTarget renderTarget = new RenderTarget(commandBuffer, imageIndex, frameBuffer, fbi);
-                if (frameBuffers.size() == 1) {
-                    // For render jobs with only one target framebuffer (-> render pass), e.g. one scene texture, all command buffers can be handled in a single renderJob.render call, which improves performance
-                    singleFrameBufferRenderJobsTargets.add(renderTarget);
-                } else {
-                    // For render jobs with multiple target framebuffers (-> render passes), e.g. multiple cascade shadow maps, multiple renderJob.render calls are needed since they might need to differentiate between frame buffers (e.g. for push constants)
-                    LinkedList<RenderTarget> ownRenderPassTargets = new LinkedList<>();
-                    ownRenderPassTargets.add(renderTarget);
-                    sequentialRenderPassTargets.add(ownRenderPassTargets);
-                }
-                fbi++;
+            int frameBufferIndex = 0;
+            for (long frameBuffer : renderJob.getFrameBuffersToRender(imageIndex)) {
+                RenderTarget renderTarget = new RenderTarget(commandBuffer, imageIndex, frameBuffer, frameBufferIndex);
+                renderPassBeginInfo.framebuffer(renderTarget.getFrameBuffer());
+                vkCmdBeginRenderPass(renderTarget.getCommandBuffer(), renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+                renderJob.render(renderTarget);
+                vkCmdEndRenderPass(renderTarget.getCommandBuffer());
+                frameBufferIndex++;
             }
-
-            for (LinkedList<RenderTarget> parallelRenderTargets : sequentialRenderPassTargets) {
-                // The singleFrameBufferRenderJobsTargets list can be empty in the current setup
-                if (parallelRenderTargets.size() > 0) {
-                    for (RenderTarget renderTarget : parallelRenderTargets) {
-                        renderPassBeginInfo.framebuffer(renderTarget.getFrameBuffer());
-                        vkCmdBeginRenderPass(renderTarget.getCommandBuffer(), renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-                    }
-                    renderJob.render(renderAction -> render(renderAction, parallelRenderTargets));
-                    for (RenderTarget renderTarget : parallelRenderTargets) {
-                        vkCmdEndRenderPass(renderTarget.getCommandBuffer());
-                    }
-                }
-            }
-        }
-    }
-
-    private void render(RenderAction renderAction, List<RenderTarget> renderTargets) {
-        for (RenderTarget renderTarget : renderTargets) {
-            renderAction.render(renderTarget);
         }
     }
 

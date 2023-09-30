@@ -1,15 +1,13 @@
 package com.destrostudios.icetea.imgui;
 
 import com.destrostudios.icetea.core.render.GeometryRenderer;
-import com.destrostudios.icetea.core.render.RenderAction;
+import com.destrostudios.icetea.core.render.RenderTarget;
 import com.destrostudios.icetea.core.scene.Geometry;
 import imgui.ImDrawData;
 import imgui.ImGui;
 import imgui.ImVec4;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkRect2D;
-
-import java.util.function.Consumer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -21,7 +19,7 @@ public class ImGuiGeometryRenderer extends GeometryRenderer {
     private ImVec4 tmpClipRect = new ImVec4();
 
     @Override
-    protected void drawVertices(Geometry geometry, Consumer<RenderAction> actions, MemoryStack stack) {
+    protected void drawVertices(Geometry geometry, RenderTarget renderTarget, MemoryStack stack) {
         ImDrawData drawData = ImGui.getDrawData();
         int commandListsCount = drawData.getCmdListsCount();
         int offsetIndex = 0;
@@ -33,20 +31,16 @@ public class ImGuiGeometryRenderer extends GeometryRenderer {
                 drawData.getCmdListCmdBufferClipRect(commandListIndex, bufferIndex, tmpClipRect);
                 clipRect.offset(it -> it.x((int) tmpClipRect.x).y((int) tmpClipRect.y));
                 clipRect.extent(it -> it.width((int) (tmpClipRect.z - tmpClipRect.x)).height((int) (tmpClipRect.w - tmpClipRect.y)));
-                actions.accept(rt -> vkCmdSetScissor(rt.getCommandBuffer(), 0, clipRect));
+                vkCmdSetScissor(renderTarget.getCommandBuffer(), 0, clipRect);
                 int elementsCount = drawData.getCmdListCmdBufferElemCount(commandListIndex, bufferIndex);
-                int _commandListIndex = commandListIndex;
-                int _bufferIndex = bufferIndex;
-                int _offsetIndex = offsetIndex;
-                int _offsetVertex = offsetVertex;
-                actions.accept(rt -> vkCmdDrawIndexed(
-                    rt.getCommandBuffer(),
+                vkCmdDrawIndexed(
+                    renderTarget.getCommandBuffer(),
                     elementsCount,
                     1,
-                    _offsetIndex + drawData.getCmdListCmdBufferIdxOffset(_commandListIndex, _bufferIndex),
-                    _offsetVertex + drawData.getCmdListCmdBufferVtxOffset(_commandListIndex, _bufferIndex),
+                    offsetIndex + drawData.getCmdListCmdBufferIdxOffset(commandListIndex, bufferIndex),
+                    offsetVertex + drawData.getCmdListCmdBufferVtxOffset(commandListIndex, bufferIndex),
                     0
-                ));
+                );
             }
             offsetIndex += drawData.getCmdListIdxBufferSize(commandListIndex);
             offsetVertex += drawData.getCmdListVtxBufferSize(commandListIndex);

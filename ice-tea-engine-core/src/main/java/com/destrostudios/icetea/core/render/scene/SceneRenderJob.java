@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.render.scene;
 
-import com.destrostudios.icetea.core.render.RenderAction;
+import com.destrostudios.icetea.core.render.RenderTarget;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
@@ -12,7 +12,6 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRCreateRenderpass2.vkCreateRenderPass2KHR;
@@ -309,11 +308,11 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    public void render(Consumer<RenderAction> actions) {
+    public void render(RenderTarget renderTarget) {
         application.getBucketRenderer().render(application.getRootNode(), geometry -> {
             SceneGeometryRenderContext renderContext = getRenderContext(geometry);
             if (renderContext != null) {
-                geometry.getRenderer().render(geometry, renderContext, actions);
+                geometry.getRenderer().render(geometry, renderContext, renderTarget);
             }
         });
     }

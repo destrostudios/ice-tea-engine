@@ -5,7 +5,7 @@ import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.light.DirectionalLight;
-import com.destrostudios.icetea.core.render.RenderAction;
+import com.destrostudios.icetea.core.render.RenderTarget;
 import com.destrostudios.icetea.core.resource.descriptor.ShadowMapTextureDescriptor;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.resource.descriptor.UniformDescriptor;
@@ -21,7 +21,6 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -361,15 +360,15 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public void render(Consumer<RenderAction> actions) {
-        actions.accept(rt -> pushConstants.getData().setInt("cascadeIndex", rt.getFrameBufferIndex()));
+    public void render(RenderTarget renderTarget) {
+        pushConstants.getData().setInt("cascadeIndex", renderTarget.getFrameBufferIndex());
         pushConstants.updateNative(application);
 
         application.getRootNode().forEachGeometry(geometry -> {
             ShadowMapGeometryRenderContext renderContext = getRenderContext(geometry);
             if (renderContext != null) {
-                actions.accept(rt -> vkCmdPushConstants(rt.getCommandBuffer(), renderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer()));
-                geometry.getRenderer().render(geometry, renderContext, actions);
+                vkCmdPushConstants(renderTarget.getCommandBuffer(), renderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
+                geometry.getRenderer().render(geometry, renderContext, renderTarget);
             }
         });
     }
