@@ -5,7 +5,7 @@ import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.light.DirectionalLight;
-import com.destrostudios.icetea.core.render.RenderTarget;
+import com.destrostudios.icetea.core.render.RenderTask;
 import com.destrostudios.icetea.core.resource.descriptor.ShadowMapTextureDescriptor;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.resource.descriptor.UniformDescriptor;
@@ -21,6 +21,7 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -360,17 +361,20 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     }
 
     @Override
-    public void render(RenderTarget renderTarget) {
-        pushConstants.getData().setInt("cascadeIndex", renderTarget.getFrameBufferIndex());
-        pushConstants.updateNative(application);
+    public List<RenderTask> render() {
+        return application.getBucketRenderer().getSplitOrderedGeometries().stream()
+            .map(geometries -> (RenderTask) (commandBuffer, renderContext) -> {
+                pushConstants.getData().setInt("cascadeIndex", renderContext.getFrameBufferIndex());
+                pushConstants.updateNative(application);
 
-        application.getRootNode().forEachGeometry(geometry -> {
-            ShadowMapGeometryRenderContext renderContext = getRenderContext(geometry);
-            if (renderContext != null) {
-                vkCmdPushConstants(renderTarget.getCommandBuffer(), renderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
-                geometry.getRenderer().render(geometry, renderContext, renderTarget);
-            }
-        });
+                for (Geometry geometry : geometries) {
+                    ShadowMapGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
+                    if (geometryRenderContext != null) {
+                        vkCmdPushConstants(commandBuffer, geometryRenderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
+                        geometry.getRenderer().render(geometry, geometryRenderContext, commandBuffer, renderContext);
+                    }
+                }
+            }).collect(Collectors.toList());
     }
 
     @Override

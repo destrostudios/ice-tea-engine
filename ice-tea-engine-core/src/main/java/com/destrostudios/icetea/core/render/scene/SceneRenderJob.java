@@ -1,6 +1,6 @@
 package com.destrostudios.icetea.core.render.scene;
 
-import com.destrostudios.icetea.core.render.RenderTarget;
+import com.destrostudios.icetea.core.render.RenderTask;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
@@ -12,6 +12,8 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRCreateRenderpass2.vkCreateRenderPass2KHR;
@@ -308,13 +310,16 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     }
 
     @Override
-    public void render(RenderTarget renderTarget) {
-        application.getBucketRenderer().render(application.getRootNode(), geometry -> {
-            SceneGeometryRenderContext renderContext = getRenderContext(geometry);
-            if (renderContext != null) {
-                geometry.getRenderer().render(geometry, renderContext, renderTarget);
-            }
-        });
+    public List<RenderTask> render() {
+        return application.getBucketRenderer().getSplitOrderedGeometries().stream()
+            .map(geometries -> (RenderTask) (commandBuffer, renderContext) -> {
+                for (Geometry geometry : geometries) {
+                    SceneGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
+                    if (geometryRenderContext != null) {
+                        geometry.getRenderer().render(geometry, geometryRenderContext, commandBuffer, renderContext);
+                    }
+                }
+            }).collect(Collectors.toList());
     }
 
     @Override

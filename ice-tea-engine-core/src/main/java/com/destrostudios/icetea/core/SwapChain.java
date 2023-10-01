@@ -2,10 +2,11 @@ package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.command.CommandPool;
 import com.destrostudios.icetea.core.object.NativeObject;
-import com.destrostudios.icetea.core.render.RenderTarget;
-import com.destrostudios.icetea.core.render.RenderJob;
-import com.destrostudios.icetea.core.render.RenderJobManager;
+import com.destrostudios.icetea.core.render.*;
+import com.destrostudios.icetea.core.command.SecondaryCommandBufferPool;
+import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
+import com.destrostudios.icetea.core.util.ThreadUtil;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
+import java.util.concurrent.*;
 
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwWaitEvents;
@@ -42,8 +44,10 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     private int imageFormat;
     @Getter
     private ArrayList<Long> imageViews;
-    private CommandPool commandPool;
-    private ArrayList<VkCommandBuffer> commandBuffers;
+    private CommandPool primaryCommandPool;
+    private ArrayList<VkCommandBuffer> primaryCommandBuffers;
+    private ExecutorService secondaryCommandBufferExecutorService;
+    private SecondaryCommandBufferPool[] secondarySecondaryCommandBufferPools;
     @Getter
     private RenderJobManager renderJobManager;
     private Frame[] inFlightFrames;
@@ -76,7 +80,8 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         super.initNative();
         initSwapChain();
         initImageViews();
-        initCommandPoolAndBuffers();
+        initPrimaryCommandBuffers();
+        initSecondaryCommandBufferPools();
         initSyncObjects();
         application.addWindowResizeListener(this);
         LOGGER.debug("Initialized swapchain.");
@@ -213,12 +218,28 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         LOGGER.debug("Initialized image views.");
     }
 
-    private void initCommandPoolAndBuffers() {
-        LOGGER.debug("Initializing swapchain command pool and buffers...");
-        commandPool = new CommandPool(application);
-        commandPool.updateNative(application);
-        commandBuffers = commandPool.allocateCommandBuffers(VK_COMMAND_BUFFER_LEVEL_PRIMARY, images.size());
-        LOGGER.debug("Initialized swapchain command pool and buffers.");
+    private void initPrimaryCommandBuffers() {
+        LOGGER.debug("Initializing primary command pool...");
+        primaryCommandPool = new CommandPool(application);
+        primaryCommandPool.updateNative(application);
+        LOGGER.debug("Initializing primary command pool.");
+
+        LOGGER.debug("Initializing primary command buffers...");
+        primaryCommandBuffers = primaryCommandPool.allocateCommandBuffers(VK_COMMAND_BUFFER_LEVEL_PRIMARY, images.size());
+        LOGGER.debug("Initialized primary command buffers.");
+    }
+
+    private void initSecondaryCommandBufferPools() {
+        int threads = application.getConfig().getWorkerThreads();
+        if (threads > 1) {
+            LOGGER.debug("Initializing secondary command buffer pools...");
+            secondaryCommandBufferExecutorService = Executors.newFixedThreadPool(threads);
+            secondarySecondaryCommandBufferPools = new SecondaryCommandBufferPool[threads];
+            for (int i = 0; i < secondarySecondaryCommandBufferPools.length; i++) {
+                secondarySecondaryCommandBufferPools[i] = new SecondaryCommandBufferPool();
+            }
+            LOGGER.debug("Initialized secondary command buffer pools.");
+        }
     }
 
     private void initSyncObjects() {
@@ -258,7 +279,12 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     @Override
     public void updateNative() {
         super.updateNative();
-        commandPool.updateNative(application);
+        primaryCommandPool.updateNative(application);
+        if (secondarySecondaryCommandBufferPools != null) {
+            for (SecondaryCommandBufferPool secondaryCommandBufferPool : secondarySecondaryCommandBufferPools) {
+                secondaryCommandBufferPool.updateNative(application);
+            }
+        }
         renderJobManager.updateNative(application);
     }
 
@@ -272,12 +298,12 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
     private void recordCommandBuffers(int imageIndex) {
         try (MemoryStack stack = stackPush()) {
-            VkCommandBuffer commandBuffer = commandBuffers.get(imageIndex);
+            VkCommandBuffer primaryCommandBuffer = primaryCommandBuffers.get(imageIndex);
 
-            VkCommandBufferBeginInfo commandBufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
-            commandBufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-            commandBufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-            int result = vkBeginCommandBuffer(commandBuffer, commandBufferBeginInfo);
+            VkCommandBufferBeginInfo primaryCommandBufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+            primaryCommandBufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            primaryCommandBufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+            int result = vkBeginCommandBuffer(primaryCommandBuffer, primaryCommandBufferBeginInfo);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
             }
@@ -288,7 +314,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             render(renderJobManager.getSceneRenderJob(), renderPassBeginInfo, imageIndex);
             render(renderJobManager.getQueuePostScene(), renderPassBeginInfo, imageIndex);
 
-            result = vkEndCommandBuffer(commandBuffer);
+            result = vkEndCommandBuffer(primaryCommandBuffer);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to end recording command buffer (result = " + result + ")");
             }
@@ -301,19 +327,65 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
     private void render(RenderJob<?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
         try (MemoryStack stack = stackPush()) {
+            VkCommandBuffer primaryCommandBuffer = primaryCommandBuffers.get(imageIndex);
 
             renderPassBeginInfo.renderPass(renderJob.getRenderPass());
             renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
             renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
 
-            VkCommandBuffer commandBuffer = commandBuffers.get(imageIndex);
             int frameBufferIndex = 0;
             for (long frameBuffer : renderJob.getFrameBuffersToRender(imageIndex)) {
-                RenderTarget renderTarget = new RenderTarget(commandBuffer, imageIndex, frameBuffer, frameBufferIndex);
-                renderPassBeginInfo.framebuffer(renderTarget.getFrameBuffer());
-                vkCmdBeginRenderPass(renderTarget.getCommandBuffer(), renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-                renderJob.render(renderTarget);
-                vkCmdEndRenderPass(renderTarget.getCommandBuffer());
+                RenderContext renderContext = new RenderContext(imageIndex, frameBufferIndex);
+                renderPassBeginInfo.framebuffer(frameBuffer);
+
+                List<RenderTask> renderTasks = renderJob.render();
+
+                int threads = application.getConfig().getWorkerThreads();
+                if (threads > 1) {
+                    vkCmdBeginRenderPass(primaryCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+
+                    VkCommandBufferBeginInfo secondaryCommandBufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+                    secondaryCommandBufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+                    secondaryCommandBufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT);
+
+                    VkCommandBufferInheritanceInfo secondaryCommandBufferInheritanceInfo = VkCommandBufferInheritanceInfo.callocStack(stack);
+                    secondaryCommandBufferInheritanceInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO);
+                    secondaryCommandBufferInheritanceInfo.renderPass(renderJob.getRenderPass());
+                    secondaryCommandBufferInheritanceInfo.framebuffer(frameBuffer);
+                    secondaryCommandBufferBeginInfo.pInheritanceInfo(secondaryCommandBufferInheritanceInfo);
+
+                    ArrayList<VkCommandBuffer> secondaryCommandBuffers = new ArrayList<>(threads);
+                    ArrayList<Future<?>> secondaryCommandBufferRecordingFutures = new ArrayList<>(threads);
+                    int renderTaskIndex = 0;
+                    for (RenderTask renderTask : renderTasks) {
+                        SecondaryCommandBufferPool secondaryCommandBufferPool = secondarySecondaryCommandBufferPools[renderTaskIndex];
+                        VkCommandBuffer secondaryCommandBuffer = secondaryCommandBufferPool.getOrAllocateCommandBuffer();
+                        Future<?> recordingFuture = secondaryCommandBufferExecutorService.submit(() -> {
+                            int result = vkBeginCommandBuffer(secondaryCommandBuffer, secondaryCommandBufferBeginInfo);
+                            if (result != VK_SUCCESS) {
+                                throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
+                            }
+                            renderTask.render(secondaryCommandBuffer, renderContext);
+                            result = vkEndCommandBuffer(secondaryCommandBuffer);
+                            if (result != VK_SUCCESS) {
+                                throw new RuntimeException("Failed to end recording command buffer (result = " + result + ")");
+                            }
+                        });
+                        secondaryCommandBuffers.add(secondaryCommandBuffer);
+                        secondaryCommandBufferRecordingFutures.add(recordingFuture);
+                        renderTaskIndex++;
+                    }
+                    ThreadUtil.waitForCompletion(secondaryCommandBufferRecordingFutures);
+                    vkCmdExecuteCommands(primaryCommandBuffer, BufferUtil.asPointerBuffer(secondaryCommandBuffers, stack));
+                } else {
+                    vkCmdBeginRenderPass(primaryCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+                    for (RenderTask renderTask : renderTasks) {
+                        renderTask.render(primaryCommandBuffer, renderContext);
+                    }
+                }
+
+                vkCmdEndRenderPass(primaryCommandBuffer);
                 frameBufferIndex++;
             }
         }
@@ -359,7 +431,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
             LongBuffer pRenderFinishedSemaphore = stack.longs(thisFrame.getRenderFinishedSemaphore());
             submitInfo.pSignalSemaphores(pRenderFinishedSemaphore);
-            submitInfo.pCommandBuffers(stack.pointers(commandBuffers.get(imageIndex)));
+            submitInfo.pCommandBuffers(stack.pointers(primaryCommandBuffers.get(imageIndex)));
             LongBuffer pFence = stack.longs(thisFrame.getFence());
             vkResetFences(application.getLogicalDevice(), pFence);
             int result = vkQueueSubmit(application.getGraphicsQueue(), submitInfo, thisFrame.getFence());
@@ -395,8 +467,14 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             cleanupInFlightFrames();
         }
         renderJobManager.cleanupNative();
-        commandPool.freeCommandBuffers(commandBuffers);
-        commandPool.cleanupNative();
+        if (secondaryCommandBufferExecutorService != null) {
+            secondaryCommandBufferExecutorService.shutdown();
+            for (SecondaryCommandBufferPool secondaryCommandBufferPool : secondarySecondaryCommandBufferPools) {
+                secondaryCommandBufferPool.cleanupNative();
+            }
+        }
+        primaryCommandPool.freeCommandBuffers(primaryCommandBuffers);
+        primaryCommandPool.cleanupNative();
         imageViews.forEach(imageView -> vkDestroyImageView(application.getLogicalDevice(), imageView, null));
         vkDestroySwapchainKHR(application.getLogicalDevice(), swapChain, null);
         super.cleanupNativeInternal();

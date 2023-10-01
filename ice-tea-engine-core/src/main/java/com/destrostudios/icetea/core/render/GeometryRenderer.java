@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core.render;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkCommandBuffer;
 
 import java.nio.LongBuffer;
 
@@ -14,26 +15,26 @@ public class GeometryRenderer {
     @Getter
     protected int[] dynamicStates;
 
-    public <RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> void render(Geometry geometry, GeometryRenderContext<RJ, RP> renderContext, RenderTarget renderTarget) {
+    public <RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> void render(Geometry geometry, GeometryRenderContext<RJ, RP> geometryRenderContext, VkCommandBuffer commandBuffer, RenderContext renderContext) {
         try (MemoryStack stack = stackPush()) {
-            RenderPipeline<?> renderPipeline = renderContext.getRenderPipeline();
-            vkCmdBindPipeline(renderTarget.getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
+            RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
             LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer().getBuffer());
             LongBuffer offsets = stack.longs(0);
-            vkCmdBindVertexBuffers(renderTarget.getCommandBuffer(), 0, vertexBuffers, offsets);
+            vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
             if (geometry.getMesh().getIndexBuffer() != null) {
-                vkCmdBindIndexBuffer(renderTarget.getCommandBuffer(), geometry.getMesh().getIndexBuffer().getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                vkCmdBindIndexBuffer(commandBuffer, geometry.getMesh().getIndexBuffer().getBuffer(), 0, VK_INDEX_TYPE_UINT32);
             }
-            vkCmdBindDescriptorSets(renderTarget.getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, renderContext.getResourceDescriptorSet().getDescriptorSets(renderTarget.getImageIndex(), stack), null);
-            drawVertices(geometry, renderTarget, stack);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, geometryRenderContext.getResourceDescriptorSet().getDescriptorSets(renderContext.getImageIndex(), stack), null);
+            drawVertices(geometry, commandBuffer, stack);
         }
     }
 
-    protected void drawVertices(Geometry geometry, RenderTarget renderTarget, MemoryStack stack) {
+    protected void drawVertices(Geometry geometry, VkCommandBuffer commandBuffer, MemoryStack stack) {
         if (geometry.getMesh().getIndices() != null) {
-            vkCmdDrawIndexed(renderTarget.getCommandBuffer(), geometry.getMesh().getIndices().length, 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, geometry.getMesh().getIndices().length, 1, 0, 0, 0);
         } else {
-            vkCmdDraw(renderTarget.getCommandBuffer(), geometry.getMesh().getVertices().length, 1, 0, 0);
+            vkCmdDraw(commandBuffer, geometry.getMesh().getVertices().length, 1, 0, 0);
         }
     }
 }

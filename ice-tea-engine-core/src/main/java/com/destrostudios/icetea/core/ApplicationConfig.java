@@ -17,5 +17,6 @@ public class ApplicationConfig {
 	private int height = 720;
 	private int preferredPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
 	private Vector4f clearColor = new Vector4f(0, 0, 0, 1);
+	private int workerThreads = 1;
 
 }

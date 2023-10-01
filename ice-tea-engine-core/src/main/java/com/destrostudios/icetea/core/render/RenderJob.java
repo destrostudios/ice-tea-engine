@@ -175,7 +175,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
 
     public abstract VkClearValue.Buffer getClearValues(MemoryStack stack);
 
-    public abstract void render(RenderTarget renderTarget);
+    public abstract List<RenderTask> render();
 
     @Override
     public void updateNative() {

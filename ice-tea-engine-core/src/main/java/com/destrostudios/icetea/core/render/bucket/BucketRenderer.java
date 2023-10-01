@@ -5,55 +5,62 @@ import com.destrostudios.icetea.core.render.bucket.comparators.BackToFrontGeomet
 import com.destrostudios.icetea.core.render.bucket.comparators.FrontToBackGeometryComparator;
 import com.destrostudios.icetea.core.render.bucket.comparators.ZGeometryComparator;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.scene.Spatial;
+import com.destrostudios.icetea.core.util.ListUtil;
+import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.function.Consumer;
+import java.util.List;
 
 public class BucketRenderer {
 
     public BucketRenderer(Application application) {
+        this.application = application;
         buckets = new HashMap<>();
         buckets.put(RenderBucketType.BACKGROUND, new RenderBucket(new FrontToBackGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.OPAQUE, new RenderBucket(new FrontToBackGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.TRANSPARENT, new RenderBucket(new BackToFrontGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.GUI, new RenderBucket(new ZGeometryComparator(), application.getGuiCamera()));
-    }
-    private HashMap<RenderBucketType, RenderBucket> buckets;
 
-    public void render(Node node, Consumer<Geometry> renderGeometry) {
-        node.forEachGeometry(geometry -> {
-            RenderBucket bucket = getBucket(geometry);
-            bucket.add(geometry);
+        tmpBucketGeometries = new HashMap<>();
+        buckets.keySet().forEach(bucketType -> tmpBucketGeometries.put(bucketType, new ArrayList<>()));
+    }
+    private Application application;
+    private HashMap<RenderBucketType, RenderBucket> buckets;
+    // TODO: Introduce TempVars
+    private HashMap<RenderBucketType, ArrayList<Geometry>> tmpBucketGeometries;
+    @Getter
+    private List<List<Geometry>> splitOrderedGeometries;
+
+    public void updateSplitOrderedGeometries() {
+        application.getRootNode().forEachGeometry(geometry -> {
+            RenderBucketType bucketType = getEffectiveBucketType(geometry);
+            tmpBucketGeometries.get(bucketType).add(geometry);
         });
-        for (RenderBucket bucket : buckets.values()) {
-            bucket.sort();
-        }
-        renderBucket(RenderBucketType.OPAQUE, renderGeometry);
-        renderBucket(RenderBucketType.BACKGROUND, renderGeometry);
-        renderBucket(RenderBucketType.TRANSPARENT, renderGeometry);
-        renderBucket(RenderBucketType.GUI, renderGeometry);
-        for (RenderBucket bucket : buckets.values()) {
-            bucket.clear();
-        }
+        tmpBucketGeometries.forEach((bucketType, geometries) -> {
+            RenderBucket bucket = buckets.get(bucketType);
+            bucket.sort(geometries);
+        });
+        ArrayList<Geometry> orderedGeometries = new ArrayList<>();
+        orderedGeometries.addAll(tmpBucketGeometries.get(RenderBucketType.OPAQUE));
+        orderedGeometries.addAll(tmpBucketGeometries.get(RenderBucketType.BACKGROUND));
+        orderedGeometries.addAll(tmpBucketGeometries.get(RenderBucketType.TRANSPARENT));
+        orderedGeometries.addAll(tmpBucketGeometries.get(RenderBucketType.GUI));
+        tmpBucketGeometries.values().forEach(ArrayList::clear);
+        splitOrderedGeometries = ListUtil.split(orderedGeometries, application.getConfig().getWorkerThreads());
     }
 
     public RenderBucket getBucket(Geometry geometry) {
-        return buckets.get(getEffectiveRenderBucketType(geometry));
+        return buckets.get(getEffectiveBucketType(geometry));
     }
 
-    private RenderBucketType getEffectiveRenderBucketType(Spatial spatial) {
+    private RenderBucketType getEffectiveBucketType(Spatial spatial) {
         if (spatial.getRenderBucket() != null) {
             return spatial.getRenderBucket();
         } else if (spatial.getParent() != null) {
-            return getEffectiveRenderBucketType(spatial.getParent());
+            return getEffectiveBucketType(spatial.getParent());
         }
         return RenderBucketType.OPAQUE;
-    }
-
-    private void renderBucket(RenderBucketType renderBucketType, Consumer<Geometry> renderGeometry) {
-        RenderBucket bucket = buckets.get(renderBucketType);
-        bucket.forEach(renderGeometry);
     }
 }

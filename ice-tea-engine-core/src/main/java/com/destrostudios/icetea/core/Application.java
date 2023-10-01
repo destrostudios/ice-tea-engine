@@ -437,6 +437,7 @@ public abstract class Application {
             light.applyLogicalState();
         }
         rootNode.applyLogicalState();
+        bucketRenderer.updateSplitOrderedGeometries();
     }
 
     private void updateNativeState() {
