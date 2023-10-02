@@ -9,10 +9,23 @@ import static org.lwjgl.vulkan.VK10.VK_FORMAT_R32G32B32_SFLOAT;
 
 public class Vector3fDataValue extends DataValue<Vector3f> {
 
-    public Vector3fDataValue() { }
+    public Vector3fDataValue() {
+        super(new Vector3f());
+    }
 
     public Vector3fDataValue(Vector3fDataValue vector3fDataValue) {
-        value = new Vector3f(vector3fDataValue.value);
+        this();
+        setValue(vector3fDataValue.value);
+    }
+
+    @Override
+    public void setValue(Vector3f value) {
+        this.value.set(value);
+    }
+
+    @Override
+    public boolean hasEqualValue(Vector3f value) {
+        return this.value.equals(value);
     }
 
     @Override

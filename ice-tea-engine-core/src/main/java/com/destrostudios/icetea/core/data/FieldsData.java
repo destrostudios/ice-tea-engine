@@ -78,16 +78,19 @@ public class FieldsData extends NativeObject implements ContextCloneable {
     }
 
     private <T> void set(String name, T value, Supplier<DataValue<T>> dataValueSupplier) {
+        boolean modified = false;
         DataValue<T> dataValue = (DataValue<T>) fields.get(name);
         if (dataValue == null) {
             dataValue = dataValueSupplier.get();
             dataValue.setValue(value);
             fields.put(name, dataValue);
             size += getSize(dataValue);
-        } else {
+            modified = true;
+        } else if (!dataValue.hasEqualValue(value)) {
             dataValue.setValue(value);
+            modified = true;
         }
-        if (listener != null) {
+        if ((listener != null) && modified) {
             listener.onFieldsDataModified(dataValue);
         }
     }

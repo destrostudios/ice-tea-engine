@@ -3,14 +3,30 @@ package com.destrostudios.icetea.core.data.values;
 import com.destrostudios.icetea.core.clone.CloneContext;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class FloatArrayDataValue extends DataValue<float[]> {
 
-    public FloatArrayDataValue() { }
+    public FloatArrayDataValue() {
+        super(new float[0]);
+    }
 
     public FloatArrayDataValue(FloatArrayDataValue floatArrayDataValue) {
-        value = new float[floatArrayDataValue.value.length];
-        System.arraycopy(floatArrayDataValue.value, 0, value, 0, floatArrayDataValue.value.length);
+        this();
+        setValue(floatArrayDataValue.getValue());
+    }
+
+    @Override
+    public void setValue(float[] value) {
+        if (this.value.length != value.length) {
+            this.value = new float[value.length];
+        }
+        System.arraycopy(value, 0, this.value, 0, value.length);
+    }
+
+    @Override
+    public boolean hasEqualValue(float[] value) {
+        return Arrays.equals(this.value, value);
     }
 
     @Override

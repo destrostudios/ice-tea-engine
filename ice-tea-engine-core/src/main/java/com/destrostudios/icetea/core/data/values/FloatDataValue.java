@@ -8,10 +8,23 @@ import static org.lwjgl.vulkan.VK10.VK_FORMAT_R32_SFLOAT;
 
 public class FloatDataValue extends DataValue<Float> {
 
-    public FloatDataValue() { }
+    public FloatDataValue() {
+        super(null);
+    }
 
     public FloatDataValue(FloatDataValue floatDataValue) {
-        value = floatDataValue.getValue();
+        this();
+        setValue(floatDataValue.getValue());
+    }
+
+    @Override
+    public void setValue(Float value) {
+        this.value = value;
+    }
+
+    @Override
+    public boolean hasEqualValue(Float value) {
+        return this.value.equals(value);
     }
 
     @Override

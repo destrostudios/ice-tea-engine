@@ -7,10 +7,23 @@ import java.nio.ByteBuffer;
 
 public class Matrix4fDataValue extends DataValue<Matrix4f> {
 
-    public Matrix4fDataValue() { }
+    public Matrix4fDataValue() {
+        super(new Matrix4f());
+    }
 
     public Matrix4fDataValue(Matrix4fDataValue matrix4fDataValue) {
-        value = new Matrix4f(matrix4fDataValue.value);
+        this();
+        setValue(matrix4fDataValue.value);
+    }
+
+    @Override
+    public void setValue(Matrix4f value) {
+        this.value.set(value);
+    }
+
+    @Override
+    public boolean hasEqualValue(Matrix4f value) {
+        return this.value.equals(value);
     }
 
     @Override

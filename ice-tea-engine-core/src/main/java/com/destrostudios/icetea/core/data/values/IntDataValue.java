@@ -6,10 +6,23 @@ import java.nio.ByteBuffer;
 
 public class IntDataValue extends DataValue<Integer> {
 
-    public IntDataValue() { }
+    public IntDataValue() {
+        super(null);
+    }
 
     public IntDataValue(IntDataValue intDataValue) {
-        value = intDataValue.getValue();
+        this();
+        setValue(intDataValue.getValue());
+    }
+
+    @Override
+    public void setValue(Integer value) {
+        this.value = value;
+    }
+
+    @Override
+    public boolean hasEqualValue(Integer value) {
+        return this.value.equals(value);
     }
 
     @Override

@@ -6,10 +6,23 @@ import java.nio.ByteBuffer;
 
 public class BooleanDataValue extends DataValue<Boolean> {
 
-    public BooleanDataValue() { }
+    public BooleanDataValue() {
+        super(null);
+    }
 
     public BooleanDataValue(BooleanDataValue booleanDataValue) {
-        value = booleanDataValue.getValue();
+        this();
+        setValue(booleanDataValue.getValue());
+    }
+
+    @Override
+    public void setValue(Boolean value) {
+        this.value = value;
+    }
+
+    @Override
+    public boolean hasEqualValue(Boolean value) {
+        return this.value.equals(value);
     }
 
     @Override

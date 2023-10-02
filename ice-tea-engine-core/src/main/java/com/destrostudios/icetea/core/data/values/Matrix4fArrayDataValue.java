@@ -4,16 +4,35 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 import org.joml.Matrix4f;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class Matrix4fArrayDataValue extends DataValue<Matrix4f[]> {
 
-    public Matrix4fArrayDataValue() { }
+    public Matrix4fArrayDataValue() {
+        super(new Matrix4f[0]);
+    }
 
     public Matrix4fArrayDataValue(Matrix4fArrayDataValue matrix4fArrayDataValue) {
-        value = new Matrix4f[matrix4fArrayDataValue.value.length];
-        for (int i = 0; i < value.length; i++) {
-            value[i] = new Matrix4f(matrix4fArrayDataValue.value[i]);
+        this();
+        setValue(matrix4fArrayDataValue.getValue());
+    }
+
+    @Override
+    public void setValue(Matrix4f[] value) {
+        if (this.value.length != value.length) {
+            this.value = new Matrix4f[value.length];
+            for (int i = 0; i < value.length; i++) {
+                this.value[i] = new Matrix4f();
+            }
         }
+        for (int i = 0; i < value.length; i++) {
+            this.value[i].set(value[i]);
+        }
+    }
+
+    @Override
+    public boolean hasEqualValue(Matrix4f[] value) {
+        return Arrays.equals(this.value, value);
     }
 
     @Override
