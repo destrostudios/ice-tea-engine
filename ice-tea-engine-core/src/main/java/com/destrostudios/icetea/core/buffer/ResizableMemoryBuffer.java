@@ -4,65 +4,56 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 import lombok.Getter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.vma.VmaAllocationInfo;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 
 public class ResizableMemoryBuffer extends ResizableBuffer {
 
     public ResizableMemoryBuffer(ResizableMemoryBuffer resizableMemoryBuffer) {
-        this(resizableMemoryBuffer.usage, resizableMemoryBuffer.properties);
+        this(resizableMemoryBuffer.bufferUsage, resizableMemoryBuffer.memoryUsage, resizableMemoryBuffer.memoryFlags);
     }
 
-    public ResizableMemoryBuffer(int usage, int properties) {
-        this.usage = usage;
-        this.properties = properties;
+    public ResizableMemoryBuffer(int bufferUsage, int memoryUsage, int memoryFlags) {
+        this.bufferUsage = bufferUsage;
+        this.memoryUsage = memoryUsage;
+        this.memoryFlags = memoryFlags;
     }
-    private int usage;
-    private int properties;
+    private int bufferUsage;
+    private int memoryUsage;
+    private int memoryFlags;
     @Getter
     protected Long buffer;
-    protected Long bufferMemory;
+    protected Long allocation;
+    protected VmaAllocationInfo allocationInfo;
 
     @Override
     protected void createBuffer() {
         try (MemoryStack stack = stackPush()) {
             LongBuffer pBuffer = stack.mallocLong(1);
-            LongBuffer pBufferMemory = stack.mallocLong(1);
-            application.getBufferManager().createBuffer(size, usage, properties, pBuffer, pBufferMemory);
+            PointerBuffer pAllocation = stack.mallocPointer(1);
+            allocationInfo = VmaAllocationInfo.callocStack(stack);
+            application.getMemoryManager().createBuffer(size, bufferUsage, memoryUsage, memoryFlags, pBuffer, pAllocation, allocationInfo);
             buffer = pBuffer.get(0);
-            bufferMemory = pBufferMemory.get(0);
+            allocation = pAllocation.get(0);
         }
     }
 
     @Override
     protected void write(Consumer<ByteBuffer> write) {
-        try (MemoryStack stack = stackPush()) {
-            PointerBuffer dataPointer = stack.mallocPointer(1);
-            int result = vkMapMemory(application.getLogicalDevice(), bufferMemory, 0, size, 0, dataPointer);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to map memory (result = " + result + ")");
-            }
-            ByteBuffer byteBuffer = dataPointer.getByteBuffer(0, (int) size);
-            write.accept(byteBuffer);
-            vkUnmapMemory(application.getLogicalDevice(), bufferMemory);
-        }
+        application.getMemoryManager().writeBuffer(allocation, size, write);
     }
 
     @Override
     protected void cleanupBuffer() {
         if (buffer != null) {
-            vkDestroyBuffer(application.getLogicalDevice(), buffer, null);
+            application.getMemoryManager().destroyBuffer(buffer, allocation);
             buffer = null;
-        }
-        if (bufferMemory != null) {
-            vkFreeMemory(application.getLogicalDevice(), bufferMemory, null);
-            bufferMemory = null;
+            allocation = null;
         }
     }
 

@@ -106,10 +106,10 @@ public class Mesh extends MultiConsumableNativeObject<Geometry> implements Conte
         super.updateNative();
         if (buffersOutdated) {
             if (vertexBuffer == null) {
-                vertexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+                vertexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
             }
             if ((indices != null) && (indexBuffer == null)) {
-                indexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+                indexBuffer = new StagedResizableMemoryBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
             }
         }
         updateVertexBufferNative();

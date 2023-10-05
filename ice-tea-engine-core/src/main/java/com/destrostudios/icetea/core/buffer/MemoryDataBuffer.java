@@ -2,13 +2,12 @@ package com.destrostudios.icetea.core.buffer;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 
-import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+import static org.lwjgl.util.vma.Vma.*;
 
 public class MemoryDataBuffer extends FieldsDataBuffer<ResizableMemoryBuffer> {
 
-    public MemoryDataBuffer(int usage, boolean aligned) {
-        super(new ResizableMemoryBuffer(usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT), aligned);
+    public MemoryDataBuffer(int bufferUsage, boolean aligned) {
+        super(new ResizableMemoryBuffer(bufferUsage, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT), aligned);
     }
 
     public MemoryDataBuffer(MemoryDataBuffer memoryDataBufferResource, CloneContext context) {

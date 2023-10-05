@@ -3,12 +3,13 @@ package com.destrostudios.icetea.core.buffer;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class StagedResizableMemoryBuffer extends ResizableMemoryBuffer {
 
-    public StagedResizableMemoryBuffer(int usage, int properties) {
-        super(usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, properties);
+    public StagedResizableMemoryBuffer(int bufferUsage) {
+        super(bufferUsage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 0);
         stagingBuffer = new StagingResizableMemoryBuffer();
     }
     private StagingResizableMemoryBuffer stagingBuffer;
@@ -28,7 +29,7 @@ public class StagedResizableMemoryBuffer extends ResizableMemoryBuffer {
     @Override
     protected void write(Consumer<ByteBuffer> write) {
         stagingBuffer.write(write);
-        application.getBufferManager().copyBuffer(stagingBuffer.getBuffer(), buffer, size);
+        application.getMemoryManager().copyBuffer(stagingBuffer.getBuffer(), buffer, size);
     }
 
     @Override

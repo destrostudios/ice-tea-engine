@@ -69,7 +69,7 @@ public abstract class Application {
     @Getter
     private PhysicalDeviceManager physicalDeviceManager;
     @Getter
-    private BufferManager bufferManager;
+    private MemoryManager memoryManager;
     @Getter
     private ImageManager imageManager;
     @Getter
@@ -136,7 +136,6 @@ public abstract class Application {
     private void create() {
         LOGGER.debug("Creating application...");
         physicalDeviceManager = new PhysicalDeviceManager(this);
-        bufferManager = new BufferManager(this);
         imageManager = new ImageManager(this);
         inputManager = new InputManager(this);
         assetManager = new AssetManager();
@@ -156,6 +155,7 @@ public abstract class Application {
         initSurface();
         initPhysicalDevice();
         initLogicalDevice();
+        initMemoryManager();
         initSceneCamera();
         initGuiCamera();
         commandPool = new CommandPool(this);
@@ -367,6 +367,13 @@ public abstract class Application {
         }
     }
 
+    private void initMemoryManager() {
+        LOGGER.debug("Initializing memory manager...");
+        memoryManager = new MemoryManager(this);
+        memoryManager.init();
+        LOGGER.debug("Initialized memory manager.");
+    }
+
     private void initSceneCamera() {
         sceneCamera = new SceneCamera();
         float fieldOfViewY = (float) (Math.PI / 4);
@@ -545,6 +552,7 @@ public abstract class Application {
         inputManager.cleanup();
         assetManager.cleanup();
         cleanupNativeState();
+        memoryManager.cleanup();
         vkDestroyDevice(logicalDevice, null);
         vkDestroySurfaceKHR(instance, surface, null);
         if (debugMessenger != null) {

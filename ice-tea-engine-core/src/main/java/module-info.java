@@ -5,6 +5,7 @@ module com.destrostudios.icetea.core {
     requires transitive org.lwjgl.openal;
     requires transitive org.lwjgl.shaderc;
     requires transitive org.lwjgl.stb;
+    requires transitive org.lwjgl.vma;
     requires transitive org.lwjgl.vulkan;
     requires transitive org.joml;
     requires obj;
