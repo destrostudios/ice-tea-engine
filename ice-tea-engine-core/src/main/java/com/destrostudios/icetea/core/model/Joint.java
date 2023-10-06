@@ -16,7 +16,6 @@ public class Joint implements ContextCloneable {
         this.localResetTransform = localResetTransform;
         localPoseTransform = new Transform();
         worldPoseTransform = new Transform();
-        isWorldTransformOutdated = true;
         jointMatrix = new Matrix4f();
         resetPose();
     }
@@ -28,9 +27,9 @@ public class Joint implements ContextCloneable {
         localResetTransform = joint.localResetTransform.clone(context);
         localPoseTransform = joint.localPoseTransform.clone(context);
         worldPoseTransform = joint.worldPoseTransform.clone(context);
-        isWorldTransformOutdated = joint.isWorldTransformOutdated;
         jointMatrix = new Matrix4f(joint.jointMatrix);
     }
+    @Getter
     private Joint parent;
     @Getter
     private Joint[] children;
@@ -40,7 +39,6 @@ public class Joint implements ContextCloneable {
     private Transform localPoseTransform;
     @Getter
     private Transform worldPoseTransform;
-    private boolean isWorldTransformOutdated;
     @Getter
     private Matrix4f jointMatrix;
 
@@ -65,16 +63,14 @@ public class Joint implements ContextCloneable {
         localPoseTransform.setScale(scale);
     }
 
-    public void applyLogicalState() {
-        if (localPoseTransform.updateMatrixIfNecessary()) {
-            setWorldTransformOutdated();
-        }
+    public void updateJointMatrix(boolean wasParentWorldTransformUpdated) {
+        boolean hasLocalTransformChanged = localPoseTransform.updateMatrixIfNecessary();
+        boolean isWorldTransformOutdated = (hasLocalTransformChanged || wasParentWorldTransformUpdated);
         if (isWorldTransformOutdated) {
             updateWorldTransform();
-            // We have to make sure that the children are (at least once) updated after the parent, so they have the correct world transform
-            for (Joint child : children) {
-                child.applyLogicalState();
-            }
+        }
+        for (Joint child : children) {
+            child.updateJointMatrix(isWorldTransformOutdated);
         }
     }
 
@@ -86,14 +82,6 @@ public class Joint implements ContextCloneable {
             worldPoseTransform.set(localPoseTransform);
         }
         worldPoseTransform.getMatrix().mul(inverseBindMatrix, jointMatrix);
-        isWorldTransformOutdated = false;
-    }
-
-    private void setWorldTransformOutdated() {
-        isWorldTransformOutdated = true;
-        for (Joint child : children) {
-            child.setWorldTransformOutdated();
-        }
     }
 
     @Override

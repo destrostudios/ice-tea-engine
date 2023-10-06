@@ -46,9 +46,10 @@ public class Skeleton extends LogicalObject implements ContextCloneable {
     public void applyLogicalState() {
         super.applyLogicalState();
         for (Joint joint : joints) {
-            joint.applyLogicalState();
+            if (joint.getParent() == null) {
+                joint.updateJointMatrix(false);
+            }
         }
-        // Update the joint matrices after all were updated because a child might be in the array before its parent and would otherwise have a wrong world transform
         for (int i = 0; i < joints.length; i++) {
             jointMatrices[i].set(joints[i].getJointMatrix());
         }
