@@ -331,7 +331,10 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
             renderPassBeginInfo.renderPass(renderJob.getRenderPass());
             renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
-            renderPassBeginInfo.pClearValues(renderJob.getClearValues(stack));
+            VkClearValue.Buffer clearValues = renderJob.getClearValues(stack);
+            if (clearValues != null) {
+                renderPassBeginInfo.pClearValues(clearValues);
+            }
 
             int frameBufferIndex = 0;
             for (long frameBuffer : renderJob.getFrameBuffersToRender(imageIndex)) {

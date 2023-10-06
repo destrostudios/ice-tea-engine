@@ -8,7 +8,6 @@ import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
-import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -56,7 +55,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
             VkAttachmentDescription multisampledColorAttachment = attachments.get(0);
             multisampledColorAttachment.format(colorFormat);
             multisampledColorAttachment.samples(application.getMsaaSamples());
-            multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+            multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             multisampledColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
             multisampledColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             multisampledColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
@@ -128,11 +127,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
 
     @Override
     public VkClearValue.Buffer getClearValues(MemoryStack stack) {
-        VkClearValue.Buffer clearValues = VkClearValue.callocStack(1, stack);
-        // TODO: Check if this is even needed for all fullscreen quad render jobs
-        Vector4f clearColor = application.getConfig().getClearColor();
-        clearValues.get(0).color().float32(stack.floats(clearColor.x(), clearColor.y(), clearColor.z(), clearColor.w()));
-        return clearValues;
+        return null;
     }
 
     @Override
