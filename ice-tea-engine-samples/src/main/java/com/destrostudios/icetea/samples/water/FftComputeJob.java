@@ -9,6 +9,7 @@ import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
@@ -17,6 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class FftComputeJob extends ComputeJob {
@@ -90,7 +92,7 @@ public class FftComputeJob extends ComputeJob {
             int mipLevels = 1;
 
             LongBuffer pImage = stack.mallocLong(1);
-            LongBuffer pImageMemory = stack.mallocLong(1);
+            PointerBuffer pImageAllocation = stack.mallocPointer(1);
             application.getImageManager().createImage(
                 width,
                 height,
@@ -98,13 +100,13 @@ public class FftComputeJob extends ComputeJob {
                 VK_SAMPLE_COUNT_1_BIT,
                 format,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                 1,
                 pImage,
-                pImageMemory
+                pImageAllocation
             );
             long image = pImage.get(0);
-            long imageMemory = pImageMemory.get(0);
+            long imageAllocation = pImageAllocation.get(0);
 
             int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             application.getImageManager().transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, mipLevels);
@@ -141,7 +143,7 @@ public class FftComputeJob extends ComputeJob {
             }
             long imageSampler = pImageSampler.get(0);
 
-            texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
+            texture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
         }
     }
 

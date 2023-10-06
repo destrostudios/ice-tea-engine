@@ -459,17 +459,6 @@ public abstract class Application {
         swapChain.updateNative(this);
     }
 
-    public int findMemoryType(int typeFilter, int properties) {
-        VkPhysicalDeviceMemoryProperties memoryProperties = VkPhysicalDeviceMemoryProperties.mallocStack();
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice, memoryProperties);
-        for (int i = 0;i < memoryProperties.memoryTypeCount(); i++) {
-            if (((typeFilter & (1 << i)) != 0) && ((memoryProperties.memoryTypes(i).propertyFlags() & properties) == properties)) {
-                return i;
-            }
-        }
-        throw new RuntimeException("Failed to find suitable memory type");
-    }
-
     public void setLight(Light light) {
         light.setModified(true);
         this.light = light;

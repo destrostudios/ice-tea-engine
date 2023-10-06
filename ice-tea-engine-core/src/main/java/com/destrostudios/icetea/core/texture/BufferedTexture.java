@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core.texture;
 import com.destrostudios.icetea.core.buffer.StagingResizableMemoryBuffer;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class BufferedTexture extends Texture {
@@ -55,8 +57,8 @@ public class BufferedTexture extends Texture {
             textureData.getCleanup().run();
 
             mipLevels = (int) (Math.floor(MathUtil.log2(Math.max(textureData.getWidth(), textureData.getHeight()))) + 1);
-            LongBuffer pTextureImage = stack.mallocLong(1);
-            LongBuffer pTextureImageMemory = stack.mallocLong(1);
+            LongBuffer pImage = stack.mallocLong(1);
+            PointerBuffer pImageAllocation = stack.mallocPointer(1);
             application.getImageManager().createImage(
                 textureData.getWidth(),
                 textureData.getHeight(),
@@ -65,14 +67,14 @@ public class BufferedTexture extends Texture {
                 format,
                 // TRANSFER_SRC and TRANSFER_DST are needed for the mipmap generation below
                 VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | usage,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                 1,
-                pTextureImage,
-                pTextureImageMemory
+                pImage,
+                pImageAllocation
             );
 
-            image = pTextureImage.get(0);
-            imageMemory = pTextureImageMemory.get(0);
+            image = pImage.get(0);
+            imageAllocation = pImageAllocation.get(0);
 
             application.getImageManager().transitionImageLayout(
                 image,

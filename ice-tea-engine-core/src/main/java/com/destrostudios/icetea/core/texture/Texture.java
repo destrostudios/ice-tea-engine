@@ -11,7 +11,7 @@ public class Texture extends Resource {
     @Getter
     protected Long image;
     @Getter
-    protected Long imageMemory;
+    protected Long imageAllocation;
     @Getter
     protected Long imageView;
     @Getter
@@ -21,13 +21,13 @@ public class Texture extends Resource {
 
     private boolean wasJustSet;
 
-    public void set(long image, long imageMemory, long imageView, int imageViewLayout) {
-        set(image, imageMemory, imageView, imageViewLayout, null);
+    public void set(long image, long imageAllocation, long imageView, int imageViewLayout) {
+        set(image, imageAllocation, imageView, imageViewLayout, null);
     }
 
-    public void set(long image, long imageMemory, long imageView, int imageViewLayout, Long imageSampler) {
+    public void set(long image, long imageAllocation, long imageView, int imageViewLayout, Long imageSampler) {
         this.image = image;
-        this.imageMemory = imageMemory;
+        this.imageAllocation = imageAllocation;
         this.imageView = imageView;
         this.imageViewLayout = imageViewLayout;
         this.imageSampler = imageSampler;
@@ -57,12 +57,9 @@ public class Texture extends Resource {
             imageView = null;
         }
         if (image != null) {
-            vkDestroyImage(application.getLogicalDevice(), image, null);
+            application.getImageManager().destroyImage(image, imageAllocation);
             image = null;
-        }
-        if (imageMemory != null) {
-            vkFreeMemory(application.getLogicalDevice(), imageMemory, null);
-            imageMemory = null;
+            imageAllocation = null;
         }
         super.cleanupNativeInternal();
     }

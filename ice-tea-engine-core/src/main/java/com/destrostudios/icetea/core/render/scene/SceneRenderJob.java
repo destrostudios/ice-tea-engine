@@ -7,6 +7,7 @@ import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.render.RenderJob;
 import lombok.Getter;
 import org.joml.Vector4f;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.KHRCreateRenderpass2.vkCreateRenderPass2KHR;
 import static org.lwjgl.vulkan.KHRDepthStencilResolve.VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -205,7 +207,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             int depthFormat = findDepthFormat(stack);
 
             LongBuffer pDepthImage = stack.mallocLong(1);
-            LongBuffer pDepthImageMemory = stack.mallocLong(1);
+            PointerBuffer pDepthImageAllocation = stack.mallocPointer(1);
             application.getImageManager().createImage(
                 extent.width(),
                 extent.height(),
@@ -213,20 +215,20 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
                 application.getMsaaSamples(),
                 depthFormat,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                 1,
                 pDepthImage,
-                pDepthImageMemory
+                pDepthImageAllocation
             );
 
             long image = pDepthImage.get(0);
-            long imageMemory = pDepthImageMemory.get(0);
+            long imageAllocation = pDepthImageAllocation.get(0);
 
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
             // Will later be true because of the specified attachment transition after renderpass
             int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            multisampledDepthTexture.set(image, imageMemory, imageView, finalLayout);
+            multisampledDepthTexture.set(image, imageAllocation, imageView, finalLayout);
         }
     }
 
@@ -235,7 +237,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
             int depthFormat = findDepthFormat(stack);
 
             LongBuffer pDepthImage = stack.mallocLong(1);
-            LongBuffer pDepthImageMemory = stack.mallocLong(1);
+            PointerBuffer pDepthImageAllocation = stack.mallocPointer(1);
             application.getImageManager().createImage(
                 extent.width(),
                 extent.height(),
@@ -243,14 +245,14 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
                 VK_SAMPLE_COUNT_1_BIT,
                 depthFormat,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                 1,
                 pDepthImage,
-                pDepthImageMemory
+                pDepthImageAllocation
             );
 
             long image = pDepthImage.get(0);
-            long imageMemory = pDepthImageMemory.get(0);
+            long imageAllocation = pDepthImageAllocation.get(0);
 
             long imageView = application.getImageManager().createImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
@@ -277,7 +279,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
 
             // Will later be true because of the specified attachment transition after renderpass
             int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            resolvedDepthTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
+            resolvedDepthTexture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
         }
     }
 

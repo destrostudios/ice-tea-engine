@@ -28,32 +28,32 @@ public class ResizableMemoryBuffer extends ResizableBuffer {
     private int memoryFlags;
     @Getter
     protected Long buffer;
-    protected Long allocation;
+    protected Long bufferAllocation;
     protected VmaAllocationInfo allocationInfo;
 
     @Override
     protected void createBuffer() {
         try (MemoryStack stack = stackPush()) {
             LongBuffer pBuffer = stack.mallocLong(1);
-            PointerBuffer pAllocation = stack.mallocPointer(1);
+            PointerBuffer pBufferAllocation = stack.mallocPointer(1);
             allocationInfo = VmaAllocationInfo.callocStack(stack);
-            application.getMemoryManager().createBuffer(size, bufferUsage, memoryUsage, memoryFlags, pBuffer, pAllocation, allocationInfo);
+            application.getMemoryManager().createBuffer(size, bufferUsage, memoryUsage, memoryFlags, pBuffer, pBufferAllocation, allocationInfo);
             buffer = pBuffer.get(0);
-            allocation = pAllocation.get(0);
+            bufferAllocation = pBufferAllocation.get(0);
         }
     }
 
     @Override
     protected void write(Consumer<ByteBuffer> write) {
-        application.getMemoryManager().writeBuffer(allocation, size, write);
+        application.getMemoryManager().writeBuffer(bufferAllocation, size, write);
     }
 
     @Override
     protected void cleanupBuffer() {
         if (buffer != null) {
-            application.getMemoryManager().destroyBuffer(buffer, allocation);
+            application.getMemoryManager().destroyBuffer(buffer, bufferAllocation);
             buffer = null;
-            allocation = null;
+            bufferAllocation = null;
         }
     }
 

@@ -1,11 +1,14 @@
 package com.destrostudios.icetea.core;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.vma.*;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class ImageManager {
@@ -22,10 +25,10 @@ public class ImageManager {
         int numSamples,
         int format,
         int usage,
-        int memProperties,
+        int memoryUsage,
         int arrayLayers,
-        LongBuffer pTextureImage,
-        LongBuffer pTextureImageMemory
+        LongBuffer pImage,
+        PointerBuffer pImageAllocation
     ) {
         try (MemoryStack stack = stackPush()) {
             VkImageCreateInfo imageCreateInfo = VkImageCreateInfo.callocStack(stack);
@@ -43,23 +46,15 @@ public class ImageManager {
             imageCreateInfo.samples(numSamples);
             imageCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
-            int result = vkCreateImage(application.getLogicalDevice(), imageCreateInfo, null, pTextureImage);
+            VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.callocStack(stack);
+            allocationCreateInfo.usage(memoryUsage);
+
+            VmaAllocationInfo allocationInfo = VmaAllocationInfo.callocStack(stack);
+
+            int result = vmaCreateImage(application.getMemoryManager().getAllocator(), imageCreateInfo, allocationCreateInfo, pImage, pImageAllocation, allocationInfo);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create image (result = " + result + ")");
             }
-
-            VkMemoryAllocateInfo allocateInfo = VkMemoryAllocateInfo.callocStack(stack);
-            allocateInfo.sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
-            VkMemoryRequirements memoryRequirements = VkMemoryRequirements.mallocStack(stack);
-            vkGetImageMemoryRequirements(application.getLogicalDevice(), pTextureImage.get(0), memoryRequirements);
-            allocateInfo.allocationSize(memoryRequirements.size());
-            allocateInfo.memoryTypeIndex(application.findMemoryType(memoryRequirements.memoryTypeBits(), memProperties));
-
-            result = vkAllocateMemory(application.getLogicalDevice(), allocateInfo, null, pTextureImageMemory);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate image memory (result = " + result + ")");
-            }
-            vkBindImageMemory(application.getLogicalDevice(), pTextureImage.get(0), pTextureImageMemory.get(0), 0);
         }
     }
 
@@ -220,13 +215,13 @@ public class ImageManager {
                 barrier.dstAccessMask(VK_ACCESS_TRANSFER_READ_BIT);
 
                 vkCmdPipelineBarrier(
-                        commandBuffer,
-                        VK_PIPELINE_STAGE_TRANSFER_BIT,
-                        VK_PIPELINE_STAGE_TRANSFER_BIT,
-                        0,
-                        null,
-                        null,
-                        barrier
+                    commandBuffer,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    0,
+                    null,
+                    null,
+                    barrier
                 );
 
                 VkImageBlit.Buffer blit = VkImageBlit.callocStack(1, stack);
@@ -292,5 +287,9 @@ public class ImageManager {
             );
             application.getCommandPool().endSingleTimeCommands(commandBuffer);
         }
+    }
+
+    public void destroyImage(long image, long imageAllocation) {
+        vmaDestroyImage(application.getMemoryManager().getAllocator(), image, imageAllocation);
     }
 }

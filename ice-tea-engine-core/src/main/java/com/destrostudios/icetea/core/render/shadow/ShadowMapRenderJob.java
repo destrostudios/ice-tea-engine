@@ -16,6 +16,7 @@ import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext> {
@@ -127,7 +129,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     private void initShadowMapTexture() {
         try (MemoryStack stack = stackPush()) {
             LongBuffer pImage = stack.mallocLong(1);
-            LongBuffer pImageMemory = stack.mallocLong(1);
+            PointerBuffer pImageAllocation = stack.mallocPointer(1);
             application.getImageManager().createImage(
                 shadowConfig.getShadowMapSize(),
                 shadowConfig.getShadowMapSize(),
@@ -135,13 +137,13 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
                 VK_SAMPLE_COUNT_1_BIT,
                 shadowConfig.getShadowMapFormat(),
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                 shadowConfig.getCascadesCount(),
                 pImage,
-                pImageMemory
+                pImageAllocation
             );
             long image = pImage.get(0);
-            long imageMemory = pImageMemory.get(0);
+            long imageAllocation = pImageAllocation.get(0);
 
             // Image view with all cascade layers, used to read the values inside the fragment shader (which calculates cascadeIndex and does lookup)
             long imageView = application.getImageManager().createImageView(
@@ -192,7 +194,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
 
             // Will later be true because of the specified attachment transition after renderpass
             int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            shadowMapTexture.set(image, imageMemory, imageView, finalLayout, imageSampler);
+            shadowMapTexture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
         }
     }
 

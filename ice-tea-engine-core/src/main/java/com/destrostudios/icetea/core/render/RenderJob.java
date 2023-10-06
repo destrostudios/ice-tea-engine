@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -13,6 +14,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends NativeObject {
@@ -39,7 +41,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
             int imageFormat = application.getSwapChain().getImageFormat();
 
             LongBuffer pColorImage = stack.mallocLong(1);
-            LongBuffer pColorImageMemory = stack.mallocLong(1);
+            PointerBuffer pColorImageAllocation = stack.mallocPointer(1);
             application.getImageManager().createImage(
                 extent.width(),
                 extent.height(),
@@ -47,19 +49,19 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
                 application.getMsaaSamples(),
                 imageFormat,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                 1,
                 pColorImage,
-                pColorImageMemory
+                pColorImageAllocation
             );
             long image = pColorImage.get(0);
-            long imageMemory = pColorImageMemory.get(0);
+            long imageAllocation = pColorImageAllocation.get(0);
 
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
             // Will later be true because of the specified attachment transition after renderpass
             int finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            texture.set(image, imageMemory, imageView, finalLayout);
+            texture.set(image, imageAllocation, imageView, finalLayout);
         }
     }
 
@@ -83,7 +85,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
             int imageFormat = application.getSwapChain().getImageFormat();
 
             LongBuffer pColorImage = stack.mallocLong(1);
-            LongBuffer pColorImageMemory = stack.mallocLong(1);
+            PointerBuffer pColorImageAllocation = stack.mallocPointer(1);
             application.getImageManager().createImage(
                 extent.width(),
                 extent.height(),
@@ -91,13 +93,13 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
                 VK_SAMPLE_COUNT_1_BIT,
                 imageFormat,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                 1,
                 pColorImage,
-                pColorImageMemory
+                pColorImageAllocation
             );
             long image = pColorImage.get(0);
-            long imageMemory = pColorImageMemory.get(0);
+            long imageAllocation = pColorImageAllocation.get(0);
 
             long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
@@ -124,7 +126,7 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends
 
             // Will later be true because of the specified attachment transition after renderpass
             int finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            texture.set(image, imageMemory, imageView, finalLayout, imageSampler);
+            texture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
         }
     }
 

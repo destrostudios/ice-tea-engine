@@ -29,23 +29,7 @@ public class MemoryManager {
     public void init() {
         try (MemoryStack stack = stackPush()) {
             VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.callocStack(stack);
-            vulkanFunctions.vkGetPhysicalDeviceProperties(getVkCommandAddress("vkGetPhysicalDeviceProperties"));
-            vulkanFunctions.vkGetPhysicalDeviceMemoryProperties(getVkCommandAddress("vkGetPhysicalDeviceMemoryProperties"));
-            vulkanFunctions.vkAllocateMemory(getVkCommandAddress("vkAllocateMemory"));
-            vulkanFunctions.vkFreeMemory(getVkCommandAddress("vkFreeMemory"));
-            vulkanFunctions.vkMapMemory(getVkCommandAddress("vkMapMemory"));
-            vulkanFunctions.vkUnmapMemory(getVkCommandAddress("vkUnmapMemory"));
-            vulkanFunctions.vkFlushMappedMemoryRanges(getVkCommandAddress("vkFlushMappedMemoryRanges"));
-            vulkanFunctions.vkInvalidateMappedMemoryRanges(getVkCommandAddress("vkInvalidateMappedMemoryRanges"));
-            vulkanFunctions.vkBindBufferMemory(getVkCommandAddress("vkBindBufferMemory"));
-            vulkanFunctions.vkBindImageMemory(getVkCommandAddress("vkBindImageMemory"));
-            vulkanFunctions.vkGetBufferMemoryRequirements(getVkCommandAddress("vkGetBufferMemoryRequirements"));
-            vulkanFunctions.vkGetImageMemoryRequirements(getVkCommandAddress("vkGetImageMemoryRequirements"));
-            vulkanFunctions.vkCreateBuffer(getVkCommandAddress("vkCreateBuffer"));
-            vulkanFunctions.vkDestroyBuffer(getVkCommandAddress("vkDestroyBuffer"));
-            vulkanFunctions.vkCreateImage(getVkCommandAddress("vkCreateImage"));
-            vulkanFunctions.vkDestroyImage(getVkCommandAddress("vkDestroyImage"));
-            vulkanFunctions.vkCmdCopyBuffer(getVkCommandAddress("vkCmdCopyBuffer"));
+            vulkanFunctions.set(application.getInstance(), application.getLogicalDevice());
 
             VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.callocStack(stack);
             allocatorCreateInfo.physicalDevice(application.getPhysicalDevice());
@@ -62,11 +46,7 @@ public class MemoryManager {
         }
     }
 
-    private long getVkCommandAddress(String commandName) {
-        return vkGetInstanceProcAddr(application.getInstance(), commandName);
-    }
-
-    public void createBuffer(long size, int bufferUsage, int memoryUsage, int memoryFlags, LongBuffer pBuffer, PointerBuffer pAllocation, VmaAllocationInfo allocationInfo) {
+    public void createBuffer(long size, int bufferUsage, int memoryUsage, int memoryFlags, LongBuffer pBuffer, PointerBuffer pBufferAllocation, VmaAllocationInfo allocationInfo) {
         try (MemoryStack stack = stackPush()) {
             VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.callocStack(stack);
             bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
@@ -78,23 +58,23 @@ public class MemoryManager {
             allocationCreateInfo.flags(memoryFlags);
             allocationCreateInfo.usage(memoryUsage);
 
-            int result = vmaCreateBuffer(allocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
+            int result = vmaCreateBuffer(allocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pBufferAllocation, allocationInfo);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create buffer (result = " + result + ")");
             }
         }
     }
 
-    public void writeBuffer(long allocation, long bufferSize, Consumer<ByteBuffer> write) {
+    public void writeBuffer(long bufferAllocation, long bufferSize, Consumer<ByteBuffer> write) {
         try (MemoryStack stack = stackPush()) {
             PointerBuffer dataPointer = stack.mallocPointer(1);
-            int result = vmaMapMemory(allocator, allocation, dataPointer);
+            int result = vmaMapMemory(allocator, bufferAllocation, dataPointer);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to map memory (result = " + result + ")");
             }
             ByteBuffer byteBuffer = dataPointer.getByteBuffer(0, (int) bufferSize);
             write.accept(byteBuffer);
-            vmaUnmapMemory(allocator, allocation);
+            vmaUnmapMemory(allocator, bufferAllocation);
         }
     }
 
