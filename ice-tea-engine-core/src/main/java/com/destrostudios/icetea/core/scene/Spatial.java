@@ -9,7 +9,6 @@ import com.destrostudios.icetea.core.collision.CollisionResult;
 import com.destrostudios.icetea.core.collision.CollisionResult_AABB_Ray;
 import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.object.LogicalObject;
-import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.resource.AdditionalResourceDescriptorProvider;
 import com.destrostudios.icetea.core.resource.ResourceDescriptor;
 import com.destrostudios.icetea.core.mesh.VertexPositionModifier;
@@ -53,15 +52,17 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
     @Getter
     protected BoundingBox worldBounds;
     @Getter
-    @Setter
-    private ShadowMode shadowMode;
-    @Getter
     private BoundingBox worldBoundsShadowReceive;
     @Getter
     protected Set<Control> controls = new HashSet<>();
     @Getter
     @Setter
     private RenderBucketType renderBucket;
+    @Setter
+    private boolean affectedByLight;
+    @Getter
+    @Setter
+    private ShadowMode shadowMode;
     // TODO: Introduce TempVars
     private LinkedList<ResourceDescriptor> tmpAdditionalResourceDescriptors = new LinkedList<>();
     private LinkedList<VertexPositionModifier> tmpVertexPositionModifiers = new LinkedList<>();
@@ -140,15 +141,6 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
         localTransform.scale(scale);
     }
 
-    public List<Light> getAffectingLights() {
-        List<Light> affectingLights = new LinkedList<>();
-        Light light = application.getLight();
-        if ((light != null) && light.isAffecting(this)) {
-            affectingLights.add(light);
-        }
-        return affectingLights;
-    }
-
     public void collideStatic(Ray ray, ArrayList<CollisionResult> collisionResults) {
         CollisionResult_AABB_Ray worldBoundCollision = worldBounds.collide(ray);
         if (worldBoundCollision != null) {
@@ -159,6 +151,10 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
     protected abstract void collideStatic(Ray ray, Matrix4f worldMatrix, float worldBoundsTMin, float worldBoundsTMax, ArrayList<CollisionResult> collisionResults);
 
     public abstract void collideDynamic(Ray ray, ArrayList<CollisionResult> collisionResults);
+
+    public boolean isAffectedByLight() {
+       return (affectedByLight || ((parent != null) && parent.isAffectedByLight()));
+    }
 
     public boolean isReceivingShadows() {
         return (shadowMode == ShadowMode.RECEIVE)

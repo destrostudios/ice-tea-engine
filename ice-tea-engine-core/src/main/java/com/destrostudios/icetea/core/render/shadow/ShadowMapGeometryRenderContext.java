@@ -3,15 +3,10 @@ package com.destrostudios.icetea.core.render.shadow;
 import com.destrostudios.icetea.core.render.EssentialGeometryRenderContext;
 import com.destrostudios.icetea.core.scene.Geometry;
 
-public class ShadowMapGeometryRenderContext extends EssentialGeometryRenderContext<ShadowMapRenderJob, ShadowMapRenderPipeline> {
+public class ShadowMapGeometryRenderContext extends EssentialGeometryRenderContext<ShadowMapRenderJob> {
 
     public ShadowMapGeometryRenderContext(Geometry geometry, ShadowMapRenderJob renderJob) {
         super(geometry, renderJob);
-    }
-
-    @Override
-    protected ShadowMapRenderPipeline createRenderPipeline() {
-        return new ShadowMapRenderPipeline(renderJob, geometry, this);
     }
 
     @Override

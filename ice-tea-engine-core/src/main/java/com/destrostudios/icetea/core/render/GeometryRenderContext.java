@@ -1,26 +1,24 @@
 package com.destrostudios.icetea.core.render;
 
+import com.destrostudios.icetea.core.Pipeline;
 import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
 
-public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> extends NativeObject {
+public abstract class GeometryRenderContext<RJ extends RenderJob<?>> extends NativeObject {
 
     public GeometryRenderContext(Geometry geometry, RJ renderJob) {
         this.geometry = geometry;
         this.renderJob = renderJob;
-        this.renderPipeline = createRenderPipeline();
     }
     protected RJ renderJob;
-    @Getter
-    private RP renderPipeline;
     @Getter
     protected Geometry geometry;
     @Getter
     protected ResourceDescriptorSet resourceDescriptorSet;
-
-    protected abstract RP createRenderPipeline();
+    @Getter
+    private Pipeline renderPipeline;
 
     @Override
     protected void initNative() {
@@ -32,10 +30,7 @@ public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends 
     public void updateNative() {
         super.updateNative();
         setDescriptors();
-        if (geometry.getMesh().isWereBuffersOutdated() || resourceDescriptorSet.isChanged()) {
-            resourceDescriptorSet.onChangeApplied();
-            renderPipeline.cleanupNative();
-        }
+        renderPipeline = renderJob.getRenderPipelineCreator().getOrCreatePipeline(this);
         renderPipeline.updateNative(application);
     }
 
@@ -43,7 +38,7 @@ public abstract class GeometryRenderContext<RJ extends RenderJob<?>, RP extends 
 
     @Override
     protected void cleanupNativeInternal() {
-        renderPipeline.cleanupNative();
+        // Don't cleanup (the potentially shared) renderPipeline to keep it in the PipelineManager cache (which owns and controls its lifetime)
         super.cleanupNativeInternal();
     }
 }

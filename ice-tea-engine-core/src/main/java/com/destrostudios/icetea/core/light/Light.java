@@ -6,30 +6,19 @@ import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.resource.descriptor.LightDescriptor;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
-import com.destrostudios.icetea.core.scene.Node;
-import com.destrostudios.icetea.core.scene.Spatial;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector4f;
 
-import java.util.LinkedList;
-import java.util.List;
-
 public abstract class Light extends LogicalObject {
 
     public Light() {
-        affectedSpatials = new LinkedList<>();
-        shadowMapRenderJobs = new LinkedList<>();
         lightColor = new Vector4f(1, 1, 1, 1);
         ambientColor = new Vector4f(0.1f, 0.1f, 0.1f, 1);
         specularColor = new Vector4f(1, 1, 1, 1);
         uniformBuffer = new UniformDataBuffer();
         uniformBuffer.setDescriptor("default", new LightDescriptor());
     }
-    @Getter
-    private List<Spatial> affectedSpatials;
-    @Getter
-    private List<ShadowMapRenderJob> shadowMapRenderJobs;
     @Getter
     @Setter
     private Vector4f lightColor;
@@ -41,6 +30,8 @@ public abstract class Light extends LogicalObject {
     private Vector4f specularColor;
     @Getter
     protected UniformDataBuffer uniformBuffer;
+    @Getter
+    private ShadowMapRenderJob shadowMapRenderJob;
     @Setter
     private boolean modified;
 
@@ -49,7 +40,7 @@ public abstract class Light extends LogicalObject {
         super.updateLogicalState(application, tpf);
         if (modified) {
             // TODO: Solve this properly, including updates
-            application.getSwapChain().getRenderJobManager().addPreSceneRenderJobs(shadowMapRenderJobs);
+            application.getSwapChain().getRenderJobManager().addPreSceneRenderJob(shadowMapRenderJob);
             modified = false;
         }
     }
@@ -72,34 +63,9 @@ public abstract class Light extends LogicalObject {
         uniformBuffer.updateNative(application);
     }
 
-    public void addAffectedSpatial(Spatial spatial) {
-        affectedSpatials.add(spatial);
+    public void enableShadows(ShadowConfig shadowConfig) {
+        shadowMapRenderJob = new ShadowMapRenderJob(this, shadowConfig);
         modified = true;
-    }
-
-    public void removeAffectedSpatial(Spatial spatial) {
-        affectedSpatials.add(spatial);
-        modified = true;
-    }
-
-    public void addShadows(ShadowConfig shadowConfig) {
-        shadowMapRenderJobs.add(new ShadowMapRenderJob(this, shadowConfig));
-        modified = true;
-    }
-
-    public boolean isAffecting(Spatial spatial) {
-        return affectedSpatials.stream().anyMatch(affectedSpatial -> isAffecting(affectedSpatial, spatial));
-    }
-
-    private boolean isAffecting(Spatial affectedSpatial, Spatial spatialToCheck) {
-        if (affectedSpatial == spatialToCheck) {
-            return true;
-        }
-        if (affectedSpatial instanceof Node) {
-            Node node = (Node) affectedSpatial;
-            return node.getChildren().stream().anyMatch(child -> isAffecting(child, spatialToCheck));
-        }
-        return false;
     }
 
     @Override

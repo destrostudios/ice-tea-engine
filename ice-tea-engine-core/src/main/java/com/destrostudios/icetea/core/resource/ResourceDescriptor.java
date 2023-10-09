@@ -17,11 +17,15 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class ResourceDescriptor<R extends Resource> extends NativeObject implements ContextCloneable {
 
-    public ResourceDescriptor() { }
+    public ResourceDescriptor(int stageFlags) {
+        this.stageFlags = stageFlags;
+    }
 
     public ResourceDescriptor(ResourceDescriptor<R> resourceDescriptor, CloneContext context) {
+        stageFlags = resourceDescriptor.stageFlags;
         // Set parent-child relationships afterwards to avoid circular cloning
     }
+    private int stageFlags;
     @Setter
     protected R resource;
     @Getter
@@ -49,7 +53,8 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
             layoutBinding.binding(0);
             layoutBinding.descriptorCount(1);
             layoutBinding.descriptorType(getDescriptorType());
-            initDescriptorSetLayoutBinding(layoutBinding);
+            layoutBinding.stageFlags(stageFlags);
+
             layoutCreateInfo.pBindings(layoutBinding);
 
             LongBuffer pDescriptorSetLayout = stack.mallocLong(1);
@@ -59,10 +64,6 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
             }
             descriptorSetLayout = pDescriptorSetLayout.get(0);
         }
-    }
-
-    protected void initDescriptorSetLayoutBinding(VkDescriptorSetLayoutBinding.Buffer layoutBinding) {
-
     }
 
     private void initDescriptorPool() {

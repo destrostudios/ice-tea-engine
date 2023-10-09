@@ -14,16 +14,11 @@ public abstract class ComputeActionGroup extends NativeObject {
 
     public ComputeActionGroup() {
         computeActions = new LinkedList<>();
+        computePipeline = new ComputePipeline( this);
     }
     protected ComputePipeline computePipeline;
     @Getter
     protected List<ComputeAction> computeActions;
-
-    @Override
-    protected void initNative() {
-        super.initNative();
-        computePipeline = new ComputePipeline(this);
-    }
 
     public abstract Shader getComputeShader();
 

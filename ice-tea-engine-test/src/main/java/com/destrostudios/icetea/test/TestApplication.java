@@ -78,16 +78,16 @@ public class TestApplication extends Application {
 
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
-        directionalLight.addAffectedSpatial(sceneNode);
-        directionalLight.addShadows(new ShadowConfig());
+        directionalLight.enableShadows(new ShadowConfig());
         setLight(directionalLight);
 
         SpotLight spotLight = new SpotLight();
         spotLight.setTranslation(new Vector3f(-2, 3.25f, 2.5f));
         spotLight.setRotation(new Quaternionf().rotateLocalX((float) (-0.3333f * Math.PI)));
-        spotLight.addAffectedSpatial(sceneNode);
-        spotLight.addShadows(new ShadowConfig());
+        spotLight.enableShadows(new ShadowConfig());
         // setLight(spotLight);
+
+        sceneNode.setAffectedByLight(true);
 
         nodeRotating = new Node();
         sceneNode.add(nodeRotating);

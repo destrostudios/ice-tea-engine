@@ -7,10 +7,9 @@ import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
 import com.destrostudios.icetea.core.scene.Geometry;
 
-import java.util.List;
 import java.util.function.Supplier;
 
-public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<SceneRenderJob, SceneRenderPipeline> {
+public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<SceneRenderJob> {
 
     public SceneGeometryRenderContext(Geometry geometry, SceneRenderJob renderJob, Supplier<Camera> defaultCameraSupplier, BucketRenderer bucketRenderer) {
         super(geometry, renderJob);
@@ -21,21 +20,16 @@ public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<S
     private BucketRenderer bucketRenderer;
 
     @Override
-    protected SceneRenderPipeline createRenderPipeline() {
-        return new SceneRenderPipeline(renderJob, geometry, this);
-    }
-
-    @Override
     protected void setDescriptors() {
         Camera forcedCamera = bucketRenderer.getBucket(geometry).getForcedCamera();
         Camera camera = ((forcedCamera != null) ? forcedCamera : defaultCameraSupplier.get());
         resourceDescriptorSet.setDescriptor("camera", camera.getTransformUniformBuffer().getDescriptor("default"));
 
-        // TODO: Handle multiple lights + shadows (use a descriptor binding array)
-        List<Light> affectingLights = geometry.getAffectingLights();
-        for (Light light : affectingLights) {
+        if (geometry.isAffectedByLight()) {
+            Light light = application.getLight();
             resourceDescriptorSet.setDescriptor("light", light.getUniformBuffer().getDescriptor("default"));
-            for (ShadowMapRenderJob shadowMapRenderJob : light.getShadowMapRenderJobs()) {
+            ShadowMapRenderJob shadowMapRenderJob = light.getShadowMapRenderJob();
+            if (shadowMapRenderJob != null) {
                 resourceDescriptorSet.setDescriptor("shadowInfo", shadowMapRenderJob.getShadowInfoUniformBuffer().getDescriptor("default"));
                 resourceDescriptorSet.setDescriptor("shadowMapTexture", shadowMapRenderJob.getShadowMapTexture().getDescriptor("default"));
             }

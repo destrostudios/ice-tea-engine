@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
+import com.destrostudios.icetea.core.Pipeline;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderTask;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
@@ -25,15 +26,16 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     }
     @Getter
     protected ResourceDescriptorSet resourceDescriptorSet;
-    private FullScreenQuadRenderPipeline renderPipeline;
     private Texture multisampledColorTexture;
+    private Pipeline renderPipeline;
 
     @Override
     protected void initNative() {
         super.initNative();
+        renderPipelineCreator = new FullScreenQuadRenderPipelineCreator(application, this);
+        renderPipeline = renderPipelineCreator.getOrCreatePipeline(null);
         initRenderPass();
         initResourceDescriptorSet();
-        renderPipeline = new FullScreenQuadRenderPipeline(this);
         initMultisampledColorTexture(multisampledColorTexture);
         initFrameBuffers();
     }
@@ -150,7 +152,7 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
 
     @Override
     protected void cleanupNativeInternal() {
-        renderPipeline.cleanupNative();
+        // Don't cleanup (the potentially shared) renderPipeline to keep it in the PipelineManager cache (which owns and controls its lifetime)
         multisampledColorTexture.cleanupNative();
         super.cleanupNativeInternal();
     }

@@ -75,9 +75,9 @@ public class TestSimple extends Application {
 
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
-        directionalLight.addAffectedSpatial(sceneNode);
-        directionalLight.addShadows(new ShadowConfig());
+        directionalLight.enableShadows(new ShadowConfig());
         setLight(directionalLight);
+        sceneNode.setAffectedByLight(true);
 
         BitmapFont bitmapFont = assetManager.loadBitmapFont("com/destrostudios/icetea/core/fonts/Verdana_18.fnt");
         bitmapTextDynamic = new BitmapText(bitmapFont);

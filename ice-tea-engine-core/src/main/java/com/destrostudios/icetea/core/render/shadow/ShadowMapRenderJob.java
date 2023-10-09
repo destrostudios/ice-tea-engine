@@ -54,6 +54,7 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     protected void initNative() {
         super.initNative();
+        renderPipelineCreator = new ShadowMapRenderPipelineCreator(application, this);
         initRenderPass();
         initShadowMapTexture();
         initFrameBuffer();

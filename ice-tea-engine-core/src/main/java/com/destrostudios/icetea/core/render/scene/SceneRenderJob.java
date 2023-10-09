@@ -40,6 +40,7 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
     @Override
     protected void initNative() {
         super.initNative();
+        renderPipelineCreator = new SceneRenderPipelineCreator(application, this);
         initRenderPass();
         initMultisampledColorTexture(multisampledColorTexture);
         initMultisampledDepthTexture();

@@ -9,23 +9,15 @@ import org.lwjgl.vulkan.*;
 public abstract class TextureDescriptor extends ResourceDescriptor<Texture> {
 
     public TextureDescriptor(int stageFlags, boolean isArray) {
-        this.stageFlags = stageFlags;
+        super(stageFlags);
         this.isArray = isArray;
     }
 
     public TextureDescriptor(TextureDescriptor textureDescriptor, CloneContext context) {
         super(textureDescriptor, context);
-        stageFlags = textureDescriptor.stageFlags;
         isArray = textureDescriptor.isArray;
     }
-    private int stageFlags;
     private boolean isArray;
-
-    @Override
-    protected void initDescriptorSetLayoutBinding(VkDescriptorSetLayoutBinding.Buffer layoutBinding) {
-        super.initDescriptorSetLayoutBinding(layoutBinding);
-        layoutBinding.stageFlags(stageFlags);
-    }
 
     @Override
     protected void initWriteDescriptorSet(VkWriteDescriptorSet descriptorWrite, MemoryStack stack) {

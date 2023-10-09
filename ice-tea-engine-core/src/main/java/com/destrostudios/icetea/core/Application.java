@@ -78,6 +78,8 @@ public abstract class Application {
     protected AssetManager assetManager;
     @Getter
     protected ShaderManager shaderManager;
+    @Getter
+    protected PipelineManager pipelineManager;
 
     @Getter
     private VkInstance instance;
@@ -141,6 +143,7 @@ public abstract class Application {
         assetManager = new AssetManager();
         assetManager.addLocator(new ClasspathLocator());
         shaderManager = new ShaderManager();
+        pipelineManager = new PipelineManager();
         rootNode = new Node();
         sceneNode = new Node();
         rootNode.add(sceneNode);
@@ -449,6 +452,7 @@ public abstract class Application {
 
     private void updateNativeState() {
         shaderManager.updateNative(this);
+        pipelineManager.updateNative(this);
         sceneCamera.updateNative(this);
         guiCamera.updateNative(this);
         if (light != null) {
@@ -560,6 +564,7 @@ public abstract class Application {
     public void cleanupNativeState() {
         assetManager.cleanupNative();
         swapChain.cleanupNative();
+        pipelineManager.cleanupNative();
         shaderManager.cleanupNative();
         sceneCamera.cleanupNative();
         guiCamera.cleanupNative();

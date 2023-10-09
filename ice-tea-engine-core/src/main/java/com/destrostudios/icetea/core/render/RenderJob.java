@@ -17,8 +17,10 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class RenderJob<GRC extends GeometryRenderContext<?, ?>> extends NativeObject {
+public abstract class RenderJob<GRC extends GeometryRenderContext<?>> extends NativeObject {
 
+    @Getter
+    protected RenderPipelineCreator<?, ?> renderPipelineCreator;
     @Getter
     protected VkExtent2D extent;
     @Getter

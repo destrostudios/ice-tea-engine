@@ -1,6 +1,5 @@
 package com.destrostudios.icetea.core.resource;
 
-import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.LongBuffer;
@@ -10,18 +9,14 @@ import java.util.Map;
 public class ResourceDescriptorSet {
 
     private HashMap<String, ResourceDescriptor<?>> descriptors = new HashMap<>();
-    @Getter
-    private boolean changed;
+    private boolean shaderDeclarationOutdated;
+    private String shaderDeclaration;
 
     public void setDescriptor(String name, ResourceDescriptor<?> descriptor) {
         ResourceDescriptor<?> previousDescriptor = descriptors.put(name, descriptor);
         if (descriptor != previousDescriptor) {
-            changed = true;
+            shaderDeclarationOutdated = true;
         }
-    }
-
-    public void onChangeApplied() {
-        changed = false;
     }
 
     public LongBuffer getDescriptorSetLayouts(MemoryStack stack) {
@@ -47,12 +42,15 @@ public class ResourceDescriptorSet {
     }
 
     public String getShaderDeclaration() {
-        String text = "";
-        int setIndex = 0;
-        for (Map.Entry<String, ResourceDescriptor<?>> entry : descriptors.entrySet()) {
-            text += entry.getValue().getShaderDeclaration(setIndex, entry.getKey()) + "\n\n";
-            setIndex++;
+        if (shaderDeclarationOutdated) {
+            shaderDeclaration = "";
+            int setIndex = 0;
+            for (Map.Entry<String, ResourceDescriptor<?>> entry : descriptors.entrySet()) {
+                shaderDeclaration += entry.getValue().getShaderDeclaration(setIndex, entry.getKey()) + "\n\n";
+                setIndex++;
+            }
+            shaderDeclarationOutdated = false;
         }
-        return text;
+        return shaderDeclaration;
     }
 }

@@ -42,9 +42,9 @@ public class TestTerrain extends Application {
 
         DirectionalLight directionalLight = new DirectionalLight();
         directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
-        directionalLight.addAffectedSpatial(sceneNode);
-        directionalLight.addShadows(new ShadowConfig());
+        directionalLight.enableShadows(new ShadowConfig());
         setLight(directionalLight);
+        sceneNode.setAffectedByLight(true);
 
         // Terrain
 

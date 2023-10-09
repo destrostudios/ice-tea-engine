@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.render;
 
+import com.destrostudios.icetea.core.Pipeline;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
@@ -15,9 +16,9 @@ public class GeometryRenderer {
     @Getter
     protected int[] dynamicStates;
 
-    public <RJ extends RenderJob<?>, RP extends RenderPipeline<RJ>> void render(Geometry geometry, GeometryRenderContext<RJ, RP> geometryRenderContext, VkCommandBuffer commandBuffer, RenderContext renderContext) {
+    public <RJ extends RenderJob<?>> void render(Geometry geometry, GeometryRenderContext<RJ> geometryRenderContext, VkCommandBuffer commandBuffer, RenderContext renderContext) {
         try (MemoryStack stack = stackPush()) {
-            RenderPipeline<?> renderPipeline = geometryRenderContext.getRenderPipeline();
+            Pipeline renderPipeline = geometryRenderContext.getRenderPipeline();
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
             LongBuffer vertexBuffers = stack.longs(geometry.getMesh().getVertexBuffer().getBuffer());
             LongBuffer offsets = stack.longs(0);

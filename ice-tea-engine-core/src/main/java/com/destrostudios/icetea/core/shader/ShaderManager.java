@@ -1,23 +1,48 @@
 package com.destrostudios.icetea.core.shader;
 
 import com.destrostudios.icetea.core.object.NativeObject;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
+import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.shaderc.Shaderc.*;
+import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public class ShaderManager extends NativeObject {
 
     private HashMap<String, String> filesCache = new HashMap<>();
     private LinkedHashMap<String, SPIRV> spirvCache = new LinkedHashMap<>();
+    // TODO: Make configurable
     private int maximumCachedSPIRVs = 1000;
 
-    public ByteBuffer getCompiledShaderCode(Shader shader, ShaderType shaderType, String additionalDeclarations) {
+    public long createShaderModule(Shader shader, ShaderType shaderType, String additionalDeclarations) {
+        try (MemoryStack stack = stackPush()) {
+            ByteBuffer compiledShaderCode = getCompiledShaderCode(shader, shaderType, additionalDeclarations);
+
+            VkShaderModuleCreateInfo shaderModuleCreateInfo = VkShaderModuleCreateInfo.callocStack(stack);
+            shaderModuleCreateInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
+            shaderModuleCreateInfo.pCode(compiledShaderCode);
+
+            LongBuffer pShaderModule = stack.mallocLong(1);
+            int result = vkCreateShaderModule(application.getLogicalDevice(), shaderModuleCreateInfo, null, pShaderModule);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create shader module (result = " + result + ")");
+            }
+            return pShaderModule.get(0);
+        }
+    }
+
+    private ByteBuffer getCompiledShaderCode(Shader shader, ShaderType shaderType, String additionalDeclarations) {
         String combinedSource = getCombinedShaderSource(shader, additionalDeclarations);
         return getOrCompileShaderSource(shader.getFilePath(), combinedSource, shaderType);
     }
@@ -86,6 +111,14 @@ public class ShaderManager extends NativeObject {
         }
         shaderc_compiler_release(compiler);
         return new SPIRV(result, shaderc_result_get_bytes(result));
+    }
+
+    public void createShaderStage(VkPipelineShaderStageCreateInfo.Buffer shaderStages, int shaderStageIndex, int shaderStage, long shaderModule, MemoryStack stack) {
+        VkPipelineShaderStageCreateInfo shaderStageCreateInfo = shaderStages.get(shaderStageIndex);
+        shaderStageCreateInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+        shaderStageCreateInfo.stage(shaderStage);
+        shaderStageCreateInfo.module(shaderModule);
+        shaderStageCreateInfo.pName(stack.UTF8("main"));
     }
 
     @Override
