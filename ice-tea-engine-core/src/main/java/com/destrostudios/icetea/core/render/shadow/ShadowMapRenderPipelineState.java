@@ -8,9 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)
-public class ShadowMapRenderPipelineStateEssential extends EssentialGeometryRenderPipelineState {
+public class ShadowMapRenderPipelineState extends EssentialGeometryRenderPipelineState {
 
-    public ShadowMapRenderPipelineStateEssential(String jobId) {
+    public ShadowMapRenderPipelineState(String jobId) {
         super(jobId);
     }
 }

@@ -5,7 +5,6 @@ import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.data.values.DataValue;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.render.scene.SceneRenderPipelineStateEssential;
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.scene.Geometry;
 
@@ -30,7 +29,7 @@ public abstract class EssentialGeometryRenderPipelineCreator<RJ extends RenderJo
             .map((entry) -> {
                 String name = entry.getKey();
                 DataValue<?> dataValue = entry.getValue();
-                return new SceneRenderPipelineStateEssential.VertexField(
+                return new EssentialGeometryRenderPipelineState.VertexField(
                     name,
                     dataValue.getShaderDefinitionType(),
                     dataValue.getFormat(),

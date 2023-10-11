@@ -15,15 +15,15 @@ import java.util.LinkedList;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineCreator<SceneRenderJob, SceneRenderPipelineStateEssential> {
+public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineCreator<SceneRenderJob, SceneRenderPipelineState> {
 
     public SceneRenderPipelineCreator(Application application, SceneRenderJob renderJob) {
         super(application, renderJob);
     }
 
     @Override
-    protected SceneRenderPipelineStateEssential createState(GeometryRenderContext<SceneRenderJob> geometryRenderContext) {
-        SceneRenderPipelineStateEssential state = new SceneRenderPipelineStateEssential("renderScene");
+    protected SceneRenderPipelineState createState(GeometryRenderContext<SceneRenderJob> geometryRenderContext) {
+        SceneRenderPipelineState state = new SceneRenderPipelineState("renderScene");
         fillEssentialGeometryState(state, geometryRenderContext);
 
         Geometry geometry = geometryRenderContext.getGeometry();
@@ -33,7 +33,7 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
     }
 
     @Override
-    protected Pipeline createPipeline(SceneRenderPipelineStateEssential state, LongBuffer descriptorSetLayouts, MemoryStack stack) {
+    protected Pipeline createPipeline(SceneRenderPipelineState state, LongBuffer descriptorSetLayouts, MemoryStack stack) {
         int shaderStagesCount = 2;
         if (state.getTessellationControlShader() != null) {
             shaderStagesCount++;

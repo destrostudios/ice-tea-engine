@@ -9,9 +9,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)
-public class SceneRenderPipelineStateEssential extends EssentialGeometryRenderPipelineState {
+public class SceneRenderPipelineState extends EssentialGeometryRenderPipelineState {
 
-    public SceneRenderPipelineStateEssential(String jobId) {
+    public SceneRenderPipelineState(String jobId) {
         super(jobId);
     }
     // Material

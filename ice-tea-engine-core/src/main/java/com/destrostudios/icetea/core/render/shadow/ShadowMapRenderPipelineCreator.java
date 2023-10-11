@@ -15,21 +15,21 @@ import java.util.LinkedList;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipelineCreator<ShadowMapRenderJob, ShadowMapRenderPipelineStateEssential> {
+public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipelineCreator<ShadowMapRenderJob, ShadowMapRenderPipelineState> {
 
     public ShadowMapRenderPipelineCreator(Application application, ShadowMapRenderJob renderJob) {
         super(application, renderJob);
     }
 
     @Override
-    protected ShadowMapRenderPipelineStateEssential createState(GeometryRenderContext<ShadowMapRenderJob> geometryRenderContext) {
-        ShadowMapRenderPipelineStateEssential state = new ShadowMapRenderPipelineStateEssential("renderShadowMap");
+    protected ShadowMapRenderPipelineState createState(GeometryRenderContext<ShadowMapRenderJob> geometryRenderContext) {
+        ShadowMapRenderPipelineState state = new ShadowMapRenderPipelineState("renderShadowMap");
         fillEssentialGeometryState(state, geometryRenderContext);
         return state;
     }
 
     @Override
-    protected Pipeline createPipeline(ShadowMapRenderPipelineStateEssential state, LongBuffer descriptorSetLayouts, MemoryStack stack) {
+    protected Pipeline createPipeline(ShadowMapRenderPipelineState state, LongBuffer descriptorSetLayouts, MemoryStack stack) {
         int shaderStagesCount = 1;
         if (state.getTessellationControlShader() != null) {
             shaderStagesCount++;
