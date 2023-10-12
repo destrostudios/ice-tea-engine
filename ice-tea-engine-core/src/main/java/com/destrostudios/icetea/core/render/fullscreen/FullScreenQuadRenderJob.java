@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
 import com.destrostudios.icetea.core.Pipeline;
+import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderTask;
 import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
@@ -19,7 +20,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRenderContext> {
+public abstract class FullScreenQuadRenderJob extends RenderJob<GeometryRenderContext<?>, FullScreenQuadRenderPipelineCreator> {
 
     public FullScreenQuadRenderJob() {
         multisampledColorTexture = new Texture();
@@ -32,12 +33,12 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
     @Override
     protected void initNative() {
         super.initNative();
-        renderPipelineCreator = new FullScreenQuadRenderPipelineCreator(application, this);
-        renderPipeline = renderPipelineCreator.getOrCreatePipeline(null);
         initRenderPass();
         initResourceDescriptorSet();
         initMultisampledColorTexture(multisampledColorTexture);
         initFrameBuffers();
+        renderPipelineCreator = new FullScreenQuadRenderPipelineCreator(application, this);
+        initRenderPipeline();
     }
 
     @Override
@@ -106,6 +107,12 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<SceneGeometryRen
 
     protected void initResourceDescriptorSet() {
         resourceDescriptorSet = new ResourceDescriptorSet();
+    }
+
+    private void initRenderPipeline() {
+        FullScreenQuadRenderPipelineState state = new FullScreenQuadRenderPipelineState("renderFullScreenQuad");
+        state.setFragmentShader(getFragmentShader());
+        renderPipeline = renderPipelineCreator.getOrCreatePipeline(state, resourceDescriptorSet);
     }
 
     public abstract Shader getFragmentShader();

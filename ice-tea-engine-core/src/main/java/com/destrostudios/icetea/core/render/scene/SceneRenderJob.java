@@ -24,7 +24,7 @@ import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.*;
 
-public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext> {
+public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext, SceneRenderPipelineCreator> {
 
     public SceneRenderJob() {
         multisampledColorTexture = new Texture();

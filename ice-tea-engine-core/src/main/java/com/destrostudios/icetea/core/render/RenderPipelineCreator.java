@@ -2,6 +2,7 @@ package com.destrostudios.icetea.core.render;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Pipeline;
+import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.VK_VERTEX_INPUT_RATE_VERTEX;
 
-public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends PipelineState> {
+public abstract class RenderPipelineCreator<RJ extends RenderJob<?, ?>, PS extends PipelineState> {
 
     public RenderPipelineCreator(Application application, RJ renderJob) {
         this.application = application;
@@ -25,11 +26,13 @@ public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends 
 
     public Pipeline getOrCreatePipeline(GeometryRenderContext geometryRenderContext) {
         PS state = (PS) createState(geometryRenderContext);
+        return getOrCreatePipeline(state, geometryRenderContext.getResourceDescriptorSet());
+    }
+
+    public Pipeline getOrCreatePipeline(PS state, ResourceDescriptorSet resourceDescriptorSet) {
         return application.getPipelineManager().getOrCreate(state, s -> {
             try (MemoryStack stack = stackPush()) {
-                // Since GeometryRenderPipelineState contains the whole descriptorSetShaderDeclaration, this is matching
-                LongBuffer descriptorSetLayouts = geometryRenderContext.getResourceDescriptorSet().getDescriptorSetLayouts(stack);
-                return createPipeline(s, descriptorSetLayouts, stack);
+                return createPipeline(s, resourceDescriptorSet.getDescriptorSetLayouts(stack), stack);
             }
         });
     }

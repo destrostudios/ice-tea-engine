@@ -9,8 +9,8 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 public abstract class MemoryBufferDataDescriptor<B extends MemoryDataBuffer> extends ResourceDescriptor<B> {
 
-    public MemoryBufferDataDescriptor(int stageFlags) {
-        super(stageFlags);
+    public MemoryBufferDataDescriptor(int descriptorType, int stageFlags) {
+        super(descriptorType, stageFlags);
     }
 
     public MemoryBufferDataDescriptor(MemoryBufferDataDescriptor<B> memoryBufferDataDescriptor, CloneContext context) {

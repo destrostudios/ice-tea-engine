@@ -7,16 +7,11 @@ import static org.lwjgl.vulkan.VK10.*;
 public class SimpleTextureDescriptor extends TextureDescriptor {
 
     public SimpleTextureDescriptor() {
-        super(VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, false);
+        super(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, false);
     }
 
     public SimpleTextureDescriptor(SimpleTextureDescriptor simpleTextureDescriptor, CloneContext context) {
         super(simpleTextureDescriptor, context);
-    }
-
-    @Override
-    protected int getDescriptorType() {
-        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     }
 
     @Override

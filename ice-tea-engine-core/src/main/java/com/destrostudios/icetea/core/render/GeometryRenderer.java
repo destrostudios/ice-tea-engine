@@ -16,7 +16,7 @@ public class GeometryRenderer {
     @Getter
     protected int[] dynamicStates;
 
-    public <RJ extends RenderJob<?>> void render(Geometry geometry, GeometryRenderContext<RJ> geometryRenderContext, VkCommandBuffer commandBuffer, RenderContext renderContext) {
+    public <RJ extends RenderJob<?, ?>> void render(Geometry geometry, GeometryRenderContext<RJ> geometryRenderContext, VkCommandBuffer commandBuffer, RenderContext renderContext) {
         try (MemoryStack stack = stackPush()) {
             Pipeline renderPipeline = geometryRenderContext.getRenderPipeline();
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());

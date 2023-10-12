@@ -20,12 +20,11 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
     public FullScreenQuadRenderPipelineCreator(Application application, FullScreenQuadRenderJob renderJob) {
         super(application, renderJob);
     }
-    private FullScreenQuadRenderPipelineState state = new FullScreenQuadRenderPipelineState("renderFullScreenQuad");
     private Shader vertShader = new Shader("com/destrostudios/icetea/core/shaders/fullScreenQuad.vert");
 
     @Override
     protected FullScreenQuadRenderPipelineState createState(GeometryRenderContext<FullScreenQuadRenderJob> geometryRenderContext) {
-        return state;
+        throw new UnsupportedOperationException();
     }
 
     @Override

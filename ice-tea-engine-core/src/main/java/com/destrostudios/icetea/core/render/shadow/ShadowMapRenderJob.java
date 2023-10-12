@@ -28,7 +28,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext> {
+public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext, ShadowMapRenderPipelineCreator> {
 
     public ShadowMapRenderJob(Light light, ShadowConfig shadowConfig) {
         this.light = light;

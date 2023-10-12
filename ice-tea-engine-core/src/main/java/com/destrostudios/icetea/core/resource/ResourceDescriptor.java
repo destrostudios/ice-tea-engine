@@ -17,14 +17,17 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class ResourceDescriptor<R extends Resource> extends NativeObject implements ContextCloneable {
 
-    public ResourceDescriptor(int stageFlags) {
+    public ResourceDescriptor(int descriptorType, int stageFlags) {
+        this.descriptorType = descriptorType;
         this.stageFlags = stageFlags;
     }
 
     public ResourceDescriptor(ResourceDescriptor<R> resourceDescriptor, CloneContext context) {
+        descriptorType = resourceDescriptor.descriptorType;
         stageFlags = resourceDescriptor.stageFlags;
         // Set parent-child relationships afterwards to avoid circular cloning
     }
+    private int descriptorType;
     private int stageFlags;
     @Setter
     protected R resource;
@@ -52,7 +55,7 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
             VkDescriptorSetLayoutBinding.Buffer layoutBinding = VkDescriptorSetLayoutBinding.callocStack(1, stack);
             layoutBinding.binding(0);
             layoutBinding.descriptorCount(1);
-            layoutBinding.descriptorType(getDescriptorType());
+            layoutBinding.descriptorType(descriptorType);
             layoutBinding.stageFlags(stageFlags);
 
             layoutCreateInfo.pBindings(layoutBinding);
@@ -75,7 +78,7 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
 
             VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.callocStack(1, stack);
             poolSize.descriptorCount(descriptorSets.length);
-            poolSize.type(getDescriptorType());
+            poolSize.type(descriptorType);
             poolCreateInfo.pPoolSizes(poolSize);
 
             LongBuffer pDescriptorPool = stack.mallocLong(1);
@@ -126,7 +129,7 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
                 descriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
                 descriptorWrite.dstSet(descriptorSets[i]);
                 descriptorWrite.dstBinding(0);
-                descriptorWrite.descriptorType(getDescriptorType());
+                descriptorWrite.descriptorType(descriptorType);
                 descriptorWrite.descriptorCount(1);
                 descriptorWrite.dstArrayElement(0);
                 initWriteDescriptorSet(descriptorWrite, stack);
@@ -138,8 +141,6 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
     protected void initWriteDescriptorSet(VkWriteDescriptorSet descriptorWrite, MemoryStack stack) {
 
     }
-
-    protected abstract int getDescriptorType();
 
     public String getShaderDeclaration(int setIndex, String name) {
         String text = "";

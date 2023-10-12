@@ -9,6 +9,7 @@ public class FullScreenTextureRenderJob extends FullScreenQuadRenderJob {
         this.texture = texture;
     }
     private Texture texture;
+    private Shader fragmentShader = new Shader("com/destrostudios/icetea/core/shaders/fullScreenTexture.frag");
 
     @Override
     protected void initResourceDescriptorSet() {
@@ -24,6 +25,6 @@ public class FullScreenTextureRenderJob extends FullScreenQuadRenderJob {
 
     @Override
     public Shader getFragmentShader() {
-        return new Shader("com/destrostudios/icetea/core/shaders/fullScreenTexture.frag");
+        return fragmentShader;
     }
 }

@@ -8,8 +8,8 @@ import org.lwjgl.vulkan.*;
 
 public abstract class TextureDescriptor extends ResourceDescriptor<Texture> {
 
-    public TextureDescriptor(int stageFlags, boolean isArray) {
-        super(stageFlags);
+    public TextureDescriptor(int descriptorType, int stageFlags, boolean isArray) {
+        super(descriptorType, stageFlags);
         this.isArray = isArray;
     }
 

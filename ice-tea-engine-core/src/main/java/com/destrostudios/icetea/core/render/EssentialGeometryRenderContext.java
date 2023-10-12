@@ -7,7 +7,7 @@ import com.destrostudios.icetea.core.texture.Texture;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class EssentialGeometryRenderContext<RJ extends RenderJob<?>> extends GeometryRenderContext<RJ> {
+public abstract class EssentialGeometryRenderContext<RJ extends RenderJob<?, ?>> extends GeometryRenderContext<RJ> {
 
     public EssentialGeometryRenderContext(Geometry geometry, RJ renderJob) {
         super(geometry, renderJob);

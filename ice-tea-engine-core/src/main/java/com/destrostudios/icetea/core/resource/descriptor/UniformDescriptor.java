@@ -12,16 +12,11 @@ import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 public class UniformDescriptor extends MemoryBufferDataDescriptor<UniformDataBuffer> {
 
     public UniformDescriptor(int stageFlags) {
-        super(stageFlags);
+        super(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, stageFlags);
     }
 
     public UniformDescriptor(UniformDescriptor uniformDescriptor, CloneContext context) {
         super(uniformDescriptor, context);
-    }
-
-    @Override
-    protected int getDescriptorType() {
-        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     }
 
     @Override

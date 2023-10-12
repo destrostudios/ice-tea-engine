@@ -17,11 +17,11 @@ public class RenderJobManager extends NativeObject {
         queuePostScene = new LinkedList<>();
     }
     @Getter
-    private LinkedList<RenderJob<?>> queuePreScene;
+    private LinkedList<RenderJob<?, ?>> queuePreScene;
     @Getter
     private SceneRenderJob sceneRenderJob;
     @Getter
-    private LinkedList<RenderJob<?>> queuePostScene;
+    private LinkedList<RenderJob<?, ?>> queuePostScene;
     private boolean modified;
 
     @Override
@@ -36,11 +36,11 @@ public class RenderJobManager extends NativeObject {
         forEachRenderJob(RenderJob::updateRenderContextsNative);
     }
 
-    public RenderJob<?> getPresentingRenderJob() {
+    public RenderJob<?, ?> getPresentingRenderJob() {
         return ((queuePostScene.size() > 0) ? queuePostScene.getLast() : sceneRenderJob);
     }
 
-    public RenderJob<?> getPreviousRenderJob(FilterRenderJob filterRenderJob) {
+    public RenderJob<?, ?> getPreviousRenderJob(FilterRenderJob filterRenderJob) {
         int postSceneIndex = queuePostScene.indexOf(filterRenderJob);
         return ((postSceneIndex > 0) ? queuePostScene.get(postSceneIndex - 1) : sceneRenderJob);
     }
@@ -55,7 +55,7 @@ public class RenderJobManager extends NativeObject {
         forEachRenderJob(RenderJob::cleanupNative);
     }
 
-    public void forEachRenderJob(Consumer<RenderJob<?>> renderJobConsumer) {
+    public void forEachRenderJob(Consumer<RenderJob<?, ?>> renderJobConsumer) {
         queuePreScene.forEach(renderJobConsumer);
         renderJobConsumer.accept(sceneRenderJob);
         queuePostScene.forEach(renderJobConsumer);
@@ -63,45 +63,45 @@ public class RenderJobManager extends NativeObject {
 
     // Add & Remove
 
-    public void addPreSceneRenderJob(RenderJob<?> renderJob) {
+    public void addPreSceneRenderJob(RenderJob<?, ?> renderJob) {
         queuePreScene.add(renderJob);
         modified = true;
     }
 
-    public void addPreSceneRenderJobs(Collection<? extends RenderJob<?>> renderJobs) {
+    public void addPreSceneRenderJobs(Collection<? extends RenderJob<?, ?>> renderJobs) {
         queuePreScene.addAll(renderJobs);
         modified = true;
     }
 
-    public void removePreSceneRenderJob(RenderJob<?> renderJob) {
+    public void removePreSceneRenderJob(RenderJob<?, ?> renderJob) {
         if (queuePreScene.remove(renderJob)) {
             modified = true;
         }
     }
 
-    public void removePreSceneRenderJobs(Collection<? extends RenderJob<?>> renderJobs) {
+    public void removePreSceneRenderJobs(Collection<? extends RenderJob<?, ?>> renderJobs) {
         if (queuePreScene.removeAll(renderJobs)) {
             modified = true;
         }
     }
 
-    public void addPostSceneRenderJob(RenderJob<?> renderJob) {
+    public void addPostSceneRenderJob(RenderJob<?, ?> renderJob) {
         queuePostScene.add(renderJob);
         modified = true;
     }
 
-    public void addPostSceneRenderJobs(Collection<? extends RenderJob<?>> renderJobs) {
+    public void addPostSceneRenderJobs(Collection<? extends RenderJob<?, ?>> renderJobs) {
         queuePostScene.addAll(renderJobs);
         modified = true;
     }
 
-    public void removePostSceneRenderJob(RenderJob<?> renderJob) {
+    public void removePostSceneRenderJob(RenderJob<?, ?> renderJob) {
         if (queuePostScene.remove(renderJob)) {
             modified = true;
         }
     }
 
-    public void removePostSceneRenderJobs(Collection<? extends RenderJob<?>> renderJobs) {
+    public void removePostSceneRenderJobs(Collection<? extends RenderJob<?, ?>> renderJobs) {
         if (queuePostScene.removeAll(renderJobs)) {
             modified = true;
         }

@@ -11,16 +11,11 @@ import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 public class StorageBufferDescriptor extends MemoryBufferDataDescriptor<StorageDataBuffer> {
 
     public StorageBufferDescriptor(int stageFlags) {
-        super(stageFlags);
+        super(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, stageFlags);
     }
 
     public StorageBufferDescriptor(StorageBufferDescriptor storageBufferDescriptor, CloneContext context) {
         super(storageBufferDescriptor, context);
-    }
-
-    @Override
-    protected int getDescriptorType() {
-        return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     }
 
     @Override
