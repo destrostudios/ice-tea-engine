@@ -465,6 +465,10 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
     @Override
     protected void cleanupNativeInternal() {
+        // The cached pipelines don't seem to behave correctly after the swapchain is recreated (e.g. on window resize)
+        // TODO: Clarify if this is really needed or if the pipelines could be reused
+        application.getPipelineManager().cleanupNative();
+
         application.removeWindowResizeListener(this);
         if (!isDuringRecreation) {
             cleanupInFlightFrames();

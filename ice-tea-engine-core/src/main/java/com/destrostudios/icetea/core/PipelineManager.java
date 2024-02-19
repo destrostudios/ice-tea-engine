@@ -19,6 +19,8 @@ public class PipelineManager extends NativeObject {
         for (Pipeline pipeline : pipelines.values()) {
             pipeline.cleanupNative();
         }
+        // The pipelines don't properly support recreating on update after cleanup (they only implement init at the moment), so we simply clear the list
+        pipelines.clear();
         super.cleanupNativeInternal();
     }
 }
