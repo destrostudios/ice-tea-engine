@@ -453,13 +453,13 @@ public abstract class Application {
     private void updateNativeState() {
         shaderManager.updateNative(this);
         pipelineManager.updateNative(this);
+        commandPool.updateNative(this);
         sceneCamera.updateNative(this);
         guiCamera.updateNative(this);
         if (light != null) {
             light.updateNativeState(this);
         }
         rootNode.updateNativeState(this);
-        commandPool.updateNative(this);
         swapChain.updateNative(this);
     }
 
