@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.imgui;
 
+import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.render.GeometryRenderer;
-import com.destrostudios.icetea.core.scene.Geometry;
 import imgui.ImDrawData;
 import imgui.ImGui;
 import imgui.ImVec4;
@@ -19,7 +19,7 @@ public class ImGuiGeometryRenderer extends GeometryRenderer {
     private ImVec4 tmpClipRect = new ImVec4();
 
     @Override
-    protected void drawVertices(Geometry geometry, VkCommandBuffer commandBuffer, MemoryStack stack) {
+    protected void drawVertices(VkCommandBuffer commandBuffer, Mesh mesh, MemoryStack stack) {
         ImDrawData drawData = ImGui.getDrawData();
         int commandListsCount = drawData.getCmdListsCount();
         int offsetIndex = 0;

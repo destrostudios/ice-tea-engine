@@ -24,7 +24,7 @@ public class HktComputeActionGroup extends ComputeActionGroup {
     public void record(VkCommandBuffer commandBuffer) {
         super.record(commandBuffer);
         try (MemoryStack stack = stackPush()) {
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, computeActions.get(0).getResourceDescriptorSet().getDescriptorSets(0, stack), null);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline.getPipelineLayout(), 0, computeActions.get(0).getResourceDescriptorSet().getDescriptorSets(0, 0, stack), null);
             vkCmdDispatch(commandBuffer, getGroupCountX(), getGroupCountY(), getGroupCountZ());
         }
     }

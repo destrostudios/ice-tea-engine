@@ -3,12 +3,13 @@ package com.destrostudios.icetea.core.resource;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.LongBuffer;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ResourceDescriptorSet {
 
-    private HashMap<String, ResourceDescriptor<?>> descriptors = new HashMap<>();
+    private LinkedHashMap<String, ResourceDescriptor<?>> descriptors = new LinkedHashMap<>();
     private boolean shaderDeclarationOutdated;
     private String shaderDeclaration;
 
@@ -30,15 +31,25 @@ public class ResourceDescriptorSet {
         return descriptorSetLayouts;
     }
 
-    public LongBuffer getDescriptorSets(int imageIndex, MemoryStack stack) {
-        LongBuffer descriptorSets = stack.mallocLong(descriptors.size());
+    public LongBuffer getDescriptorSets(int descriptorStartIndex, int imageIndex, MemoryStack stack) {
+        List<ResourceDescriptor<?>> subDescriptors = descriptors.values().stream().skip(descriptorStartIndex).toList();
+        LongBuffer descriptorSets = stack.mallocLong(subDescriptors.size());
         int i = 0;
-        for (ResourceDescriptor<?> descriptor : descriptors.values()) {
+        for (ResourceDescriptor<?> descriptor : subDescriptors) {
             long descriptorSet = descriptor.getDescriptorSets()[imageIndex];
             descriptorSets.put(i, descriptorSet);
             i++;
         }
         return descriptorSets;
+    }
+
+    public long getDescriptorSet(int descriptorIndex, int imageIndex) {
+        ResourceDescriptor<?> descriptor = descriptors.values().stream().skip(descriptorIndex).findFirst().get();
+        return descriptor.getDescriptorSets()[imageIndex];
+    }
+
+    public int size() {
+        return descriptors.size();
     }
 
     public String getShaderDeclaration() {

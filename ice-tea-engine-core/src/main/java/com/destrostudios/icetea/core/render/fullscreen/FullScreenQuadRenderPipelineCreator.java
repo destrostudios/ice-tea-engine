@@ -123,7 +123,7 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
         pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-        pipelineLayoutInfo.pSetLayouts(resourceDescriptorSet.getDescriptorSetLayouts(stack));
+        pipelineLayoutInfo.pSetLayouts(descriptorSetLayouts);
 
         LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
         int result = vkCreatePipelineLayout(application.getLogicalDevice(), pipelineLayoutInfo, null, pPipelineLayout);

@@ -366,15 +366,15 @@ public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext
     @Override
     public List<RenderTask> render() {
         return application.getBucketRenderer().getSplitOrderedGeometries().stream()
-            .map(geometries -> (RenderTask) (commandBuffer, renderContext) -> {
-                pushConstants.getData().setInt("cascadeIndex", renderContext.getFrameBufferIndex());
+            .map(geometries -> (RenderTask) recorder -> {
+                pushConstants.getData().setInt("cascadeIndex", recorder.getFrameBufferIndex());
                 pushConstants.updateNative(application);
 
                 for (Geometry geometry : geometries) {
                     ShadowMapGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
                     if (geometryRenderContext != null) {
-                        vkCmdPushConstants(commandBuffer, geometryRenderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
-                        geometry.getRenderer().render(geometry, geometryRenderContext, commandBuffer, renderContext);
+                        vkCmdPushConstants(recorder.getCommandBuffer(), geometryRenderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
+                        geometry.getRenderer().render(recorder, geometryRenderContext);
                     }
                 }
             }).collect(Collectors.toList());

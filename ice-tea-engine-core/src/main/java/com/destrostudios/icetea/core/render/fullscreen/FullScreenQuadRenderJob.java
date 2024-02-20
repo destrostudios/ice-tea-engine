@@ -141,11 +141,11 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<GeometryRenderCo
 
     @Override
     public List<RenderTask> render() {
-        return List.of((commandBuffer, renderContext) -> {
+        return List.of(recorder -> {
             try (MemoryStack stack = stackPush()) {
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipelineLayout(), 0, resourceDescriptorSet.getDescriptorSets(renderContext.getImageIndex(), stack), null);
-                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPipeline.getPipeline());
-                vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+                recorder.bindPipeline(renderPipeline);
+                recorder.bindDescriptorSets(resourceDescriptorSet, stack);
+                vkCmdDraw(recorder.getCommandBuffer(), 3, 1, 0, 0);
             }
         });
     }

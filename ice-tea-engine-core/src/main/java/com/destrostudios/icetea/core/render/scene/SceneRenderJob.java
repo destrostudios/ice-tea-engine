@@ -315,11 +315,11 @@ public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext, SceneR
     @Override
     public List<RenderTask> render() {
         return application.getBucketRenderer().getSplitOrderedGeometries().stream()
-            .map(geometries -> (RenderTask) (commandBuffer, renderContext) -> {
+            .map(geometries -> (RenderTask) (recorder) -> {
                 for (Geometry geometry : geometries) {
                     SceneGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
                     if (geometryRenderContext != null) {
-                        geometry.getRenderer().render(geometry, geometryRenderContext, commandBuffer, renderContext);
+                        geometry.getRenderer().render(recorder, geometryRenderContext);
                     }
                 }
             }).collect(Collectors.toList());

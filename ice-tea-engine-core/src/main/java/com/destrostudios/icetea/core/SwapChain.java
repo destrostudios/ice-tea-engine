@@ -338,7 +338,6 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
             int frameBufferIndex = 0;
             for (long frameBuffer : renderJob.getFrameBuffersToRender(imageIndex)) {
-                RenderContext renderContext = new RenderContext(imageIndex, frameBufferIndex);
                 renderPassBeginInfo.framebuffer(frameBuffer);
 
                 List<RenderTask> renderTasks = renderJob.render();
@@ -363,12 +362,13 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
                     for (RenderTask renderTask : renderTasks) {
                         SecondaryCommandBufferPool secondaryCommandBufferPool = secondarySecondaryCommandBufferPools[renderTaskIndex];
                         VkCommandBuffer secondaryCommandBuffer = secondaryCommandBufferPool.getOrAllocateCommandBuffer();
+                        RenderRecorder recorder = new RenderRecorder(imageIndex, frameBufferIndex, secondaryCommandBuffer);
                         Future<?> recordingFuture = secondaryCommandBufferExecutorService.submit(() -> {
                             int result = vkBeginCommandBuffer(secondaryCommandBuffer, secondaryCommandBufferBeginInfo);
                             if (result != VK_SUCCESS) {
                                 throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
                             }
-                            renderTask.render(secondaryCommandBuffer, renderContext);
+                            renderTask.render(recorder);
                             result = vkEndCommandBuffer(secondaryCommandBuffer);
                             if (result != VK_SUCCESS) {
                                 throw new RuntimeException("Failed to end recording command buffer (result = " + result + ")");
@@ -383,8 +383,9 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
                 } else {
                     vkCmdBeginRenderPass(primaryCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+                    RenderRecorder recorder = new RenderRecorder(imageIndex, frameBufferIndex, primaryCommandBuffer);
                     for (RenderTask renderTask : renderTasks) {
-                        renderTask.render(primaryCommandBuffer, renderContext);
+                        renderTask.render(recorder);
                     }
                 }
 
