@@ -132,6 +132,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
     private Node loadNode(MeshModel meshModel, Skeleton skeleton) {
         Node node = new Node();
+        node.setName(meshModel.getName());
         for (MeshPrimitiveModel meshPrimitiveModel : meshModel.getMeshPrimitiveModels()) {
             Geometry geometry = loadGeometry(meshPrimitiveModel);
             if (skeleton != null) {
