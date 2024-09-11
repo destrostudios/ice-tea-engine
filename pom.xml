@@ -14,15 +14,15 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.ice-tea-engine>0.0.1</version.ice-tea-engine>
-        <version.jgltf>2.0.3</version.jgltf>
-        <version.joml>1.10.5</version.joml>
-        <version.imgui-java>1.86.11</version.imgui-java>
-        <version.lwjgl>3.3.3</version.lwjgl>
-        <version.lombok>1.18.30</version.lombok>
-        <version.maven-compiler-plugin>3.12.1</version.maven-compiler-plugin>
-        <version.maven-source-plugin>3.3.0</version.maven-source-plugin>
+        <version.jgltf>2.0.4</version.jgltf>
+        <version.joml>1.10.8</version.joml>
+        <version.imgui-java>1.86.12</version.imgui-java>
+        <version.lwjgl>3.3.4</version.lwjgl>
+        <version.lombok>1.18.34</version.lombok>
+        <version.maven-compiler-plugin>3.13.0</version.maven-compiler-plugin>
+        <version.maven-source-plugin>3.3.1</version.maven-source-plugin>
         <version.obj>0.4.0</version.obj>
-        <version.slf4j>2.0.12</version.slf4j>
+        <version.slf4j>2.0.16</version.slf4j>
     </properties>
     <build>
         <plugins>
@@ -31,8 +31,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${version.maven-compiler-plugin}</version>
                 <configuration>
-                    <source>18</source>
-                    <target>18</target>
+                    <source>22</source>
+                    <target>22</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>

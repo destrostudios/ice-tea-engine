@@ -76,13 +76,16 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
     private Spatial loadScenes() {
         Node rootNode = new Node();
-        for (SceneModel sceneModel : gltfModel.getSceneModels()) {
-            Node sceneNode = new Node();
-            for (NodeModel nodeModel : sceneModel.getNodeModels()) {
-                Node node = loadNode(nodeModel);
-                sceneNode.add(node);
+        if (settings.isLoadAllNodesAsOneScene()) {
+            for (NodeModel nodeModel : gltfModel.getNodeModels()) {
+                Node nodeNode = loadNode(nodeModel);
+                rootNode.add(nodeNode);
             }
-            rootNode.add(sceneNode);
+        } else {
+            for (SceneModel sceneModel : gltfModel.getSceneModels()) {
+                Node sceneNode = loadScene(sceneModel);
+                rootNode.add(sceneNode);
+            }
         }
         Spatial spatial = (settings.isBakeGeometries() ? SpatialUtil.bakeGeometries(rootNode) : rootNode);
         Collection<Skeleton> skeletons = skeletonMap.values();
@@ -96,75 +99,19 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         return spatial;
     }
 
-    private ArrayList<CombinedAnimation> loadAnimations(List<AnimationModel> animationModels) {
-        ArrayList<CombinedAnimation> animations = new ArrayList<>(animationModels.size());
-        for (AnimationModel animationModel : animationModels) {
-            animations.add(loadCombinedAnimation(animationModel));
+    private Node loadScene(SceneModel sceneModel) {
+        Node node = new Node();
+        node.setName(sceneModel.getName());
+        for (NodeModel nodeModel : sceneModel.getNodeModels()) {
+            Node nodeNode = loadNode(nodeModel);
+            node.add(nodeNode);
         }
-        return animations;
-    }
-
-    private CombinedAnimation loadCombinedAnimation(AnimationModel animationModel) {
-        List<AnimationModel.Channel> channels = animationModel.getChannels();
-        Animation[] animations = new Animation[channels.size()];
-        int animationIndex = 0;
-        for (AnimationModel.Channel channel : channels) {
-            animations[animationIndex++] = loadAnimation(channel);
-        }
-        CombinedAnimation combinedAnimation = new CombinedAnimation(animations);
-        combinedAnimation.setName(animationModel.getName());
-        return combinedAnimation;
-    }
-
-    private SampledAnimation<?> loadAnimation(AnimationModel.Channel channel) {
-        AnimationSamplerData<?> sampler = loadAnimationSamplerData(channel.getSampler());
-        Joint joint = jointsMap.get(channel.getNodeModel());
-        if (joint != null) {
-            switch (channel.getPath()) {
-                case "translation": return new JointTranslationAnimation((AnimationSamplerData<Vector3f>) sampler, joint);
-                case "rotation": return new JointRotationAnimation((AnimationSamplerData<Quaternionf>) sampler, joint);
-                case "scale": return new JointScaleAnimation((AnimationSamplerData<Vector3f>) sampler, joint);
-            }
-        } else {
-            Node node = nodesMap.get(channel.getNodeModel());
-            if (node != null) {
-                switch (channel.getPath()) {
-                    case "translation": return new SpatialTranslationAnimation((AnimationSamplerData<Vector3f>) sampler, node);
-                    case "rotation": return new SpatialRotationAnimation((AnimationSamplerData<Quaternionf>) sampler, node);
-                    case "scale": return new SpatialScaleAnimation((AnimationSamplerData<Vector3f>) sampler, node);
-                }
-            }
-        }
-        throw new UnsupportedOperationException("Animation channel path: " + channel.getPath());
-    }
-
-    private AnimationSamplerData<?> loadAnimationSamplerData(AnimationModel.Sampler sampler) {
-        return samplersDataMap.computeIfAbsent(sampler, s -> {
-            LinkedList<Object> input = readValues(sampler.getInput());
-            LinkedList<Object> output = readValues(sampler.getOutput());
-            int keyframeIndex = 0;
-            float[] keyframeTimes = new float[input.size()];
-            Object[] keyframeValues = new Object[output.size()];
-            Iterator<Object> inputIterator = input.iterator();
-            Iterator<Object> outputIterator = output.iterator();
-            while (inputIterator.hasNext()) {
-                keyframeTimes[keyframeIndex] = (float) inputIterator.next();
-                float[] values = (float[]) outputIterator.next();
-                if (values.length == 3) {
-                    keyframeValues[keyframeIndex] = new Vector3f(values[0], values[1], values[2]);
-                } else if (values.length == 4) {
-                    keyframeValues[keyframeIndex] = new Quaternionf(values[0], values[1], values[2], values[3]);
-                } else {
-                    throw new UnsupportedOperationException("Animation sampler dimension: " + values.length);
-                }
-                keyframeIndex++;
-            }
-            return new AnimationSamplerData<>(keyframeTimes, keyframeValues);
-        });
+        return node;
     }
 
     private Node loadNode(NodeModel nodeModel) {
         Node node = new Node();
+        node.setName(nodeModel.getName());
         Skeleton skeleton = null;
         SkinModel skinModel = nodeModel.getSkinModel();
         if (skinModel != null) {
@@ -323,6 +270,73 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
             }
         }
         return transform;
+    }
+
+    private ArrayList<CombinedAnimation> loadAnimations(List<AnimationModel> animationModels) {
+        ArrayList<CombinedAnimation> animations = new ArrayList<>(animationModels.size());
+        for (AnimationModel animationModel : animationModels) {
+            animations.add(loadCombinedAnimation(animationModel));
+        }
+        return animations;
+    }
+
+    private CombinedAnimation loadCombinedAnimation(AnimationModel animationModel) {
+        List<AnimationModel.Channel> channels = animationModel.getChannels();
+        Animation[] animations = new Animation[channels.size()];
+        int animationIndex = 0;
+        for (AnimationModel.Channel channel : channels) {
+            animations[animationIndex++] = loadAnimation(channel);
+        }
+        CombinedAnimation combinedAnimation = new CombinedAnimation(animations);
+        combinedAnimation.setName(animationModel.getName());
+        return combinedAnimation;
+    }
+
+    private SampledAnimation<?> loadAnimation(AnimationModel.Channel channel) {
+        AnimationSamplerData<?> sampler = loadAnimationSamplerData(channel.getSampler());
+        Joint joint = jointsMap.get(channel.getNodeModel());
+        if (joint != null) {
+            switch (channel.getPath()) {
+                case "translation": return new JointTranslationAnimation((AnimationSamplerData<Vector3f>) sampler, joint);
+                case "rotation": return new JointRotationAnimation((AnimationSamplerData<Quaternionf>) sampler, joint);
+                case "scale": return new JointScaleAnimation((AnimationSamplerData<Vector3f>) sampler, joint);
+            }
+        } else {
+            Node node = nodesMap.get(channel.getNodeModel());
+            if (node != null) {
+                switch (channel.getPath()) {
+                    case "translation": return new SpatialTranslationAnimation((AnimationSamplerData<Vector3f>) sampler, node);
+                    case "rotation": return new SpatialRotationAnimation((AnimationSamplerData<Quaternionf>) sampler, node);
+                    case "scale": return new SpatialScaleAnimation((AnimationSamplerData<Vector3f>) sampler, node);
+                }
+            }
+        }
+        throw new UnsupportedOperationException("Animation channel path: " + channel.getPath());
+    }
+
+    private AnimationSamplerData<?> loadAnimationSamplerData(AnimationModel.Sampler sampler) {
+        return samplersDataMap.computeIfAbsent(sampler, s -> {
+            LinkedList<Object> input = readValues(sampler.getInput());
+            LinkedList<Object> output = readValues(sampler.getOutput());
+            int keyframeIndex = 0;
+            float[] keyframeTimes = new float[input.size()];
+            Object[] keyframeValues = new Object[output.size()];
+            Iterator<Object> inputIterator = input.iterator();
+            Iterator<Object> outputIterator = output.iterator();
+            while (inputIterator.hasNext()) {
+                keyframeTimes[keyframeIndex] = (float) inputIterator.next();
+                float[] values = (float[]) outputIterator.next();
+                if (values.length == 3) {
+                    keyframeValues[keyframeIndex] = new Vector3f(values[0], values[1], values[2]);
+                } else if (values.length == 4) {
+                    keyframeValues[keyframeIndex] = new Quaternionf(values[0], values[1], values[2], values[3]);
+                } else {
+                    throw new UnsupportedOperationException("Animation sampler dimension: " + values.length);
+                }
+                keyframeIndex++;
+            }
+            return new AnimationSamplerData<>(keyframeTimes, keyframeValues);
+        });
     }
 
     private LinkedList<Object> readValues(AccessorModel accessorModel) {

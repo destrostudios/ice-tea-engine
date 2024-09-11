@@ -11,7 +11,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -28,7 +27,7 @@ public class Node extends Spatial {
         }
     }
     @Getter
-    private List<Spatial> children = new LinkedList<>();
+    private List<Spatial> children = new ArrayList<>();
 
     @Override
     public void updateLogicalState(Application application, float tpf) {
@@ -107,6 +106,10 @@ public class Node extends Spatial {
             spatial.setParent(null);
         }
         children.clear();
+    }
+
+    public Spatial getChild(String name) {
+        return children.stream().filter(child -> name.equals(child.getName())).findFirst().orElse(null);
     }
 
     public void forEachGeometry(Consumer<Geometry> geometryConsumer) {

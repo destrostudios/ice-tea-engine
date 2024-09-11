@@ -44,6 +44,9 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
         renderBucket = spatial.renderBucket;
     }
     @Getter
+    @Setter
+    private String name;
+    @Getter
     private Node parent;
     @Getter
     protected Transform localTransform;
@@ -194,7 +197,7 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
         }
     }
 
-    public void setParent(Node parent) {
+    protected void setParent(Node parent) {
         this.parent = parent;
     }
 

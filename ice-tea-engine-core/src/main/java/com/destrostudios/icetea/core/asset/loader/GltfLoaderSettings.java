@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class GltfLoaderSettings {
+    private boolean loadAllNodesAsOneScene;
     private boolean bakeGeometries;
     @Builder.Default
     private CloneContext cloneContext = CloneContext.reuseAll();
