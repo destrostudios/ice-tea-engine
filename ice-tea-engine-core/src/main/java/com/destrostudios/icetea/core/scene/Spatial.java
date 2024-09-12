@@ -32,6 +32,7 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
     }
 
     protected Spatial(Spatial spatial, CloneContext context) {
+        name = spatial.name;
         // Set parent-child relationships afterwards to avoid circular cloning
         localTransform = spatial.localTransform.clone(context);
         worldTransform = spatial.worldTransform.clone(context);
