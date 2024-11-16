@@ -25,9 +25,23 @@ vec4 shaderNode_light_getLightColor(LightVertexInfo lightVertexInfo, vec4 lightC
     float cosTheta = max(dot(lightVertexInfo.viewSpaceVertexNormal, -1 * lightVertexInfo.viewSpaceLightDirection), 0);
     vec4 diffuse = cosTheta * lightColor;
 
-    vec3 viewDirection = normalize(-1 * lightVertexInfo.viewSpaceVertexPosition); // The viewer is always at (0, 0, 0) in view space
-    vec3 reflectDirection = reflect(lightVertexInfo.viewSpaceLightDirection, lightVertexInfo.viewSpaceVertexNormal);
-    float cosAlpha = pow(max(dot(viewDirection, reflectDirection), 0), shininess);
+    vec3 viewDirection = normalize(lightVertexInfo.viewSpaceVertexPosition); // The viewer is always at (0, 0, 0) in view space
+
+    vec3 lightDir = lightVertexInfo.viewSpaceLightDirection;
+    vec3 viewDir = viewDirection;
+    vec3 normal = lightVertexInfo.viewSpaceVertexNormal;
+    float spec;
+    if (true) {
+        // Blinn-Phong
+        vec3 halfwayDir = normalize(-lightDir - viewDir);
+        spec = pow(max(dot(normal, halfwayDir), 0), shininess * 2);
+    } else {
+        // Phong
+        vec3 reflectDir = reflect(lightDir, normal);
+        spec = pow(max(dot(-viewDir, reflectDir), 0), shininess);
+    }
+    float cosAlpha = spec;
+
     vec4 specular = specularColor * cosAlpha * lightColor;
 
     return (ambient + shadowFactor * (diffuse + specular));

@@ -53,13 +53,17 @@ public class WaterControl extends Control {
     private Material createMaterial() {
         Material material = new Material();
         material.setVertexShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.vert"));
-        material.setFragmentShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.frag"));
+        material.setFragmentShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.frag", new String[] {
+            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
+        }));
         material.setTessellationPatchSize(16);
         material.setTessellationControlShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.tesc"));
         material.setTessellationEvaluationShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.tese"));
-        material.setGeometryShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.geom"));
+        material.setGeometryShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.geom", new String[] {
+            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
+        }));
         // FIXME: Vectors have to be defined first or somehow the memory alignment is messed up
-        material.getParameters().setVector3f("waterColor", waterConfig.getWaterColor());
+        material.getParameters().setVector4f("waterColor", waterConfig.getWaterColor());
         material.getParameters().setVector2f("windDirection", waterConfig.getWindDirection());
         // Tessellation
         material.getParameters().setFloat("tessellationFactor", waterConfig.getTessellationFactor());
@@ -86,9 +90,6 @@ public class WaterControl extends Control {
         material.setTexture("refractionMap", refractionRenderJob.getResolvedColorTexture());
         material.getParameters().setFloat("kReflection", waterConfig.getKReflection());
         material.getParameters().setFloat("kRefraction", waterConfig.getKRefraction());
-        material.getParameters().setFloat("reflectionBlendMinFactor", waterConfig.getReflectionBlendMinFactor());
-        material.getParameters().setFloat("reflectionBlendMaxFactor", waterConfig.getReflectionBlendMaxFactor());
-        material.getParameters().setFloat("reflectionBlendMaxDistance", waterConfig.getReflectionBlendMaxDistance());
         material.getParameters().setFloat("eta", waterConfig.getEta());
         material.getParameters().setFloat("fresnelFactor", waterConfig.getFresnelFactor());
         // Movement

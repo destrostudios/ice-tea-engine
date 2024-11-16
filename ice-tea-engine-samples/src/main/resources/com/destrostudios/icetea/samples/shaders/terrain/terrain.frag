@@ -25,6 +25,7 @@ void main() {
         shadowFactor = 1;
     #endif
 
+    // TODO: SHOULD CHECK LIGHT
     vec4 effectiveLightColor = shaderNode_light_getLightColor(lightVertexInfo, light.lightColor, light.ambientColor, light.specularColor, shininess, shadowFactor);
-    outColor = inBiomeColor * effectiveLightColor;
+    outColor = effectiveLightColor;
 }

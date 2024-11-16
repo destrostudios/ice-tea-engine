@@ -40,7 +40,9 @@ public abstract class Light extends LogicalObject {
         super.updateLogicalState(application, tpf);
         if (modified) {
             // TODO: Solve this properly, including updates
-            application.getSwapChain().getRenderJobManager().addPreSceneRenderJob(shadowMapRenderJob);
+            if (shadowMapRenderJob != null) {
+                application.getSwapChain().getRenderJobManager().addPreSceneRenderJob(shadowMapRenderJob);
+            }
             modified = false;
         }
     }

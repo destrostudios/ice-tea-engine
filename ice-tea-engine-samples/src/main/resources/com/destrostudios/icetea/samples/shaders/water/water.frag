@@ -45,8 +45,7 @@ void main() {
     // Reflection
     vec2 reflectionCoords = projectionCoordInvertedX.xy + dudvCoord.rb * params.kReflection;
     reflectionCoords = clamp(reflectionCoords, params.kReflection, 1 - params.kReflection);
-    float reflectionDistanceBlending = params.reflectionBlendMinFactor + (params.reflectionBlendMaxFactor - params.reflectionBlendMinFactor) * smoothstep(0, 1, cameraDistance / params.reflectionBlendMaxDistance);
-    vec3 reflection = mix(texture(reflectionMap, reflectionCoords).rgb, params.waterColor, reflectionDistanceBlending);
+    vec3 reflection = texture(reflectionMap, reflectionCoords).rgb;
     reflection *= fresnel;
 
     // Refraction
@@ -55,5 +54,10 @@ void main() {
     vec3 refraction = texture(refractionMap, refractionCoords).rgb;
     refraction *= 1 - fresnel;
 
-    outColor = vec4(reflection + refraction, 1);
+    outColor = vec4(mix(params.waterColor.rgb, reflection + refraction, params.waterColor.a), 1);
+
+    // TEST:
+    outColor = vec4(normalize(vec3(normal.x, 0, normal.z)), 1);
+    // LightVertexInfo lightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, vec4(inPosition, 1), normal, light.direction);
+    // outColor += shaderNode_light_getLightColor(lightVertexInfo, light.lightColor, light.ambientColor, light.specularColor, 32, 1);
 }
