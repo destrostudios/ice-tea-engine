@@ -56,7 +56,7 @@ public class SkeletonNode implements ContextCloneable {
     public void updateWorldTransform() {
         if (localTransform.updateMatrixIfNecessary()) {
             if (parent != null) {
-                worldTransform.setChildParentTransform(parent.worldTransform, localTransform);
+                worldTransform.setMultiplicationResult(parent.worldTransform, localTransform);
                 worldTransform.updateMatrixIfNecessary();
             } else {
                 worldTransform.set(localTransform);

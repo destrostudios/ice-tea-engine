@@ -11,13 +11,13 @@ public class SpatialUtil {
 
     // Careful - This is not covering controls
     public static Spatial bakeGeometries(Spatial spatial) {
-        updateWorldTransformRecursive(spatial);
+        updateTransformRecursive(spatial);
         if (spatial instanceof Node node) {
             HashMap<String, LinkedList<Geometry>> groupedGeometries = new HashMap<>();
             node.forEachGeometry(geometry -> {
                 geometry.setLocalTransform(geometry.getWorldTransform());
                 String key = geometry.getShadowMode().name();
-                LinkedList<Geometry> geometries = groupedGeometries.computeIfAbsent(key, k -> new LinkedList<>());
+                LinkedList<Geometry> geometries = groupedGeometries.computeIfAbsent(key, _ -> new LinkedList<>());
                 geometries.add(geometry);
             });
             LinkedList<Spatial> groupSpatials = new LinkedList<>();
@@ -47,11 +47,11 @@ public class SpatialUtil {
         }
     }
 
-    public static void updateWorldTransformRecursive(Spatial spatial) {
-        spatial.updateWorldTransform();
+    public static void updateTransformRecursive(Spatial spatial) {
+        spatial.updateTransform();
         if (spatial instanceof Node node) {
             for (Spatial child : node.getChildren()) {
-                updateWorldTransformRecursive(child);
+                updateTransformRecursive(child);
             }
         }
     }

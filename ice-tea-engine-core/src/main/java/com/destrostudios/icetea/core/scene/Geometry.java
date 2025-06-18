@@ -59,8 +59,8 @@ public class Geometry extends Spatial {
     }
 
     @Override
-    public void updateWorldTransform() {
-        super.updateWorldTransform();
+    public void updateTransform() {
+        super.updateTransform();
         transformUniformBuffer.getData().setMatrix4f("model", worldTransform.getMatrix());
     }
 

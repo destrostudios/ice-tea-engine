@@ -108,6 +108,43 @@ public class MathUtil {
         );
     }
 
+    public static Quaternionf getPureRotation(Matrix4f matrix, Quaternionf dest) {
+        // TODO: Introduce TempVars
+        Matrix3f rotationAndScale = new Matrix3f();
+        matrix.get3x3(rotationAndScale);
+
+        // Extract and normalize each axis independently
+        Vector3f xAxis = rotationAndScale.getColumn(0, new Vector3f()).normalize();
+        Vector3f yAxis = rotationAndScale.getColumn(1, new Vector3f()).normalize();
+        Vector3f zAxis = rotationAndScale.getColumn(2, new Vector3f()).normalize();
+
+        Matrix3f pureRotation = new Matrix3f(
+            xAxis.x, yAxis.x, zAxis.x,
+            xAxis.y, yAxis.y, zAxis.y,
+            xAxis.z, yAxis.z, zAxis.z
+        );
+        pureRotation.getNormalizedRotation(dest);
+
+        return dest;
+    }
+
+    public static Vector3f getPureScale(Matrix4f matrix4f, Vector3f dest) {
+        // TODO: Introduce TempVars
+        // Extract basis vectors
+        Vector3f xAxis = matrix4f.getColumn(0, new Vector3f());
+        Vector3f yAxis = matrix4f.getColumn(1, new Vector3f());
+        Vector3f zAxis = matrix4f.getColumn(2, new Vector3f());
+
+        // Determine scale along each axis (with sign)
+        float scaleX = xAxis.length() * Math.signum(xAxis.dot(new Vector3f(1, 0, 0)));
+        float scaleY = yAxis.length() * Math.signum(yAxis.dot(new Vector3f(0, 1, 0)));
+        float scaleZ = zAxis.length() * Math.signum(zAxis.dot(new Vector3f(0, 0, 1)));
+
+        dest.set(scaleX, scaleY, scaleZ);
+
+        return dest;
+    }
+
     public static Vector3f getTriangleNormal(Vector3f v1, Vector3f v2, Vector3f v3) {
         return v2.sub(v1, new Vector3f()).cross(v3.x() - v1.x(), v3.y() - v1.y(), v3.z() - v1.z());
     }

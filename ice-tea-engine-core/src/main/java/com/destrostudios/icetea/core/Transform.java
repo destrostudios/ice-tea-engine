@@ -2,6 +2,7 @@ package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.clone.CloneContext;
 import com.destrostudios.icetea.core.clone.ContextCloneable;
+import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
 import org.joml.*;
 
@@ -44,10 +45,19 @@ public class Transform implements ContextCloneable {
     }
 
     public void set(Matrix4fc matrix) {
-        matrix.getTranslation(translation);
-        rotation.set(matrix.getRotation(new AxisAngle4f()));
-        matrix.getScale(scale);
         this.matrix.set(matrix);
+        onMatrixSet();
+    }
+
+    public void setMultiplicationResult(Transform transformA, Transform transformB) {
+        transformA.getMatrix().mul(transformB.getMatrix(), matrix);
+        onMatrixSet();
+    }
+
+    private void onMatrixSet() {
+        matrix.getTranslation(translation);
+        MathUtil.getPureRotation(matrix, rotation);
+        MathUtil.getPureScale(matrix, scale);
         modified = true;
         matrixOutdated = false;
     }
@@ -88,13 +98,13 @@ public class Transform implements ContextCloneable {
         matrixOutdated = true;
     }
 
-    public void setChildParentTransform(Transform parentWorldTransform, Transform childLocalTransform) {
-        parentWorldTransform.getMatrix().mul(childLocalTransform.getMatrix(), matrix);
-        matrix.getTranslation(translation);
-        matrix.getNormalizedRotation(rotation);
-        matrix.getScale(scale);
-        modified = false;
-        matrixOutdated = false;
+    public void combineWithParent(Transform parentWorldTransform, Transform childLocalTransform) {
+        scale.set(childLocalTransform.getScale()).mul(parentWorldTransform.getScale());
+        parentWorldTransform.getRotation().mul(childLocalTransform.getRotation(), rotation);
+        translation.set(childLocalTransform.getTranslation()).mul(parentWorldTransform.getScale());
+        translation.rotate(parentWorldTransform.getRotation()).add(parentWorldTransform.getTranslation());
+        modified = true;
+        matrixOutdated = true;
     }
 
     public boolean updateMatrixIfNecessary() {

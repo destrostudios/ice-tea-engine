@@ -85,8 +85,7 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
         for (Control control : controls) {
             control.applyLogicalState();
         }
-        localTransform.updateMatrixIfNecessary();
-        updateWorldTransform();
+        updateTransform();
     }
 
     @Override
@@ -97,9 +96,10 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
         }
     }
 
-    public void updateWorldTransform() {
+    public void updateTransform() {
+        localTransform.updateMatrixIfNecessary();
         if (parent != null) {
-            worldTransform.setChildParentTransform(parent.getWorldTransform(), localTransform);
+            worldTransform.combineWithParent(parent.getWorldTransform(), localTransform);
             worldTransform.updateMatrixIfNecessary();
         } else {
             worldTransform.set(localTransform);

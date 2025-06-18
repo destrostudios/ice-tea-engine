@@ -290,8 +290,8 @@ public class TestApplication extends Application {
 
         animatedObject2 = (Node) assetManager.loadModel("models/footman/scene.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
         animatedObject2.move(new Vector3f(2.5f, 0, 0));
-        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
-        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 0, 0, 1)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 0, 1, 0)));
         animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject2.forEachGeometry(geometry -> geometry.getMaterial().setCullMode(VK_CULL_MODE_NONE));
         animatedObject2.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
@@ -301,12 +301,23 @@ public class TestApplication extends Application {
 
         Spatial animatedObject3 = assetManager.loadModel("models/fallacia35.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
         animatedObject3.move(new Vector3f(3, 0, 0));
-        animatedObject3.scale(new Vector3f(0.23f, 0.23f, 0.23f));
+        animatedObject3.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
+        animatedObject3.scale(new Vector3f(23, 23, 23));
         animatedObject3.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl3 = animatedObject3.getFirstControl(AnimationControl.class);
         animationControl3.play("Armature|mixamo.com|Layer0");
         animationControl3.setSpeed(2);
         sceneNode.add(animatedObject3);
+
+        for (int i = 0; i < 2; i++) {
+            Spatial chicken = assetManager.loadModel("models/chicken/chicken.gltf", GltfLoaderSettings.builder().bakeGeometries(i == 0).build());
+            chicken.move(new Vector3f(2 + (i * 0.4f), -0.2f, 1));
+            chicken.scale(new Vector3f(0.5f, 0.5f, 0.5f));
+            chicken.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
+            AnimationControl chickenAnimationControl = chicken.getFirstControl(AnimationControl.class);
+            chickenAnimationControl.play("Stand");
+            sceneNode.add(chicken);
+        }
 
         // Sky
 
