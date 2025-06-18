@@ -22,7 +22,7 @@ public class JointRotationAnimation extends SampledAnimation<Quaternionf> {
 
     @Override
     protected void setValue(Quaternionf value) {
-        joint.setLocalPoseRotation(value);
+        joint.setLocalRotation(value);
     }
 
     @Override

@@ -290,7 +290,8 @@ public class TestApplication extends Application {
 
         animatedObject2 = (Node) assetManager.loadModel("models/footman/scene.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
         animatedObject2.move(new Vector3f(2.5f, 0, 0));
-        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 0, 1, 0)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
+        animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 0, 0, 1)));
         animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject2.forEachGeometry(geometry -> geometry.getMaterial().setCullMode(VK_CULL_MODE_NONE));
         animatedObject2.setShadowMode(ShadowMode.CAST_AND_RECEIVE);

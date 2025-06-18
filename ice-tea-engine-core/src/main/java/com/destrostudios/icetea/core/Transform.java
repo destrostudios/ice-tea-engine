@@ -88,13 +88,13 @@ public class Transform implements ContextCloneable {
         matrixOutdated = true;
     }
 
-    public void setChildWorldTransform(Transform parentWorldTransform, Transform childLocalTransform) {
-        scale.set(childLocalTransform.getScale()).mul(parentWorldTransform.getScale());
-        parentWorldTransform.getRotation().mul(childLocalTransform.getRotation(), rotation);
-        translation.set(childLocalTransform.getTranslation()).mul(parentWorldTransform.getScale());
-        translation.rotate(parentWorldTransform.getRotation()).add(parentWorldTransform.getTranslation());
-        modified = true;
-        matrixOutdated = true;
+    public void setChildParentTransform(Transform parentWorldTransform, Transform childLocalTransform) {
+        parentWorldTransform.getMatrix().mul(childLocalTransform.getMatrix(), matrix);
+        matrix.getTranslation(translation);
+        matrix.getNormalizedRotation(rotation);
+        matrix.getScale(scale);
+        modified = false;
+        matrixOutdated = false;
     }
 
     public boolean updateMatrixIfNecessary() {

@@ -99,7 +99,7 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
 
     public void updateWorldTransform() {
         if (parent != null) {
-            worldTransform.setChildWorldTransform(parent.getWorldTransform(), localTransform);
+            worldTransform.setChildParentTransform(parent.getWorldTransform(), localTransform);
             worldTransform.updateMatrixIfNecessary();
         } else {
             worldTransform.set(localTransform);

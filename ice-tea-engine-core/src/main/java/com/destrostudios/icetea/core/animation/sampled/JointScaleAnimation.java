@@ -22,7 +22,7 @@ public class JointScaleAnimation extends SampledAnimation<Vector3f> {
 
     @Override
     protected void setValue(Vector3f value) {
-        joint.setLocalPoseScale(value);
+        joint.setLocalScale(value);
     }
 
     @Override

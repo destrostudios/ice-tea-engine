@@ -11,7 +11,8 @@ import org.joml.Matrix4f;
 
 public class Skeleton extends LogicalObject implements ContextCloneable {
 
-    public Skeleton(Joint[] joints) {
+    public Skeleton(SkeletonNode[] nodes, Joint[] joints) {
+        this.nodes = nodes;
         this.joints = joints;
         jointMatrices = new Matrix4f[joints.length];
         for (int i = 0; i < jointMatrices.length; i++) {
@@ -22,12 +23,19 @@ public class Skeleton extends LogicalObject implements ContextCloneable {
     }
 
     public Skeleton(Skeleton skeleton, CloneContext context) {
+        nodes = new SkeletonNode[skeleton.nodes.length];
         joints = new Joint[skeleton.joints.length];
-        for (int i = 0; i < joints.length; i++) {
-            joints[i] = context.cloneByReference(skeleton.joints[i]);
+        for (int i = 0; i < nodes.length; i++) {
+            nodes[i] = context.cloneByReference(skeleton.nodes[i]);
             // Set parent-child relationships afterwards to avoid circular cloning
-            for (int r = 0; r < skeleton.joints[i].getChildren().length; r++) {
-                joints[i].setChild(r, context.cloneByReference(skeleton.joints[i].getChildren()[r]));
+            for (int r = 0; r < skeleton.nodes[i].getChildren().length; r++) {
+                nodes[i].setChild(r, context.cloneByReference(skeleton.nodes[i].getChildren()[r]));
+            }
+            for (int r = 0; r < joints.length; r++) {
+                if (skeleton.joints[r] == skeleton.nodes[i]) {
+                    joints[r] = (Joint) nodes[i];
+                    break;
+                }
             }
         }
         jointMatrices = new Matrix4f[skeleton.jointMatrices.length];
@@ -36,6 +44,7 @@ public class Skeleton extends LogicalObject implements ContextCloneable {
         }
         uniformBuffer = skeleton.uniformBuffer.clone(context);
     }
+    private SkeletonNode[] nodes;
     private Joint[] joints;
     @Getter
     private Matrix4f[] jointMatrices;
@@ -45,9 +54,9 @@ public class Skeleton extends LogicalObject implements ContextCloneable {
     @Override
     public void applyLogicalState() {
         super.applyLogicalState();
-        for (Joint joint : joints) {
-            if (joint.getParent() == null) {
-                joint.updateJointMatrix(false);
+        for (SkeletonNode node : nodes) {
+            if (node.getParent() == null) {
+                node.updateWorldTransform();
             }
         }
         for (int i = 0; i < joints.length; i++) {
@@ -62,9 +71,9 @@ public class Skeleton extends LogicalObject implements ContextCloneable {
         uniformBuffer.updateNative(application);
     }
 
-    public void resetPose() {
-        for (Joint joint : joints) {
-            joint.resetPose();
+    public void resetLocalTransform() {
+        for (SkeletonNode node : nodes) {
+            node.resetLocalTransform();
         }
     }
 

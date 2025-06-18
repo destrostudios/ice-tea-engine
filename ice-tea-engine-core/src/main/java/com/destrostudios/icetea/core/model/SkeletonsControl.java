@@ -10,15 +10,15 @@ import java.util.LinkedList;
 
 public class SkeletonsControl extends Control {
 
+    public SkeletonsControl(Collection<Skeleton> skeletons) {
+        this.skeletons = skeletons;
+    }
+
     public SkeletonsControl(SkeletonsControl skeletonsControl, CloneContext context) {
         skeletons = new LinkedList<>();
         for (Skeleton skeleton : skeletonsControl.skeletons) {
             skeletons.add(context.cloneByReference(skeleton));
         }
-    }
-
-    public SkeletonsControl(Collection<Skeleton> skeletons) {
-        this.skeletons = skeletons;
     }
     @Getter
     private Collection<Skeleton> skeletons;

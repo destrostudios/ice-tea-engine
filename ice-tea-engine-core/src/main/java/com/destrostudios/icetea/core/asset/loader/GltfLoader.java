@@ -10,10 +10,7 @@ import com.destrostudios.icetea.core.asset.locator.FileAssetKey;
 import com.destrostudios.icetea.core.data.VertexData;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
-import com.destrostudios.icetea.core.model.Joint;
-import com.destrostudios.icetea.core.model.Skeleton;
-import com.destrostudios.icetea.core.model.SkeletonGeometryControl;
-import com.destrostudios.icetea.core.model.SkeletonsControl;
+import com.destrostudios.icetea.core.model.*;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.scene.Spatial;
@@ -35,7 +32,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
     public GltfLoader() {
         nodesMap = new HashMap<>();
         skeletonMap = new HashMap<>();
-        jointsMap = new HashMap<>();
+        skeletonNodeMap = new HashMap<>();
         samplersDataMap = new HashMap<>();
         materialsMap = new HashMap<>();
         tmpMatrix4f = new float[16];
@@ -45,7 +42,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
     private String keyDirectory;
     private HashMap<NodeModel, Node> nodesMap;
     private HashMap<SkinModel, Skeleton> skeletonMap;
-    private HashMap<NodeModel, Joint> jointsMap;
+    private HashMap<NodeModel, SkeletonNode> skeletonNodeMap;
     private HashMap<AnimationModel.Sampler, AnimationSamplerData<?>> samplersDataMap;
     private HashMap<MaterialModel, Material> materialsMap;
     private HashMap<BufferModel, byte[]> buffers;
@@ -216,14 +213,48 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
             Matrix4f[] inverseBindMatrices = loadMatrices(sm.getInverseBindMatrices());
             List<NodeModel> jointNodeModels = sm.getJoints();
             Joint[] joints = new Joint[jointNodeModels.size()];
+            ArrayList<SkeletonNode> skeletonNodes = new ArrayList<>();
             int jointIndex = 0;
             for (NodeModel nodeModel : jointNodeModels) {
-                Joint joint = getOrCreateJoint(nodeModel);
+                Joint joint = (Joint) getOrCreateSkeletonNode(nodeModel, jointNodeModels);
                 joint.setInverseBindMatrix(inverseBindMatrices[jointIndex]);
                 joints[jointIndex++] = joint;
+                skeletonNodes.add(joint);
+                addSkeletonNodeParents(nodeModel, jointNodeModels, skeletonNodes);
             }
-            return new Skeleton(joints);
+            return new Skeleton(skeletonNodes.toArray(SkeletonNode[]::new), joints);
         });
+    }
+
+    private void addSkeletonNodeParents(NodeModel childNodeModel, List<NodeModel> jointNodeModels, ArrayList<SkeletonNode> skeletonNodes) {
+        NodeModel parentNodeModel = childNodeModel.getParent();
+        if (parentNodeModel != null) {
+            SkeletonNode parentSkeletonNode = getOrCreateSkeletonNode(parentNodeModel, jointNodeModels);
+            if (!(parentSkeletonNode instanceof Joint)) {
+                skeletonNodes.add(parentSkeletonNode);
+                addSkeletonNodeParents(parentNodeModel, jointNodeModels, skeletonNodes);
+            }
+        }
+    }
+
+    private SkeletonNode getOrCreateSkeletonNode(NodeModel nodeModel, List<NodeModel> jointNodeModels) {
+        SkeletonNode skeletonNode = skeletonNodeMap.get(nodeModel);
+        if (skeletonNode != null) {
+            return skeletonNode;
+        }
+        Transform localResetTransform = loadTransform(nodeModel);
+        if (jointNodeModels.contains(nodeModel)) {
+            skeletonNode = new Joint(nodeModel.getChildren().size(), localResetTransform);
+        } else {
+            skeletonNode = new SkeletonNode(nodeModel.getChildren().size(), localResetTransform);
+        }
+        int childIndex = 0;
+        for (NodeModel childNodeModel : nodeModel.getChildren()) {
+            skeletonNode.setChild(childIndex, getOrCreateSkeletonNode(childNodeModel, jointNodeModels));
+            childIndex++;
+        }
+        skeletonNodeMap.put(nodeModel, skeletonNode);
+        return skeletonNode;
     }
 
     private Matrix4f[] loadMatrices(AccessorModel accessorModel) {
@@ -234,21 +265,6 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
             matrices[matrixIndex++] = (Matrix4f) matrixObject;
         }
         return matrices;
-    }
-
-    private Joint getOrCreateJoint(NodeModel nodeModel) {
-        Joint joint = jointsMap.get(nodeModel);
-        if (joint == null) {
-            Transform localResetTransform = loadTransform(nodeModel);
-            joint = new Joint(nodeModel.getChildren().size(), localResetTransform);
-            int childIndex = 0;
-            for (NodeModel childNodeModel : nodeModel.getChildren()) {
-                joint.setChild(childIndex, getOrCreateJoint(childNodeModel));
-                childIndex++;
-            }
-            jointsMap.put(nodeModel, joint);
-        }
-        return joint;
     }
 
     private Transform loadTransform(NodeModel nodeModel) {
@@ -295,8 +311,9 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
     private SampledAnimation<?> loadAnimation(AnimationModel.Channel channel) {
         AnimationSamplerData<?> sampler = loadAnimationSamplerData(channel.getSampler());
-        Joint joint = jointsMap.get(channel.getNodeModel());
-        if (joint != null) {
+        SkeletonNode skeletonNode = skeletonNodeMap.get(channel.getNodeModel());
+        if (skeletonNode != null) {
+            Joint joint = (Joint) skeletonNode;
             switch (channel.getPath()) {
                 case "translation": return new JointTranslationAnimation((AnimationSamplerData<Vector3f>) sampler, joint);
                 case "rotation": return new JointRotationAnimation((AnimationSamplerData<Quaternionf>) sampler, joint);
