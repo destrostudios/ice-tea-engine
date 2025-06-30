@@ -1,5 +1,8 @@
 #version 450
 
+// @import core/light
+// @import core/shadow
+
 layout(triangles) in;
 
 layout(triangle_strip, max_vertices = 3) out;
@@ -30,7 +33,7 @@ void main() {
 	outViewPosition = viewPosition2;
 	outBiomeColor = inBiomeColor[2];
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition2, inNormal[2], light.direction);
+		outLightVertexInfo = shaderLib_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition2, inNormal[2], light.direction);
 	#endif
 
 	EmitVertex();
@@ -46,7 +49,7 @@ void main() {
 	outViewPosition = viewPosition1;
 	outBiomeColor = inBiomeColor[1];
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition1, inNormal[1], light.direction);
+		outLightVertexInfo = shaderLib_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition1, inNormal[1], light.direction);
 	#endif
 
     EmitVertex();
@@ -62,7 +65,7 @@ void main() {
 	outViewPosition = viewPosition0;
 	outBiomeColor = inBiomeColor[0];
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition0, inNormal[0], light.direction);
+		outLightVertexInfo = shaderLib_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition0, inNormal[0], light.direction);
 	#endif
 
 	EmitVertex();

@@ -8,7 +8,6 @@ import org.joml.Vector3f;
 @Getter
 @Setter
 public class WaterConfig {
-
 	// H0k, Hkt computations
 	private int n = 256;
 	private int l = 1000;
@@ -48,5 +47,4 @@ public class WaterConfig {
 	private float timeSpeed = 4;
 	private float motionSpeed = 0.00001f;
 	private float distortionSpeed = 0.1f;
-
 }

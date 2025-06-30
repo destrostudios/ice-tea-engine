@@ -4,7 +4,6 @@ import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Pipeline;
 import com.destrostudios.icetea.core.render.EssentialGeometryRenderPipelineCreator;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
-import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderManager;
 import com.destrostudios.icetea.core.shader.ShaderType;
 import org.lwjgl.system.MemoryStack;
@@ -47,28 +46,27 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         int shaderStageIndex = 0;
         LinkedList<Long> shaderModules = new LinkedList<>();
 
-        Shader vertShader = new Shader("com/destrostudios/icetea/core/shaders/shadow.vert");
-        long vertShaderModule = createShaderModule_Vertex(vertShader, state.getDescriptorSetShaderDeclaration(), state.getVertexFields());
+        long vertShaderModule = createShaderModule_Vertex(state.getVertexShader(), state.getDescriptorSetShaderDeclaration(), state.getVertexFields());
         shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
         shaderModules.add(vertShaderModule);
         shaderStageIndex++;
 
         if (state.getTessellationControlShader() != null) {
-            long tessellationControlShaderModule = shaderManager.createShaderModule(state.getTessellationControlShader(), ShaderType.TESSELLATION_CONTROL_SHADER, state.getDescriptorSetShaderDeclaration());
+            long tessellationControlShaderModule = createShaderModule(state.getTessellationControlShader(), ShaderType.TESSELLATION_CONTROL_SHADER, state.getDescriptorSetShaderDeclaration());
             shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tessellationControlShaderModule, stack);
             shaderModules.add(tessellationControlShaderModule);
             shaderStageIndex++;
         }
 
         if (state.getTessellationEvaluationShader() != null) {
-            long tessellationEvaluationShaderModule = shaderManager.createShaderModule(state.getTessellationEvaluationShader(), ShaderType.TESSELLATION_EVALUATION_SHADER, state.getDescriptorSetShaderDeclaration());
+            long tessellationEvaluationShaderModule = createShaderModule(state.getTessellationEvaluationShader(), ShaderType.TESSELLATION_EVALUATION_SHADER, state.getDescriptorSetShaderDeclaration());
             shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tessellationEvaluationShaderModule, stack);
             shaderModules.add(tessellationEvaluationShaderModule);
             shaderStageIndex++;
         }
 
         if (state.getGeometryShader() != null) {
-            long geometryShaderModule = shaderManager.createShaderModule(state.getGeometryShader(), ShaderType.GEOMETRY_SHADER, state.getDescriptorSetShaderDeclaration());
+            long geometryShaderModule = createShaderModule(state.getGeometryShader(), ShaderType.GEOMETRY_SHADER, state.getDescriptorSetShaderDeclaration());
             shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_GEOMETRY_BIT, geometryShaderModule, stack);
             shaderModules.add(geometryShaderModule);
             shaderStageIndex++;

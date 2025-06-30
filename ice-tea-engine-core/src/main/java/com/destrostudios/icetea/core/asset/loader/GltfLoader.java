@@ -14,7 +14,6 @@ import com.destrostudios.icetea.core.model.*;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.scene.Spatial;
-import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.LowEndianUtil;
 import com.destrostudios.icetea.core.util.SpatialUtil;
@@ -533,16 +532,9 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
     }
 
     private Material loadMaterial(MaterialModel materialModel) {
-        return materialsMap.computeIfAbsent(materialModel, mm -> {
+        return materialsMap.computeIfAbsent(materialModel, _ -> {
             Material material = new Material();
-            material.setVertexShader(new Shader("com/destrostudios/icetea/core/shaders/default.vert", new String[] {
-                "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-                "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-            }));
-            material.setFragmentShader(new Shader("com/destrostudios/icetea/core/shaders/default.frag", new String[] {
-                "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-                "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-            }));
+            material.setDefaultShaders();
             TextureModel baseColorTextureModel = null;
             float[] baseColorFactor = null;
             if (materialModel instanceof MaterialModelV2 materialModelV2) {

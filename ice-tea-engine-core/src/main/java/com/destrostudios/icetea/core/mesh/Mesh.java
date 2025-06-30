@@ -11,7 +11,6 @@ import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -39,10 +38,8 @@ public class Mesh extends MultiConsumableNativeObject<Geometry> implements Conte
     @Getter
     protected int topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     @Getter
-    @Setter
     protected VertexData[] vertices;
     @Getter
-    @Setter
     protected int[] indices;
     @Getter
     private StagedResizableMemoryBuffer vertexBuffer;
@@ -54,6 +51,16 @@ public class Mesh extends MultiConsumableNativeObject<Geometry> implements Conte
     @Getter
     private BoundingBox bounds;
     private BIHTree collisionTree;
+
+    public void setVertices(VertexData[] vertices) {
+        this.vertices = vertices;
+        setBuffersOutdated();
+    }
+
+    public void setIndices(int[] indices) {
+        this.indices = indices;
+        setBuffersOutdated();
+    }
 
     public void updateBounds() {
         // TODO: Introduce TempVars
@@ -89,6 +96,7 @@ public class Mesh extends MultiConsumableNativeObject<Geometry> implements Conte
             normal.normalize();
             entry.getKey().setVector3f("vertexNormal", normal);
         }
+        setBuffersOutdated();
     }
 
     @Override

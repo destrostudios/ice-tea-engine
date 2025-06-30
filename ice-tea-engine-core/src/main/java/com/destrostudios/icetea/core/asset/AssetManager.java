@@ -17,11 +17,13 @@ public class AssetManager {
 
     public AssetManager() {
         locators = new LinkedList<>();
+        cachedStrings = new HashMap<>();
         cachedMeshes = new HashMap<>();
         cachedModels = new HashMap<>();
         cachedTextures = new HashMap<>();
         cachedBitmapFonts = new HashMap<>();
     }
+    private HashMap<String, String> cachedStrings;
     private HashMap<String, Mesh> cachedMeshes;
     private HashMap<String, Spatial> cachedModels;
     private HashMap<String, BufferedTexture> cachedTextures;
@@ -34,6 +36,10 @@ public class AssetManager {
 
     public void removeLocator(AssetLocator locator) {
         locators.remove(locator);
+    }
+
+    public String loadString(String key) {
+        return cachedStrings.computeIfAbsent(key, k -> load(k, new StringLoader(), null));
     }
 
     public Mesh loadMesh(String key) {
@@ -91,9 +97,11 @@ public class AssetManager {
 
     public void cleanup() {
         cleanupNative();
+        cachedStrings.clear();
         cachedMeshes.clear();
         cachedModels.clear();
         cachedTextures.clear();
+        cachedBitmapFonts.clear();
     }
 
     public void cleanupNative() {

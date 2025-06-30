@@ -4,7 +4,7 @@ import com.destrostudios.icetea.core.asset.AssetManager;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Grid;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.FileShader;
 
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_NONE;
 
@@ -19,18 +19,12 @@ public class GrassFactory {
 
     private static Material createMaterial(GrassConfig grassConfig, AssetManager assetManager) {
         Material material = new Material();
-        material.setVertexShader(new Shader("com/destrostudios/icetea/samples/shaders/grass/grass.vert"));
-        material.setFragmentShader(new Shader("com/destrostudios/icetea/samples/shaders/grass/grass.frag", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        }));
+        material.setVertexShader(new FileShader("com/destrostudios/icetea/samples/shaders/grass/grass.vert"));
+        material.setFragmentShader(new FileShader("com/destrostudios/icetea/samples/shaders/grass/grass.frag"));
         material.setTessellationPatchSize(16);
-        material.setTessellationControlShader(new Shader("com/destrostudios/icetea/samples/shaders/grass/grass.tesc"));
-        material.setTessellationEvaluationShader(new Shader("com/destrostudios/icetea/samples/shaders/grass/grass.tese"));
-        material.setGeometryShader(new Shader("com/destrostudios/icetea/samples/shaders/grass/grass.geom", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        }));
+        material.setTessellationControlShader(new FileShader("com/destrostudios/icetea/samples/shaders/grass/grass.tesc"));
+        material.setTessellationEvaluationShader(new FileShader("com/destrostudios/icetea/samples/shaders/grass/grass.tese"));
+        material.setGeometryShader(new FileShader("com/destrostudios/icetea/samples/shaders/grass/grass.geom"));
         // FIXME: Vectors have to be defined first in this order or somehow the memory alignment is messed up
         material.getParameters().setVector4f("baseColor", grassConfig.getBaseColor());
         material.getParameters().setVector4f("tipColor", grassConfig.getTipColor());

@@ -1,0 +1,1 @@
+worldPosition += shaderNode_whoosh_getWorldPosition(vertexPosition, params.meshBoundsCenter, params.meshBoundsExtent, params.targetPositionOld, params.targetPositionNew, params.duration, params.startTime, params.time);

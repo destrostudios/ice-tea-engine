@@ -1,5 +1,8 @@
 #version 450
 
+// @import core/light
+// @import core/shadow
+
 #define PI 3.14159265359f
 
 layout(triangles) in;
@@ -44,7 +47,7 @@ void emitVertex(vec3 position, vec3 offset, mat3 transformationMatrix, vec2 texC
 	outViewPosition = viewPosition;
 	outVertexTexCoord = texCoord;
 	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderNode_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition, vec3(0, 1, 0), light.direction);
+		outLightVertexInfo = shaderLib_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition, vec3(0, 1, 0), light.direction);
 	#endif
 	EmitVertex();
 }

@@ -48,6 +48,7 @@ public class Geometry extends Spatial {
     public void applyLogicalState() {
         super.applyLogicalState();
         updateWorldBounds();
+        material.updateShaders(application.getShaderManager());
     }
 
     @Override

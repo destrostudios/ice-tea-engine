@@ -16,7 +16,6 @@ import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.scene.Spatial;
-import com.destrostudios.icetea.core.shader.Shader;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -49,24 +48,12 @@ public class TestSimple extends Application {
 
         sceneCamera.setLocation(new Vector3f(0, 1, 13));
 
-        Shader vertexShaderDefault = new Shader("com/destrostudios/icetea/core/shaders/default.vert", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        });
-        Shader fragShaderDefault = new Shader("com/destrostudios/icetea/core/shaders/default.frag", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        });
-
-        Quad meshGround = new Quad(20, 20);
-
         Material materialGround = new Material();
-        materialGround.setVertexShader(vertexShaderDefault);
-        materialGround.setFragmentShader(fragShaderDefault);
+        materialGround.setDefaultShaders();
         materialGround.getParameters().setVector4f("color", new Vector4f(1, 1, 1, 1));
 
         ground = new Geometry();
-        ground.setMesh(meshGround);
+        ground.setMesh(new Quad(20, 20));
         ground.setMaterial(materialGround);
         ground.move(new Vector3f(-10, -0.25f, 10));
         ground.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
@@ -85,7 +72,6 @@ public class TestSimple extends Application {
         bitmapTextDynamic.setText("Hello");
         guiNode.add(bitmapTextDynamic);
 
-        // Will of course only work if you have the model locally
         model = (Geometry) assetManager.loadModel("models/ghost/ghost.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
         model.scale(new Vector3f(100, 100, 100));
         model.setShadowMode(ShadowMode.CAST_AND_RECEIVE);

@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.samples.filter;
 
 import com.destrostudios.icetea.core.filter.Filter;
-import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.FileShader;
 import org.joml.Vector4f;
 
 public class SepiaFilter extends Filter {
@@ -13,7 +13,7 @@ public class SepiaFilter extends Filter {
     public SepiaFilter(Vector4f color1, Vector4f color2) {
         this.color1 = color1;
         this.color2 = color2;
-        fragmentShader = new Shader("com/destrostudios/icetea/samples/shaders/filters/sepia.frag");
+        fragmentShader = new FileShader("com/destrostudios/icetea/samples/shaders/filters/sepia.frag");
     }
     private Vector4f color1;
     private Vector4f color2;

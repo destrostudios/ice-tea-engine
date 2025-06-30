@@ -31,6 +31,7 @@ import static org.lwjgl.vulkan.VK10.*;
 public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext, ShadowMapRenderPipelineCreator> {
 
     public ShadowMapRenderJob(Light light, ShadowConfig shadowConfig) {
+        super("shadowMap");
         this.light = light;
         this.shadowConfig = shadowConfig;
         shadowMapTexture = new Texture();

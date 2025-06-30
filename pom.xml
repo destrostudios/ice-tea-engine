@@ -16,6 +16,7 @@
         <version.ice-tea-engine>0.0.1</version.ice-tea-engine>
         <version.jgltf>2.0.4</version.jgltf>
         <version.joml>1.10.8</version.joml>
+        <version.json>20250517</version.json>
         <version.imgui-java>1.86.12</version.imgui-java>
         <version.lwjgl>3.3.4</version.lwjgl>
         <version.lombok>1.18.34</version.lombok>
@@ -88,6 +89,12 @@
                 <groupId>org.joml</groupId>
                 <artifactId>joml</artifactId>
                 <version>${version.joml}</version>
+            </dependency>
+            <!--JSON-->
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${version.json}</version>
             </dependency>
             <!--OBJ-->
             <dependency>

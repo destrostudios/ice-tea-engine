@@ -7,11 +7,15 @@ import com.destrostudios.icetea.core.object.MultiConsumableNativeObject;
 import com.destrostudios.icetea.core.resource.descriptor.MaterialParamsDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.ShaderManager;
+import com.destrostudios.icetea.core.shader.ShaderType;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_BACK_BIT;
@@ -19,12 +23,15 @@ import static org.lwjgl.vulkan.VK10.VK_POLYGON_MODE_FILL;
 
 public class Material extends MultiConsumableNativeObject<Geometry> implements ContextCloneable {
 
+    private static final String DEFAULT_SHADER_NODE = "default";
+
     public Material() {
         parametersBuffer = new UniformDataBuffer();
         parametersBuffer.setDescriptor("default", new MaterialParamsDescriptor());
     }
 
     public Material(Material material, CloneContext context) {
+        shaderNodes = material.shaderNodes;
         vertexShader = material.vertexShader;
         fragmentShader = material.fragmentShader;
         tessellationPatchSize = material.tessellationPatchSize;
@@ -39,6 +46,9 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
         depthWrite = material.depthWrite;
         fillMode = material.fillMode;
     }
+    @Getter
+    @Setter
+    private ArrayList<String> shaderNodes;
     @Getter
     @Setter
     private Shader vertexShader;
@@ -76,6 +86,36 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
     @Setter
     @Getter
     private int fillMode = VK_POLYGON_MODE_FILL;
+
+    public void setDefaultShaders() {
+        shaderNodes = new ArrayList<>();
+        shaderNodes.add(DEFAULT_SHADER_NODE);
+    }
+
+    public void addShaderNodes(String... nodeNames) {
+        Collections.addAll(shaderNodes, nodeNames);
+    }
+
+    public void updateShaders(ShaderManager shaderManager) {
+        if (shaderNodes != null) {
+            HashMap<ShaderType, Shader> shaders = shaderManager.getShaderNodeManager().getShaders(shaderNodes);
+            if (vertexShader == null) {
+                vertexShader = shaders.get(ShaderType.VERTEX_SHADER);
+            }
+            if (tessellationControlShader == null) {
+                tessellationControlShader = shaders.get(ShaderType.TESSELLATION_CONTROL_SHADER);
+            }
+            if (tessellationEvaluationShader == null) {
+                tessellationEvaluationShader = shaders.get(ShaderType.TESSELLATION_EVALUATION_SHADER);
+            }
+            if (geometryShader == null) {
+                geometryShader = shaders.get(ShaderType.GEOMETRY_SHADER);
+            }
+            if (fragmentShader == null) {
+                fragmentShader = shaders.get(ShaderType.FRAGMENT_SHADER);
+            }
+        }
+    }
 
     @Override
     protected void updateNative() {

@@ -2,7 +2,6 @@ package com.destrostudios.icetea.core.font;
 
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.shader.Shader;
 import lombok.Getter;
 
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_FRONT_BIT;
@@ -19,14 +18,7 @@ public class BitmapText extends Geometry {
         setMesh(new BitmapTextMesh(font, text));
 
         Material material = new Material();
-        material.setVertexShader(new Shader("com/destrostudios/icetea/core/shaders/default.vert", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        }));
-        material.setFragmentShader(new Shader("com/destrostudios/icetea/core/shaders/default.frag", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        }));
+        material.setDefaultShaders();
         material.setCullMode(VK_CULL_MODE_FRONT_BIT);
         material.setDepthTest(false);
         material.setDepthWrite(false);

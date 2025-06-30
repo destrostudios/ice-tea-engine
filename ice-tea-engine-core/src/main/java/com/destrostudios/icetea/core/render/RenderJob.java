@@ -19,6 +19,11 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public abstract class RenderJob<GRC extends GeometryRenderContext<?>, RPC extends RenderPipelineCreator<?, ?>> extends NativeObject {
 
+    public RenderJob(String name) {
+        this.name = name;
+    }
+    @Getter
+    private String name;
     @Getter
     protected RPC renderPipelineCreator;
     @Getter

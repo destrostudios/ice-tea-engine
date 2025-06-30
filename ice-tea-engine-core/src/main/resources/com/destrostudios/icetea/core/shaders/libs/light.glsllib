@@ -4,7 +4,7 @@ struct LightVertexInfo {
     vec3 viewSpaceLightDirection;
 };
 
-LightVertexInfo shaderNode_light_getVertexInfo_SpotLight(mat4 viewMatrix, mat4 modelMatrix, vec4 worldSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightPosition) {
+LightVertexInfo shaderLib_light_getVertexInfo_SpotLight(mat4 viewMatrix, mat4 modelMatrix, vec4 worldSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightPosition) {
     vec3 viewSpaceVertexPosition = vec3(viewMatrix * worldSpaceVertexPosition);
     vec3 viewSpaceVertexNormal = normalize(mat3(transpose(inverse(viewMatrix * modelMatrix))) * modelSpaceVertexNormal);
     vec3 viewSpaceLightPosition = vec3(viewMatrix * vec4(worldSpaceLightPosition, 1));
@@ -12,14 +12,14 @@ LightVertexInfo shaderNode_light_getVertexInfo_SpotLight(mat4 viewMatrix, mat4 m
     return LightVertexInfo(viewSpaceVertexPosition, viewSpaceVertexNormal, viewSpaceLightDirection);
 }
 
-LightVertexInfo shaderNode_light_getVertexInfo_DirectionalLight(mat4 viewMatrix, mat4 modelMatrix, vec4 worldSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightDirection) {
+LightVertexInfo shaderLib_light_getVertexInfo_DirectionalLight(mat4 viewMatrix, mat4 modelMatrix, vec4 worldSpaceVertexPosition, vec3 modelSpaceVertexNormal, vec3 worldSpaceLightDirection) {
     vec3 viewSpaceVertexPosition = vec3(viewMatrix * worldSpaceVertexPosition);
     vec3 viewSpaceVertexNormal = normalize(mat3(transpose(inverse(viewMatrix * modelMatrix))) * modelSpaceVertexNormal);
     vec3 viewSpaceLightDirection = vec3(viewMatrix * vec4(worldSpaceLightDirection, 0));
     return LightVertexInfo(viewSpaceVertexPosition, viewSpaceVertexNormal, viewSpaceLightDirection);
 }
 
-vec4 shaderNode_light_getLightColor(LightVertexInfo lightVertexInfo, vec4 lightColor, vec4 ambientColor, vec4 specularColor, float shininess, float shadowFactor) {
+vec4 shaderLib_light_getLightColor(LightVertexInfo lightVertexInfo, vec4 lightColor, vec4 ambientColor, vec4 specularColor, float shininess, float shadowFactor) {
     vec4 ambient = ambientColor * lightColor;
 
     float cosTheta = max(dot(lightVertexInfo.viewSpaceVertexNormal, -1 * lightVertexInfo.viewSpaceLightDirection), 0);

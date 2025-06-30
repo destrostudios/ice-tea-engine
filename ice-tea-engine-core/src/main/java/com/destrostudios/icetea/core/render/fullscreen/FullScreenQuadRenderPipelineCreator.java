@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.Pipeline;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.render.RenderPipelineCreator;
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
+import com.destrostudios.icetea.core.shader.FileShader;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.shader.ShaderManager;
 import com.destrostudios.icetea.core.shader.ShaderType;
@@ -20,7 +21,7 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
     public FullScreenQuadRenderPipelineCreator(Application application, FullScreenQuadRenderJob renderJob) {
         super(application, renderJob);
     }
-    private Shader vertShader = new Shader("com/destrostudios/icetea/core/shaders/fullScreenQuad.vert");
+    private Shader vertShader = new FileShader("com/destrostudios/icetea/core/shaders/fullScreenQuad.vert");
 
     @Override
     protected FullScreenQuadRenderPipelineState createState(GeometryRenderContext<FullScreenQuadRenderJob> geometryRenderContext) {
@@ -36,10 +37,10 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(2, stack);
 
-        long vertShaderModule = shaderManager.createShaderModule(vertShader, ShaderType.VERTEX_SHADER, resourceDescriptorSetShaderDeclaration);
+        long vertShaderModule = createShaderModule(vertShader, ShaderType.VERTEX_SHADER, resourceDescriptorSetShaderDeclaration);
         shaderManager.createShaderStage(shaderStages, 0, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
 
-        long fragShaderModule = shaderManager.createShaderModule(renderJob.getFragmentShader(), ShaderType.FRAGMENT_SHADER, resourceDescriptorSetShaderDeclaration);
+        long fragShaderModule = createShaderModule(renderJob.getFragmentShader(), ShaderType.FRAGMENT_SHADER, resourceDescriptorSetShaderDeclaration);
         shaderManager.createShaderStage(shaderStages, 1, VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule, stack);
 
         // ===> VERTEX STAGE <===

@@ -10,11 +10,11 @@ mat4 shadowBiasMatrix = mat4(
     0.5, 0.5, 0.0, 1.0
 );
 
-vec4 shaderNode_shadow_getShadowMapPosition(mat4 projectionViewMatrix, vec4 worldSpaceVertexPosition) {
+vec4 shaderLib_shadow_getShadowMapPosition(mat4 projectionViewMatrix, vec4 worldSpaceVertexPosition) {
     return (shadowBiasMatrix * projectionViewMatrix * worldSpaceVertexPosition);
 }
 
-float shaderNode_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2DArray shadowMap, uint shadowCascadeIndex, float shadowBrightness) {
+float shaderLib_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2DArray shadowMap, uint shadowCascadeIndex, float shadowBrightness) {
     vec4 projectedShadowMapPosition = shadowMapPosition / shadowMapPosition.w;
     if ((projectedShadowMapPosition.z > -1) && (projectedShadowMapPosition.z < 1)) {
         float dist = texture(shadowMap, vec3(projectedShadowMapPosition.xy, shadowCascadeIndex)).r;
@@ -25,7 +25,7 @@ float shaderNode_shadow_getShadowFactor(vec4 shadowMapPosition, sampler2DArray s
     return 1;
 }
 
-vec4 shaderNode_shadow_getCascadeDebugColor(uint shadowCascadeIndex, int cascadeDebugColors) {
+vec4 shaderLib_shadow_getCascadeDebugColor(uint shadowCascadeIndex, int cascadeDebugColors) {
     if (cascadeDebugColors == 1) {
         switch(shadowCascadeIndex % 3) {
             case 0: return vec4(1, 0.25, 0.25, 1);
@@ -36,9 +36,9 @@ vec4 shaderNode_shadow_getCascadeDebugColor(uint shadowCascadeIndex, int cascade
     return vec4(1);
 }
 
-ShadowResult shaderNode_shadow_getShadowResult(vec4 worldPosition, vec4 viewPosition, uint shadowCascadeIndex, mat4 projectionViewMatrix, float shadowBrightness, int cascadeDebugColors, sampler2DArray shadowMap) {
-    vec4 shadowMapPosition = shaderNode_shadow_getShadowMapPosition(projectionViewMatrix, worldPosition);
-    float shadowFactor = shaderNode_shadow_getShadowFactor(shadowMapPosition, shadowMap, shadowCascadeIndex, shadowBrightness);
-    vec4 debugColor = shaderNode_shadow_getCascadeDebugColor(shadowCascadeIndex, cascadeDebugColors);
+ShadowResult shaderLib_shadow_getShadowResult(vec4 worldPosition, vec4 viewPosition, uint shadowCascadeIndex, mat4 projectionViewMatrix, float shadowBrightness, int cascadeDebugColors, sampler2DArray shadowMap) {
+    vec4 shadowMapPosition = shaderLib_shadow_getShadowMapPosition(projectionViewMatrix, worldPosition);
+    float shadowFactor = shaderLib_shadow_getShadowFactor(shadowMapPosition, shadowMap, shadowCascadeIndex, shadowBrightness);
+    vec4 debugColor = shaderLib_shadow_getCascadeDebugColor(shadowCascadeIndex, cascadeDebugColors);
     return ShadowResult(shadowFactor, debugColor);
 }

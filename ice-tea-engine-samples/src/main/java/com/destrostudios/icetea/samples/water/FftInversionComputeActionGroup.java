@@ -3,6 +3,7 @@ package com.destrostudios.icetea.samples.water;
 import com.destrostudios.icetea.core.buffer.PushConstantsDataBuffer;
 import com.destrostudios.icetea.core.compute.ComputeAction;
 import com.destrostudios.icetea.core.compute.ComputeActionGroup;
+import com.destrostudios.icetea.core.shader.FileShader;
 import com.destrostudios.icetea.core.shader.Shader;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
@@ -21,7 +22,7 @@ public class FftInversionComputeActionGroup extends ComputeActionGroup {
 
     @Override
     public Shader getComputeShader() {
-        return new Shader("com/destrostudios/icetea/samples/shaders/water/inversion.comp");
+        return new FileShader("com/destrostudios/icetea/samples/shaders/water/inversion.comp");
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.destrostudios.icetea.core.input.*;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.FileShader;
 import com.destrostudios.icetea.core.texture.BufferedTexture;
 import com.destrostudios.icetea.core.texture.TextureData;
 import imgui.ImGui;
@@ -131,8 +131,8 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
 
     private Geometry createGeometry() {
         Material material = new Material();
-        material.setVertexShader(new Shader("com/destrostudios/icetea/imgui/shaders/imgui.vert"));
-        material.setFragmentShader(new Shader("com/destrostudios/icetea/imgui/shaders/imgui.frag"));
+        material.setVertexShader(new FileShader("com/destrostudios/icetea/imgui/shaders/imgui.vert"));
+        material.setFragmentShader(new FileShader("com/destrostudios/icetea/imgui/shaders/imgui.frag"));
         material.setTexture("diffuseMap", fontsTexture);
         material.setCullMode(VK_CULL_MODE_NONE);
         material.setDepthTest(false);

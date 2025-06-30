@@ -1,17 +1,10 @@
 package com.destrostudios.icetea.core.shader;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import com.destrostudios.icetea.core.asset.AssetManager;
 
-@AllArgsConstructor
-@Getter
-@EqualsAndHashCode
-public class Shader {
+public abstract class Shader {
 
-    public Shader(String filePath) {
-        this(filePath, new String[0]);
-    }
-    private String filePath;
-    private String[] requiredShaderNodes;
+    public abstract String getCode(AssetManager assetManager);
+
+    public abstract String getDebugIdentifier();
 }

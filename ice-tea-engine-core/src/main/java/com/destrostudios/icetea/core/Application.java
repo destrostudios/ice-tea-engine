@@ -142,7 +142,7 @@ public abstract class Application {
         inputManager = new InputManager(this);
         assetManager = new AssetManager();
         assetManager.addLocator(new ClasspathLocator());
-        shaderManager = new ShaderManager();
+        shaderManager = new ShaderManager(assetManager);
         pipelineManager = new PipelineManager();
         rootNode = new Node();
         sceneNode = new Node();

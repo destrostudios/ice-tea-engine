@@ -23,6 +23,7 @@ import static org.lwjgl.vulkan.VK10.*;
 public abstract class FullScreenQuadRenderJob extends RenderJob<GeometryRenderContext<?>, FullScreenQuadRenderPipelineCreator> {
 
     public FullScreenQuadRenderJob() {
+        super("fullScreenQuad");
         multisampledColorTexture = new Texture();
     }
     @Getter

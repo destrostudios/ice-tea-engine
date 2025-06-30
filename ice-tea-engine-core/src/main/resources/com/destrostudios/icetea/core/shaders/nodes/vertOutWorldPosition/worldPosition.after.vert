@@ -1,0 +1,1 @@
+outWorldPosition = worldPosition;

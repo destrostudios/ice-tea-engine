@@ -1,5 +1,8 @@
 #version 450
 
+// @import core/light
+// @import core/shadow
+
 layout(location = 0) in vec4 worldPosition;
 layout(location = 1) in vec4 viewPosition;
 layout(location = 2) in vec2 vertexTexCoord;
@@ -17,8 +20,8 @@ void main() {
             shadowCascadeIndex = i + 1;
         }
     }
-    ShadowResult shadowResult = shaderNode_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMapTexture);
+    ShadowResult shadowResult = shaderLib_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMapTexture);
 
-    vec4 effectiveLightColor = shaderNode_light_getLightColor(lightVertexInfo, light.lightColor, light.ambientColor, light.specularColor, shininess, shadowResult.shadowFactor);
+    vec4 effectiveLightColor = shaderLib_light_getLightColor(lightVertexInfo, light.lightColor, light.ambientColor, light.specularColor, shininess, shadowResult.shadowFactor);
     outColor = grassColor * effectiveLightColor * shadowResult.debugColor;
 }

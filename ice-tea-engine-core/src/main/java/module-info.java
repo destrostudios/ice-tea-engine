@@ -8,6 +8,7 @@ module com.destrostudios.icetea.core {
     requires transitive org.lwjgl.vma;
     requires transitive org.lwjgl.vulkan;
     requires transitive org.joml;
+    requires org.json;
     requires obj;
     requires jgltf.model;
     requires jgltf.impl.v1;
@@ -49,6 +50,7 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.scene;
     exports com.destrostudios.icetea.core.scene.gui;
     exports com.destrostudios.icetea.core.shader;
+    exports com.destrostudios.icetea.core.shader.node;
     exports com.destrostudios.icetea.core.texture;
     exports com.destrostudios.icetea.core.util;
 }

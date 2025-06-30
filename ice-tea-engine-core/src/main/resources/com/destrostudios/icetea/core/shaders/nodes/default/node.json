@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    "scene",
+    "shadowMap",
+    "skeleton",
+    "clip",
+    "color",
+    "light"
+  ]
+}

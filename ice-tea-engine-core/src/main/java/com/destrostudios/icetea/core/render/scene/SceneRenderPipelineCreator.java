@@ -57,27 +57,27 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
         shaderStageIndex++;
 
         if (state.getTessellationControlShader() != null) {
-            long tessellationControlShaderModule = shaderManager.createShaderModule(state.getTessellationControlShader(), ShaderType.TESSELLATION_CONTROL_SHADER, state.getDescriptorSetShaderDeclaration());
+            long tessellationControlShaderModule = createShaderModule(state.getTessellationControlShader(), ShaderType.TESSELLATION_CONTROL_SHADER, state.getDescriptorSetShaderDeclaration());
             shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tessellationControlShaderModule, stack);
             shaderModules.add(tessellationControlShaderModule);
             shaderStageIndex++;
         }
 
         if (state.getTessellationEvaluationShader() != null) {
-            long tessellationEvaluationShaderModule = shaderManager.createShaderModule(state.getTessellationEvaluationShader(), ShaderType.TESSELLATION_EVALUATION_SHADER, state.getDescriptorSetShaderDeclaration());
+            long tessellationEvaluationShaderModule = createShaderModule(state.getTessellationEvaluationShader(), ShaderType.TESSELLATION_EVALUATION_SHADER, state.getDescriptorSetShaderDeclaration());
             shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tessellationEvaluationShaderModule, stack);
             shaderModules.add(tessellationEvaluationShaderModule);
             shaderStageIndex++;
         }
 
         if (state.getGeometryShader() != null) {
-            long geometryShaderModule = shaderManager.createShaderModule(state.getGeometryShader(), ShaderType.GEOMETRY_SHADER, state.getDescriptorSetShaderDeclaration());
+            long geometryShaderModule = createShaderModule(state.getGeometryShader(), ShaderType.GEOMETRY_SHADER, state.getDescriptorSetShaderDeclaration());
             shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_GEOMETRY_BIT, geometryShaderModule, stack);
             shaderModules.add(geometryShaderModule);
             shaderStageIndex++;
         }
 
-        long fragShaderModule = shaderManager.createShaderModule(state.getFragmentShader(), ShaderType.FRAGMENT_SHADER, state.getDescriptorSetShaderDeclaration());
+        long fragShaderModule = createShaderModule(state.getFragmentShader(), ShaderType.FRAGMENT_SHADER, state.getDescriptorSetShaderDeclaration());
         shaderManager.createShaderStage(shaderStages, shaderStageIndex, VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule, stack);
         shaderModules.add(fragShaderModule);
         shaderStageIndex++;

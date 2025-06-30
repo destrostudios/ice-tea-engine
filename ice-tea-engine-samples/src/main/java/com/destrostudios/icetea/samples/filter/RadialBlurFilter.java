@@ -1,7 +1,7 @@
 package com.destrostudios.icetea.samples.filter;
 
 import com.destrostudios.icetea.core.filter.Filter;
-import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.FileShader;
 
 public class RadialBlurFilter extends Filter {
 
@@ -12,7 +12,7 @@ public class RadialBlurFilter extends Filter {
     public RadialBlurFilter(float sampleDist, float sampleStrength) {
         this.sampleDist = sampleDist;
         this.sampleStrength = sampleStrength;
-        fragmentShader = new Shader("com/destrostudios/icetea/samples/shaders/filters/radialBlur.frag");
+        fragmentShader = new FileShader("com/destrostudios/icetea/samples/shaders/filters/radialBlur.frag");
     }
     private float sampleDist;
     private float sampleStrength;

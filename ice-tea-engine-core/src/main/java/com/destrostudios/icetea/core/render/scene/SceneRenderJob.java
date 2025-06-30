@@ -27,6 +27,7 @@ import static org.lwjgl.vulkan.VK12.*;
 public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext, SceneRenderPipelineCreator> {
 
     public SceneRenderJob() {
+        super("scene");
         multisampledColorTexture = new Texture();
         multisampledDepthTexture = new Texture();
         resolvedDepthTexture = new Texture();

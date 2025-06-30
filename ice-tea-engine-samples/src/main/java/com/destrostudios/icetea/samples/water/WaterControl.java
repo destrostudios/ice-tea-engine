@@ -6,7 +6,7 @@ import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.render.RenderJobManager;
 import com.destrostudios.icetea.core.scene.Control;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.FileShader;
 
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -52,12 +52,12 @@ public class WaterControl extends Control {
 
     private Material createMaterial() {
         Material material = new Material();
-        material.setVertexShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.vert"));
-        material.setFragmentShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.frag"));
+        material.setVertexShader(new FileShader("com/destrostudios/icetea/samples/shaders/water/water.vert"));
+        material.setFragmentShader(new FileShader("com/destrostudios/icetea/samples/shaders/water/water.frag"));
         material.setTessellationPatchSize(16);
-        material.setTessellationControlShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.tesc"));
-        material.setTessellationEvaluationShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.tese"));
-        material.setGeometryShader(new Shader("com/destrostudios/icetea/samples/shaders/water/water.geom"));
+        material.setTessellationControlShader(new FileShader("com/destrostudios/icetea/samples/shaders/water/water.tesc"));
+        material.setTessellationEvaluationShader(new FileShader("com/destrostudios/icetea/samples/shaders/water/water.tese"));
+        material.setGeometryShader(new FileShader("com/destrostudios/icetea/samples/shaders/water/water.geom"));
         // FIXME: Vectors have to be defined first or somehow the memory alignment is messed up
         material.getParameters().setVector3f("waterColor", waterConfig.getWaterColor());
         material.getParameters().setVector2f("windDirection", waterConfig.getWindDirection());

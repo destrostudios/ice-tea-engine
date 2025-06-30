@@ -20,7 +20,8 @@ import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.*;
 import com.destrostudios.icetea.core.scene.gui.Panel;
-import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.FileShader;
+import com.destrostudios.icetea.core.texture.BufferedTexture;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.imgui.ImGuiSystem;
 import com.destrostudios.icetea.samples.filter.RadialBlurFilter;
@@ -92,24 +93,9 @@ public class TestApplication extends Application {
         nodeRotating = new Node();
         sceneNode.add(nodeRotating);
 
-        Shader vertexShaderDefault = new Shader("com/destrostudios/icetea/core/shaders/default.vert", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        });
-        Shader fragShaderDefault = new Shader("com/destrostudios/icetea/core/shaders/default.frag", new String[] {
-            "com/destrostudios/icetea/core/shaders/nodes/light.glsllib",
-            "com/destrostudios/icetea/core/shaders/nodes/shadow.glsllib"
-        });
-
-        Shader vertexShaderCool = new Shader("shaders/veryCool.vert");
-        Shader fragShaderCool = new Shader("shaders/veryCool.frag", new String[] {
-            "shaders/nodes/texCoordColor.glsllib",
-            "shaders/nodes/alphaPulsate.glsllib"
-        });
-
         materialCool = new Material();
-        materialCool.setVertexShader(vertexShaderCool);
-        materialCool.setFragmentShader(fragShaderCool);
+        materialCool.setVertexShader(new FileShader("shaders/veryCool.vert"));
+        materialCool.setFragmentShader(new FileShader("shaders/veryCool.frag"));
         materialCool.setTransparent(true);
 
         // GUI
@@ -152,8 +138,7 @@ public class TestApplication extends Application {
         Quad meshGround = new Quad(10, 10);
 
         Material materialGround = new Material();
-        materialGround.setVertexShader(vertexShaderDefault);
-        materialGround.setFragmentShader(fragShaderDefault);
+        materialGround.setDefaultShaders();
         materialGround.getParameters().setVector4f("color", new Vector4f(0.5f, 0.5f, 0.5f, 1));
 
         geometryGround = new Geometry();
@@ -178,9 +163,8 @@ public class TestApplication extends Application {
         meshChalet.loadCollisionTree(); // Preload to avoid lag later on
 
         Material materialChalet = new Material();
-        materialChalet.setVertexShader(vertexShaderDefault);
-        materialChalet.setFragmentShader(fragShaderDefault);
-        Texture textureChalet = assetManager.loadTexture("textures/chalet.jpg");
+        materialChalet.setDefaultShaders();
+        BufferedTexture textureChalet = assetManager.loadTexture("textures/chalet.jpg");
         materialChalet.setTexture("diffuseMap", textureChalet);
 
         Geometry geometryChalet1 = new Geometry();
@@ -224,10 +208,8 @@ public class TestApplication extends Application {
         Mesh meshTrees = assetManager.loadMesh("models/trees.obj");
 
         Material materialTrees = new Material();
-        materialTrees.setVertexShader(vertexShaderDefault);
-        materialTrees.setFragmentShader(fragShaderDefault);
-        Texture textureTree = assetManager.loadTexture("textures/trees.jpg");
-        materialTrees.setTexture("diffuseMap", textureTree);
+        materialTrees.setDefaultShaders();
+        materialTrees.setTexture("diffuseMap", assetManager.loadTexture("textures/trees.jpg"));
         materialTrees.getParameters().setVector4f("color", new Vector4f(0, 0, 1, 1));
 
         Geometry geometryTrees = new Geometry();
@@ -249,8 +231,7 @@ public class TestApplication extends Application {
         meshDennis.loadCollisionTree(); // Preload to avoid lag later on
 
         Material materialDennis = new Material();
-        materialDennis.setVertexShader(vertexShaderDefault);
-        materialDennis.setFragmentShader(fragShaderDefault);
+        materialDennis.setDefaultShaders();
         Texture textureDennis = assetManager.loadTexture("textures/dennis.jpg");
         materialDennis.setTexture("diffuseMap", textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
@@ -324,8 +305,8 @@ public class TestApplication extends Application {
         Mesh meshSky = assetManager.loadMesh("models/dome.obj");
 
         Material materialSky = new Material();
-        materialSky.setVertexShader(new Shader("shaders/atmosphere.vert"));
-        materialSky.setFragmentShader(new Shader("shaders/atmosphere.frag"));
+        materialSky.setVertexShader(new FileShader("shaders/atmosphere.vert"));
+        materialSky.setFragmentShader(new FileShader("shaders/atmosphere.frag"));
         materialSky.setCullMode(VK_CULL_MODE_FRONT_BIT);
 
         Geometry geometrySky = new Geometry();
@@ -340,8 +321,7 @@ public class TestApplication extends Application {
         Mesh meshKnot = assetManager.loadMesh("models/knot.obj");
 
         Material materialKnot = new Material();
-        materialKnot.setVertexShader(vertexShaderDefault);
-        materialKnot.setFragmentShader(fragShaderDefault);
+        materialKnot.setDefaultShaders();
         materialKnot.setTexture("diffuseMap", textureChalet);
         materialKnot.getParameters().setVector4f("color", new Vector4f(0.33f, 1.33f, 0.33f, 1));
 
@@ -362,8 +342,7 @@ public class TestApplication extends Application {
         Mesh meshBox = new Box(1, 1, 1);
 
         Material materialBounds = new Material();
-        materialBounds.setVertexShader(vertexShaderDefault);
-        materialBounds.setFragmentShader(fragShaderDefault);
+        materialBounds.setDefaultShaders();
         materialBounds.setCullMode(VK_CULL_MODE_NONE);
         materialBounds.setFillMode(VK_POLYGON_MODE_LINE);
         materialBounds.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
@@ -511,8 +490,7 @@ public class TestApplication extends Application {
                         geometryBox.setMesh(meshBox);
 
                         Material materialBox = new Material();
-                        materialBox.setVertexShader(vertexShaderDefault);
-                        materialBox.setFragmentShader(fragShaderDefault);
+                        materialBox.setDefaultShaders();
                         geometryBox.setMaterial(materialBox);
 
                         float boxSize = 0.05f;

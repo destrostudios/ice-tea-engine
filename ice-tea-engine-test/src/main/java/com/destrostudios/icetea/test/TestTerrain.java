@@ -12,7 +12,7 @@ import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
-import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.shader.FileShader;
 import com.destrostudios.icetea.samples.terrain.TerrainFactory;
 import com.destrostudios.icetea.samples.water.WaterConfig;
 import com.destrostudios.icetea.samples.water.WaterFactory;
@@ -72,8 +72,8 @@ public class TestTerrain extends Application {
         }
 
         Material materialSky = new Material();
-        materialSky.setVertexShader(new Shader("shaders/atmosphere.vert"));
-        materialSky.setFragmentShader(new Shader("shaders/atmosphere.frag"));
+        materialSky.setVertexShader(new FileShader("shaders/atmosphere.vert"));
+        materialSky.setFragmentShader(new FileShader("shaders/atmosphere.frag"));
         materialSky.setCullMode(VK_CULL_MODE_FRONT_BIT);
 
         Geometry geometrySky = new Geometry();

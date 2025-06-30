@@ -42,7 +42,15 @@ public abstract class RenderPipelineCreator<RJ extends RenderJob<?, ?>, PS exten
     protected abstract Pipeline createPipeline(PS state, LongBuffer descriptorSetLayouts, MemoryStack stack);
 
     protected long createShaderModule_Vertex(Shader shader, String additionalDeclarations, List<EssentialGeometryRenderPipelineState.VertexField> vertexFields) {
-        return application.getShaderManager().createShaderModule(shader, ShaderType.VERTEX_SHADER, additionalDeclarations + getVertexDataDeclarations(vertexFields) + "\n");
+        return createShaderModule(shader, ShaderType.VERTEX_SHADER, additionalDeclarations + getVertexDataDeclarations(vertexFields));
+    }
+
+    protected long createShaderModule(Shader shader, ShaderType shaderType, String additionalDeclarations) {
+        return application.getShaderManager().createShaderModule(shader, shaderType, additionalDeclarations + getRenderJobDeclarations());
+    }
+
+    private String getRenderJobDeclarations() {
+        return "#define RENDERJOB_" + renderJob.getName().toUpperCase() + " 1\n";
     }
 
     private static String getVertexDataDeclarations(List<EssentialGeometryRenderPipelineState.VertexField> vertexFields) {
