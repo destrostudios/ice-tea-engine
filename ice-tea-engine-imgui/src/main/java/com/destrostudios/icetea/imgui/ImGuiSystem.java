@@ -60,32 +60,6 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
         imGuiIO.setDisplayFramebufferScale(1, 1);
         onWindowResize(application.getConfig().getWidth(), application.getConfig().getHeight());
 
-        // Special keys
-        int[] keyMap = new int[ImGuiKey.COUNT];
-        keyMap[ImGuiKey.Tab] = GLFW_KEY_TAB;
-        keyMap[ImGuiKey.LeftArrow] = GLFW_KEY_LEFT;
-        keyMap[ImGuiKey.RightArrow] = GLFW_KEY_RIGHT;
-        keyMap[ImGuiKey.UpArrow] = GLFW_KEY_UP;
-        keyMap[ImGuiKey.DownArrow] = GLFW_KEY_DOWN;
-        keyMap[ImGuiKey.PageUp] = GLFW_KEY_PAGE_UP;
-        keyMap[ImGuiKey.PageDown] = GLFW_KEY_PAGE_DOWN;
-        keyMap[ImGuiKey.Home] = GLFW_KEY_HOME;
-        keyMap[ImGuiKey.End] = GLFW_KEY_END;
-        keyMap[ImGuiKey.Insert] = GLFW_KEY_INSERT;
-        keyMap[ImGuiKey.Delete] = GLFW_KEY_DELETE;
-        keyMap[ImGuiKey.Backspace] = GLFW_KEY_BACKSPACE;
-        keyMap[ImGuiKey.Space] = GLFW_KEY_SPACE;
-        keyMap[ImGuiKey.Enter] = GLFW_KEY_ENTER;
-        keyMap[ImGuiKey.Escape] = GLFW_KEY_ESCAPE;
-        keyMap[ImGuiKey.KeyPadEnter] = GLFW_KEY_KP_ENTER;
-        keyMap[ImGuiKey.A] = GLFW_KEY_A;
-        keyMap[ImGuiKey.C] = GLFW_KEY_C;
-        keyMap[ImGuiKey.V] = GLFW_KEY_V;
-        keyMap[ImGuiKey.X] = GLFW_KEY_X;
-        keyMap[ImGuiKey.Y] = GLFW_KEY_Y;
-        keyMap[ImGuiKey.Z] = GLFW_KEY_Z;
-        imGuiIO.setKeyMap(keyMap);
-
         // Clipboard
         imGuiIO.setGetClipboardTextFn(new ImStrSupplier() {
 
@@ -189,18 +163,93 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
     @Override
     public void onKeyEvent(KeyEvent keyEvent) {
         ImGuiIO imGuiIO = ImGui.getIO();
-        if (keyEvent.getAction() == GLFW_PRESS) {
-            imGuiIO.setKeysDown(keyEvent.getKey(), true);
-        } else if (keyEvent.getAction() == GLFW_RELEASE) {
-            imGuiIO.setKeysDown(keyEvent.getKey(), false);
+        Integer imguiKey = convertGlfwKeyToImGuiKey(keyEvent.getKey());
+        if (imguiKey != null) {
+            if (keyEvent.getAction() == GLFW_PRESS) {
+                imGuiIO.addKeyEvent(imguiKey, true);
+            } else if (keyEvent.getAction() == GLFW_RELEASE) {
+                imGuiIO.addKeyEvent(imguiKey, false);
+            }
         }
-        imGuiIO.setKeyCtrl(imGuiIO.getKeysDown(GLFW_KEY_LEFT_CONTROL) || imGuiIO.getKeysDown(GLFW_KEY_RIGHT_CONTROL));
-        imGuiIO.setKeyShift(imGuiIO.getKeysDown(GLFW_KEY_LEFT_SHIFT) || imGuiIO.getKeysDown(GLFW_KEY_RIGHT_SHIFT));
-        imGuiIO.setKeyAlt(imGuiIO.getKeysDown(GLFW_KEY_LEFT_ALT) || imGuiIO.getKeysDown(GLFW_KEY_RIGHT_ALT));
-        imGuiIO.setKeySuper(imGuiIO.getKeysDown(GLFW_KEY_LEFT_SUPER) || imGuiIO.getKeysDown(GLFW_KEY_RIGHT_SUPER));
+        imGuiIO.addKeyEvent(ImGuiKey.ModCtrl, (keyEvent.getModifiers() & GLFW_MOD_CONTROL) != 0);
+        imGuiIO.addKeyEvent(ImGuiKey.ModShift, (keyEvent.getModifiers() & GLFW_MOD_SHIFT) != 0);
+        imGuiIO.addKeyEvent(ImGuiKey.ModAlt, (keyEvent.getModifiers() & GLFW_MOD_ALT) != 0);
+        imGuiIO.addKeyEvent(ImGuiKey.ModSuper, (keyEvent.getModifiers() & GLFW_MOD_SUPER) != 0);
         if (imGuiIO.getWantCaptureKeyboard()) {
             keyEvent.stopPropagating();
         }
+    }
+
+    private Integer convertGlfwKeyToImGuiKey(int glfwKey) {
+        // Letters A-Z
+        if (glfwKey >= GLFW_KEY_A && glfwKey <= GLFW_KEY_Z) {
+            return ImGuiKey.A + (glfwKey - GLFW_KEY_A);
+        }
+        // Numbers 0-9
+        if (glfwKey >= GLFW_KEY_0 && glfwKey <= GLFW_KEY_9) {
+            return ImGuiKey._0 + (glfwKey - GLFW_KEY_0);
+        }
+        // Function keys
+        if (glfwKey >= GLFW_KEY_F1 && glfwKey <= GLFW_KEY_F12) {
+            return ImGuiKey.F1 + (glfwKey - GLFW_KEY_F1);
+        }
+        // Numpad numbers
+        if (glfwKey >= GLFW_KEY_KP_0 && glfwKey <= GLFW_KEY_KP_9) {
+            return ImGuiKey.Keypad0 + (glfwKey - GLFW_KEY_KP_0);
+        }
+        return switch (glfwKey) {
+            // Navigation
+            case GLFW_KEY_TAB -> ImGuiKey.Tab;
+            case GLFW_KEY_LEFT -> ImGuiKey.LeftArrow;
+            case GLFW_KEY_RIGHT -> ImGuiKey.RightArrow;
+            case GLFW_KEY_UP -> ImGuiKey.UpArrow;
+            case GLFW_KEY_DOWN -> ImGuiKey.DownArrow;
+            case GLFW_KEY_PAGE_UP -> ImGuiKey.PageUp;
+            case GLFW_KEY_PAGE_DOWN -> ImGuiKey.PageDown;
+            case GLFW_KEY_HOME -> ImGuiKey.Home;
+            case GLFW_KEY_END -> ImGuiKey.End;
+            case GLFW_KEY_INSERT -> ImGuiKey.Insert;
+            case GLFW_KEY_DELETE -> ImGuiKey.Delete;
+            case GLFW_KEY_BACKSPACE -> ImGuiKey.Backspace;
+            case GLFW_KEY_SPACE -> ImGuiKey.Space;
+            case GLFW_KEY_ENTER -> ImGuiKey.Enter;
+            case GLFW_KEY_ESCAPE -> ImGuiKey.Escape;
+            // Symbols & punctuation
+            case GLFW_KEY_APOSTROPHE -> ImGuiKey.Apostrophe;
+            case GLFW_KEY_COMMA -> ImGuiKey.Comma;
+            case GLFW_KEY_MINUS -> ImGuiKey.Minus;
+            case GLFW_KEY_PERIOD -> ImGuiKey.Period;
+            case GLFW_KEY_SLASH -> ImGuiKey.Slash;
+            case GLFW_KEY_SEMICOLON -> ImGuiKey.Semicolon;
+            case GLFW_KEY_EQUAL -> ImGuiKey.Equal;
+            case GLFW_KEY_LEFT_BRACKET -> ImGuiKey.LeftBracket;
+            case GLFW_KEY_BACKSLASH -> ImGuiKey.Backslash;
+            case GLFW_KEY_RIGHT_BRACKET -> ImGuiKey.RightBracket;
+            case GLFW_KEY_GRAVE_ACCENT -> ImGuiKey.GraveAccent;
+            // Modifiers
+            case GLFW_KEY_LEFT_CONTROL -> ImGuiKey.LeftCtrl;
+            case GLFW_KEY_RIGHT_CONTROL -> ImGuiKey.RightCtrl;
+            case GLFW_KEY_LEFT_SHIFT -> ImGuiKey.LeftShift;
+            case GLFW_KEY_RIGHT_SHIFT -> ImGuiKey.RightShift;
+            case GLFW_KEY_LEFT_ALT -> ImGuiKey.LeftAlt;
+            case GLFW_KEY_RIGHT_ALT -> ImGuiKey.RightAlt;
+            case GLFW_KEY_LEFT_SUPER -> ImGuiKey.LeftSuper;
+            case GLFW_KEY_RIGHT_SUPER -> ImGuiKey.RightSuper;
+            case GLFW_KEY_CAPS_LOCK -> ImGuiKey.CapsLock;
+            case GLFW_KEY_SCROLL_LOCK -> ImGuiKey.ScrollLock;
+            case GLFW_KEY_NUM_LOCK -> ImGuiKey.NumLock;
+            case GLFW_KEY_PRINT_SCREEN -> ImGuiKey.PrintScreen;
+            case GLFW_KEY_PAUSE -> ImGuiKey.Pause;
+            // Numpad operations
+            case GLFW_KEY_KP_DECIMAL -> ImGuiKey.KeypadDecimal;
+            case GLFW_KEY_KP_DIVIDE -> ImGuiKey.KeypadDivide;
+            case GLFW_KEY_KP_MULTIPLY -> ImGuiKey.KeypadMultiply;
+            case GLFW_KEY_KP_SUBTRACT -> ImGuiKey.KeypadSubtract;
+            case GLFW_KEY_KP_ADD -> ImGuiKey.KeypadAdd;
+            case GLFW_KEY_KP_ENTER -> ImGuiKey.KeypadEnter;
+            case GLFW_KEY_KP_EQUAL -> ImGuiKey.KeypadEqual;
+            default -> null;
+        };
     }
 
     @Override

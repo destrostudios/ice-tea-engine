@@ -28,7 +28,7 @@ public class ImGuiGeometryRenderer extends GeometryRenderer {
         for (int commandListIndex = 0; commandListIndex < commandListsCount; commandListIndex++) {
             int buffersCount = drawData.getCmdListCmdBufferSize(commandListIndex);
             for (int bufferIndex = 0; bufferIndex < buffersCount; bufferIndex++) {
-                drawData.getCmdListCmdBufferClipRect(commandListIndex, bufferIndex, tmpClipRect);
+                drawData.getCmdListCmdBufferClipRect(tmpClipRect, commandListIndex, bufferIndex);
                 clipRect.offset(it -> it.x((int) tmpClipRect.x).y((int) tmpClipRect.y));
                 clipRect.extent(it -> it.width((int) (tmpClipRect.z - tmpClipRect.x)).height((int) (tmpClipRect.w - tmpClipRect.y)));
                 vkCmdSetScissor(commandBuffer, 0, clipRect);
