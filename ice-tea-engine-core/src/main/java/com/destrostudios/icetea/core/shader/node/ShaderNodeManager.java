@@ -108,7 +108,7 @@ public class ShaderNodeManager {
     }
 
     private static String getShaderSnippetPath(String rootPath, String nodeName, String hookName, ShaderHookPosition hookPosition, ShaderType shaderType) {
-        String path = rootPath + "/" + nodeName + "/" + hookName;
+        String path = rootPath + nodeName + "/" + hookName;
         if (hookPosition.getExtension().length() > 0) {
             path += "." + hookPosition.getExtension();
         }
