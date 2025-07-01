@@ -71,7 +71,7 @@ public class ShaderNodeManager {
         for (String nodeName : nodeNames) {
             for (String rootPath : rootPaths) {
                 try {
-                    String json = assetManager.loadString(rootPath + "/" + nodeName + "/node.json");
+                    String json = assetManager.loadString(rootPath + nodeName + "/node.json");
                     JSONObject root = new JSONObject(json);
                     JSONArray dependencies = root.getJSONArray("dependencies");
                     addDependencies(dependencies, rootPath, nodeName, shaderType, snippets);
