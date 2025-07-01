@@ -20,7 +20,7 @@ void main() {
             shadowCascadeIndex = i + 1;
         }
     }
-    ShadowResult shadowResult = shaderLib_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMapTexture);
+    ShadowResult shadowResult = shaderLib_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMap);
 
     vec4 effectiveLightColor = shaderLib_light_getLightColor(lightVertexInfo, light.lightColor, light.ambientColor, light.specularColor, shininess, shadowResult.shadowFactor);
     outColor = grassColor * effectiveLightColor * shadowResult.debugColor;

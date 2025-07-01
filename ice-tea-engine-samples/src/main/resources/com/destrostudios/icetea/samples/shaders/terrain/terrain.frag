@@ -21,7 +21,7 @@ void main() {
                 shadowCascadeIndex = i + 1;
             }
         }
-        ShadowResult shadowResult = shaderLib_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMapTexture);
+        ShadowResult shadowResult = shaderLib_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMap);
         shadowFactor = shadowResult.shadowFactor;
         outColor *= shadowResult.debugColor;
     #else

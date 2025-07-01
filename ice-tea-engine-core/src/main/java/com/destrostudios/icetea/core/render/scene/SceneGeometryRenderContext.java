@@ -33,7 +33,7 @@ public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<S
             ShadowMapRenderJob shadowMapRenderJob = light.getShadowMapRenderJob();
             if (shadowMapRenderJob != null) {
                 resourceDescriptorSet.setDescriptor("shadowInfo", shadowMapRenderJob.getShadowInfoUniformBuffer().getDescriptor("default"), ResourceReusability.HIGH);
-                resourceDescriptorSet.setDescriptor("shadowMapTexture", shadowMapRenderJob.getShadowMapTexture().getDescriptor("default"), ResourceReusability.HIGH);
+                resourceDescriptorSet.setDescriptor("shadowMap", shadowMapRenderJob.getShadowMapTexture().getDescriptor("default"), ResourceReusability.HIGH);
             }
         }
     }
