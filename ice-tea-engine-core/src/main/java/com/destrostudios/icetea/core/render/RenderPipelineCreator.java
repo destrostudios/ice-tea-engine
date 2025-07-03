@@ -15,7 +15,7 @@ import java.util.List;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.VK_VERTEX_INPUT_RATE_VERTEX;
 
-public abstract class RenderPipelineCreator<RJ extends RenderJob<?, ?>, PS extends PipelineState> {
+public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends PipelineState> {
 
     public RenderPipelineCreator(Application application, RJ renderJob) {
         this.application = application;

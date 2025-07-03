@@ -31,7 +31,7 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
         super.initResourceDescriptorSet();
         resourceDescriptorSet.setDescriptor("config", filter.getUniformBuffer().getDescriptor("default"));
 
-        RenderJob<?, ?> previousRenderJob = application.getSwapChain().getRenderJobManager().getPreviousRenderJob(this);
+        RenderJob<?> previousRenderJob = application.getSwapChain().getRenderJobManager().getPreviousRenderJob(this);
         SceneRenderJob sceneRenderJob = application.getSwapChain().getRenderJobManager().getSceneRenderJob();
         resourceDescriptorSet.setDescriptor("colorMap", previousRenderJob.getResolvedColorTexture().getDescriptor("default"));
         resourceDescriptorSet.setDescriptor("depthMap", sceneRenderJob.getResolvedDepthTexture().getDescriptor("default"));

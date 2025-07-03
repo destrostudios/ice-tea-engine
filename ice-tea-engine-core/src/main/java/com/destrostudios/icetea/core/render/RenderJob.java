@@ -2,7 +2,6 @@ package com.destrostudios.icetea.core.render;
 
 import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
-import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
 import org.lwjgl.PointerBuffer;
@@ -17,7 +16,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class RenderJob<GRC extends GeometryRenderContext<?>, RPC extends RenderPipelineCreator<?, ?>> extends NativeObject {
+public abstract class RenderJob<RPC extends RenderPipelineCreator<?, ?>> extends NativeObject {
 
     public RenderJob(String name) {
         this.name = name;
@@ -30,7 +29,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>, RPC extend
     protected VkExtent2D extent;
     @Getter
     protected long renderPass;
-    private HashMap<Geometry, GRC> renderContexts = new HashMap<>();
     @Getter
     private Texture resolvedColorTexture;
     protected List<Long> frameBuffers;
@@ -42,35 +40,6 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>, RPC extend
     }
 
     protected abstract VkExtent2D calculateExtent();
-
-    protected void initMultisampledColorTexture(Texture texture) {
-        try (MemoryStack stack = stackPush()) {
-            int imageFormat = application.getSwapChain().getImageFormat();
-
-            LongBuffer pColorImage = stack.mallocLong(1);
-            PointerBuffer pColorImageAllocation = stack.mallocPointer(1);
-            application.getImageManager().createImage(
-                extent.width(),
-                extent.height(),
-                1,
-                application.getMsaaSamples(),
-                imageFormat,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-                1,
-                pColorImage,
-                pColorImageAllocation
-            );
-            long image = pColorImage.get(0);
-            long imageAllocation = pColorImageAllocation.get(0);
-
-            long imageView = application.getImageManager().createImageView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-
-            // Will later be true because of the specified attachment transition after renderpass
-            int finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            texture.set(image, imageAllocation, imageView, finalLayout);
-        }
-    }
 
     protected long getResolvedColorImageView(int frameBufferIndex) {
         if (isPresentingRenderJob()) {
@@ -192,51 +161,19 @@ public abstract class RenderJob<GRC extends GeometryRenderContext<?>, RPC extend
         if (resolvedColorTexture != null) {
             resolvedColorTexture.updateNative(application);
         }
-        synchronizeRenderContextsWithRootNode();
     }
 
-    private void synchronizeRenderContextsWithRootNode() {
-        // TODO: Performance can be improved here
-        for (Map.Entry<Geometry, GRC> entry : renderContexts.entrySet().toArray(Map.Entry[]::new)) {
-            Geometry geometry = entry.getKey();
-            if ((!geometry.hasParent(application.getRootNode())) || (!isRendering(geometry))) {
-                entry.getValue().cleanupNative();
-                renderContexts.remove(geometry);
-            }
-        }
-        application.getRootNode().forEachGeometry(geometry -> {
-            GRC renderContext = getRenderContext(geometry);
-            if ((renderContext == null) && isRendering(geometry)) {
-                renderContext = createGeometryRenderContext(geometry);
-                renderContexts.put(geometry, renderContext);
-            }
-        });
+    public void afterAllRenderJobsUpdatedNative() {
+
     }
-
-    public void updateRenderContextsNative() {
-        for (GRC renderContext : renderContexts.values()) {
-            renderContext.updateNative(application);
-        }
-    }
-
-    protected abstract boolean isRendering(Geometry geometry);
-
-    protected abstract GRC createGeometryRenderContext(Geometry geometry);
 
     @Override
     protected void cleanupNativeInternal() {
-        for (GRC renderContext : renderContexts.values()) {
-            renderContext.cleanupNative();
-        }
         if (resolvedColorTexture != null) {
             resolvedColorTexture.cleanupNative();
         }
         frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
         vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
         super.cleanupNativeInternal();
-    }
-
-    protected GRC getRenderContext(Geometry geometry) {
-        return renderContexts.get(geometry);
     }
 }

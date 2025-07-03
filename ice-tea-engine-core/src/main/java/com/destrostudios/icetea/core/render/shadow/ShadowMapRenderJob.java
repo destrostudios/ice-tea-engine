@@ -5,9 +5,9 @@ import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.light.DirectionalLight;
+import com.destrostudios.icetea.core.render.GeometryRenderJob;
 import com.destrostudios.icetea.core.render.RenderTask;
 import com.destrostudios.icetea.core.resource.descriptor.ShadowMapTextureDescriptor;
-import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.resource.descriptor.UniformDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.light.Light;
@@ -28,7 +28,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class ShadowMapRenderJob extends RenderJob<ShadowMapGeometryRenderContext, ShadowMapRenderPipelineCreator> {
+public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRenderContext, ShadowMapRenderPipelineCreator> {
 
     public ShadowMapRenderJob(Light light, ShadowConfig shadowConfig) {
         super("shadowMap");

@@ -10,7 +10,7 @@ import com.destrostudios.icetea.core.scene.Geometry;
 
 import java.util.stream.Collectors;
 
-public abstract class EssentialGeometryRenderPipelineCreator<RJ extends RenderJob<?, ?>, PS extends EssentialGeometryRenderPipelineState> extends RenderPipelineCreator<RJ, PS> {
+public abstract class EssentialGeometryRenderPipelineCreator<RJ extends RenderJob<?>, PS extends EssentialGeometryRenderPipelineState> extends RenderPipelineCreator<RJ, PS> {
 
     public EssentialGeometryRenderPipelineCreator(Application application, RJ renderJob) {
         super(application, renderJob);

@@ -1,10 +1,10 @@
 package com.destrostudios.icetea.core.render.scene;
 
+import com.destrostudios.icetea.core.render.GeometryRenderJob;
 import com.destrostudios.icetea.core.render.RenderTask;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.texture.Texture;
-import com.destrostudios.icetea.core.render.RenderJob;
 import lombok.Getter;
 import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
@@ -24,7 +24,7 @@ import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.*;
 
-public class SceneRenderJob extends RenderJob<SceneGeometryRenderContext, SceneRenderPipelineCreator> {
+public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext, SceneRenderPipelineCreator> {
 
     public SceneRenderJob() {
         super("scene");

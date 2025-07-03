@@ -6,7 +6,7 @@ import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
 
-public abstract class GeometryRenderContext<RJ extends RenderJob<?, ?>> extends NativeObject {
+public abstract class GeometryRenderContext<RJ extends RenderJob<?>> extends NativeObject {
 
     public GeometryRenderContext(Geometry geometry, RJ renderJob) {
         this.geometry = geometry;

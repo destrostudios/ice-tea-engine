@@ -1,12 +1,9 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
 import com.destrostudios.icetea.core.Pipeline;
-import com.destrostudios.icetea.core.render.GeometryRenderContext;
-import com.destrostudios.icetea.core.render.RenderJob;
+import com.destrostudios.icetea.core.render.MultisampleRenderJob;
 import com.destrostudios.icetea.core.render.RenderTask;
-import com.destrostudios.icetea.core.render.scene.SceneGeometryRenderContext;
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
-import com.destrostudios.icetea.core.scene.Geometry;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
@@ -20,7 +17,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class FullScreenQuadRenderJob extends RenderJob<GeometryRenderContext<?>, FullScreenQuadRenderPipelineCreator> {
+public abstract class FullScreenQuadRenderJob extends MultisampleRenderJob<FullScreenQuadRenderPipelineCreator> {
 
     public FullScreenQuadRenderJob() {
         super("fullScreenQuad");
@@ -123,16 +120,6 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<GeometryRenderCo
             multisampledColorTexture.getImageView(),
             getResolvedColorImageView(frameBufferIndex),
         });
-    }
-
-    @Override
-    public boolean isRendering(Geometry geometry) {
-        return false;
-    }
-
-    @Override
-    public SceneGeometryRenderContext createGeometryRenderContext(Geometry geometry) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

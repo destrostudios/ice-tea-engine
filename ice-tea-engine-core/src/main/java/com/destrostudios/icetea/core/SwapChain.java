@@ -321,11 +321,11 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         }
     }
 
-    private void render(List<RenderJob<?, ?>> renderJobBucket, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
+    private void render(List<RenderJob<?>> renderJobBucket, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
         renderJobBucket.forEach(renderJob -> render(renderJob, renderPassBeginInfo, imageIndex));
     }
 
-    private void render(RenderJob<?, ?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
+    private void render(RenderJob<?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
         try (MemoryStack stack = stackPush()) {
             VkCommandBuffer primaryCommandBuffer = primaryCommandBuffers.get(imageIndex);
 

@@ -13,7 +13,7 @@ public class GeometryRenderer {
     @Getter
     protected int[] dynamicStates;
 
-    public <RJ extends RenderJob<?, ?>> void render(RenderRecorder recorder, GeometryRenderContext<RJ> geometryRenderContext) {
+    public <RJ extends RenderJob<?>> void render(RenderRecorder recorder, GeometryRenderContext<RJ> geometryRenderContext) {
         try (MemoryStack stack = stackPush()) {
             Mesh mesh = geometryRenderContext.getGeometry().getMesh();
             recorder.bindPipeline(geometryRenderContext.getRenderPipeline());
