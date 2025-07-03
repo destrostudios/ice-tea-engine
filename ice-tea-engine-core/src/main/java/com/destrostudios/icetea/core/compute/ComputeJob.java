@@ -52,7 +52,7 @@ public abstract class ComputeJob extends NativeObject {
                 throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
             }
             for (ComputeActionGroup computeActionGroup : computeActionGroups) {
-                computeActionGroup.record(commandBuffer);
+                computeActionGroup.record(commandBuffer, stack);
             }
             result = vkEndCommandBuffer(commandBuffer);
             if (result != VK_SUCCESS) {
