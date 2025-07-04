@@ -5,7 +5,7 @@ import com.destrostudios.icetea.core.scene.Geometry;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class GeometryRenderJob<GRC extends GeometryRenderContext<?>, RPC extends RenderPipelineCreator<?, ?>> extends MultisampleRenderJob<RPC> {
+public abstract class GeometryRenderJob<GRC extends GeometryRenderContext<?>, RPC extends RenderPipelineCreator<?, ?>> extends RenderJob<RPC> {
 
     public GeometryRenderJob(String name) {
         super(name);

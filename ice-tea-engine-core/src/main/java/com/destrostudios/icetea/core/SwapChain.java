@@ -30,11 +30,11 @@ import static org.lwjgl.vulkan.VK10.*;
 public class SwapChain extends NativeObject implements WindowResizeListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SwapChain.class);
+    private static final int FRAMES_IN_FLIGHT = 2;
 
     public SwapChain() {
         renderJobManager = new RenderJobManager();
     }
-    private static final int FRAMES_IN_FLIGHT = 2;
     @Getter
     private VkExtent2D extent;
     private long swapChain;

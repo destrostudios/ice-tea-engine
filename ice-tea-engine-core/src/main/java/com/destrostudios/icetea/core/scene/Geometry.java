@@ -22,6 +22,8 @@ import java.util.function.Predicate;
 
 public class Geometry extends Spatial {
 
+    private static final GeometryRenderer DEFAULT_GEOMETRY_RENDERER = new GeometryRenderer();
+
     public Geometry() {
         transformUniformBuffer = new UniformDataBuffer();
         transformUniformBuffer.setDescriptor("default", new GeometryTransformDescriptor());
@@ -33,7 +35,6 @@ public class Geometry extends Spatial {
         setMaterial(context.isCloneMaterials() ? context.cloneByReference(geometry.material) : geometry.material);
         transformUniformBuffer = geometry.transformUniformBuffer.clone(context);
     }
-    private static final GeometryRenderer DEFAULT_GEOMETRY_RENDERER = new GeometryRenderer();
     @Getter
     protected Mesh mesh;
     @Getter

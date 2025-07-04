@@ -1,9 +1,10 @@
 package com.destrostudios.icetea.core.render.fullscreen;
 
 import com.destrostudios.icetea.core.Pipeline;
-import com.destrostudios.icetea.core.render.MultisampleRenderJob;
+import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.RenderTask;
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
+import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.shader.Shader;
 import com.destrostudios.icetea.core.texture.Texture;
 import lombok.Getter;
@@ -17,24 +18,29 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 
-public abstract class FullScreenQuadRenderJob extends MultisampleRenderJob<FullScreenQuadRenderPipelineCreator> {
+public abstract class FullScreenQuadRenderJob extends RenderJob<FullScreenQuadRenderPipelineCreator> {
 
     public FullScreenQuadRenderJob() {
         super("fullScreenQuad");
         multisampledColorTexture = new Texture();
+        resolvedColorTexture = new Texture();
+        resolvedColorTexture.setDescriptor("default", new SimpleTextureDescriptor());
     }
+    private Texture multisampledColorTexture;
+    @Getter
+    private Texture resolvedColorTexture;
     @Getter
     protected ResourceDescriptorSet resourceDescriptorSet;
-    private Texture multisampledColorTexture;
     private Pipeline renderPipeline;
 
     @Override
     protected void initNative() {
         super.initNative();
         initRenderPass();
-        initResourceDescriptorSet();
         initMultisampledColorTexture(multisampledColorTexture);
+        initColorTexture(resolvedColorTexture);
         initFrameBuffers();
+        initResourceDescriptorSet();
         renderPipelineCreator = new FullScreenQuadRenderPipelineCreator(application, this);
         initRenderPipeline();
     }
@@ -103,6 +109,13 @@ public abstract class FullScreenQuadRenderJob extends MultisampleRenderJob<FullS
         }
     }
 
+    private void initFrameBuffers() {
+        initFrameBuffers(frameBufferIndex -> new long[] {
+            multisampledColorTexture.getImageView(),
+            getPotentiallyPresentingColorImageView(resolvedColorTexture, frameBufferIndex),
+        });
+    }
+
     protected void initResourceDescriptorSet() {
         resourceDescriptorSet = new ResourceDescriptorSet();
     }
@@ -114,18 +127,6 @@ public abstract class FullScreenQuadRenderJob extends MultisampleRenderJob<FullS
     }
 
     public abstract Shader getFragmentShader();
-
-    private void initFrameBuffers() {
-        initFrameBuffers(frameBufferIndex -> new long[] {
-            multisampledColorTexture.getImageView(),
-            getResolvedColorImageView(frameBufferIndex),
-        });
-    }
-
-    @Override
-    public VkClearValue.Buffer getClearValues(MemoryStack stack) {
-        return null;
-    }
 
     @Override
     public List<RenderTask> render() {
@@ -142,12 +143,14 @@ public abstract class FullScreenQuadRenderJob extends MultisampleRenderJob<FullS
     public void updateNative() {
         super.updateNative();
         multisampledColorTexture.updateNative(application);
+        resolvedColorTexture.updateNative(application);
         renderPipeline.updateNative(application);
     }
 
     @Override
     protected void cleanupNativeInternal() {
         // Don't cleanup (the potentially shared) renderPipeline to keep it in the PipelineManager cache (which owns and controls its lifetime)
+        resolvedColorTexture.cleanupNative();
         multisampledColorTexture.cleanupNative();
         super.cleanupNativeInternal();
     }

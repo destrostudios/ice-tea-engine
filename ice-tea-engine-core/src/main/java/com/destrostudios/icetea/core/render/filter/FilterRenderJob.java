@@ -5,6 +5,7 @@ import com.destrostudios.icetea.core.render.RenderJob;
 import com.destrostudios.icetea.core.render.fullscreen.FullScreenQuadRenderJob;
 import com.destrostudios.icetea.core.render.scene.SceneRenderJob;
 import com.destrostudios.icetea.core.shader.Shader;
+import com.destrostudios.icetea.core.texture.Texture;
 
 public class FilterRenderJob extends FullScreenQuadRenderJob {
 
@@ -33,8 +34,17 @@ public class FilterRenderJob extends FullScreenQuadRenderJob {
 
         RenderJob<?> previousRenderJob = application.getSwapChain().getRenderJobManager().getPreviousRenderJob(this);
         SceneRenderJob sceneRenderJob = application.getSwapChain().getRenderJobManager().getSceneRenderJob();
-        resourceDescriptorSet.setDescriptor("colorMap", previousRenderJob.getResolvedColorTexture().getDescriptor("default"));
+        resourceDescriptorSet.setDescriptor("colorMap", getColorMap(previousRenderJob).getDescriptor("default"));
         resourceDescriptorSet.setDescriptor("depthMap", sceneRenderJob.getResolvedDepthTexture().getDescriptor("default"));
+    }
+
+    private Texture getColorMap(RenderJob<?> previousRenderJob) {
+        if (previousRenderJob instanceof SceneRenderJob sceneRenderJob) {
+            return sceneRenderJob.getResolvedColorTexture();
+        } else if (previousRenderJob instanceof FilterRenderJob filterRenderJob) {
+            return filterRenderJob.getResolvedColorTexture();
+        }
+        throw new IllegalArgumentException("Unsupported previous render job: " + previousRenderJob);
     }
 
     @Override

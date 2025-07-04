@@ -142,7 +142,7 @@ public class ImageManager {
                 sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
             } else {
-                throw new IllegalArgumentException("Unsupported layout transition");
+                throw new IllegalArgumentException("Unsupported layout transition.");
             }
 
             VkCommandBuffer commandBuffer = application.getCommandPool().beginSingleTimeCommands();
