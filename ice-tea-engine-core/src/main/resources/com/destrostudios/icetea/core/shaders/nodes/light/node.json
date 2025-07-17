@@ -1,10 +1,13 @@
 {
   "dependencies": [
     "functions",
-    "worldPosition",
+    "viewPosition",
     "vertOutWorldPosition",
+    "vertOutWorldNormal",
+    "vertOutWorldTangent",
     "vertOutViewPosition",
-    "color",
-    "outputs"
+    "vertOutViewNormal",
+    "outputs",
+    "color"
   ]
 }

@@ -8,14 +8,17 @@ import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.command.CommandPool;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
+import com.destrostudios.icetea.core.pbr.PbrEnvironment;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.light.Light;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
+import com.destrostudios.icetea.core.pbr.PbrManager;
 import com.destrostudios.icetea.core.scene.Node;
 import com.destrostudios.icetea.core.shader.ShaderManager;
 import com.destrostudios.icetea.core.util.BufferUtil;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
+import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -71,8 +74,6 @@ public abstract class Application {
     @Getter
     private MemoryManager memoryManager;
     @Getter
-    private ImageManager imageManager;
-    @Getter
     protected InputManager inputManager;
     @Getter
     protected AssetManager assetManager;
@@ -80,6 +81,8 @@ public abstract class Application {
     protected ShaderManager shaderManager;
     @Getter
     protected PipelineManager pipelineManager;
+    @Getter
+    protected PbrManager pbrManager;
 
     @Getter
     private VkInstance instance;
@@ -123,6 +126,9 @@ public abstract class Application {
     @Getter
     private Light light;
     @Getter
+    @Setter
+    private PbrEnvironment pbrEnvironment;
+    @Getter
     private List<Filter> filters;
     @Getter
     private LinkedList<AppSystem> systems;
@@ -138,12 +144,12 @@ public abstract class Application {
     private void create() {
         LOGGER.debug("Creating application...");
         physicalDeviceManager = new PhysicalDeviceManager(this);
-        imageManager = new ImageManager(this);
         inputManager = new InputManager(this);
         assetManager = new AssetManager();
         assetManager.addLocator(new ClasspathLocator());
         shaderManager = new ShaderManager(assetManager);
         pipelineManager = new PipelineManager();
+        pbrManager = new PbrManager(this);
         rootNode = new Node();
         sceneNode = new Node();
         rootNode.add(sceneNode);
@@ -439,12 +445,18 @@ public abstract class Application {
         if (light != null) {
             light.updateLogicalState(this, tpf);
         }
+        if (pbrEnvironment != null) {
+            pbrEnvironment.updateLogicalState(this, tpf);
+        }
         rootNode.updateLogicalState(this, tpf);
     }
 
     private void applyLogicalState() {
         if (light != null) {
             light.applyLogicalState();
+        }
+        if (pbrEnvironment != null) {
+            pbrEnvironment.applyLogicalState();
         }
         rootNode.applyLogicalState();
         bucketRenderer.updateSplitOrderedGeometries();
@@ -458,6 +470,9 @@ public abstract class Application {
         guiCamera.updateNative(this);
         if (light != null) {
             light.updateNativeState(this);
+        }
+        if (pbrEnvironment != null) {
+            pbrEnvironment.updateNativeState(this);
         }
         rootNode.updateNativeState(this);
         swapChain.updateNative(this);
@@ -571,6 +586,9 @@ public abstract class Application {
         rootNode.cleanupNativeState();
         if (light != null) {
             light.cleanupNativeState();
+        }
+        if (pbrEnvironment != null) {
+            pbrEnvironment.cleanupNativeState();
         }
         commandPool.cleanupNative();
     }

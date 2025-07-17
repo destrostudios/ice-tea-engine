@@ -26,6 +26,9 @@ import org.joml.*;
 import java.io.*;
 import java.util.*;
 
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_SRGB;
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_UNORM;
+
 public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
     public GltfLoader() {
@@ -155,12 +158,14 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         LinkedList<Object> positionList = readValues(meshPrimitiveModel.getAttributes().get("POSITION"));
         LinkedList<Object> texCoordList = readValues(meshPrimitiveModel.getAttributes().get("TEXCOORD_0"));
         LinkedList<Object> normalList = readValues(meshPrimitiveModel.getAttributes().get("NORMAL"));
+        LinkedList<Object> tangentList = readValues(meshPrimitiveModel.getAttributes().get("TANGENT"));
         LinkedList<Object> jointsList = readValues(meshPrimitiveModel.getAttributes().get("JOINTS_0"));
         LinkedList<Object> weightsList = readValues(meshPrimitiveModel.getAttributes().get("WEIGHTS_0"));
         VertexData[] vertices = new VertexData[positionList.size()];
         Iterator<Object> positionIterator = positionList.iterator();
         Iterator<Object> texCoordIterator = texCoordList.iterator();
         Iterator<Object> normalIterator = normalList.iterator();
+        Iterator<Object> tarngentIterator = tangentList.iterator();
         Iterator<Object> jointsIterator = jointsList.iterator();
         Iterator<Object> weightsIterator = weightsList.iterator();
         for (i = 0; i < vertices.length; i++) {
@@ -180,6 +185,12 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                 float[] normalArray = (float[]) normalIterator.next();
                 Vector3f normal = new Vector3f(normalArray[0], normalArray[1], normalArray[2]);
                 vertex.setVector3f("vertexNormal", normal);
+            }
+
+            if (tarngentIterator.hasNext()) {
+                float[] tangentArray = (float[]) tarngentIterator.next();
+                Vector4f tangent = new Vector4f(tangentArray[0], tangentArray[1], tangentArray[2], tangentArray[3]);
+                vertex.setVector4f("vertexTangent", tangent);
             }
 
             if (jointsIterator.hasNext()) {
@@ -432,14 +443,14 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                             case SCALAR: {
                                 int value = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(value);
-                                readBytes = 2;
+                                readBytes = 4;
                                 break;
                             }
                             case VEC2: {
                                 int x = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 int y = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(new int[]{ x, y });
-                                readBytes = 4;
+                                readBytes = 8;
                                 break;
                             }
                             case VEC3: {
@@ -447,7 +458,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                                 int y = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 int z = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(new int[]{ x, y, z });
-                                readBytes = 6;
+                                readBytes = 12;
                                 break;
                             }
                             case VEC4: {
@@ -456,7 +467,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                                 int z = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 int w = LowEndianUtil.readUnsignedInt(bufferInputStream);
                                 values.add(new int[]{ x, y, z, w });
-                                readBytes = 8;
+                                readBytes = 16;
                                 break;
                             }
                             default:
@@ -535,11 +546,31 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         return materialsMap.computeIfAbsent(materialModel, _ -> {
             Material material = new Material();
             material.setDefaultShaders();
+
             TextureModel baseColorTextureModel = null;
             float[] baseColorFactor = null;
+            TextureModel metallicRoughnessTexture = null;
+            Float metallicFactor = null;
+            Float roughnessFactor = null;
+            TextureModel normalTexture = null;
+            Float normalScale = null;
+            TextureModel occlusionTexture = null;
+            Float occlusionStrength = null;
+            TextureModel emissiveTexture = null;
+            float[] emissiveFactor = null;
+
             if (materialModel instanceof MaterialModelV2 materialModelV2) {
                 baseColorTextureModel = materialModelV2.getBaseColorTexture();
                 baseColorFactor = materialModelV2.getBaseColorFactor();
+                metallicRoughnessTexture = materialModelV2.getMetallicRoughnessTexture();
+                metallicFactor = materialModelV2.getMetallicFactor();
+                roughnessFactor = materialModelV2.getRoughnessFactor();
+                normalTexture = materialModelV2.getNormalTexture();
+                normalScale = materialModelV2.getNormalScale();
+                occlusionTexture = materialModelV2.getOcclusionTexture();
+                occlusionStrength = materialModelV2.getOcclusionStrength();
+                emissiveTexture = materialModelV2.getEmissiveTexture();
+                emissiveFactor = materialModelV2.getEmissiveFactor();
             } else if (materialModel instanceof MaterialModelV1 materialModelV1) {
                 Object baseColorTextureValue = materialModelV1.getValues().get("baseColorTexture");
                 if (baseColorTextureValue != null) {
@@ -550,16 +581,50 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                 if (baseColorFactorValue != null) {
                     baseColorFactor = (float[]) baseColorFactorValue;
                 }
+                // TODO: Support the rest for V1
             }
+
             if (baseColorTextureModel != null) {
-                String textureFilePath = keyDirectory + baseColorTextureModel.getImageModel().getUri();
-                Texture texture = assetManager.loadTexture(textureFilePath);
-                material.setTexture("diffuseMap", texture);
+                material.setTexture("colorMap", loadTexture(baseColorTextureModel, true));
             }
             if (baseColorFactor != null) {
                 material.getParameters().setVector4f("color", new Vector4f(baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]));
             }
+            if (metallicRoughnessTexture != null) {
+                material.setTexture("metallicRoughnessMap", loadTexture(metallicRoughnessTexture, false));
+            }
+            if (metallicFactor != null) {
+                material.getParameters().setFloat("metallic", metallicFactor);
+            }
+            if (roughnessFactor != null) {
+                material.getParameters().setFloat("roughness", roughnessFactor);
+            }
+            if (normalTexture != null) {
+                material.setTexture("normalMap", loadTexture(normalTexture, false));
+            }
+            if (normalScale != null) {
+                material.getParameters().setFloat("normalScale", normalScale);
+            }
+            if (occlusionTexture != null) {
+                material.setTexture("occlusionMap", loadTexture(occlusionTexture, false));
+            }
+            if (occlusionStrength != null) {
+                material.getParameters().setFloat("occlusionStrength", occlusionStrength);
+            }
+            if (emissiveTexture != null) {
+                material.setTexture("emissionMap", loadTexture(emissiveTexture, false));
+            }
+            if (emissiveFactor != null) {
+                material.getParameters().setVector3f("emissionFactor", new Vector3f(emissiveFactor[0], emissiveFactor[1], emissiveFactor[2]));
+            }
+
             return material;
         });
+    }
+
+    private Texture loadTexture(TextureModel textureModel, boolean srgbOrLinear) {
+        return assetManager.loadTexture(keyDirectory + textureModel.getImageModel().getUri(), BufferedTextureLoaderSettings.builder()
+                .format(srgbOrLinear ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM)
+                .build());
     }
 }

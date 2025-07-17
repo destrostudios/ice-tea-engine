@@ -15,6 +15,7 @@ import com.destrostudios.icetea.core.font.BitmapText;
 import com.destrostudios.icetea.core.light.*;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
+import com.destrostudios.icetea.core.pbr.PbrConfig;
 import com.destrostudios.icetea.core.render.bucket.RenderBucketType;
 import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
@@ -78,17 +79,18 @@ public class TestApplication extends Application {
         sceneCamera.setLocation(new Vector3f(0, 0.3f, 5));
 
         DirectionalLight directionalLight = new DirectionalLight();
-        directionalLight.setDirection(new Vector3f(-1, -1, -1).normalize());
+        directionalLight.setDirection(new Vector3f(1, -1, -1).normalize());
         directionalLight.enableShadows(new ShadowConfig());
         setLight(directionalLight);
 
-        SpotLight spotLight = new SpotLight();
-        spotLight.setTranslation(new Vector3f(-2, 3.25f, 2.5f));
-        spotLight.setRotation(new Quaternionf().rotateLocalX((float) (-0.3333f * Math.PI)));
-        spotLight.enableShadows(new ShadowConfig());
-        // setLight(spotLight);
+        PointLight pointLight = new PointLight();
+        pointLight.setPosition(new Vector3f(-2, 3.25f, 2.5f));
+        pointLight.enableShadows(new ShadowConfig());
+        // setLight(pointLight);
 
         sceneNode.setAffectedByLight(true);
+
+        setPbrEnvironment(pbrManager.createEnvironmentByHdrMap("com/destrostudios/icetea/samples/textures/pbr/papermill.hdr", new PbrConfig()));
 
         nodeRotating = new Node();
         sceneNode.add(nodeRotating);
@@ -165,7 +167,7 @@ public class TestApplication extends Application {
         Material materialChalet = new Material();
         materialChalet.setDefaultShaders();
         BufferedTexture textureChalet = assetManager.loadTexture("textures/chalet.jpg");
-        materialChalet.setTexture("diffuseMap", textureChalet);
+        materialChalet.setTexture("colorMap", textureChalet);
 
         Geometry geometryChalet1 = new Geometry();
         geometryChalet1.setMesh(meshChalet);
@@ -209,7 +211,7 @@ public class TestApplication extends Application {
 
         Material materialTrees = new Material();
         materialTrees.setDefaultShaders();
-        materialTrees.setTexture("diffuseMap", assetManager.loadTexture("textures/trees.jpg"));
+        materialTrees.setTexture("colorMap", assetManager.loadTexture("textures/trees.jpg"));
         materialTrees.getParameters().setVector4f("color", new Vector4f(0, 0, 1, 1));
 
         Geometry geometryTrees = new Geometry();
@@ -233,7 +235,7 @@ public class TestApplication extends Application {
         Material materialDennis = new Material();
         materialDennis.setDefaultShaders();
         Texture textureDennis = assetManager.loadTexture("textures/dennis.jpg");
-        materialDennis.setTexture("diffuseMap", textureDennis);
+        materialDennis.setTexture("colorMap", textureDennis);
         materialDennis.getParameters().setVector4f("color", new Vector4f(1, 1, 0, 1));
 
         Geometry geometryDennis = new Geometry();
@@ -322,7 +324,7 @@ public class TestApplication extends Application {
 
         Material materialKnot = new Material();
         materialKnot.setDefaultShaders();
-        materialKnot.setTexture("diffuseMap", textureChalet);
+        materialKnot.setTexture("colorMap", textureChalet);
         materialKnot.getParameters().setVector4f("color", new Vector4f(0.33f, 1.33f, 0.33f, 1));
 
         Geometry geometryKnot = new Geometry();
@@ -339,8 +341,6 @@ public class TestApplication extends Application {
 
         // Bounds
 
-        Mesh meshBox = new Box(1, 1, 1);
-
         Material materialBounds = new Material();
         materialBounds.setDefaultShaders();
         materialBounds.setCullMode(VK_CULL_MODE_NONE);
@@ -348,7 +348,7 @@ public class TestApplication extends Application {
         materialBounds.getParameters().setVector4f("color", new Vector4f(1, 0, 0, 1));
 
         geometryBounds = new Geometry();
-        geometryBounds.setMesh(meshBox);
+        geometryBounds.setMesh(new Box());
         geometryBounds.setMaterial(materialBounds);
         sceneNode.add(geometryBounds);
 
@@ -487,19 +487,21 @@ public class TestApplication extends Application {
                 for (CollisionResult collisionResult : collisionResults) {
                     if (collisionResult.getGeometry().getParent() != nodeCollisions) {
                         Geometry geometryBox = new Geometry();
-                        geometryBox.setMesh(meshBox);
+                        geometryBox.setMesh(new Box(0.02f));
 
                         Material materialBox = new Material();
                         materialBox.setDefaultShaders();
                         geometryBox.setMaterial(materialBox);
 
-                        float boxSize = 0.05f;
-                        geometryBox.setLocalTranslation(collisionResult.getPosition().sub((boxSize / 2), (boxSize / 2), (boxSize / 2), new Vector3f()));
-                        geometryBox.setLocalScale(new Vector3f(boxSize, boxSize, boxSize));
+                        geometryBox.setLocalTranslation(collisionResult.getPosition());
                         displayedCollisions.add(geometryBox);
                     }
                 }
 
+                // FIXME: This still doesn't cleanup everything?
+                for (Geometry displayedCollision : displayedCollisions) {
+                    displayedCollision.cleanupNativeState();
+                }
                 nodeCollisions.removeAll();
                 for (Geometry displayedCollision : displayedCollisions) {
                     nodeCollisions.add(displayedCollision);
@@ -531,7 +533,7 @@ public class TestApplication extends Application {
         }
 
         BoundingBox debugWorldBounds = geometryChalet3.getWorldBounds();
-        geometryBounds.setLocalTranslation(debugWorldBounds.getCenter().sub(debugWorldBounds.getExtent(), new Vector3f()));
+        geometryBounds.setLocalTranslation(debugWorldBounds.getCenter());
         geometryBounds.setLocalScale(debugWorldBounds.getExtent().mul(2, new Vector3f()));
 
         bitmapTextDynamic.setLocalTranslation(getScreenCoordinates(animatedObject2.getWorldTransform().getTranslation().add(new Vector3f(0, 1, 0), new Vector3f())));

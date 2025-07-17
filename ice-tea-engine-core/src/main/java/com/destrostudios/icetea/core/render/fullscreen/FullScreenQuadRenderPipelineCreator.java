@@ -18,10 +18,11 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<FullScreenQuadRenderJob, FullScreenQuadRenderPipelineState> {
 
+    private static final Shader VERT_SHADER = new FileShader("com/destrostudios/icetea/core/shaders/fullScreenQuad.vert");
+
     public FullScreenQuadRenderPipelineCreator(Application application, FullScreenQuadRenderJob renderJob) {
         super(application, renderJob);
     }
-    private Shader vertShader = new FileShader("com/destrostudios/icetea/core/shaders/fullScreenQuad.vert");
 
     @Override
     protected FullScreenQuadRenderPipelineState createState(GeometryRenderContext<FullScreenQuadRenderJob> geometryRenderContext) {
@@ -37,7 +38,7 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(2, stack);
 
-        long vertShaderModule = createShaderModule(vertShader, ShaderType.VERTEX_SHADER, resourceDescriptorSetShaderDeclaration);
+        long vertShaderModule = createShaderModule(VERT_SHADER, ShaderType.VERTEX_SHADER, resourceDescriptorSetShaderDeclaration);
         shaderManager.createShaderStage(shaderStages, 0, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
 
         long fragShaderModule = createShaderModule(renderJob.getFragmentShader(), ShaderType.FRAGMENT_SHADER, resourceDescriptorSetShaderDeclaration);
@@ -54,22 +55,20 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(stack);
         inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
         inputAssembly.topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-        inputAssembly.primitiveRestartEnable(false);
 
         // ===> VIEWPORT & SCISSOR
 
         VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
         viewport.x(0);
         viewport.y(0);
-        VkExtent2D swapChainExtent = application.getSwapChain().getExtent();
-        viewport.width(swapChainExtent.width());
-        viewport.height(swapChainExtent.height());
+        viewport.width(renderJob.getExtent().width());
+        viewport.height(renderJob.getExtent().height());
         viewport.minDepth(0);
         viewport.maxDepth(1);
 
         VkRect2D.Buffer scissor = VkRect2D.callocStack(1, stack);
         scissor.offset(VkOffset2D.callocStack(stack).set(0, 0));
-        scissor.extent(swapChainExtent);
+        scissor.extent(renderJob.getExtent());
 
         VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.callocStack(stack);
         viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
@@ -80,13 +79,10 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.callocStack(stack);
         rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
-        rasterizer.depthClampEnable(false);
-        rasterizer.rasterizerDiscardEnable(false);
         rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
         rasterizer.lineWidth(1);
         rasterizer.cullMode(VK_CULL_MODE_FRONT_BIT);
         rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
-        rasterizer.depthBiasEnable(false);
 
         // ===> MULTISAMPLING <===
 
@@ -96,18 +92,6 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
         multisampling.minSampleShading(0.2f);
         multisampling.rasterizationSamples(application.getMsaaSamples());
 
-        // ===> DEPTH STENCIL <===
-
-        VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.callocStack(stack);
-        depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
-        depthStencil.depthTestEnable(true);
-        depthStencil.depthWriteEnable(true);
-        depthStencil.depthCompareOp(VK_COMPARE_OP_LESS);
-        depthStencil.depthBoundsTestEnable(false);
-        depthStencil.minDepthBounds(0); // Optional
-        depthStencil.maxDepthBounds(1); // Optional
-        depthStencil.stencilTestEnable(false);
-
         // ===> COLOR BLENDING <===
 
         VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.callocStack(1, stack);
@@ -115,10 +99,7 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.callocStack(stack);
         colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
-        colorBlending.logicOpEnable(false);
-        colorBlending.logicOp(VK_LOGIC_OP_COPY);
         colorBlending.pAttachments(colorBlendAttachment);
-        colorBlending.blendConstants(stack.floats(0, 0, 0, 0));
 
         // ===> PIPELINE LAYOUT CREATION <===
 
@@ -141,13 +122,9 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
         pipelineInfo.pViewportState(viewportState);
         pipelineInfo.pRasterizationState(rasterizer);
         pipelineInfo.pMultisampleState(multisampling);
-        pipelineInfo.pDepthStencilState(depthStencil);
         pipelineInfo.pColorBlendState(colorBlending);
         pipelineInfo.layout(pipelineLayout);
         pipelineInfo.renderPass(renderJob.getRenderPass());
-        pipelineInfo.subpass(0);
-        pipelineInfo.basePipelineHandle(VK_NULL_HANDLE);
-        pipelineInfo.basePipelineIndex(-1);
 
         LongBuffer pGraphicsPipeline = stack.mallocLong(1);
         result = vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline);

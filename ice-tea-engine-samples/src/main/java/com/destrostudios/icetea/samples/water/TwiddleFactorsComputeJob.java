@@ -10,16 +10,12 @@ import com.destrostudios.icetea.core.resource.descriptor.UniformDescriptor;
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
 
-import java.nio.LongBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class TwiddleFactorsComputeJob extends ComputeJob {
@@ -46,60 +42,34 @@ public class TwiddleFactorsComputeJob extends ComputeJob {
 
     private void initTwiddleFactorsTexture() {
         try (MemoryStack stack = stackPush()) {
-            int width = (int) MathUtil.log2(n);
-            int height = n;
-            int format = VK_FORMAT_R32G32B32A32_SFLOAT;
-            int mipLevels = 1;
-
-            LongBuffer pImage = stack.mallocLong(1);
-            PointerBuffer pImageAllocation = stack.mallocPointer(1);
-            application.getImageManager().createImage(
-                width,
-                height,
-                mipLevels,
-                VK_SAMPLE_COUNT_1_BIT,
-                format,
-                VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-                1,
-                pImage,
-                pImageAllocation
-            );
-            long image = pImage.get(0);
-            long imageAllocation = pImageAllocation.get(0);
-
-            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            application.getImageManager().transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, mipLevels);
-
-            long imageView = application.getImageManager().createImageView(
-                image,
-                VK_FORMAT_R32G32B32A32_SFLOAT,
+            twiddleFactorsTexture.set(
                 VK_IMAGE_ASPECT_COLOR_BIT,
-                mipLevels
+                VK_FORMAT_R32G32B32A32_SFLOAT,
+                VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
             );
-
-            VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.callocStack(stack);
-            samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-            samplerCreateInfo.magFilter(VK_FILTER_LINEAR);
-            samplerCreateInfo.minFilter(VK_FILTER_LINEAR);
-            samplerCreateInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-            samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-            samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-            samplerCreateInfo.maxAnisotropy(1);
-            samplerCreateInfo.borderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
-            samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
-            samplerCreateInfo.minLod(0); // Optional
-            samplerCreateInfo.maxLod(1);
-            samplerCreateInfo.mipLodBias(0); // Optional
-
-            LongBuffer pImageSampler = stack.mallocLong(1);
-            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image sampler (result = " + result + ")");
-            }
-            long imageSampler = pImageSampler.get(0);
-
-            twiddleFactorsTexture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
+            twiddleFactorsTexture.setWidth((int) MathUtil.log2(n));
+            twiddleFactorsTexture.setHeight(n);
+            twiddleFactorsTexture.updateNative(application);
+            twiddleFactorsTexture.createImage(stack);
+            application.getCommandPool().executeSingleTimeCommands(commandBuffer -> {
+                twiddleFactorsTexture.transitionLayout(
+                    commandBuffer,
+                    VK_IMAGE_LAYOUT_GENERAL,
+                    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                    0,
+                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                    VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                    stack
+                );
+            });
+            twiddleFactorsTexture.createImageView(stack);
+            twiddleFactorsTexture.createSampler(
+                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                null,
+                VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+                VK_SAMPLER_MIPMAP_MODE_LINEAR,
+                stack
+            );
             twiddleFactorsTexture.updateNative(application);
         }
     }

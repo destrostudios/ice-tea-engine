@@ -2,6 +2,7 @@ package com.destrostudios.icetea.core.render.scene;
 
 import com.destrostudios.icetea.core.camera.Camera;
 import com.destrostudios.icetea.core.light.Light;
+import com.destrostudios.icetea.core.pbr.PbrEnvironment;
 import com.destrostudios.icetea.core.render.EssentialGeometryRenderContext;
 import com.destrostudios.icetea.core.render.bucket.BucketRenderer;
 import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
@@ -27,9 +28,16 @@ public class SceneGeometryRenderContext extends EssentialGeometryRenderContext<S
         Camera camera = ((forcedCamera != null) ? forcedCamera : defaultCameraSupplier.get());
         resourceDescriptorSet.setDescriptor("camera", camera.getTransformUniformBuffer().getDescriptor("default"), ResourceReusability.HIGH);
 
-        if (geometry.isAffectedByLight()) {
-            Light light = application.getLight();
+        Light light = application.getLight();
+        if ((light != null) && geometry.isAffectedByLight()) {
             resourceDescriptorSet.setDescriptor("light", light.getUniformBuffer().getDescriptor("default"), ResourceReusability.HIGH);
+            PbrEnvironment pbrEnvironment = application.getPbrEnvironment();
+            if (pbrEnvironment != null) {
+                resourceDescriptorSet.setDescriptor("pbrInfo", pbrEnvironment.getUniformBuffer().getDescriptor("default"), ResourceReusability.HIGH);
+                resourceDescriptorSet.setDescriptor("pbrIrradianceMap", pbrEnvironment.getIrradianceMap().getDescriptor("default"), ResourceReusability.HIGH);
+                resourceDescriptorSet.setDescriptor("pbrPrefilteredEnvironmentMap", pbrEnvironment.getPrefilteredEnvironmentMap().getDescriptor("default"), ResourceReusability.HIGH);
+                resourceDescriptorSet.setDescriptor("pbrBrdfLUT", pbrEnvironment.getBrdfLookupTexture().getDescriptor("default"), ResourceReusability.HIGH);
+            }
             ShadowMapRenderJob shadowMapRenderJob = light.getShadowMapRenderJob();
             if (shadowMapRenderJob != null) {
                 resourceDescriptorSet.setDescriptor("shadowInfo", shadowMapRenderJob.getShadowInfoUniformBuffer().getDescriptor("default"), ResourceReusability.HIGH);

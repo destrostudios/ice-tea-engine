@@ -16,7 +16,6 @@ import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRenderContext, ShadowMapRenderPipelineCreator> {
@@ -55,11 +53,13 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
     @Override
     protected void initNative() {
         super.initNative();
-        renderPipelineCreator = new ShadowMapRenderPipelineCreator(application, this);
-        initRenderPass();
-        initShadowMapTexture();
-        initFrameBuffer();
-        initPushConstants();
+        try (MemoryStack stack = stackPush()) {
+            initShadowMapTexture(stack);
+            initPushConstants();
+            initRenderPass(stack);
+            initFrameBuffer();
+            renderPipelineCreator = new ShadowMapRenderPipelineCreator(application, this);
+        }
     }
 
     @Override
@@ -67,147 +67,109 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
         return VkExtent2D.create().set(shadowConfig.getShadowMapSize(), shadowConfig.getShadowMapSize());
     }
 
-    private void initRenderPass() {
-        try (MemoryStack stack = stackPush()) {
-            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(1, stack);
-            VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.callocStack(1, stack);
+    private void initShadowMapTexture(MemoryStack stack) {
+        shadowMapTexture.set(
+            VK_IMAGE_ASPECT_DEPTH_BIT,
+            shadowConfig.getShadowMapFormat(),
+            shadowConfig.getCascadesCount(),
+            1,
+            VK_SAMPLE_COUNT_1_BIT,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+        );
+        shadowMapTexture.setWidth(shadowConfig.getShadowMapSize());
+        shadowMapTexture.setHeight(shadowConfig.getShadowMapSize());
+        shadowMapTexture.updateNative(application);
+        shadowMapTexture.createImage(stack);
+        // Image view with all cascade layers, used to read the values inside the fragment shader (which calculates cascadeIndex and does lookup)
+        shadowMapTexture.createImageView(VK_IMAGE_VIEW_TYPE_2D_ARRAY, stack);
+        shadowMapTexture.createSampler(
+            VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            1,
+            VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+            VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            stack
+        );
+        shadowMapTexture.setAutomaticallyTransitionedLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
-            // Depth attachment (shadow map)
-            VkAttachmentDescription depthAttachment = attachments.get(0);
-            depthAttachment.format(shadowConfig.getShadowMapFormat());
-            depthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
-            depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-            depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-            depthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            depthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            depthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            depthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
-
-            // Attachment references from subpasses
-            VkAttachmentReference depthAttachmentRef = attachmentRefs.get(0);
-            depthAttachmentRef.attachment(0);
-            depthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-            // Subpass 0: Shadow map rendering
-            VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
-            subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
-            subpass.pDepthStencilAttachment(depthAttachmentRef);
-
-            VkSubpassDependency.Buffer dependencies = VkSubpassDependency.callocStack(2, stack);
-
-            VkSubpassDependency dependency1 = dependencies.get(0);
-            dependency1.srcSubpass(VK_SUBPASS_EXTERNAL);
-            dependency1.dstSubpass(0);
-            dependency1.srcStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-            dependency1.srcAccessMask(VK_ACCESS_SHADER_READ_BIT);
-            dependency1.dstStageMask(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
-            dependency1.dstAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
-            dependency1.dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
-
-            VkSubpassDependency dependency2 = dependencies.get(1);
-            dependency2.srcSubpass(0);
-            dependency2.dstSubpass(VK_SUBPASS_EXTERNAL);
-            dependency2.srcStageMask(VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-            dependency2.srcAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
-            dependency2.dstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-            dependency2.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
-            dependency2.dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
-
-            VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.callocStack(stack);
-            renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
-            renderPassCreateInfo.pAttachments(attachments);
-            renderPassCreateInfo.pSubpasses(subpass);
-            renderPassCreateInfo.pDependencies(dependencies);
-
-            LongBuffer pRenderPass = stack.mallocLong(1);
-            int result = vkCreateRenderPass(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create render pass (result = " + result + ")");
-            }
-            renderPass = pRenderPass.get(0);
+        // Image views for each cascade layer, used as framebuffer attachment to render to that specific layer
+        shadowMapCascadeImageViews = new long[shadowConfig.getCascadesCount()];
+        for (int i = 0; i < shadowMapCascadeImageViews.length; i++) {
+            shadowMapCascadeImageViews[i] = shadowMapTexture.createSeparateImageView(
+                VK_IMAGE_VIEW_TYPE_2D_ARRAY,
+                i,
+                1,
+                stack
+            );
         }
     }
 
-    private void initShadowMapTexture() {
-        try (MemoryStack stack = stackPush()) {
-            LongBuffer pImage = stack.mallocLong(1);
-            PointerBuffer pImageAllocation = stack.mallocPointer(1);
-            application.getImageManager().createImage(
-                shadowConfig.getShadowMapSize(),
-                shadowConfig.getShadowMapSize(),
-                1,
-                VK_SAMPLE_COUNT_1_BIT,
-                shadowConfig.getShadowMapFormat(),
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-                shadowConfig.getCascadesCount(),
-                pImage,
-                pImageAllocation
-            );
-            long image = pImage.get(0);
-            long imageAllocation = pImageAllocation.get(0);
+    private void initPushConstants() {
+        pushConstants.getData().setInt("cascadeIndex", 0);
+    }
 
-            // Image view with all cascade layers, used to read the values inside the fragment shader (which calculates cascadeIndex and does lookup)
-            long imageView = application.getImageManager().createImageView(
-                image,
-                shadowConfig.getShadowMapFormat(),
-                VK_IMAGE_ASPECT_DEPTH_BIT,
-                1,
-                VK_IMAGE_VIEW_TYPE_2D_ARRAY,
-                shadowConfig.getCascadesCount(),
-                0
-            );
+    private void initRenderPass(MemoryStack stack) {
+        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(1, stack);
+        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.callocStack(1, stack);
 
-            // Image views for each cascade layer, used as framebuffer attachment to render to that specific layer
-            shadowMapCascadeImageViews = new long[shadowConfig.getCascadesCount()];
-            for (int i = 0; i < shadowMapCascadeImageViews.length; i++) {
-                shadowMapCascadeImageViews[i] = application.getImageManager().createImageView(
-                    image,
-                    shadowConfig.getShadowMapFormat(),
-                    VK_IMAGE_ASPECT_DEPTH_BIT,
-                    1,
-                    VK_IMAGE_VIEW_TYPE_2D_ARRAY,
-                    1,
-                    i
-                );
-            }
+        // Depth attachment (shadow map)
+        VkAttachmentDescription depthAttachment = attachments.get(0);
+        depthAttachment.format(shadowConfig.getShadowMapFormat());
+        depthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+        depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+        depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+        depthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        depthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        depthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        depthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
-            VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.callocStack(stack);
-            samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-            int filter = VK_FILTER_LINEAR;
-            samplerCreateInfo.magFilter(filter);
-            samplerCreateInfo.minFilter(filter);
-            samplerCreateInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-            samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-            samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-            samplerCreateInfo.anisotropyEnable(true);
-            samplerCreateInfo.maxAnisotropy(1.0f);
-            samplerCreateInfo.borderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
-            samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
-            samplerCreateInfo.minLod(0);
-            samplerCreateInfo.maxLod(1);
+        VkAttachmentReference depthAttachmentRef = attachmentRefs.get(0);
+        depthAttachmentRef.attachment(0);
+        depthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            LongBuffer pImageSampler = stack.mallocLong(1);
-            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image sampler (result = " + result + ")");
-            }
-            long imageSampler = pImageSampler.get(0);
+        // Subpass and dependencies
 
-            // Will later be true because of the specified attachment transition after renderpass
-            int finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            shadowMapTexture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
+        VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
+        subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
+        subpass.pDepthStencilAttachment(depthAttachmentRef);
+
+        VkSubpassDependency.Buffer dependencies = VkSubpassDependency.callocStack(2, stack);
+
+        VkSubpassDependency dependency1 = dependencies.get(0);
+        dependency1.srcSubpass(VK_SUBPASS_EXTERNAL);
+        dependency1.dstSubpass(0);
+        dependency1.srcStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+        dependency1.srcAccessMask(VK_ACCESS_SHADER_READ_BIT);
+        dependency1.dstStageMask(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+        dependency1.dstAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+        dependency1.dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
+
+        VkSubpassDependency dependency2 = dependencies.get(1);
+        dependency2.srcSubpass(0);
+        dependency2.dstSubpass(VK_SUBPASS_EXTERNAL);
+        dependency2.srcStageMask(VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
+        dependency2.srcAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+        dependency2.dstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+        dependency2.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
+        dependency2.dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
+
+        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.callocStack(stack);
+        renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
+        renderPassCreateInfo.pAttachments(attachments);
+        renderPassCreateInfo.pSubpasses(subpass);
+        renderPassCreateInfo.pDependencies(dependencies);
+
+        LongBuffer pRenderPass = stack.mallocLong(1);
+        int result = vkCreateRenderPass(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
+        if (result != VK_SUCCESS) {
+            throw new RuntimeException("Failed to create render pass (result = " + result + ")");
         }
+        renderPass = pRenderPass.get(0);
     }
 
     private void initFrameBuffer() {
         initFrameBuffers(frameBufferIndex -> new long[] {
             shadowMapCascadeImageViews[frameBufferIndex]
         }, shadowConfig.getCascadesCount());
-    }
-
-    private void initPushConstants() {
-        pushConstants.getData().setInt("cascadeIndex", 0);
     }
 
     @Override
@@ -365,7 +327,7 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
     }
 
     @Override
-    public List<RenderTask> render() {
+    public List<RenderTask> render(MemoryStack stack) {
         return application.getBucketRenderer().getSplitOrderedGeometries().stream()
             .map(geometries -> (RenderTask) recorder -> {
                 pushConstants.getData().setInt("cascadeIndex", recorder.getFrameBufferIndex());
@@ -375,7 +337,7 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
                     ShadowMapGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
                     if (geometryRenderContext != null) {
                         vkCmdPushConstants(recorder.getCommandBuffer(), geometryRenderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
-                        geometry.getRenderer().render(recorder, geometryRenderContext);
+                        geometry.getRenderer().drawGeometry(recorder, geometryRenderContext, stack);
                     }
                 }
             }).collect(Collectors.toList());

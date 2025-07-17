@@ -8,26 +8,26 @@ import com.destrostudios.icetea.core.render.shadow.ShadowMapRenderJob;
 import com.destrostudios.icetea.core.buffer.UniformDataBuffer;
 import lombok.Getter;
 import lombok.Setter;
-import org.joml.Vector4f;
+import org.joml.Vector3f;
 
 public abstract class Light extends LogicalObject {
 
     public Light() {
-        lightColor = new Vector4f(1, 1, 1, 1);
-        ambientColor = new Vector4f(0.1f, 0.1f, 0.1f, 1);
-        specularColor = new Vector4f(1, 1, 1, 1);
+        lightColor = new Vector3f(1, 1, 1);
+        phongAmbientColor = new Vector3f(0.1f, 0.1f, 0.1f);
+        phongSpecularColor = new Vector3f(1, 1, 1);
         uniformBuffer = new UniformDataBuffer();
         uniformBuffer.setDescriptor("default", new LightDescriptor());
     }
     @Getter
     @Setter
-    private Vector4f lightColor;
+    private Vector3f lightColor;
     @Getter
     @Setter
-    private Vector4f ambientColor;
+    private Vector3f phongAmbientColor;
     @Getter
     @Setter
-    private Vector4f specularColor;
+    private Vector3f phongSpecularColor;
     @Getter
     protected UniformDataBuffer uniformBuffer;
     @Getter
@@ -39,8 +39,10 @@ public abstract class Light extends LogicalObject {
     public void updateLogicalState(Application application, float tpf) {
         super.updateLogicalState(application, tpf);
         if (modified) {
-            // TODO: Solve this properly, including updates
-            application.getSwapChain().getRenderJobManager().addPreSceneRenderJob(shadowMapRenderJob);
+            if (shadowMapRenderJob != null) {
+                // TODO: Solve this properly, including updates
+                application.getSwapChain().getRenderJobManager().addPreSceneRenderJob(shadowMapRenderJob);
+            }
             modified = false;
         }
     }
@@ -52,9 +54,9 @@ public abstract class Light extends LogicalObject {
     }
 
     protected void updateUniformBufferFields() {
-        uniformBuffer.getData().setVector4f("lightColor", lightColor);
-        uniformBuffer.getData().setVector4f("ambientColor", ambientColor);
-        uniformBuffer.getData().setVector4f("specularColor", specularColor);
+        uniformBuffer.getData().setVector3f("lightColor", lightColor);
+        uniformBuffer.getData().setVector3f("phongAmbientColor", phongAmbientColor);
+        uniformBuffer.getData().setVector3f("phongSpecularColor", phongSpecularColor);
     }
 
     @Override

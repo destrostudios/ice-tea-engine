@@ -1,27 +1,43 @@
 #version 450
 
-// @import core/light
+// @import core/light/frag
 // @import core/shadow
 
-layout(location = 0) in vec4 worldPosition;
-layout(location = 1) in vec4 viewPosition;
-layout(location = 2) in vec2 vertexTexCoord;
-layout(location = 3) in LightVertexInfo lightVertexInfo;
+layout(location = 0) in vec4 inWorldPosition;
+layout(location = 1) in vec4 inViewPosition;
+layout(location = 2) in vec3 inViewNormal;
+layout(location = 3) in vec3 inViewLightDirection;
+layout(location = 4) in vec2 inVertexTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    vec4 grassColor = mix(params.baseColor, params.tipColor, vertexTexCoord.y) * texture(bladeMap, vec2(vertexTexCoord.x, 1 - vertexTexCoord.y));
+    outColor = mix(params.baseColor, params.tipColor, inVertexTexCoord.y) * texture(bladeMap, vec2(inVertexTexCoord.x, 1 - inVertexTexCoord.y));
 
-    float shininess = 32;
-    uint shadowCascadeIndex = 0;
-    for (uint i = 0; i < (shadowInfo.splitDepths.length() - 1); i++) {
-        if (viewPosition.z < shadowInfo.splitDepths[i]) {
-            shadowCascadeIndex = i + 1;
-        }
-    }
-    ShadowResult shadowResult = shaderLib_shadow_getShadowResult(worldPosition, viewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMap);
+    #ifdef LIGHT
+        LightInfo lightInfo = shaderLib_light_getLightInfo();
 
-    vec4 effectiveLightColor = shaderLib_light_getLightColor(lightVertexInfo, light.lightColor, light.ambientColor, light.specularColor, shininess, shadowResult.shadowFactor);
-    outColor = grassColor * effectiveLightColor * shadowResult.debugColor;
+        float shadowFactor = 1;
+        #ifdef SHADOWINFO
+            uint shadowCascadeIndex = 0;
+            for (uint i = 0; i < (shadowInfo.splitDepths.length() - 1); i++) {
+                if (inViewPosition.z < shadowInfo.splitDepths[i]) {
+                    shadowCascadeIndex = i + 1;
+                }
+            }
+            ShadowResult shadowResult = shaderLib_shadow_getShadowResult(inWorldPosition, inViewPosition, shadowCascadeIndex, shadowInfo.viewProjectionMatrices[shadowCascadeIndex], shadowInfo.brightness, shadowInfo.cascadeDebugColors, shadowMap);
+            shadowFactor = shadowResult.shadowFactor;
+            outColor *= shadowResult.debugColor;
+        #endif
+
+        float shininess = 32;
+        outColor.rgb = outColor.rgb * shaderLib_light_getPhongLightColor(
+            lightInfo,
+            inViewPosition.xyz,
+            inViewNormal,
+            inViewLightDirection,
+            shininess,
+            shadowFactor
+        );
+    #endif
 }

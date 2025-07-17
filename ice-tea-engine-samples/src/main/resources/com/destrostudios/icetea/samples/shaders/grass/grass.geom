@@ -1,6 +1,6 @@
 #version 450
 
-// @import core/light
+// @import core/light/vert
 // @import core/shadow
 
 #define PI 3.14159265359f
@@ -11,8 +11,9 @@ layout(triangle_strip, max_vertices = 9) out;
 
 layout(location = 0) out vec4 outWorldPosition;
 layout(location = 1) out vec4 outViewPosition;
-layout(location = 2) out vec2 outVertexTexCoord;
-layout(location = 3) out LightVertexInfo outLightVertexInfo;
+layout(location = 2) out vec3 outViewNormal;
+layout(location = 3) out vec3 outViewLightDirection;
+layout(location = 4) out vec2 outVertexTexCoord;
 
 float rand(vec3 seed) {
 	return fract(sin(dot(seed, vec3(12.9898, 78.233, 53.539))) * 43758.5453);
@@ -36,7 +37,9 @@ mat3 angleAxis3x3(float angle, vec3 axis) {
 
 void emitVertex(vec3 position, vec3 offset, mat3 transformationMatrix, vec2 texCoord) {
 	vec4 worldPosition = vec4(position + (transformationMatrix * offset), 1);
+	vec3 modelNormal = vec3(0, 1, 0);
 	vec4 viewPosition = camera.view * worldPosition;
+	vec3 viewNormal = normalize(mat3(transpose(inverse(camera.view * geometry.model))) * modelNormal);
 	gl_Position = camera.proj * viewPosition;
 	#ifdef CAMERA_CLIPPLANE
 		if (camera.clipPlane.length() > 0) {
@@ -45,10 +48,12 @@ void emitVertex(vec3 position, vec3 offset, mat3 transformationMatrix, vec2 texC
 	#endif
 	outWorldPosition = worldPosition;
 	outViewPosition = viewPosition;
-	outVertexTexCoord = texCoord;
-	#ifdef LIGHT_DIRECTION
-		outLightVertexInfo = shaderLib_light_getVertexInfo_DirectionalLight(camera.view, geometry.model, worldPosition, vec3(0, 1, 0), light.direction);
+	outViewNormal = viewNormal;
+	#ifdef LIGHT
+		LightInfo lightInfo = shaderLib_light_getLightInfo();
+		outViewLightDirection = shaderLib_light_getViewLightDirection(lightInfo, camera.view, viewPosition);
 	#endif
+	outVertexTexCoord = texCoord;
 	EmitVertex();
 }
 

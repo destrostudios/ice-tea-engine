@@ -1,5 +1,5 @@
-#ifdef DIFFUSEMAP
-    outColor = texture(diffuseMap, inVertexTexCoord);
+#ifdef COLORMAP
+    outColor = texture(colorMap, inTexCoord);
 #else
     outColor = vec4(1);
 #endif

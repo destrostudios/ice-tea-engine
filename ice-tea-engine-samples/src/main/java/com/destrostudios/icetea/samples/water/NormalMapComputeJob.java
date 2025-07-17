@@ -8,16 +8,12 @@ import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
-import java.nio.LongBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class NormalMapComputeJob extends ComputeJob {
@@ -39,71 +35,45 @@ public class NormalMapComputeJob extends ComputeJob {
     @Override
     protected void initNative() {
         initNormalMapTexture();
-        normalMapTexture.updateNative(application);
         super.initNative();
     }
 
     private void initNormalMapTexture() {
         try (MemoryStack stack = stackPush()) {
-            int width = waterConfig.getN();
-            int height = waterConfig.getN();
-            int log2n = getLog2N();
-            int mipLevels = log2n;
-            int maxLod = log2n;
-            int format = VK_FORMAT_R32G32B32A32_SFLOAT;
-
-            LongBuffer pImage = stack.mallocLong(1);
-            PointerBuffer pImageAllocation = stack.mallocPointer(1);
-            application.getImageManager().createImage(
-                width,
-                height,
+            int mipLevels = (int) MathUtil.log2(waterConfig.getN());
+            normalMapTexture.set(
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_FORMAT_R32G32B32A32_SFLOAT,
+                1,
                 mipLevels,
                 VK_SAMPLE_COUNT_1_BIT,
-                format,
-                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-                1,
-                pImage,
-                pImageAllocation
+                // VK_IMAGE_USAGE_TRANSFER_SRC_BIT and VK_IMAGE_USAGE_TRANSFER_DST_BIT are needed for mipmap generation
+                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
             );
-            long image = pImage.get(0);
-            long imageAllocation = pImageAllocation.get(0);
-
-            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            application.getImageManager().transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, mipLevels);
-
-            long imageView = application.getImageManager().createImageView(
-                image,
-                VK_FORMAT_R32G32B32A32_SFLOAT,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                mipLevels
+            normalMapTexture.setWidth(waterConfig.getN());
+            normalMapTexture.setHeight(waterConfig.getN());
+            normalMapTexture.updateNative(application);
+            normalMapTexture.createImage(stack);
+            application.getCommandPool().executeSingleTimeCommands(commandBuffer -> {
+                normalMapTexture.transitionLayout(
+                    commandBuffer,
+                    VK_IMAGE_LAYOUT_GENERAL,
+                    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                    0,
+                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                    VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                    stack
+                );
+            });
+            normalMapTexture.createImageView(stack);
+            normalMapTexture.createSampler(
+                VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                null,
+                VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+                VK_SAMPLER_MIPMAP_MODE_LINEAR,
+                stack
             );
-
-            VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.callocStack(stack);
-            samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-            samplerCreateInfo.magFilter(VK_FILTER_LINEAR);
-            samplerCreateInfo.minFilter(VK_FILTER_LINEAR);
-            samplerCreateInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.maxAnisotropy(1);
-            samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
-            samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
-            samplerCreateInfo.minLod(0); // Optional
-            samplerCreateInfo.maxLod(maxLod);
-            samplerCreateInfo.mipLodBias(0); // Optional
-            samplerCreateInfo.unnormalizedCoordinates(false);
-            samplerCreateInfo.compareEnable(false);
-            samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);
-
-            LongBuffer pImageSampler = stack.mallocLong(1);
-            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image sampler (result = " + result + ")");
-            }
-            long imageSampler = pImageSampler.get(0);
-
-            normalMapTexture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
+            normalMapTexture.updateNative(application);
         }
     }
 
@@ -131,26 +101,13 @@ public class NormalMapComputeJob extends ComputeJob {
 
     @Override
     public void submit() {
-        int width = waterConfig.getN();
-        int height = waterConfig.getN();
-        int mipLevels = getLog2N();
-        application.getImageManager().transitionImageLayout(normalMapTexture.getImage(), VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
-        application.getImageManager().generateMipmaps(
-            normalMapTexture.getImage(),
-            VK_FORMAT_R32G32B32A32_SFLOAT,
-            width,
-            height,
-            mipLevels,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_GENERAL,
-            VK_ACCESS_SHADER_READ_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-        );
+        // TODO: Shouldn't this be done after rendering into it?
+        try (MemoryStack stack = stackPush()) {
+            application.getCommandPool().executeSingleTimeCommands(commandBuffer -> {
+                normalMapTexture.generateMipmaps(commandBuffer, stack);
+            });
+        }
         super.submit();
-    }
-
-    private int getLog2N() {
-        return (int) MathUtil.log2(waterConfig.getN());
     }
 
     @Override

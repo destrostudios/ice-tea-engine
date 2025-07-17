@@ -9,16 +9,12 @@ import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor
 import com.destrostudios.icetea.core.texture.Texture;
 import com.destrostudios.icetea.core.util.MathUtil;
 import lombok.Getter;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
-import java.nio.LongBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class FftComputeJob extends ComputeJob {
@@ -63,88 +59,47 @@ public class FftComputeJob extends ComputeJob {
 
     @Override
     protected void initNative() {
-        initTargetTexture(dxTexture);
-        dxTexture.updateNative(application);
-
-        initTargetTexture(dyTexture);
-        dyTexture.updateNative(application);
-
-        initTargetTexture(dzTexture);
-        dzTexture.updateNative(application);
-
-        initTargetTexture(dxPingPongTexture);
-        dxPingPongTexture.updateNative(application);
-
-        initTargetTexture(dyPingPongTexture);
-        dyPingPongTexture.updateNative(application);
-
-        initTargetTexture(dzPingPongTexture);
-        dzPingPongTexture.updateNative(application);
-
+        try (MemoryStack stack = stackPush()) {
+            initTargetTexture(dxTexture, stack);
+            initTargetTexture(dyTexture, stack);
+            initTargetTexture(dzTexture, stack);
+            initTargetTexture(dxPingPongTexture, stack);
+            initTargetTexture(dyPingPongTexture, stack);
+            initTargetTexture(dzPingPongTexture, stack);
+        }
         super.initNative();
     }
 
-    private void initTargetTexture(Texture texture) {
-        try (MemoryStack stack = stackPush()) {
-            int width = n;
-            int height = n;
-            int format = VK_FORMAT_R32G32B32A32_SFLOAT;
-            int mipLevels = 1;
-
-            LongBuffer pImage = stack.mallocLong(1);
-            PointerBuffer pImageAllocation = stack.mallocPointer(1);
-            application.getImageManager().createImage(
-                width,
-                height,
-                mipLevels,
-                VK_SAMPLE_COUNT_1_BIT,
-                format,
-                VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-                1,
-                pImage,
-                pImageAllocation
+    private void initTargetTexture(Texture texture, MemoryStack stack) {
+        texture.set(
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_FORMAT_R32G32B32A32_SFLOAT,
+            VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+        );
+        texture.setWidth(n);
+        texture.setHeight(n);
+        texture.updateNative(application);
+        texture.createImage(stack);
+        application.getCommandPool().executeSingleTimeCommands(commandBuffer -> {
+            texture.transitionLayout(
+                commandBuffer,
+                VK_IMAGE_LAYOUT_GENERAL,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                0,
+                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                stack
             );
-            long image = pImage.get(0);
-            long imageAllocation = pImageAllocation.get(0);
-
-            int finalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            application.getImageManager().transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, finalLayout, mipLevels);
-
-            long imageView = application.getImageManager().createImageView(
-                image,
-                VK_FORMAT_R32G32B32A32_SFLOAT,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                1
-            );
-
-            VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.callocStack(stack);
-            samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-            samplerCreateInfo.magFilter(VK_FILTER_LINEAR);
-            samplerCreateInfo.minFilter(VK_FILTER_LINEAR);
-            samplerCreateInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.anisotropyEnable(false);
-            samplerCreateInfo.maxAnisotropy(0);
-            samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
-            samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
-            samplerCreateInfo.minLod(0); // Optional
-            samplerCreateInfo.maxLod(0);
-            samplerCreateInfo.mipLodBias(0); // Optional
-            samplerCreateInfo.unnormalizedCoordinates(false);
-            samplerCreateInfo.compareEnable(false);
-            samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);
-
-            LongBuffer pImageSampler = stack.mallocLong(1);
-            int result = vkCreateSampler(application.getLogicalDevice(), samplerCreateInfo, null, pImageSampler);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image sampler (result = " + result + ")");
-            }
-            long imageSampler = pImageSampler.get(0);
-
-            texture.set(image, imageAllocation, imageView, finalLayout, imageSampler);
-        }
+        });
+        texture.createImageView(stack);
+        texture.createSampler(
+            VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            null,
+            VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+            VK_SAMPLER_MIPMAP_MODE_NEAREST,
+            stack
+        );
+        texture.updateNative(application);
     }
 
     @Override

@@ -1,6 +1,7 @@
 {
   "dependencies": [
     "body",
+    "vertOutTexCoord",
     "outputs"
   ]
 }

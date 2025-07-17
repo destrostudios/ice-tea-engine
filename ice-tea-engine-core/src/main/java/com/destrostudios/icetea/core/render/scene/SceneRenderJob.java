@@ -42,13 +42,12 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
     @Override
     protected void initNative() {
         super.initNative();
-        initRenderPass();
-        initMultisampledColorTexture(multisampledColorTexture);
-        initMultisampledDepthTexture(multisampledDepthTexture);
-        initColorTexture(resolvedColorTexture);
-        initDepthTexture(resolvedDepthTexture);
-        initFrameBuffers();
-        renderPipelineCreator = new SceneRenderPipelineCreator(application, this);
+        try (MemoryStack stack = stackPush()) {
+            initTextures(stack);
+            initRenderPass(stack);
+            initFrameBuffers();
+            renderPipelineCreator = new SceneRenderPipelineCreator(application, this);
+        }
     }
 
     @Override
@@ -56,126 +55,138 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
         return application.getSwapChain().getExtent();
     }
 
-    private void initRenderPass() {
-        try (MemoryStack stack = stackPush()) {
-            VkAttachmentDescription2KHR.Buffer attachments = VkAttachmentDescription2KHR.callocStack(4, stack);
-            VkAttachmentReference2KHR.Buffer attachmentRefs = VkAttachmentReference2KHR.callocStack(4, stack);
+    private void initTextures(MemoryStack stack) {
+        initMultisampledColorTexture(multisampledColorTexture, stack);
+        multisampledColorTexture.setAutomaticallyTransitionedLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            int colorFormat = getSwapChainImageFormat();
-            int depthFormat = findDepthFormat(stack);
+        initMultisampledDepthTexture(multisampledDepthTexture, stack);
+        multisampledDepthTexture.setAutomaticallyTransitionedLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            // Color attachment (Multisampled)
+        initColorTexture(resolvedColorTexture, stack);
+        resolvedColorTexture.setAutomaticallyTransitionedLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-            VkAttachmentDescription2 multisampledColorAttachment = attachments.get(0);
-            multisampledColorAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
-            multisampledColorAttachment.format(colorFormat);
-            multisampledColorAttachment.samples(application.getMsaaSamples());
-            multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-            multisampledColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            multisampledColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            multisampledColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            multisampledColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            multisampledColorAttachment.finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        initDepthTexture(resolvedDepthTexture, stack);
+        resolvedDepthTexture.setAutomaticallyTransitionedLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+    }
 
-            VkAttachmentReference2 multisampledColorAttachmentRef = attachmentRefs.get(0);
-            multisampledColorAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
-            multisampledColorAttachmentRef.attachment(0);
-            multisampledColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    private void initRenderPass(MemoryStack stack) {
+        VkAttachmentDescription2KHR.Buffer attachments = VkAttachmentDescription2KHR.callocStack(4, stack);
+        VkAttachmentReference2KHR.Buffer attachmentRefs = VkAttachmentReference2KHR.callocStack(4, stack);
 
-            // Depth-Stencil attachment (Multisampled)
+        int colorFormat = getSwapChainImageFormat();
+        int depthFormat = findDepthFormat(stack);
 
-            VkAttachmentDescription2 multisampledDepthAttachment = attachments.get(1);
-            multisampledDepthAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
-            multisampledDepthAttachment.format(depthFormat);
-            multisampledDepthAttachment.samples(application.getMsaaSamples());
-            multisampledDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-            multisampledDepthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            multisampledDepthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            multisampledDepthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            multisampledDepthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            multisampledDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        // Color attachment (Multisampled)
 
-            VkAttachmentReference2 multisampledDepthAttachmentRef = attachmentRefs.get(1);
-            multisampledDepthAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
-            multisampledDepthAttachmentRef.attachment(1);
-            multisampledDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        VkAttachmentDescription2 multisampledColorAttachment = attachments.get(0);
+        multisampledColorAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
+        multisampledColorAttachment.format(colorFormat);
+        multisampledColorAttachment.samples(application.getMsaaSamples());
+        multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+        multisampledColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        multisampledColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        multisampledColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        multisampledColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        multisampledColorAttachment.finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            // Color attachment (Resolved)
+        VkAttachmentReference2 multisampledColorAttachmentRef = attachmentRefs.get(0);
+        multisampledColorAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
+        multisampledColorAttachmentRef.attachment(0);
+        multisampledColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentDescription2 resolvedColorAttachment = attachments.get(2);
-            resolvedColorAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
-            resolvedColorAttachment.format(colorFormat);
-            resolvedColorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
-            resolvedColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            resolvedColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-            resolvedColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            resolvedColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            resolvedColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        // Depth-Stencil attachment (Multisampled)
 
-            VkAttachmentReference2 resolvedColorAttachmentRef = attachmentRefs.get(2);
-            resolvedColorAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
-            resolvedColorAttachmentRef.attachment(2);
-            resolvedColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        VkAttachmentDescription2 multisampledDepthAttachment = attachments.get(1);
+        multisampledDepthAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
+        multisampledDepthAttachment.format(depthFormat);
+        multisampledDepthAttachment.samples(application.getMsaaSamples());
+        multisampledDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+        multisampledDepthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        multisampledDepthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        multisampledDepthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        multisampledDepthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        multisampledDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            // Depth-Stencil attachment (Resolved)
+        VkAttachmentReference2 multisampledDepthAttachmentRef = attachmentRefs.get(1);
+        multisampledDepthAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
+        multisampledDepthAttachmentRef.attachment(1);
+        multisampledDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentDescription2 resolvedDepthAttachment = attachments.get(3);
-            resolvedDepthAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
-            resolvedDepthAttachment.format(depthFormat);
-            resolvedDepthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
-            resolvedDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            resolvedDepthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-            resolvedDepthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            resolvedDepthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            resolvedDepthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            resolvedDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+        // Color attachment (Resolved)
 
-            VkAttachmentReference2 resolvedDepthAttachmentRef = attachmentRefs.get(3);
-            resolvedDepthAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
-            resolvedDepthAttachmentRef.attachment(3);
-            resolvedDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        VkAttachmentDescription2 resolvedColorAttachment = attachments.get(2);
+        resolvedColorAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
+        resolvedColorAttachment.format(colorFormat);
+        resolvedColorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+        resolvedColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        resolvedColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+        resolvedColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        resolvedColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        resolvedColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-            // Subpass and dependencies
+        VkAttachmentReference2 resolvedColorAttachmentRef = attachmentRefs.get(2);
+        resolvedColorAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
+        resolvedColorAttachmentRef.attachment(2);
+        resolvedColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            VkSubpassDescription2KHR.Buffer subpass = VkSubpassDescription2KHR.callocStack(1, stack);
-            subpass.sType(VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2);
-            subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
-            subpass.colorAttachmentCount(1);
-            subpass.pColorAttachments(VkAttachmentReference2KHR.callocStack(1, stack).put(0, multisampledColorAttachmentRef));
-            subpass.pDepthStencilAttachment(multisampledDepthAttachmentRef);
-            subpass.pResolveAttachments(VkAttachmentReference2KHR.callocStack(1, stack).put(0, resolvedColorAttachmentRef));
+        // Depth-Stencil attachment (Resolved)
 
-            VkSubpassDescriptionDepthStencilResolveKHR subpassDepthStencilResolve = VkSubpassDescriptionDepthStencilResolveKHR.callocStack(stack);
-            subpassDepthStencilResolve.sType(VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR);
-            int depthStencilResolveMode = application.getPhysicalDeviceInformation().getDepthStencilResolveMode();
-            subpassDepthStencilResolve.depthResolveMode(depthStencilResolveMode);
-            subpassDepthStencilResolve.stencilResolveMode(depthStencilResolveMode);
-            subpassDepthStencilResolve.pDepthStencilResolveAttachment(resolvedDepthAttachmentRef);
-            subpass.pNext(subpassDepthStencilResolve.address());
+        VkAttachmentDescription2 resolvedDepthAttachment = attachments.get(3);
+        resolvedDepthAttachment.sType(VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
+        resolvedDepthAttachment.format(depthFormat);
+        resolvedDepthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+        resolvedDepthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        resolvedDepthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+        resolvedDepthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        resolvedDepthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        resolvedDepthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        resolvedDepthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
-            VkSubpassDependency2KHR.Buffer dependency = VkSubpassDependency2KHR.callocStack(1, stack);
-            dependency.sType(VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2);
-            dependency.srcSubpass(VK_SUBPASS_EXTERNAL);
-            dependency.dstSubpass(0);
-            dependency.srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-            dependency.srcAccessMask(0);
-            dependency.dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-            dependency.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+        VkAttachmentReference2 resolvedDepthAttachmentRef = attachmentRefs.get(3);
+        resolvedDepthAttachmentRef.sType(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
+        resolvedDepthAttachmentRef.attachment(3);
+        resolvedDepthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-            VkRenderPassCreateInfo2KHR renderPassCreateInfo = VkRenderPassCreateInfo2KHR.callocStack(stack);
-            renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2);
-            renderPassCreateInfo.pAttachments(attachments);
-            renderPassCreateInfo.pSubpasses(subpass);
-            renderPassCreateInfo.pDependencies(dependency);
+        // Subpass and dependencies
 
-            LongBuffer pRenderPass = stack.mallocLong(1);
-            int result = vkCreateRenderPass2KHR(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create render pass (result = " + result + ")");
-            }
-            renderPass = pRenderPass.get(0);
+        VkSubpassDescription2KHR.Buffer subpass = VkSubpassDescription2KHR.callocStack(1, stack);
+        subpass.sType(VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2);
+        subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
+        subpass.colorAttachmentCount(1);
+        subpass.pColorAttachments(VkAttachmentReference2KHR.callocStack(1, stack).put(0, multisampledColorAttachmentRef));
+        subpass.pDepthStencilAttachment(multisampledDepthAttachmentRef);
+        subpass.pResolveAttachments(VkAttachmentReference2KHR.callocStack(1, stack).put(0, resolvedColorAttachmentRef));
+
+        VkSubpassDescriptionDepthStencilResolveKHR subpassDepthStencilResolve = VkSubpassDescriptionDepthStencilResolveKHR.callocStack(stack);
+        subpassDepthStencilResolve.sType(VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR);
+        int depthStencilResolveMode = application.getPhysicalDeviceInformation().getDepthStencilResolveMode();
+        subpassDepthStencilResolve.depthResolveMode(depthStencilResolveMode);
+        subpassDepthStencilResolve.stencilResolveMode(depthStencilResolveMode);
+        subpassDepthStencilResolve.pDepthStencilResolveAttachment(resolvedDepthAttachmentRef);
+        subpass.pNext(subpassDepthStencilResolve.address());
+
+        VkSubpassDependency2KHR.Buffer dependency = VkSubpassDependency2KHR.callocStack(1, stack);
+        dependency.sType(VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2);
+        dependency.srcSubpass(VK_SUBPASS_EXTERNAL);
+        dependency.dstSubpass(0);
+        dependency.srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        dependency.srcAccessMask(0);
+        dependency.dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        dependency.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+
+        VkRenderPassCreateInfo2KHR renderPassCreateInfo = VkRenderPassCreateInfo2KHR.callocStack(stack);
+        renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2);
+        renderPassCreateInfo.pAttachments(attachments);
+        renderPassCreateInfo.pSubpasses(subpass);
+        renderPassCreateInfo.pDependencies(dependency);
+
+        LongBuffer pRenderPass = stack.mallocLong(1);
+        int result = vkCreateRenderPass2KHR(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
+        if (result != VK_SUCCESS) {
+            throw new RuntimeException("Failed to create render pass (result = " + result + ")");
         }
+        renderPass = pRenderPass.get(0);
     }
 
     private int getSwapChainImageFormat() {
@@ -211,13 +222,13 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
     }
 
     @Override
-    public List<RenderTask> render() {
+    public List<RenderTask> render(MemoryStack stack) {
         return application.getBucketRenderer().getSplitOrderedGeometries().stream()
             .map(geometries -> (RenderTask) (recorder) -> {
                 for (Geometry geometry : geometries) {
                     SceneGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
                     if (geometryRenderContext != null) {
-                        geometry.getRenderer().render(recorder, geometryRenderContext);
+                        geometry.getRenderer().drawGeometry(recorder, geometryRenderContext, stack);
                     }
                 }
             }).collect(Collectors.toList());

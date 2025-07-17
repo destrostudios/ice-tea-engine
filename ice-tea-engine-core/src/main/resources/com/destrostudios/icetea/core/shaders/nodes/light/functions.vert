@@ -1,1 +1,1 @@
-// @import core/light
+// @import core/light/vert

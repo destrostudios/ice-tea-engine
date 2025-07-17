@@ -84,7 +84,6 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(stack);
         inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
         inputAssembly.topology(state.getTopology());
-        inputAssembly.primitiveRestartEnable(false);
 
         // ===> DYNAMIC <===
 
@@ -101,8 +100,8 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
         viewport.x(0);
         viewport.y(0);
-        viewport.width(renderJob.getShadowConfig().getShadowMapSize());
-        viewport.height(renderJob.getShadowConfig().getShadowMapSize());
+        viewport.width(renderJob.getExtent().width());
+        viewport.height(renderJob.getExtent().height());
         viewport.minDepth(0);
         viewport.maxDepth(1);
 
@@ -119,8 +118,6 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
 
         VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.callocStack(stack);
         rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
-        rasterizer.depthClampEnable(false);
-        rasterizer.rasterizerDiscardEnable(false);
         rasterizer.polygonMode(state.getPolygonMode());
         rasterizer.lineWidth(1);
         rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
@@ -178,6 +175,7 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         pipelineInfo.pStages(shaderStages);
         pipelineInfo.pVertexInputState(vertexInputInfo);
         pipelineInfo.pInputAssemblyState(inputAssembly);
+        pipelineInfo.pDynamicState(dynamic);
         pipelineInfo.pViewportState(viewportState);
         pipelineInfo.pRasterizationState(rasterizer);
         pipelineInfo.pMultisampleState(multisampling);
@@ -185,9 +183,6 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         pipelineInfo.pTessellationState(tessellation);
         pipelineInfo.layout(pipelineLayout);
         pipelineInfo.renderPass(renderJob.getRenderPass());
-        pipelineInfo.subpass(0);
-        pipelineInfo.basePipelineHandle(VK_NULL_HANDLE);
-        pipelineInfo.basePipelineIndex(-1);
 
         LongBuffer pGraphicsPipeline = stack.mallocLong(1);
         result = vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline);

@@ -41,7 +41,7 @@ public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends 
 
     protected abstract Pipeline createPipeline(PS state, LongBuffer descriptorSetLayouts, MemoryStack stack);
 
-    protected long createShaderModule_Vertex(Shader shader, String additionalDeclarations, List<EssentialGeometryRenderPipelineState.VertexField> vertexFields) {
+    protected long createShaderModule_Vertex(Shader shader, String additionalDeclarations, List<MeshRenderPipelineState.VertexField> vertexFields) {
         return createShaderModule(shader, ShaderType.VERTEX_SHADER, additionalDeclarations + getVertexDataDeclarations(vertexFields));
     }
 
@@ -53,10 +53,10 @@ public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends 
         return "#define RENDERJOB_" + renderJob.getName().toUpperCase() + " 1\n";
     }
 
-    private static String getVertexDataDeclarations(List<EssentialGeometryRenderPipelineState.VertexField> vertexFields) {
+    private static String getVertexDataDeclarations(List<MeshRenderPipelineState.VertexField> vertexFields) {
         String text = "";
         int location = 0;
-        for (EssentialGeometryRenderPipelineState.VertexField vertexField : vertexFields) {
+        for (MeshRenderPipelineState.VertexField vertexField : vertexFields) {
             text += "#define VERTEX_" + vertexField.getName().toUpperCase() + " 1\n";
             text += "layout(location = " + location + ") in " + vertexField.getShaderDefinitionType() + " " + vertexField.getName() + ";\n";
             location++;
@@ -72,11 +72,11 @@ public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends 
         return bindingDescription;
     }
 
-    protected static VkVertexInputAttributeDescription.Buffer getVertexAttributeDescriptions(List<EssentialGeometryRenderPipelineState.VertexField> vertexFields) {
+    protected static VkVertexInputAttributeDescription.Buffer getVertexAttributeDescriptions(List<MeshRenderPipelineState.VertexField> vertexFields) {
         VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(vertexFields.size());
         int offset = 0;
         int location = 0;
-        for (EssentialGeometryRenderPipelineState.VertexField vertexField : vertexFields) {
+        for (MeshRenderPipelineState.VertexField vertexField : vertexFields) {
             VkVertexInputAttributeDescription attributeDescription = attributeDescriptions.get(location);
             attributeDescription.binding(0);
             attributeDescription.location(location);

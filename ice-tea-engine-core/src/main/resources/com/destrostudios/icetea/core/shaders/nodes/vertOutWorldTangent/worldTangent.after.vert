@@ -1,0 +1,2 @@
+outWorldTangent = worldTangent;
+outTangentHandedness = tangentHandedness;

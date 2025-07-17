@@ -52,7 +52,7 @@ public class BitmapText extends Geometry {
 
     private void updateMaterial(BitmapFont font) {
         // TODO: Support multiple pages
-        material.setTexture("diffuseMap", font.getTextures().get("0"));
+        material.setTexture("colorMap", font.getTextures().get("0"));
     }
 
     public int getTextWidth() {

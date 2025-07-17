@@ -47,7 +47,6 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
         fillMode = material.fillMode;
     }
     @Getter
-    @Setter
     private ArrayList<String> shaderNodes;
     @Getter
     @Setter
@@ -88,8 +87,12 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
     private int fillMode = VK_POLYGON_MODE_FILL;
 
     public void setDefaultShaders() {
+        setShaderNodes(DEFAULT_SHADER_NODE);
+    }
+
+    public void setShaderNodes(String... nodeNames) {
         shaderNodes = new ArrayList<>();
-        shaderNodes.add(DEFAULT_SHADER_NODE);
+        addShaderNodes(nodeNames);
     }
 
     public void addShaderNodes(String... nodeNames) {
@@ -132,6 +135,10 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
 
     public void setTexture(String name, Texture texture) {
         textures.put(name, texture);
+    }
+
+    public Texture removeTexture(String name) {
+        return textures.remove(name);
     }
 
     @Override

@@ -1,7 +1,7 @@
 #version 450
 
-// @import shaders/libs/texCoordColor.glsllib
-// @import shaders/libs/alphaPulsate.glsllib
+// @import shaders/libs/texCoordColor.glsl
+// @import shaders/libs/alphaPulsate.glsl
 
 layout(location = 0) in vec2 vertexTexCoord;
 

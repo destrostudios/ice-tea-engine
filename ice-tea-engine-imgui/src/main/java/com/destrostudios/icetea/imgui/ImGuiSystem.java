@@ -94,10 +94,14 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
         ImInt height = new ImInt();
         ByteBuffer pixels = ImGui.getIO().getFonts().getTexDataAsRGBA32(width, height);
         BufferedTexture fontsTexture = new BufferedTexture(
-            () -> new TextureData(pixels, width.get(), height.get(), () -> {}),
+            false,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            () -> new TextureData(pixels, width.get(), height.get(), () -> {})
+        );
+        fontsTexture.set(
+            VK_IMAGE_ASPECT_COLOR_BIT,
             VK_FORMAT_R8G8B8A8_SRGB,
-            VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            VK_IMAGE_USAGE_SAMPLED_BIT
         );
         fontsTexture.setDescriptor("default", new SimpleTextureDescriptor());
         return fontsTexture;
@@ -107,7 +111,7 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
         Material material = new Material();
         material.setVertexShader(new FileShader("com/destrostudios/icetea/imgui/shaders/imgui.vert"));
         material.setFragmentShader(new FileShader("com/destrostudios/icetea/imgui/shaders/imgui.frag"));
-        material.setTexture("diffuseMap", fontsTexture);
+        material.setTexture("colorMap", fontsTexture);
         material.setCullMode(VK_CULL_MODE_NONE);
         material.setDepthTest(false);
         material.setDepthWrite(false);

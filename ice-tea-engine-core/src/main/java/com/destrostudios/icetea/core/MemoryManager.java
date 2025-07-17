@@ -80,11 +80,11 @@ public class MemoryManager {
 
     public void copyBuffer(long sourceBuffer, long destinationBuffer, long size) {
         try (MemoryStack stack = stackPush()) {
-            VkBufferCopy.Buffer copyRegion = VkBufferCopy.callocStack(1, stack);
-            copyRegion.size(size);
-            VkCommandBuffer commandBuffer = application.getCommandPool().beginSingleTimeCommands();
-            vkCmdCopyBuffer(commandBuffer, sourceBuffer, destinationBuffer, copyRegion);
-            application.getCommandPool().endSingleTimeCommands(commandBuffer);
+            VkBufferCopy.Buffer region = VkBufferCopy.callocStack(1, stack);
+            region.size(size);
+            application.getCommandPool().executeSingleTimeCommands(commandBuffer -> {
+                vkCmdCopyBuffer(commandBuffer, sourceBuffer, destinationBuffer, region);
+            });
         }
     }
 

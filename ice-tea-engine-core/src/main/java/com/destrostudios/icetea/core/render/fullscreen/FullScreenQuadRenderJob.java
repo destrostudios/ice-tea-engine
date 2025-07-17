@@ -36,13 +36,13 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<FullScreenQuadRe
     @Override
     protected void initNative() {
         super.initNative();
-        initRenderPass();
-        initMultisampledColorTexture(multisampledColorTexture);
-        initColorTexture(resolvedColorTexture);
-        initFrameBuffers();
-        initResourceDescriptorSet();
-        renderPipelineCreator = new FullScreenQuadRenderPipelineCreator(application, this);
-        initRenderPipeline();
+        try (MemoryStack stack = stackPush()) {
+            initTextures(stack);
+            initRenderPass(stack);
+            initFrameBuffers();
+            initResourceDescriptorSet();
+            initRenderPipeline();
+        }
     }
 
     @Override
@@ -50,63 +50,69 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<FullScreenQuadRe
         return application.getSwapChain().getExtent();
     }
 
-    private void initRenderPass() {
-        try (MemoryStack stack = stackPush()) {
-            int colorFormat = application.getSwapChain().getImageFormat();
+    private void initTextures(MemoryStack stack) {
+        initMultisampledColorTexture(multisampledColorTexture, stack);
+        multisampledColorTexture.setAutomaticallyTransitionedLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
-            VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.callocStack(2, stack);
+        initColorTexture(resolvedColorTexture, stack);
+        resolvedColorTexture.setAutomaticallyTransitionedLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    }
 
-            // Color attachment (Multisampled)
+    private void initRenderPass(MemoryStack stack) {
+        int colorFormat = application.getSwapChain().getImageFormat();
 
-            VkAttachmentDescription multisampledColorAttachment = attachments.get(0);
-            multisampledColorAttachment.format(colorFormat);
-            multisampledColorAttachment.samples(application.getMsaaSamples());
-            multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            multisampledColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            multisampledColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            multisampledColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            multisampledColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            multisampledColorAttachment.finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
+        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.callocStack(2, stack);
 
-            VkAttachmentReference multisampledColorAttachmentRef = attachmentRefs.get(0);
-            multisampledColorAttachmentRef.attachment(0);
-            multisampledColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        // Color attachment (Multisampled)
 
-            // Color attachment (Resolved)
+        VkAttachmentDescription multisampledColorAttachment = attachments.get(0);
+        multisampledColorAttachment.format(colorFormat);
+        multisampledColorAttachment.samples(application.getMsaaSamples());
+        multisampledColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        multisampledColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        multisampledColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        multisampledColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        multisampledColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        multisampledColorAttachment.finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentDescription resolvedColorAttachment = attachments.get(1);
-            resolvedColorAttachment.format(colorFormat);
-            resolvedColorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
-            resolvedColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            resolvedColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-            resolvedColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            resolvedColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            resolvedColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkAttachmentReference multisampledColorAttachmentRef = attachmentRefs.get(0);
+        multisampledColorAttachmentRef.attachment(0);
+        multisampledColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            VkAttachmentReference resolvedColorAttachmentRef = attachmentRefs.get(1);
-            resolvedColorAttachmentRef.attachment(1);
-            resolvedColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        // Color attachment (Resolved)
 
-            VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
-            subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
-            subpass.colorAttachmentCount(1);
-            subpass.pColorAttachments(VkAttachmentReference.callocStack(1, stack).put(0, multisampledColorAttachmentRef));
-            subpass.pResolveAttachments(VkAttachmentReference.callocStack(1, stack).put(0, resolvedColorAttachmentRef));
+        VkAttachmentDescription resolvedColorAttachment = attachments.get(1);
+        resolvedColorAttachment.format(colorFormat);
+        resolvedColorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+        resolvedColorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        resolvedColorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+        resolvedColorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+        resolvedColorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+        resolvedColorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        resolvedColorAttachment.finalLayout(isPresentingRenderJob() ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-            VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.callocStack(stack);
-            renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
-            renderPassCreateInfo.pAttachments(attachments);
-            renderPassCreateInfo.pSubpasses(subpass);
+        VkAttachmentReference resolvedColorAttachmentRef = attachmentRefs.get(1);
+        resolvedColorAttachmentRef.attachment(1);
+        resolvedColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            LongBuffer pRenderPass = stack.mallocLong(1);
-            int result = vkCreateRenderPass(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create render pass (result = " + result + ")");
-            }
-            renderPass = pRenderPass.get(0);
+        VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
+        subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
+        subpass.colorAttachmentCount(1);
+        subpass.pColorAttachments(VkAttachmentReference.callocStack(1, stack).put(0, multisampledColorAttachmentRef));
+        subpass.pResolveAttachments(VkAttachmentReference.callocStack(1, stack).put(0, resolvedColorAttachmentRef));
+
+        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.callocStack(stack);
+        renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
+        renderPassCreateInfo.pAttachments(attachments);
+        renderPassCreateInfo.pSubpasses(subpass);
+
+        LongBuffer pRenderPass = stack.mallocLong(1);
+        int result = vkCreateRenderPass(application.getLogicalDevice(), renderPassCreateInfo, null, pRenderPass);
+        if (result != VK_SUCCESS) {
+            throw new RuntimeException("Failed to create render pass (result = " + result + ")");
         }
+        renderPass = pRenderPass.get(0);
     }
 
     private void initFrameBuffers() {
@@ -121,6 +127,8 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<FullScreenQuadRe
     }
 
     private void initRenderPipeline() {
+        renderPipelineCreator = new FullScreenQuadRenderPipelineCreator(application, this);
+
         FullScreenQuadRenderPipelineState state = new FullScreenQuadRenderPipelineState("renderFullScreenQuad");
         state.setFragmentShader(getFragmentShader());
         renderPipeline = renderPipelineCreator.getOrCreatePipeline(state, resourceDescriptorSet);
@@ -129,13 +137,11 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<FullScreenQuadRe
     public abstract Shader getFragmentShader();
 
     @Override
-    public List<RenderTask> render() {
+    public List<RenderTask> render(MemoryStack stack) {
         return List.of(recorder -> {
-            try (MemoryStack stack = stackPush()) {
-                recorder.bindPipeline(renderPipeline);
-                recorder.bindDescriptorSets(resourceDescriptorSet, stack);
-                vkCmdDraw(recorder.getCommandBuffer(), 3, 1, 0, 0);
-            }
+            recorder.bindPipeline(renderPipeline);
+            recorder.bindDescriptorSets(resourceDescriptorSet, stack);
+            vkCmdDraw(recorder.getCommandBuffer(), 3, 1, 0, 0);
         });
     }
 

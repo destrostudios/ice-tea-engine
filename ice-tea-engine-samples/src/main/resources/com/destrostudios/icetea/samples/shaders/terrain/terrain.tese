@@ -1,7 +1,5 @@
 #version 450
 
-// @import core/light
-// @import core/shadow
 // @import samples/noise
 
 layout(quads, fractional_odd_spacing, cw) in;

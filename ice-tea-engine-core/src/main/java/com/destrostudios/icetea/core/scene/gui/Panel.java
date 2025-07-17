@@ -21,6 +21,6 @@ public class Panel extends Geometry {
     }
 
     public void setBackground(Texture texture) {
-        getMaterial().setTexture("diffuseMap", texture);
+        getMaterial().setTexture("colorMap", texture);
     }
 }

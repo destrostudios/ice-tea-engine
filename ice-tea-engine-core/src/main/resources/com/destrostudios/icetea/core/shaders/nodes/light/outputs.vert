@@ -1,1 +1,1 @@
-LightVertexInfo lightVertexInfo; // @length 3
+vec3 viewLightDirection;

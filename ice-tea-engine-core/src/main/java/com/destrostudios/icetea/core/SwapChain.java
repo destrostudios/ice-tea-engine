@@ -67,11 +67,11 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         }
         vkDeviceWaitIdle(application.getLogicalDevice());
         Application tmpApplication = application;
-        // TODO: This is a workaround to prevent inFlightFrame recreation (not allowed while actively rendering) during swapchain recreation
+        // Used to prevent inFlightFrame recreation (recreating them is not required, but more importantly not allowed while actively rendering!)
         isDuringRecreation = true;
         cleanupNative();
-        isDuringRecreation = false;
         updateNative(tmpApplication);
+        isDuringRecreation = false;
     }
 
     @Override
@@ -82,7 +82,9 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         initImageViews();
         initPrimaryCommandBuffers();
         initSecondaryCommandBufferPools();
-        initSyncObjects();
+        if (!isDuringRecreation) {
+            initSyncObjects();
+        }
         application.addWindowResizeListener(this);
         LOGGER.debug("Initialized swapchain.");
     }
@@ -188,7 +190,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
     private VkSurfaceFormatKHR chooseSurfaceFormat(VkSurfaceFormatKHR.Buffer availableFormats) {
         // TODO: Should have a proper ranking logic (preferring nonlinear) and not just have one preferred combination and default to the first one otherwise
-        // TODO: Also, if we happen to use a linear color space, we have to adjust the read texture pixels and stored image formats as a transformation back to sRGB at the end doesn't happen automatically yet
+        // TODO: Also, if we happen to use a linear color space, we have to adjust the read texture pixels and stored formats as a transformation back to sRGB at the end doesn't happen automatically yet
         return availableFormats.stream()
                 .filter(availableFormat -> availableFormat.format() == VK_FORMAT_B8G8R8A8_SRGB)
                 .filter(availableFormat -> availableFormat.colorSpace() == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -210,12 +212,30 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
     }
 
     private void initImageViews() {
-        LOGGER.debug("Initializing image views...");
+        LOGGER.debug("Initializing swapchain image views...");
         imageViews = new ArrayList<>(images.size());
-        for (long swapChainImage : images) {
-            imageViews.add(application.getImageManager().createImageView(swapChainImage, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1));
+        try (MemoryStack stack = stackPush()) {
+            for (long image : images) {
+                VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.callocStack(stack);
+                viewInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
+                viewInfo.image(image);
+                viewInfo.viewType(VK_IMAGE_VIEW_TYPE_2D);
+                viewInfo.format(imageFormat);
+                viewInfo.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+                viewInfo.subresourceRange().levelCount(1);
+                viewInfo.subresourceRange().layerCount(1);
+
+                LongBuffer pImageView = stack.mallocLong(1);
+                int result = vkCreateImageView(application.getLogicalDevice(), viewInfo, null, pImageView);
+                if (result != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create image view (result = " + result + ")");
+                }
+                long imageView = pImageView.get(0);
+
+                imageViews.add(imageView);
+            }
         }
-        LOGGER.debug("Initialized image views.");
+        LOGGER.debug("Initialized swapchain image views.");
     }
 
     private void initPrimaryCommandBuffers() {
@@ -308,11 +328,9 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
                 throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
             }
 
-            VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.callocStack(stack);
-            renderPassBeginInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-            render(renderJobManager.getQueuePreScene(), renderPassBeginInfo, imageIndex);
-            render(renderJobManager.getSceneRenderJob(), renderPassBeginInfo, imageIndex);
-            render(renderJobManager.getQueuePostScene(), renderPassBeginInfo, imageIndex);
+            render(renderJobManager.getQueuePreScene(), imageIndex);
+            render(renderJobManager.getSceneRenderJob(), imageIndex);
+            render(renderJobManager.getQueuePostScene(), imageIndex);
 
             result = vkEndCommandBuffer(primaryCommandBuffer);
             if (result != VK_SUCCESS) {
@@ -321,31 +339,21 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         }
     }
 
-    private void render(List<RenderJob<?>> renderJobBucket, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
-        renderJobBucket.forEach(renderJob -> render(renderJob, renderPassBeginInfo, imageIndex));
+    private void render(List<RenderJob<?>> renderJobBucket, int imageIndex) {
+        renderJobBucket.forEach(renderJob -> render(renderJob, imageIndex));
     }
 
-    private void render(RenderJob<?> renderJob, VkRenderPassBeginInfo renderPassBeginInfo, int imageIndex) {
+    private void render(RenderJob<?> renderJob, int imageIndex) {
         try (MemoryStack stack = stackPush()) {
             VkCommandBuffer primaryCommandBuffer = primaryCommandBuffers.get(imageIndex);
-
-            renderPassBeginInfo.renderPass(renderJob.getRenderPass());
-            renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));
-            VkClearValue.Buffer clearValues = renderJob.getClearValues(stack);
-            if (clearValues != null) {
-                renderPassBeginInfo.pClearValues(clearValues);
-            }
-
             int frameBufferIndex = 0;
             for (long frameBuffer : renderJob.getFrameBuffersToRender(imageIndex)) {
-                renderPassBeginInfo.framebuffer(frameBuffer);
+                RenderRecorder primaryRecorder = new RenderRecorder(imageIndex, frameBuffer, frameBufferIndex, primaryCommandBuffer, true);
+                renderJob.renderStart(primaryRecorder, stack);
 
-                List<RenderTask> renderTasks = renderJob.render();
-
+                List<RenderTask> renderTasks = renderJob.render(stack);
                 int threads = application.getConfig().getWorkerThreads();
                 if (threads > 1) {
-                    vkCmdBeginRenderPass(primaryCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-
                     VkCommandBufferBeginInfo secondaryCommandBufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
                     secondaryCommandBufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
                     secondaryCommandBufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT);
@@ -362,13 +370,13 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
                     for (RenderTask renderTask : renderTasks) {
                         SecondaryCommandBufferPool secondaryCommandBufferPool = secondarySecondaryCommandBufferPools[renderTaskIndex];
                         VkCommandBuffer secondaryCommandBuffer = secondaryCommandBufferPool.getOrAllocateCommandBuffer();
-                        RenderRecorder recorder = new RenderRecorder(imageIndex, frameBufferIndex, secondaryCommandBuffer);
+                        RenderRecorder secondaryRecorder = new RenderRecorder(imageIndex, frameBuffer, frameBufferIndex, secondaryCommandBuffer, false);
                         Future<?> recordingFuture = secondaryCommandBufferExecutorService.submit(() -> {
                             int result = vkBeginCommandBuffer(secondaryCommandBuffer, secondaryCommandBufferBeginInfo);
                             if (result != VK_SUCCESS) {
                                 throw new RuntimeException("Failed to begin recording command buffer (result = " + result + ")");
                             }
-                            renderTask.render(recorder);
+                            renderTask.render(secondaryRecorder);
                             result = vkEndCommandBuffer(secondaryCommandBuffer);
                             if (result != VK_SUCCESS) {
                                 throw new RuntimeException("Failed to end recording command buffer (result = " + result + ")");
@@ -381,15 +389,12 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
                     ThreadUtil.waitForCompletion(secondaryCommandBufferRecordingFutures);
                     vkCmdExecuteCommands(primaryCommandBuffer, BufferUtil.asPointerBuffer(secondaryCommandBuffers, stack));
                 } else {
-                    vkCmdBeginRenderPass(primaryCommandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-                    RenderRecorder recorder = new RenderRecorder(imageIndex, frameBufferIndex, primaryCommandBuffer);
                     for (RenderTask renderTask : renderTasks) {
-                        renderTask.render(recorder);
+                        renderTask.render(primaryRecorder);
                     }
                 }
 
-                vkCmdEndRenderPass(primaryCommandBuffer);
+                renderJob.renderEnd(primaryRecorder, stack);
                 frameBufferIndex++;
             }
         }
@@ -472,7 +477,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
         application.removeWindowResizeListener(this);
         if (!isDuringRecreation) {
-            cleanupInFlightFrames();
+            cleanupSyncObjects();
         }
         renderJobManager.cleanupNative();
         if (secondaryCommandBufferExecutorService != null) {
@@ -488,7 +493,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         super.cleanupNativeInternal();
     }
 
-    private void cleanupInFlightFrames() {
+    private void cleanupSyncObjects() {
         for (Frame frame : inFlightFrames) {
             vkDestroySemaphore(application.getLogicalDevice(), frame.getRenderFinishedSemaphore(), null);
             vkDestroySemaphore(application.getLogicalDevice(), frame.getImageAvailableSemaphore(), null);

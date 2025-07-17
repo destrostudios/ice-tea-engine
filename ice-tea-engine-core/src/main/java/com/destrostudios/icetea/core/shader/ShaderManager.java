@@ -78,37 +78,38 @@ public class ShaderManager extends NativeObject {
     }
 
     private ByteBuffer getCompiledShaderCode(Shader shader, ShaderType shaderType, String additionalDeclarations) {
-        String combinedSource = getCombinedShaderSource(shader, additionalDeclarations);
-        return getOrCompileShaderSource(combinedSource, shaderType, shader::getDebugIdentifier);
+        String code = shader.getCode(application.getAssetManager());
+        String resolvedCode = getResolvedCode(code, additionalDeclarations);
+        return getOrCompileShaderSource(resolvedCode, shaderType, shader::getDebugIdentifier);
     }
 
-    private String getCombinedShaderSource(Shader shader, String additionalDeclarations) {
-        String combinedSource = "";
-        String shaderSource = shader.getCode(application.getAssetManager());
-        String[] shaderSourceLines = shaderSource.split("\n");
+    private String getResolvedCode(String code, String additionalDeclarations) {
+        String resolvedCode = "";
+        String[] codeLines = code.split("\n");
         boolean addDeclarations = true;
-        for (String shaderSourceLine : shaderSourceLines) {
-            Matcher importMatcher = IMPORT_PATTERN.matcher(shaderSourceLine);
+        for (String line : codeLines) {
+            Matcher importMatcher = IMPORT_PATTERN.matcher(line);
             if (importMatcher.find()) {
                 String libraryIdentifier = importMatcher.group(1);
                 String libraryPath = getLibraryPath(libraryIdentifier);
-                combinedSource += application.getAssetManager().loadString(libraryPath) + "\n\n";
+                String libraryCode = application.getAssetManager().loadString(libraryPath) + "\n\n";
+                resolvedCode += getResolvedCode(libraryCode, "") + "\n\n";
             } else {
-                if (addDeclarations && (!shaderSourceLine.startsWith("#"))) {
-                    combinedSource += "\n" + additionalDeclarations;
+                if (addDeclarations && (!line.startsWith("#"))) {
+                    resolvedCode += "\n" + additionalDeclarations;
                     addDeclarations = false;
                 }
-                combinedSource += shaderSourceLine + "\n";
+                resolvedCode += line + "\n";
             }
         }
-        return combinedSource;
+        return resolvedCode;
     }
 
     private String getLibraryPath(String libraryIdentifier) {
         for (Map.Entry<String, String> root : libraryRoots.entrySet()) {
             String prefix = root.getKey() + "/";
             if (libraryIdentifier.startsWith(prefix)) {
-                return root.getValue() + libraryIdentifier.substring(prefix.length()) + ".glsllib";
+                return root.getValue() + libraryIdentifier.substring(prefix.length()) + ".glsl";
             }
         }
         return libraryIdentifier;

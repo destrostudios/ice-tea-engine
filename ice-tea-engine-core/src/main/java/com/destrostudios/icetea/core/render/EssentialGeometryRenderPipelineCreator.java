@@ -1,16 +1,12 @@
 package com.destrostudios.icetea.core.render;
 
 import com.destrostudios.icetea.core.Application;
-import com.destrostudios.icetea.core.data.VertexData;
-import com.destrostudios.icetea.core.data.values.DataValue;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.Mesh;
 import com.destrostudios.icetea.core.resource.ResourceDescriptorSet;
 import com.destrostudios.icetea.core.scene.Geometry;
 
-import java.util.stream.Collectors;
-
-public abstract class EssentialGeometryRenderPipelineCreator<RJ extends RenderJob<?>, PS extends EssentialGeometryRenderPipelineState> extends RenderPipelineCreator<RJ, PS> {
+public abstract class EssentialGeometryRenderPipelineCreator<RJ extends RenderJob<?>, PS extends EssentialGeometryRenderPipelineState> extends MeshRenderPipelineCreator<RJ, PS> {
 
     public EssentialGeometryRenderPipelineCreator(Application application, RJ renderJob) {
         super(application, renderJob);
@@ -23,21 +19,7 @@ public abstract class EssentialGeometryRenderPipelineCreator<RJ extends RenderJo
         ResourceDescriptorSet resourceDescriptorSet = geometryRenderContext.getResourceDescriptorSet();
 
         // Mesh
-        VertexData referenceVertex = mesh.getVertices()[0];
-        state.setVertexSize(referenceVertex.getSize());
-        state.setVertexFields(referenceVertex.getFields().entrySet().stream()
-            .map((entry) -> {
-                String name = entry.getKey();
-                DataValue<?> dataValue = entry.getValue();
-                return new EssentialGeometryRenderPipelineState.VertexField(
-                    name,
-                    dataValue.getShaderDefinitionType(),
-                    dataValue.getFormat(),
-                    dataValue.getSize()
-                );
-            })
-            .collect(Collectors.toList()));
-        state.setTopology(mesh.getTopology());
+        fillMeshState(state, mesh);
 
         // Material
         state.setVertexShader(material.getVertexShader());

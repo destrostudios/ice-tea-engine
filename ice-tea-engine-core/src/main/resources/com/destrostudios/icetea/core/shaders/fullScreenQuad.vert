@@ -1,8 +1,8 @@
 #version 450
 
-layout(location = 0) out vec2 vertexTexCoord;
+layout(location = 0) out vec2 outTexCoord;
 
 void main() {
-    vertexTexCoord = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-    gl_Position = vec4((vertexTexCoord * 2) - 1, 0, 1);
+    outTexCoord = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+    gl_Position = vec4((outTexCoord * 2) - 1, 0, 1);
 }

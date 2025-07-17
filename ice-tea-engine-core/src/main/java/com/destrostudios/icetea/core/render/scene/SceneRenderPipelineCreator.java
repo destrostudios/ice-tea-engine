@@ -94,7 +94,6 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(stack);
         inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
         inputAssembly.topology(state.getTopology());
-        inputAssembly.primitiveRestartEnable(false);
 
         // ===> DYNAMIC <===
 
@@ -111,15 +110,14 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
         VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
         viewport.x(0);
         viewport.y(0);
-        VkExtent2D swapChainExtent = application.getSwapChain().getExtent();
-        viewport.width(swapChainExtent.width());
-        viewport.height(swapChainExtent.height());
+        viewport.width(renderJob.getExtent().width());
+        viewport.height(renderJob.getExtent().height());
         viewport.minDepth(0);
         viewport.maxDepth(1);
 
         VkRect2D.Buffer scissor = VkRect2D.callocStack(1, stack);
         scissor.offset(VkOffset2D.callocStack(stack).set(0, 0));
-        scissor.extent(swapChainExtent);
+        scissor.extent(renderJob.getExtent());
 
         VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.callocStack(stack);
         viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
@@ -130,13 +128,10 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
 
         VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.callocStack(stack);
         rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
-        rasterizer.depthClampEnable(false);
-        rasterizer.rasterizerDiscardEnable(false);
         rasterizer.polygonMode(state.getPolygonMode());
         rasterizer.lineWidth(1);
         rasterizer.cullMode(state.getCullMode());
         rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
-        rasterizer.depthBiasEnable(false);
 
         // ===> MULTISAMPLING <===
 
@@ -153,11 +148,7 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
         depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
         depthStencil.depthTestEnable(state.isDepthTest());
         depthStencil.depthWriteEnable(state.isDepthWrite());
-        depthStencil.depthCompareOp(VK_COMPARE_OP_LESS);
-        depthStencil.depthBoundsTestEnable(false);
-        depthStencil.minDepthBounds(0); // Optional
-        depthStencil.maxDepthBounds(1); // Optional
-        depthStencil.stencilTestEnable(false);
+        depthStencil.depthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL); // To support backgrounds
 
         // ===> COLOR BLENDING <===
 
@@ -175,10 +166,7 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
 
         VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.callocStack(stack);
         colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
-        colorBlending.logicOpEnable(false);
-        colorBlending.logicOp(VK_LOGIC_OP_COPY);
         colorBlending.pAttachments(colorBlendAttachment);
-        colorBlending.blendConstants(stack.floats(0, 0, 0, 0));
 
         // ===> TESSELLATION <===
 
@@ -216,9 +204,6 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
         pipelineInfo.pTessellationState(tessellation);
         pipelineInfo.layout(pipelineLayout);
         pipelineInfo.renderPass(renderJob.getRenderPass());
-        pipelineInfo.subpass(0);
-        pipelineInfo.basePipelineHandle(VK_NULL_HANDLE);
-        pipelineInfo.basePipelineIndex(-1);
 
         LongBuffer pGraphicsPipeline = stack.mallocLong(1);
         result = vkCreateGraphicsPipelines(application.getLogicalDevice(), VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline);

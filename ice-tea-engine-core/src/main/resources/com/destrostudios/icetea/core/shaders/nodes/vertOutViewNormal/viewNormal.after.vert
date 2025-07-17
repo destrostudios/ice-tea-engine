@@ -1,0 +1,1 @@
+outViewNormal = viewNormal;

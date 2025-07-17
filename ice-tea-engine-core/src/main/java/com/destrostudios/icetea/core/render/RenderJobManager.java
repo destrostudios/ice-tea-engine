@@ -4,10 +4,14 @@ import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.render.filter.FilterRenderJob;
 import com.destrostudios.icetea.core.render.scene.SceneRenderJob;
 import lombok.Getter;
+import org.lwjgl.system.MemoryStack;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Consumer;
+
+import static org.lwjgl.system.MemoryStack.stackPush;
 
 public class RenderJobManager extends NativeObject {
 
@@ -58,6 +62,34 @@ public class RenderJobManager extends NativeObject {
         queuePreScene.forEach(renderJobConsumer);
         renderJobConsumer.accept(sceneRenderJob);
         queuePostScene.forEach(renderJobConsumer);
+    }
+
+    public void renderOneTimeJob(RenderJob<?> renderJob) {
+        renderJob.updateNative(application);
+        try (MemoryStack stack = stackPush()) {
+            renderOneTime(renderJob, recorder -> renderJob.preRender(recorder, stack));
+            renderOneTime(renderJob, recorder -> {
+                renderJob.renderStart(recorder, stack);
+                List<RenderTask> renderTasks = renderJob.render(stack);
+                for (RenderTask renderTask : renderTasks) {
+                    renderTask.render(recorder);
+                }
+                renderJob.renderEnd(recorder, stack);
+            });
+            renderOneTime(renderJob, recorder -> renderJob.postRender(recorder, stack));
+        }
+    }
+
+    private void renderOneTime(RenderJob<?> renderJob, Consumer<RenderRecorder> record) {
+        int imageIndex = 0;
+        application.getCommandPool().executeSingleTimeCommands(commandBuffer -> {
+            int frameBufferIndex = 0;
+            for (long frameBuffer : renderJob.getFrameBuffersToRender(imageIndex)) {
+                RenderRecorder recorder = new RenderRecorder(imageIndex, frameBuffer, frameBufferIndex, commandBuffer, true);
+                record.accept(recorder);
+                frameBufferIndex++;
+            }
+        });
     }
 
     // Add & Remove

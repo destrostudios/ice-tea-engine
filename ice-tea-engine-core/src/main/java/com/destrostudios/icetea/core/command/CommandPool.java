@@ -3,6 +3,7 @@ package com.destrostudios.icetea.core.command;
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.util.BufferUtil;
+import com.destrostudios.icetea.core.util.MathUtil;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -10,6 +11,7 @@ import org.lwjgl.vulkan.*;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -45,7 +47,7 @@ public class CommandPool extends NativeObject {
         }
     }
 
-    public VkCommandBuffer beginSingleTimeCommands() {
+    public void executeSingleTimeCommands(Consumer<VkCommandBuffer> run) {
         try (MemoryStack stack = stackPush()) {
             VkCommandBuffer commandBuffer = allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
@@ -57,20 +59,29 @@ public class CommandPool extends NativeObject {
                 throw new RuntimeException("Failed to begin command buffer (result = " + result + ")");
             }
 
-            return commandBuffer;
-        }
-    }
+            run.accept(commandBuffer);
 
-    public void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
-        try (MemoryStack stack = stackPush()) {
             vkEndCommandBuffer(commandBuffer);
+
+            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.callocStack(stack);
+            fenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+            LongBuffer pFence = stack.mallocLong(1);
+            result = vkCreateFence(application.getLogicalDevice(), fenceCreateInfo, null, pFence);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create fence (result = " + result + ")");
+            }
+            long fence = pFence.get(0);
 
             VkSubmitInfo.Buffer submitInfo = VkSubmitInfo.callocStack(1, stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
-            vkQueueSubmit(application.getGraphicsQueue(), submitInfo, VK_NULL_HANDLE);
+            result = vkQueueSubmit(application.getGraphicsQueue(), submitInfo, fence);
+            if (result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to submit command buffer (result = " + result + ")");
+            }
 
-            vkQueueWaitIdle(application.getGraphicsQueue());
+            vkWaitForFences(application.getLogicalDevice(), fence, true, MathUtil.UINT64_MAX);
+            vkDestroyFence(application.getLogicalDevice(), fence, null);
 
             freeCommandBuffer(commandBuffer);
         }
