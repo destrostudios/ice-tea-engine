@@ -32,7 +32,9 @@ public class Node extends Spatial {
     @Override
     public void updateLogicalState(Application application, float tpf) {
         super.updateLogicalState(application, tpf);
-        for (Spatial child : children) {
+        // TODO: Somehow avoid copying to improve performance?
+        // Copy as children can be modified during iteration
+        for (Spatial child : children.toArray(Spatial[]::new)) {
             child.updateLogicalState(application, tpf);
         }
     }

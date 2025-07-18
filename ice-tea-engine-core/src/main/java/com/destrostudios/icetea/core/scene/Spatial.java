@@ -74,7 +74,9 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
     @Override
     public void updateLogicalState(Application application, float tpf) {
         super.updateLogicalState(application, tpf);
-        for (Control control : controls) {
+        // TODO: Somehow avoid copying to improve performance?
+        // Copy as controls can be modified during iteration
+        for (Control control : controls.toArray(Control[]::new)) {
             control.updateLogicalState(application, tpf);
         }
     }
