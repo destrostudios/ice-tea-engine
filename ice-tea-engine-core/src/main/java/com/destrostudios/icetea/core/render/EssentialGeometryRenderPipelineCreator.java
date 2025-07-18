@@ -31,7 +31,7 @@ public abstract class EssentialGeometryRenderPipelineCreator<RJ extends RenderJo
         state.setCullMode(material.getCullMode());
         state.setDepthTest(material.isDepthTest());
         state.setDepthWrite(material.isDepthWrite());
-        state.setTransparent(material.isTransparent());
+        state.setBlendMode(material.getBlendMode());
 
         // GeometryRenderer
         state.setDynamicStates(geometry.getRenderer().getDynamicStates());

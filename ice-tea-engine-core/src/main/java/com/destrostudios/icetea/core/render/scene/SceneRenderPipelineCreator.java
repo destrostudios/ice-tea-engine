@@ -2,6 +2,7 @@ package com.destrostudios.icetea.core.render.scene;
 
 import com.destrostudios.icetea.core.Application;
 import com.destrostudios.icetea.core.Pipeline;
+import com.destrostudios.icetea.core.material.BlendMode;
 import com.destrostudios.icetea.core.render.EssentialGeometryRenderPipelineCreator;
 import com.destrostudios.icetea.core.render.GeometryRenderContext;
 import com.destrostudios.icetea.core.scene.Geometry;
@@ -154,14 +155,15 @@ public class SceneRenderPipelineCreator extends EssentialGeometryRenderPipelineC
 
         VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.callocStack(1, stack);
         colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-        colorBlendAttachment.blendEnable(state.isTransparent());
-        if (state.isTransparent()) {
-            colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-            colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
-            colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
-            colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
-            colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-            colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
+        BlendMode blendMode = state.getBlendMode();
+        if (blendMode != null) {
+            colorBlendAttachment.blendEnable(true);
+            colorBlendAttachment.srcColorBlendFactor(blendMode.getSrcColorBlendFactor());
+            colorBlendAttachment.dstColorBlendFactor(blendMode.getDstColorBlendFactor());
+            colorBlendAttachment.colorBlendOp(blendMode.getColorBlendOp());
+            colorBlendAttachment.srcAlphaBlendFactor(blendMode.getSrcAlphaBlendFactor());
+            colorBlendAttachment.dstAlphaBlendFactor(blendMode.getDstAlphaBlendFactor());
+            colorBlendAttachment.alphaBlendOp(blendMode.getAlphaBlendOp());
         }
 
         VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.callocStack(stack);

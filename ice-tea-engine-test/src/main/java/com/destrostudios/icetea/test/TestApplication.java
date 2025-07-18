@@ -13,6 +13,7 @@ import com.destrostudios.icetea.core.collision.Ray;
 import com.destrostudios.icetea.core.font.BitmapFont;
 import com.destrostudios.icetea.core.font.BitmapText;
 import com.destrostudios.icetea.core.light.*;
+import com.destrostudios.icetea.core.material.BlendMode;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.mesh.*;
 import com.destrostudios.icetea.core.pbr.PbrConfig;
@@ -98,7 +99,7 @@ public class TestApplication extends Application {
         materialCool = new Material();
         materialCool.setVertexShader(new FileShader("shaders/veryCool.vert"));
         materialCool.setFragmentShader(new FileShader("shaders/veryCool.frag"));
-        materialCool.setTransparent(true);
+        materialCool.setBlendMode(BlendMode.ALPHA);
 
         // GUI
 

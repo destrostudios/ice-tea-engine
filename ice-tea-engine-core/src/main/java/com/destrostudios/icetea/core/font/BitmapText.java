@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.font;
 
+import com.destrostudios.icetea.core.material.BlendMode;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.scene.Geometry;
 import lombok.Getter;
@@ -22,7 +23,7 @@ public class BitmapText extends Geometry {
         material.setCullMode(VK_CULL_MODE_FRONT_BIT);
         material.setDepthTest(false);
         material.setDepthWrite(false);
-        material.setTransparent(true);
+        material.setBlendMode(BlendMode.ALPHA);
         setMaterial(material);
         updateMaterial(font);
     }

@@ -40,7 +40,7 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
         geometryShader = material.geometryShader;
         parametersBuffer = material.parametersBuffer.clone(context);
         textures.putAll(material.getTextures());
-        transparent = material.transparent;
+        blendMode = material.blendMode;
         cullMode = material.cullMode;
         depthTest = material.depthTest;
         depthWrite = material.depthWrite;
@@ -72,9 +72,6 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
     private HashMap<String, Texture> textures = new HashMap<>();
     @Setter
     @Getter
-    private boolean transparent;
-    @Setter
-    @Getter
     private int cullMode = VK_CULL_MODE_BACK_BIT;
     @Setter
     @Getter
@@ -85,6 +82,9 @@ public class Material extends MultiConsumableNativeObject<Geometry> implements C
     @Setter
     @Getter
     private int fillMode = VK_POLYGON_MODE_FILL;
+    @Setter
+    @Getter
+    private BlendMode blendMode;
 
     public void setDefaultShaders() {
         setShaderNodes(DEFAULT_SHADER_NODE);

@@ -3,6 +3,7 @@ package com.destrostudios.icetea.imgui;
 import com.destrostudios.icetea.core.AppSystem;
 import com.destrostudios.icetea.core.WindowResizeListener;
 import com.destrostudios.icetea.core.input.*;
+import com.destrostudios.icetea.core.material.BlendMode;
 import com.destrostudios.icetea.core.material.Material;
 import com.destrostudios.icetea.core.resource.descriptor.SimpleTextureDescriptor;
 import com.destrostudios.icetea.core.scene.Geometry;
@@ -115,7 +116,7 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
         material.setCullMode(VK_CULL_MODE_NONE);
         material.setDepthTest(false);
         material.setDepthWrite(false);
-        material.setTransparent(true);
+        material.setBlendMode(BlendMode.ALPHA);
 
         Geometry geometry = new Geometry();
         geometry.setMesh(new ImGuiMesh());

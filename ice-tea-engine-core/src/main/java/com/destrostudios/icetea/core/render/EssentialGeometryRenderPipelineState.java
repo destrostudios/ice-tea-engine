@@ -1,5 +1,6 @@
 package com.destrostudios.icetea.core.render;
 
+import com.destrostudios.icetea.core.material.BlendMode;
 import com.destrostudios.icetea.core.shader.Shader;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -23,7 +24,7 @@ public class EssentialGeometryRenderPipelineState extends MeshRenderPipelineStat
     private int cullMode;
     private boolean depthTest;
     private boolean depthWrite;
-    private boolean transparent;
+    private BlendMode blendMode;
 
     // GeometryRenderer
     private int[] dynamicStates;
