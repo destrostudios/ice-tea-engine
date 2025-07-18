@@ -4,6 +4,7 @@
     "shadowMap",
     "skeleton",
     "clip",
-    "light"
+    "light",
+    "alphaDiscardThreshold"
   ]
 }
