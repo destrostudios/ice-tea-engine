@@ -27,6 +27,7 @@ public class BufferedTextureLoader extends AssetLoader<BufferedTexture, Buffered
             BufferedTexture bufferedTexture = new BufferedTexture(
                 settings.isGenerateMipMaps(),
                 settings.getLayout(),
+                settings.getAddressMode(),
                 () -> {
                     try (InputStream inputStream = assetKey.openInputStream()) {
                         byte[] imageData = inputStream.readAllBytes();

@@ -365,8 +365,8 @@ public class Texture extends Resource {
         return pImageView.get(0);
     }
 
-    public void createSampler(MemoryStack stack) {
-        createSampler(VK_SAMPLER_ADDRESS_MODE_REPEAT, 16, VK_BORDER_COLOR_INT_OPAQUE_BLACK, VK_SAMPLER_MIPMAP_MODE_LINEAR, stack);
+    public void createSampler(int addressMode, MemoryStack stack) {
+        createSampler(addressMode, 16, VK_BORDER_COLOR_INT_OPAQUE_BLACK, VK_SAMPLER_MIPMAP_MODE_LINEAR, stack);
     }
 
     public void createSampler(int addressMode, Integer maxAnisotropy, int borderColor, int mipMapMode, MemoryStack stack) {

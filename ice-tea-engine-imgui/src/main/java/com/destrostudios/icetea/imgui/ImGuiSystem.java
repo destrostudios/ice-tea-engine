@@ -97,6 +97,7 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
         BufferedTexture fontsTexture = new BufferedTexture(
             false,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
             () -> new TextureData(pixels, width.get(), height.get(), () -> {})
         );
         fontsTexture.set(

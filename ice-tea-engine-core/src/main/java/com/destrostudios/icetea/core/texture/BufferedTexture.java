@@ -12,13 +12,15 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class BufferedTexture extends Texture {
 
-    public BufferedTexture(boolean generateMipMaps, int finalLayout, TextureDataReader dataReader) {
+    public BufferedTexture(boolean generateMipMaps, int finalLayout, int addressMode, TextureDataReader dataReader) {
         this.generateMipMaps = generateMipMaps;
         this.finalLayout = finalLayout;
+        this.addressMode = addressMode;
         this.dataReader = dataReader;
     }
     private boolean generateMipMaps;
     private int finalLayout;
+    private int addressMode;
     private TextureDataReader dataReader;
 
     @Override
@@ -27,7 +29,7 @@ public class BufferedTexture extends Texture {
         try (MemoryStack stack = stackPush()) {
             initImage(stack);
             createImageView(stack);
-            createSampler(stack);
+            createSampler(addressMode, stack);
         }
     }
 

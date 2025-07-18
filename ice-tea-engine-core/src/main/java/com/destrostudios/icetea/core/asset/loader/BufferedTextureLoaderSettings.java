@@ -23,5 +23,7 @@ public class BufferedTextureLoaderSettings {
     @Builder.Default
     private boolean generateMipMaps = false;
     @Builder.Default
+    private int addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    @Builder.Default
     private boolean createDefaultDescriptor = true;
 }
