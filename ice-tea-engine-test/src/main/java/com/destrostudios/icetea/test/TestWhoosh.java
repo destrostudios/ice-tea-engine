@@ -12,6 +12,7 @@ import com.destrostudios.icetea.core.mesh.Quad;
 import com.destrostudios.icetea.core.render.shadow.ShadowConfig;
 import com.destrostudios.icetea.core.render.shadow.ShadowMode;
 import com.destrostudios.icetea.core.scene.Geometry;
+import com.destrostudios.icetea.core.scene.Spatial;
 import com.destrostudios.icetea.samples.whoosh.WhooshConfig;
 import com.destrostudios.icetea.samples.whoosh.WhooshControl;
 import org.joml.AxisAngle4f;
@@ -34,7 +35,7 @@ public class TestWhoosh extends Application {
         config.setDisplayFpsInTitle(true);
     }
     private Geometry ground;
-    private Geometry model;
+    private Spatial model;
 
     @Override
     protected void init() {
@@ -62,7 +63,7 @@ public class TestWhoosh extends Application {
         ground.setShadowMode(ShadowMode.RECEIVE);
         sceneNode.add(ground);
 
-        model = (Geometry) assetManager.loadModel("models/ghost/ghost.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
+        model = assetManager.loadModel("models/ghost/ghost.gltf", GltfLoaderSettings.builder().flattenNodes(true).build());
         model.scale(new Vector3f(100, 100, 100));
         model.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl = model.getFirstControl(AnimationControl.class);

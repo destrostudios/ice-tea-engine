@@ -10,7 +10,8 @@ import com.destrostudios.icetea.core.pbr.PbrConfig;
 import com.destrostudios.icetea.core.light.DirectionalLight;
 import com.destrostudios.icetea.core.light.PointLight;
 import com.destrostudios.icetea.core.material.Material;
-import com.destrostudios.icetea.core.scene.Node;
+import com.destrostudios.icetea.core.scene.Geometry;
+import com.destrostudios.icetea.core.scene.Spatial;
 import com.destrostudios.icetea.core.scene.background.BackgroundFactory;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
@@ -55,20 +56,18 @@ public class TestPBR extends Application {
             for (int col = 0; col < columns; col++) {
                 float roughness = ((float) col) / columns;
 
-                Node duck = (Node) assetManager.loadModel("models/duck/Duck.gltf");
-                duck.forEachGeometry(geometry -> {
-                    Material material = geometry.getMaterial().clone(CloneContext.reuseAll());
-                    material.getParameters().setFloat("metallic", metallic);
-                    material.getParameters().setFloat("roughness", roughness);
-                    geometry.setMaterial(material);
-                });
+                Geometry duck = (Geometry) assetManager.loadModel("models/duck/Duck.gltf", GltfLoaderSettings.builder().batchGeometries(true).build());
+                Material material = duck.getMaterial().clone(CloneContext.reuseAll());
+                material.getParameters().setFloat("metallic", metallic);
+                material.getParameters().setFloat("roughness", roughness);
+                duck.setMaterial(material);
                 duck.move(new Vector3f((col - (columns / 2f)) * spacing, (row - (rows / 2f)) * spacing, -2));
                 duck.scale(new Vector3f(1.5f));
                 sceneNode.add(duck);
             }
         }
 
-        Node footman = (Node) assetManager.loadModel("models/footman/scene.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
+        Spatial footman = assetManager.loadModel("models/footman/scene.gltf", GltfLoaderSettings.builder().flattenNodes(true).build());
         footman.move(new Vector3f(0, -5, 0));
         footman.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
         footman.scale(new Vector3f(7));

@@ -160,16 +160,18 @@ public abstract class Spatial extends LogicalObject implements ContextCloneable 
        return (affectedByLight || ((parent != null) && parent.isAffectedByLight()));
     }
 
-    public boolean isReceivingShadows() {
-        return (shadowMode == ShadowMode.RECEIVE)
-            || (shadowMode == ShadowMode.CAST_AND_RECEIVE)
-            || ((shadowMode == ShadowMode.INHERIT) && ((parent != null) && parent.isReceivingShadows()));
+    public boolean isCastingShadows() {
+        ShadowMode effectiveShadowMode = getEffectiveShadowMode();
+        return ((effectiveShadowMode == ShadowMode.CAST) || (effectiveShadowMode == ShadowMode.CAST_AND_RECEIVE));
     }
 
-    public boolean isCastingShadows() {
-        return (shadowMode == ShadowMode.CAST)
-            || (shadowMode == ShadowMode.CAST_AND_RECEIVE)
-            || ((shadowMode == ShadowMode.INHERIT) && ((parent != null) && parent.isCastingShadows()));
+    public boolean isReceivingShadows() {
+        ShadowMode effectiveShadowMode = getEffectiveShadowMode();
+        return ((effectiveShadowMode == ShadowMode.RECEIVE) || (effectiveShadowMode == ShadowMode.CAST_AND_RECEIVE));
+    }
+
+    public ShadowMode getEffectiveShadowMode() {
+        return (shadowMode == ShadowMode.INHERIT) ? ((parent != null) ? parent.getEffectiveShadowMode() : ShadowMode.OFF) : shadowMode;
     }
 
     public void addControl(Control control) {

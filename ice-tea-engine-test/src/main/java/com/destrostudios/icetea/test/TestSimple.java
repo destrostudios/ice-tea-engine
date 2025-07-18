@@ -72,7 +72,7 @@ public class TestSimple extends Application {
         bitmapTextDynamic.setText("Hello");
         guiNode.add(bitmapTextDynamic);
 
-        model = (Geometry) assetManager.loadModel("models/ghost/ghost.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
+        model = (Geometry) assetManager.loadModel("models/ghost/ghost.gltf", GltfLoaderSettings.builder().flattenNodes(true).build());
         model.scale(new Vector3f(100, 100, 100));
         model.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl = model.getFirstControl(AnimationControl.class);

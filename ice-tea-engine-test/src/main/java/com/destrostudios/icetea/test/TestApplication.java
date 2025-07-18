@@ -59,9 +59,9 @@ public class TestApplication extends Application {
     private Material materialGrass;
     private Geometry geometryChalet3;
     private Node nodeDennis;
-    private Node animatedObject2;
+    private Spatial animatedObject2;
     private int animatedObject2AnimationIndex;
-    private Node nodeDuck;
+    private Spatial duck;
     private Geometry geometryBounds;
     private Node nodeCollisions;
     private BitmapText bitmapTextDynamic;
@@ -251,19 +251,19 @@ public class TestApplication extends Application {
 
         // Duck
 
-        nodeDuck = (Node) assetManager.loadModel("models/duck/Duck.gltf");
-        nodeDuck.scale(new Vector3f(0.25f, 0.25f, 0.25f));
-        nodeDuck.setShadowMode(ShadowMode.CAST);
+        duck = assetManager.loadModel("models/duck/Duck.gltf", GltfLoaderSettings.builder().batchGeometries(true).build());
+        duck.scale(new Vector3f(0.25f, 0.25f, 0.25f));
+        duck.setShadowMode(ShadowMode.CAST);
 
-        Node nodeDuckWrapper = new Node();
-        nodeDuckWrapper.add(nodeDuck);
-        nodeDuckWrapper.move(new Vector3f(1, -0.25f, 1.5f));
-        nodeRotating.add(nodeDuckWrapper);
+        Node duckWrapper = new Node();
+        duckWrapper.add(duck);
+        duckWrapper.move(new Vector3f(1, -0.25f, 1.5f));
+        nodeRotating.add(duckWrapper);
 
         // Animated objects
 
-        Node animatedObject1 = (Node) assetManager.loadModel("models/simple_skin/SimpleSkin.gltf");
-        animatedObject1.forEachGeometry(geometry -> geometry.getMesh().generateNormals());
+        Geometry animatedObject1 = (Geometry) assetManager.loadModel("models/simple_skin/SimpleSkin.gltf", GltfLoaderSettings.builder().flattenNodes(true).build());
+        animatedObject1.getMesh().generateNormals();
         animatedObject1.move(new Vector3f(-2.5f, 0, 0));
         animatedObject1.scale(new Vector3f(0.5f, 0.5f, 0.5f));
         animatedObject1.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
@@ -271,18 +271,17 @@ public class TestApplication extends Application {
         animationControl1.play(0);
         sceneNode.add(animatedObject1);
 
-        animatedObject2 = (Node) assetManager.loadModel("models/footman/scene.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
+        animatedObject2 = assetManager.loadModel("models/footman/scene.gltf", GltfLoaderSettings.builder().flattenNodes(true).build());
         animatedObject2.move(new Vector3f(2.5f, 0, 0));
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) Math.PI, 1, 0, 0)));
         animatedObject2.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / 2), 0, 1, 0)));
         animatedObject2.scale(new Vector3f(0.5f, 0.5f, 0.5f));
-        animatedObject2.forEachGeometry(geometry -> geometry.getMaterial().setCullMode(VK_CULL_MODE_NONE));
         animatedObject2.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
         AnimationControl animationControl2 = animatedObject2.getFirstControl(AnimationControl.class);
         animationControl2.play(animatedObject2AnimationIndex);
         sceneNode.add(animatedObject2);
 
-        Spatial animatedObject3 = assetManager.loadModel("models/fallacia35.gltf", GltfLoaderSettings.builder().bakeGeometries(true).build());
+        Spatial animatedObject3 = assetManager.loadModel("models/fallacia35.gltf", GltfLoaderSettings.builder().flattenNodes(true).build());
         animatedObject3.move(new Vector3f(3, 0, 0));
         animatedObject3.rotate(new Quaternionf(new AxisAngle4f((float) (Math.PI / -2), 1, 0, 0)));
         animatedObject3.scale(new Vector3f(23, 23, 23));
@@ -293,7 +292,7 @@ public class TestApplication extends Application {
         sceneNode.add(animatedObject3);
 
         for (int i = 0; i < 2; i++) {
-            Spatial chicken = assetManager.loadModel("models/chicken/chicken.gltf", GltfLoaderSettings.builder().bakeGeometries(i == 0).build());
+            Spatial chicken = assetManager.loadModel("models/chicken/chicken.gltf", GltfLoaderSettings.builder().flattenNodes(i == 0).build());
             chicken.move(new Vector3f(2 + (i * 0.4f), -0.2f, 1));
             chicken.scale(new Vector3f(0.5f, 0.5f, 0.5f));
             chicken.setShadowMode(ShadowMode.CAST_AND_RECEIVE);
@@ -414,7 +413,7 @@ public class TestApplication extends Application {
                     break;
                 case GLFW_KEY_7:
                     if (keyEvent.getAction() == GLFW_PRESS) {
-                        nodeDuck.setShadowMode((nodeDuck.getShadowMode() == ShadowMode.INHERIT) ? ShadowMode.CAST : ShadowMode.INHERIT);
+                        duck.setShadowMode((duck.getShadowMode() == ShadowMode.INHERIT) ? ShadowMode.CAST : ShadowMode.INHERIT);
                     }
                     break;
                 case GLFW_KEY_8:
@@ -440,7 +439,7 @@ public class TestApplication extends Application {
                 case GLFW_KEY_0:
                     if (keyEvent.getAction() == GLFW_PRESS) {
                         for (int i = 0; i < 10; i++) {
-                            Node clone = nodeDuckWrapper.clone(CloneContext.reuseAll());
+                            Node clone = duckWrapper.clone(CloneContext.reuseAll());
                             float deltaX = (float) ((Math.random() * 2) - 1);
                             float deltaZ = (float) ((Math.random() * 2) - 1);
                             clone.getLocalTransform().getTranslation().add(deltaX, 0, deltaZ);

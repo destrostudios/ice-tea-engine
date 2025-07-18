@@ -88,6 +88,10 @@ public class Node extends Spatial {
         }
     }
 
+    public void addAll(Iterable<? extends Spatial> spatials) {
+        spatials.forEach(this::add);
+    }
+
     public void add(Spatial spatial) {
         if (spatial.getParent() != null) {
             spatial.getParent().remove(spatial);
@@ -96,16 +100,20 @@ public class Node extends Spatial {
         children.add(spatial);
     }
 
-    public void remove(Spatial spatial) {
-        spatial.setParent(null);
-        children.remove(spatial);
-    }
-
     public void removeAll() {
         for (Spatial spatial : children) {
             spatial.setParent(null);
         }
         children.clear();
+    }
+
+    public void removeAll(Iterable<? extends Spatial> spatials) {
+        spatials.forEach(this::remove);
+    }
+
+    public void remove(Spatial spatial) {
+        spatial.setParent(null);
+        children.remove(spatial);
     }
 
     public Spatial getChild(String name) {

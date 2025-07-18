@@ -86,7 +86,12 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
                 rootNode.add(sceneNode);
             }
         }
-        Spatial spatial = (settings.isBakeGeometries() ? SpatialUtil.bakeGeometries(rootNode) : rootNode);
+        Spatial spatial = rootNode;
+        if (settings.isBatchGeometries()) {
+            spatial = SpatialUtil.batchGeometries(rootNode);
+        } else if (settings.isFlattenNodes()) {
+            spatial = SpatialUtil.flattenNodes(rootNode);
+        }
         Collection<Skeleton> skeletons = skeletonMap.values();
         if (skeletons.size() > 0) {
             spatial.addControl(new SkeletonsControl(skeletons));
@@ -146,7 +151,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         Geometry geometry = new Geometry();
         Mesh mesh = new Mesh();
 
-        LinkedList<Object> indicesList = readValues(meshPrimitiveModel.getIndices());
+        ArrayList<Object> indicesList = readValues(meshPrimitiveModel.getIndices());
         int[] indices = new int[indicesList.size()];
         int i = 0;
         for (Object index : indicesList) {
@@ -155,12 +160,12 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         }
         mesh.setIndices(indices);
 
-        LinkedList<Object> positionList = readValues(meshPrimitiveModel.getAttributes().get("POSITION"));
-        LinkedList<Object> texCoordList = readValues(meshPrimitiveModel.getAttributes().get("TEXCOORD_0"));
-        LinkedList<Object> normalList = readValues(meshPrimitiveModel.getAttributes().get("NORMAL"));
-        LinkedList<Object> tangentList = readValues(meshPrimitiveModel.getAttributes().get("TANGENT"));
-        LinkedList<Object> jointsList = readValues(meshPrimitiveModel.getAttributes().get("JOINTS_0"));
-        LinkedList<Object> weightsList = readValues(meshPrimitiveModel.getAttributes().get("WEIGHTS_0"));
+        ArrayList<Object> positionList = readValues(meshPrimitiveModel.getAttributes().get("POSITION"));
+        ArrayList<Object> texCoordList = readValues(meshPrimitiveModel.getAttributes().get("TEXCOORD_0"));
+        ArrayList<Object> normalList = readValues(meshPrimitiveModel.getAttributes().get("NORMAL"));
+        ArrayList<Object> tangentList = readValues(meshPrimitiveModel.getAttributes().get("TANGENT"));
+        ArrayList<Object> jointsList = readValues(meshPrimitiveModel.getAttributes().get("JOINTS_0"));
+        ArrayList<Object> weightsList = readValues(meshPrimitiveModel.getAttributes().get("WEIGHTS_0"));
         VertexData[] vertices = new VertexData[positionList.size()];
         Iterator<Object> positionIterator = positionList.iterator();
         Iterator<Object> texCoordIterator = texCoordList.iterator();
@@ -268,7 +273,7 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
     }
 
     private Matrix4f[] loadMatrices(AccessorModel accessorModel) {
-        LinkedList<Object> matricesList = readValues(accessorModel);
+        ArrayList<Object> matricesList = readValues(accessorModel);
         Matrix4f[] matrices = new Matrix4f[matricesList.size()];
         int matrixIndex = 0;
         for (Object matrixObject : matricesList) {
@@ -344,8 +349,8 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
 
     private AnimationSamplerData<?> loadAnimationSamplerData(AnimationModel.Sampler sampler) {
         return samplersDataMap.computeIfAbsent(sampler, s -> {
-            LinkedList<Object> input = readValues(sampler.getInput());
-            LinkedList<Object> output = readValues(sampler.getOutput());
+            ArrayList<Object> input = readValues(sampler.getInput());
+            ArrayList<Object> output = readValues(sampler.getOutput());
             int keyframeIndex = 0;
             float[] keyframeTimes = new float[input.size()];
             Object[] keyframeValues = new Object[output.size()];
@@ -367,8 +372,8 @@ public class GltfLoader extends AssetLoader<Spatial, GltfLoaderSettings> {
         });
     }
 
-    private LinkedList<Object> readValues(AccessorModel accessorModel) {
-        LinkedList<Object> values = new LinkedList<>();
+    private ArrayList<Object> readValues(AccessorModel accessorModel) {
+        ArrayList<Object> values = new ArrayList<>();
         if (accessorModel == null) {
             return values;
         }

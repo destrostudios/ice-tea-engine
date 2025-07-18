@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.core.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ListUtil {
@@ -14,5 +15,14 @@ public class ListUtil {
             subLists.add(list.subList(start, end));
         }
         return subLists;
+    }
+
+    public static int[] toArray(Collection<Integer> values) {
+        int[] array = new int[values.size()];
+        int i = 0;
+        for (int value : values) {
+            array[i++] = value;
+        }
+        return array;
     }
 }

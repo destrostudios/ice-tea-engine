@@ -1,6 +1,7 @@
 package com.destrostudios.icetea.test;
 
 import com.destrostudios.icetea.core.Application;
+import com.destrostudios.icetea.core.asset.loader.GltfLoaderSettings;
 import com.destrostudios.icetea.core.asset.locator.FileLocator;
 import com.destrostudios.icetea.core.camera.systems.CameraKeyMoveSystem;
 import com.destrostudios.icetea.core.camera.systems.CameraMouseRotateSystem;
@@ -25,7 +26,7 @@ public class TestRoom extends Application {
 
         sceneCamera.setLocation(new Vector3f(0, 10, 5));
 
-        Spatial room = assetManager.loadModel("models/room.gltf");
+        Spatial room = assetManager.loadModel("models/room.gltf", GltfLoaderSettings.builder().batchGeometries(true).build());
         room.scale(new Vector3f(2, 2, 2));
         sceneNode.add(room);
 
