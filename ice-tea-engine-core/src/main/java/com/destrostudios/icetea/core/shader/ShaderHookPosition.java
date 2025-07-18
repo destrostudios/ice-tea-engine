@@ -8,6 +8,7 @@ import lombok.Getter;
 public enum ShaderHookPosition {
     BEFORE("before"),
     SELF(""),
+    END("end"),
     AFTER("after");
 
     private String extension;

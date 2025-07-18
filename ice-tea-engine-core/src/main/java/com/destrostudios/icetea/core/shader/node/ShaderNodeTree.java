@@ -68,6 +68,7 @@ public class ShaderNodeTree {
         }
         if (hookedSnippetsByPosition != null) {
             code += getHookedCode(hookedSnippetsByPosition, ShaderHookPosition.SELF);
+            code += getHookedCode(hookedSnippetsByPosition, ShaderHookPosition.END);
             code += getHookedCode(hookedSnippetsByPosition, ShaderHookPosition.AFTER);
         }
         if (hookName.equals(HOOK_NAME_INPUTS)) {
