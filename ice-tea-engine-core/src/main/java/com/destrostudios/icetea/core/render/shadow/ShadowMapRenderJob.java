@@ -336,8 +336,11 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
                 for (Geometry geometry : geometries) {
                     ShadowMapGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
                     if (geometryRenderContext != null) {
-                        vkCmdPushConstants(recorder.getCommandBuffer(), geometryRenderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
-                        geometry.getRenderer().drawGeometry(recorder, geometryRenderContext, stack);
+                        // Create an own stack for each of the (possibly many!) geometries, to avoid running out of space in the render job one
+                        try (MemoryStack stackPerGeometry = stackPush()) {
+                            vkCmdPushConstants(recorder.getCommandBuffer(), geometryRenderContext.getRenderPipeline().getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushConstants.getBuffer().getByteBuffer());
+                            geometry.getRenderer().drawGeometry(recorder, geometryRenderContext, stackPerGeometry);
+                        }
                     }
                 }
             }).collect(Collectors.toList());

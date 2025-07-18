@@ -228,7 +228,10 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
                 for (Geometry geometry : geometries) {
                     SceneGeometryRenderContext geometryRenderContext = getRenderContext(geometry);
                     if (geometryRenderContext != null) {
-                        geometry.getRenderer().drawGeometry(recorder, geometryRenderContext, stack);
+                        // Create an own stack for each of the (possibly many!) geometries, to avoid running out of space in the render job one
+                        try (MemoryStack stackPerGeometry = stackPush()) {
+                            geometry.getRenderer().drawGeometry(recorder, geometryRenderContext, stackPerGeometry);
+                        }
                     }
                 }
             }).collect(Collectors.toList());
