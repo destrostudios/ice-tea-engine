@@ -12,7 +12,7 @@ public class ApplicationConfig {
 
 	private boolean enableValidationLayer;
 	private boolean displayFpsInTitle;
-	private String title = "IceTea Engine";
+	private String title = EngineInfo.NAME;
 	private int width = 1280;
 	private int height = 720;
 	private int preferredPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;

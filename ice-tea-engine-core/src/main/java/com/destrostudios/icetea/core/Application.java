@@ -205,10 +205,11 @@ public abstract class Application {
             instanceCreateInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
             VkApplicationInfo applicationInfo = VkApplicationInfo.calloc(stack);
             applicationInfo.sType(VK_STRUCTURE_TYPE_APPLICATION_INFO);
-            applicationInfo.pApplicationName(stack.UTF8Safe("Hello Triangle"));
+            applicationInfo.pApplicationName(stack.UTF8Safe(config.getTitle()));
+            // TODO: Make configurable
             applicationInfo.applicationVersion(VK_MAKE_VERSION(1, 0, 0));
-            applicationInfo.pEngineName(stack.UTF8Safe("No Engine"));
-            applicationInfo.engineVersion(VK_MAKE_VERSION(1, 0, 0));
+            applicationInfo.pEngineName(stack.UTF8Safe(EngineInfo.NAME));
+            applicationInfo.engineVersion(VK_MAKE_VERSION(EngineInfo.VERSION_MAJOR, EngineInfo.VERSION_MINOR, EngineInfo.VERSION_PATCH));
             applicationInfo.apiVersion(VK_API_VERSION_1_0);
             instanceCreateInfo.pApplicationInfo(applicationInfo);
             instanceCreateInfo.ppEnabledExtensionNames(getRequiredExtensions(stack));

@@ -123,7 +123,7 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
         rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
         rasterizer.depthBiasEnable(true);
-        // TODO: Make these configurable
+        // TODO: Make configurable
         rasterizer.depthBiasConstantFactor(4.0f);
         rasterizer.depthBiasSlopeFactor(1.5f);
 
