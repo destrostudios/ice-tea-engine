@@ -6,6 +6,8 @@ import com.destrostudios.icetea.core.camera.GuiCamera;
 import com.destrostudios.icetea.core.camera.SceneCamera;
 import com.destrostudios.icetea.core.camera.projections.PerspectiveProjection;
 import com.destrostudios.icetea.core.command.CommandPool;
+import com.destrostudios.icetea.core.device.PhysicalDeviceInformation;
+import com.destrostudios.icetea.core.device.PhysicalDeviceManager;
 import com.destrostudios.icetea.core.filter.Filter;
 import com.destrostudios.icetea.core.input.*;
 import com.destrostudios.icetea.core.pbr.PbrEnvironment;
@@ -52,16 +54,6 @@ import static org.lwjgl.vulkan.VK10.*;
 public abstract class Application {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
-
-    static final Set<String> DEVICE_EXTENSIONS_NAMES = Stream.of(
-        // Required to use swapchains
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        // Required to resolve multisampled depth buffers (for postprocessing)
-        VK_KHR_MULTIVIEW_EXTENSION_NAME,
-        VK_KHR_MAINTENANCE2_EXTENSION_NAME,
-        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
-        VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME
-    ).collect(toSet());
 
     public Application() {
         config = new ApplicationConfig();
@@ -209,9 +201,9 @@ public abstract class Application {
     private void createInstance() {
         try (MemoryStack stack = stackPush()) {
             LOGGER.debug("Creating instance...");
-            VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.callocStack(stack);
+            VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.calloc(stack);
             instanceCreateInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
-            VkApplicationInfo applicationInfo = VkApplicationInfo.callocStack(stack);
+            VkApplicationInfo applicationInfo = VkApplicationInfo.calloc(stack);
             applicationInfo.sType(VK_STRUCTURE_TYPE_APPLICATION_INFO);
             applicationInfo.pApplicationName(stack.UTF8Safe("Hello Triangle"));
             applicationInfo.applicationVersion(VK_MAKE_VERSION(1, 0, 0));
@@ -279,7 +271,7 @@ public abstract class Application {
     }
 
     private VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerCreateInfo(MemoryStack stack) {
-        VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.callocStack(stack);
+        VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc(stack);
         debugMessengerCreateInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
         debugMessengerCreateInfo.messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
         debugMessengerCreateInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
@@ -323,7 +315,7 @@ public abstract class Application {
     private void initLogicalDevice() {
         LOGGER.debug("Initializing logical device...");
         try (MemoryStack stack = stackPush()) {
-            VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.callocStack(stack);
+            VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.calloc(stack);
             deviceCreateInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
 
             Set<String> enabledExtensionNames = Stream.of(
@@ -339,7 +331,7 @@ public abstract class Application {
             deviceCreateInfo.ppEnabledExtensionNames(BufferUtil.asPointerBuffer(enabledExtensionNames, stack));
 
             int[] uniqueQueueFamilyIndices = physicalDeviceInformation.getUniqueQueueFamilyIndices();
-            VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.callocStack(uniqueQueueFamilyIndices.length, stack);
+            VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.calloc(uniqueQueueFamilyIndices.length, stack);
             for(int i = 0; i < uniqueQueueFamilyIndices.length; i++) {
                 VkDeviceQueueCreateInfo queueCreateInfo = queueCreateInfos.get(i);
                 queueCreateInfo.sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
@@ -348,7 +340,7 @@ public abstract class Application {
             }
             deviceCreateInfo.pQueueCreateInfos(queueCreateInfos);
 
-            VkPhysicalDeviceFeatures enabledDeviceFeatures = VkPhysicalDeviceFeatures.callocStack(stack);
+            VkPhysicalDeviceFeatures enabledDeviceFeatures = VkPhysicalDeviceFeatures.calloc(stack);
             enabledDeviceFeatures.samplerAnisotropy(true);
             enabledDeviceFeatures.sampleRateShading(true);
             enabledDeviceFeatures.tessellationShader(true);

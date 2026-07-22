@@ -36,7 +36,7 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         ShaderManager shaderManager = application.getShaderManager();
 
-        VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(2, stack);
+        VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.calloc(2, stack);
 
         long vertShaderModule = createShaderModule(VERT_SHADER, ShaderType.VERTEX_SHADER, resourceDescriptorSetShaderDeclaration);
         shaderManager.createShaderStage(shaderStages, 0, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, stack);
@@ -46,19 +46,19 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         // ===> VERTEX STAGE <===
 
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.callocStack(stack);
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
         vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
         // No vertex binding or vertex attribute descriptions needed
 
         // ===> ASSEMBLY STAGE <===
 
-        VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(stack);
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack);
         inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
         inputAssembly.topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
         // ===> VIEWPORT & SCISSOR
 
-        VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
+        VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
         viewport.x(0);
         viewport.y(0);
         viewport.width(renderJob.getExtent().width());
@@ -66,18 +66,18 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
         viewport.minDepth(0);
         viewport.maxDepth(1);
 
-        VkRect2D.Buffer scissor = VkRect2D.callocStack(1, stack);
-        scissor.offset(VkOffset2D.callocStack(stack).set(0, 0));
+        VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
+        scissor.offset(VkOffset2D.calloc(stack).set(0, 0));
         scissor.extent(renderJob.getExtent());
 
-        VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.callocStack(stack);
+        VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.calloc(stack);
         viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
         viewportState.pViewports(viewport);
         viewportState.pScissors(scissor);
 
         // ===> RASTERIZATION STAGE <===
 
-        VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.callocStack(stack);
+        VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack);
         rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
         rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
         rasterizer.lineWidth(1);
@@ -86,7 +86,7 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         // ===> MULTISAMPLING <===
 
-        VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.callocStack(stack);
+        VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.calloc(stack);
         multisampling.sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
         multisampling.sampleShadingEnable(true);
         multisampling.minSampleShading(0.2f);
@@ -94,16 +94,16 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
 
         // ===> COLOR BLENDING <===
 
-        VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.callocStack(1, stack);
+        VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
         colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
 
-        VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.callocStack(stack);
+        VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.calloc(stack);
         colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
         colorBlending.pAttachments(colorBlendAttachment);
 
         // ===> PIPELINE LAYOUT CREATION <===
 
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
         pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
         pipelineLayoutInfo.pSetLayouts(descriptorSetLayouts);
 
@@ -114,7 +114,7 @@ public class FullScreenQuadRenderPipelineCreator extends RenderPipelineCreator<F
         }
         long pipelineLayout = pPipelineLayout.get(0);
 
-        VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.callocStack(1, stack);
+        VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
         pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
         pipelineInfo.pStages(shaderStages);
         pipelineInfo.pVertexInputState(vertexInputInfo);

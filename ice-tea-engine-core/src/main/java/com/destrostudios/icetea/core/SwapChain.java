@@ -1,6 +1,8 @@
 package com.destrostudios.icetea.core;
 
 import com.destrostudios.icetea.core.command.CommandPool;
+import com.destrostudios.icetea.core.device.PhysicalDeviceInformation;
+import com.destrostudios.icetea.core.device.SurfaceFormat;
 import com.destrostudios.icetea.core.object.NativeObject;
 import com.destrostudios.icetea.core.render.*;
 import com.destrostudios.icetea.core.command.SecondaryCommandBufferPool;
@@ -95,14 +97,14 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
             // TODO: Can this only be done once initially like the rest of PhysicalDeviceInformation?
             LOGGER.debug("Fetching physical device surface capabilities...");
-            VkSurfaceCapabilitiesKHR surfaceCapabilities = VkSurfaceCapabilitiesKHR.mallocStack(stack);
+            VkSurfaceCapabilitiesKHR surfaceCapabilities = VkSurfaceCapabilitiesKHR.malloc(stack);
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR(application.getPhysicalDevice(), application.getSurface(), surfaceCapabilities);
             LOGGER.debug("Fetched physical device surface capabilities.");
 
             VkExtent2D extent = chooseSwapExtent(surfaceCapabilities, application.getWindow(), stack);
             this.extent = VkExtent2D.create().set(extent);
 
-            VkSwapchainCreateInfoKHR swapchainCreateInfo = VkSwapchainCreateInfoKHR.callocStack(stack);
+            VkSwapchainCreateInfoKHR swapchainCreateInfo = VkSwapchainCreateInfoKHR.calloc(stack);
             swapchainCreateInfo.sType(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR);
             swapchainCreateInfo.surface(application.getSurface());
 
@@ -117,9 +119,9 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
             LOGGER.debug("Choosing image count: {}", imageCount.get(0));
             swapchainCreateInfo.minImageCount(imageCount.get(0));
 
-            VkSurfaceFormatKHR surfaceFormat = chooseSurfaceFormat(physicalDeviceInformation.getSurfaceFormats());
-            imageFormat = surfaceFormat.format();
-            int colorSpace = surfaceFormat.colorSpace();
+            SurfaceFormat surfaceFormat = chooseSurfaceFormat(physicalDeviceInformation.getSurfaceFormats());
+            imageFormat = surfaceFormat.getFormat();
+            int colorSpace = surfaceFormat.getColorSpace();
             LOGGER.debug("Surface format: Format = {}, ColorSpace = {}", imageFormat, colorSpace);
             swapchainCreateInfo.imageFormat(imageFormat);
             swapchainCreateInfo.imageColorSpace(colorSpace);
@@ -176,7 +178,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         LOGGER.debug("Fetching framebuffer size...");
         glfwGetFramebufferSize(window, width, height);
         LOGGER.debug("Fetched framebuffer size: {} x {}", width.get(0), height.get(0));
-        VkExtent2D actualExtent = VkExtent2D.mallocStack(stack).set(width.get(0), height.get(0));
+        VkExtent2D actualExtent = VkExtent2D.malloc(stack).set(width.get(0), height.get(0));
 
         VkExtent2D minExtent = capabilities.minImageExtent();
         VkExtent2D maxExtent = capabilities.maxImageExtent();
@@ -188,20 +190,20 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         return actualExtent;
     }
 
-    private VkSurfaceFormatKHR chooseSurfaceFormat(VkSurfaceFormatKHR.Buffer availableFormats) {
+    private SurfaceFormat chooseSurfaceFormat(List<SurfaceFormat> availableFormats) {
         // TODO: Should have a proper ranking logic (preferring nonlinear) and not just have one preferred combination and default to the first one otherwise
         // TODO: Also, if we happen to use a linear color space, we have to adjust the read texture pixels and stored formats as a transformation back to sRGB at the end doesn't happen automatically yet
         return availableFormats.stream()
-                .filter(availableFormat -> availableFormat.format() == VK_FORMAT_B8G8R8A8_SRGB)
-                .filter(availableFormat -> availableFormat.colorSpace() == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+                .filter(availableFormat -> availableFormat.getFormat() == VK_FORMAT_B8G8R8A8_SRGB)
+                .filter(availableFormat -> availableFormat.getColorSpace() == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
                 .findAny()
-                .orElse(availableFormats.get(0));
+                .orElseThrow(() -> new RuntimeException("Failed to find a suitable surface format"));
     }
 
-    private int choosePresentMode(IntBuffer availablePresentModes, int preferredPresentMode) {
+    private int choosePresentMode(int[] availablePresentModes, int preferredPresentMode) {
         LOGGER.debug("Choosing present mode...");
-        for (int i = 0; i < availablePresentModes.capacity(); i++) {
-            int presentMode = availablePresentModes.get(i);
+        for (int i = 0; i < availablePresentModes.length; i++) {
+            int presentMode = availablePresentModes[i];
             if (presentMode == preferredPresentMode) {
                 LOGGER.debug("Choosing preferred present mode: {}", presentMode);
                 return presentMode;
@@ -216,7 +218,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         imageViews = new ArrayList<>(images.size());
         try (MemoryStack stack = stackPush()) {
             for (long image : images) {
-                VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.callocStack(stack);
+                VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.calloc(stack);
                 viewInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
                 viewInfo.image(image);
                 viewInfo.viewType(VK_IMAGE_VIEW_TYPE_2D);
@@ -266,10 +268,10 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         LOGGER.debug("Initializing sync objects...");
         inFlightFrames = new Frame[FRAMES_IN_FLIGHT];
         try (MemoryStack stack = stackPush()) {
-            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.callocStack(stack);
+            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
             semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
 
-            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.callocStack(stack);
+            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.calloc(stack);
             fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
             fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
 
@@ -320,7 +322,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         try (MemoryStack stack = stackPush()) {
             VkCommandBuffer primaryCommandBuffer = primaryCommandBuffers.get(imageIndex);
 
-            VkCommandBufferBeginInfo primaryCommandBufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+            VkCommandBufferBeginInfo primaryCommandBufferBeginInfo = VkCommandBufferBeginInfo.calloc(stack);
             primaryCommandBufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
             primaryCommandBufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             int result = vkBeginCommandBuffer(primaryCommandBuffer, primaryCommandBufferBeginInfo);
@@ -354,11 +356,11 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
                 List<RenderTask> renderTasks = renderJob.render(stack);
                 int threads = application.getConfig().getWorkerThreads();
                 if (threads > 1) {
-                    VkCommandBufferBeginInfo secondaryCommandBufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+                    VkCommandBufferBeginInfo secondaryCommandBufferBeginInfo = VkCommandBufferBeginInfo.calloc(stack);
                     secondaryCommandBufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
                     secondaryCommandBufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT);
 
-                    VkCommandBufferInheritanceInfo secondaryCommandBufferInheritanceInfo = VkCommandBufferInheritanceInfo.callocStack(stack);
+                    VkCommandBufferInheritanceInfo secondaryCommandBufferInheritanceInfo = VkCommandBufferInheritanceInfo.calloc(stack);
                     secondaryCommandBufferInheritanceInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO);
                     secondaryCommandBufferInheritanceInfo.renderPass(renderJob.getRenderPass());
                     secondaryCommandBufferInheritanceInfo.framebuffer(frameBuffer);
@@ -433,7 +435,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
 
             vkWaitForFences(application.getLogicalDevice(), thisFrame.getFence(), true, MathUtil.UINT64_MAX);
 
-            VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack);
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.waitSemaphoreCount(1);
             submitInfo.pWaitSemaphores(stack.longs(thisFrame.getImageAvailableSemaphore()));
@@ -448,7 +450,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
                 throw new RuntimeException("Failed to submit draw command buffer (result = " + result + ")");
             }
 
-            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.callocStack(stack);
+            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
             presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
             presentInfo.pWaitSemaphores(pRenderFinishedSemaphore);
             presentInfo.swapchainCount(1);

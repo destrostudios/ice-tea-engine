@@ -64,7 +64,7 @@ public class ShaderManager extends NativeObject {
         try (MemoryStack stack = stackPush()) {
             ByteBuffer compiledShaderCode = getCompiledShaderCode(shader, shaderType, additionalDeclarations);
 
-            VkShaderModuleCreateInfo shaderModuleCreateInfo = VkShaderModuleCreateInfo.callocStack(stack);
+            VkShaderModuleCreateInfo shaderModuleCreateInfo = VkShaderModuleCreateInfo.calloc(stack);
             shaderModuleCreateInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
             shaderModuleCreateInfo.pCode(compiledShaderCode);
 

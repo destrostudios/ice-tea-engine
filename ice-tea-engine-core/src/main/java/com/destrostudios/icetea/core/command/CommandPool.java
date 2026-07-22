@@ -33,7 +33,7 @@ public class CommandPool extends NativeObject {
 
     public void initCommandPool() {
         try (MemoryStack stack = stackPush()) {
-            VkCommandPoolCreateInfo poolCreateInfo = VkCommandPoolCreateInfo.callocStack(stack);
+            VkCommandPoolCreateInfo poolCreateInfo = VkCommandPoolCreateInfo.calloc(stack);
             poolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
             poolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
             poolCreateInfo.queueFamilyIndex(application.getPhysicalDeviceInformation().getQueueFamilyIndexGraphics());
@@ -51,7 +51,7 @@ public class CommandPool extends NativeObject {
         try (MemoryStack stack = stackPush()) {
             VkCommandBuffer commandBuffer = allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
             beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             int result = vkBeginCommandBuffer(commandBuffer, beginInfo);
@@ -63,7 +63,7 @@ public class CommandPool extends NativeObject {
 
             vkEndCommandBuffer(commandBuffer);
 
-            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.callocStack(stack);
+            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.calloc(stack);
             fenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
             LongBuffer pFence = stack.mallocLong(1);
             result = vkCreateFence(application.getLogicalDevice(), fenceCreateInfo, null, pFence);
@@ -72,7 +72,7 @@ public class CommandPool extends NativeObject {
             }
             long fence = pFence.get(0);
 
-            VkSubmitInfo.Buffer submitInfo = VkSubmitInfo.callocStack(1, stack);
+            VkSubmitInfo.Buffer submitInfo = VkSubmitInfo.calloc(1, stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
             result = vkQueueSubmit(application.getGraphicsQueue(), submitInfo, fence);
@@ -93,7 +93,7 @@ public class CommandPool extends NativeObject {
 
     public ArrayList<VkCommandBuffer> allocateCommandBuffers(int level, int count) {
         try (MemoryStack stack = stackPush()) {
-            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.callocStack(stack);
+            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.calloc(stack);
             allocateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             allocateInfo.commandPool(commandPool);
             allocateInfo.level(level);

@@ -18,6 +18,7 @@ public class BucketRenderer {
     public BucketRenderer(Application application) {
         this.application = application;
         buckets = new HashMap<>();
+        // TODO: Support custom comparators
         buckets.put(RenderBucketType.BACKGROUND, new RenderBucket(new FrontToBackGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.OPAQUE, new RenderBucket(new FrontToBackGeometryComparator(application.getSceneCamera())));
         buckets.put(RenderBucketType.TRANSPARENT, new RenderBucket(new BackToFrontGeometryComparator(application.getSceneCamera())));

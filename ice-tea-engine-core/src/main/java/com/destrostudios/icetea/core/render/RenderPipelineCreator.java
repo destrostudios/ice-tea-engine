@@ -65,7 +65,7 @@ public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends 
     }
 
     protected static VkVertexInputBindingDescription.Buffer getVertexBindingDescriptions(int vertexSize) {
-        VkVertexInputBindingDescription.Buffer bindingDescription = VkVertexInputBindingDescription.callocStack(1);
+        VkVertexInputBindingDescription.Buffer bindingDescription = VkVertexInputBindingDescription.calloc(1);
         bindingDescription.binding(0);
         bindingDescription.stride(vertexSize);
         bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
@@ -73,7 +73,7 @@ public abstract class RenderPipelineCreator<RJ extends RenderJob<?>, PS extends 
     }
 
     protected static VkVertexInputAttributeDescription.Buffer getVertexAttributeDescriptions(List<MeshRenderPipelineState.VertexField> vertexFields) {
-        VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.callocStack(vertexFields.size());
+        VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.calloc(vertexFields.size());
         int offset = 0;
         int location = 0;
         for (MeshRenderPipelineState.VertexField vertexField : vertexFields) {

@@ -70,8 +70,8 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
     }
 
     private void initRenderPass(MemoryStack stack) {
-        VkAttachmentDescription2KHR.Buffer attachments = VkAttachmentDescription2KHR.callocStack(4, stack);
-        VkAttachmentReference2KHR.Buffer attachmentRefs = VkAttachmentReference2KHR.callocStack(4, stack);
+        VkAttachmentDescription2KHR.Buffer attachments = VkAttachmentDescription2KHR.calloc(4, stack);
+        VkAttachmentReference2KHR.Buffer attachmentRefs = VkAttachmentReference2KHR.calloc(4, stack);
 
         int colorFormat = getSwapChainImageFormat();
         int depthFormat = findDepthFormat(stack);
@@ -150,15 +150,15 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
 
         // Subpass and dependencies
 
-        VkSubpassDescription2KHR.Buffer subpass = VkSubpassDescription2KHR.callocStack(1, stack);
+        VkSubpassDescription2KHR.Buffer subpass = VkSubpassDescription2KHR.calloc(1, stack);
         subpass.sType(VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2);
         subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
         subpass.colorAttachmentCount(1);
-        subpass.pColorAttachments(VkAttachmentReference2KHR.callocStack(1, stack).put(0, multisampledColorAttachmentRef));
+        subpass.pColorAttachments(VkAttachmentReference2KHR.calloc(1, stack).put(0, multisampledColorAttachmentRef));
         subpass.pDepthStencilAttachment(multisampledDepthAttachmentRef);
-        subpass.pResolveAttachments(VkAttachmentReference2KHR.callocStack(1, stack).put(0, resolvedColorAttachmentRef));
+        subpass.pResolveAttachments(VkAttachmentReference2KHR.calloc(1, stack).put(0, resolvedColorAttachmentRef));
 
-        VkSubpassDescriptionDepthStencilResolveKHR subpassDepthStencilResolve = VkSubpassDescriptionDepthStencilResolveKHR.callocStack(stack);
+        VkSubpassDescriptionDepthStencilResolveKHR subpassDepthStencilResolve = VkSubpassDescriptionDepthStencilResolveKHR.calloc(stack);
         subpassDepthStencilResolve.sType(VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR);
         int depthStencilResolveMode = application.getPhysicalDeviceInformation().getDepthStencilResolveMode();
         subpassDepthStencilResolve.depthResolveMode(depthStencilResolveMode);
@@ -166,7 +166,7 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
         subpassDepthStencilResolve.pDepthStencilResolveAttachment(resolvedDepthAttachmentRef);
         subpass.pNext(subpassDepthStencilResolve.address());
 
-        VkSubpassDependency2KHR.Buffer dependency = VkSubpassDependency2KHR.callocStack(1, stack);
+        VkSubpassDependency2KHR.Buffer dependency = VkSubpassDependency2KHR.calloc(1, stack);
         dependency.sType(VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2);
         dependency.srcSubpass(VK_SUBPASS_EXTERNAL);
         dependency.dstSubpass(0);
@@ -175,7 +175,7 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
         dependency.dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
         dependency.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
-        VkRenderPassCreateInfo2KHR renderPassCreateInfo = VkRenderPassCreateInfo2KHR.callocStack(stack);
+        VkRenderPassCreateInfo2KHR renderPassCreateInfo = VkRenderPassCreateInfo2KHR.calloc(stack);
         renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2);
         renderPassCreateInfo.pAttachments(attachments);
         renderPassCreateInfo.pSubpasses(subpass);
@@ -214,7 +214,7 @@ public class SceneRenderJob extends GeometryRenderJob<SceneGeometryRenderContext
 
     @Override
     public VkClearValue.Buffer getClearValues(MemoryStack stack) {
-        VkClearValue.Buffer clearValues = VkClearValue.callocStack(2, stack);
+        VkClearValue.Buffer clearValues = VkClearValue.calloc(2, stack);
         Vector4f clearColor = application.getConfig().getClearColor();
         clearValues.get(0).color().float32(stack.floats(clearColor.x(), clearColor.y(), clearColor.z(), clearColor.w()));
         clearValues.get(1).depthStencil().set(1, 0);

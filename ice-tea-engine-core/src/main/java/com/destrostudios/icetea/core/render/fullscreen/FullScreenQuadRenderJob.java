@@ -61,8 +61,8 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<FullScreenQuadRe
     private void initRenderPass(MemoryStack stack) {
         int colorFormat = application.getSwapChain().getImageFormat();
 
-        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(2, stack);
-        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.callocStack(2, stack);
+        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(2, stack);
+        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.calloc(2, stack);
 
         // Color attachment (Multisampled)
 
@@ -96,13 +96,13 @@ public abstract class FullScreenQuadRenderJob extends RenderJob<FullScreenQuadRe
         resolvedColorAttachmentRef.attachment(1);
         resolvedColorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-        VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
+        VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
         subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
         subpass.colorAttachmentCount(1);
-        subpass.pColorAttachments(VkAttachmentReference.callocStack(1, stack).put(0, multisampledColorAttachmentRef));
-        subpass.pResolveAttachments(VkAttachmentReference.callocStack(1, stack).put(0, resolvedColorAttachmentRef));
+        subpass.pColorAttachments(VkAttachmentReference.calloc(1, stack).put(0, multisampledColorAttachmentRef));
+        subpass.pResolveAttachments(VkAttachmentReference.calloc(1, stack).put(0, resolvedColorAttachmentRef));
 
-        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.callocStack(stack);
+        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.calloc(stack);
         renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
         renderPassCreateInfo.pAttachments(attachments);
         renderPassCreateInfo.pSubpasses(subpass);

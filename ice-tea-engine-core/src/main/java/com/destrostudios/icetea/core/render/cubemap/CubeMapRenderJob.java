@@ -129,8 +129,8 @@ public abstract class CubeMapRenderJob extends RenderJob<CubeMapRenderPipelineCr
     }
 
     private void initRenderPass(MemoryStack stack) {
-        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(1, stack);
-        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.callocStack(1, stack);
+        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(1, stack);
+        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.calloc(1, stack);
 
         // Color attachment (Face)
 
@@ -150,12 +150,12 @@ public abstract class CubeMapRenderJob extends RenderJob<CubeMapRenderPipelineCr
 
         // Subpass and dependencies
 
-        VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
+        VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
         subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
         subpass.colorAttachmentCount(1);
-        subpass.pColorAttachments(VkAttachmentReference.callocStack(1, stack).put(0, colorAttachmentRef));
+        subpass.pColorAttachments(VkAttachmentReference.calloc(1, stack).put(0, colorAttachmentRef));
 
-        VkSubpassDependency.Buffer dependencies = VkSubpassDependency.callocStack(2, stack);
+        VkSubpassDependency.Buffer dependencies = VkSubpassDependency.calloc(2, stack);
 
         VkSubpassDependency dependency1 = dependencies.get(0);
         dependency1.srcSubpass(VK_SUBPASS_EXTERNAL);
@@ -175,7 +175,7 @@ public abstract class CubeMapRenderJob extends RenderJob<CubeMapRenderPipelineCr
         dependency2.dstAccessMask(VK_ACCESS_MEMORY_READ_BIT);
         dependency2.dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
 
-        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.callocStack(stack);
+        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.calloc(stack);
         renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
         renderPassCreateInfo.pAttachments(attachments);
         renderPassCreateInfo.pSubpasses(subpass);
@@ -218,7 +218,7 @@ public abstract class CubeMapRenderJob extends RenderJob<CubeMapRenderPipelineCr
             recorder.bindPipeline(renderPipeline);
             recorder.bindDescriptorSets(resourceDescriptorSet, stack);
 
-            VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
+            VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
             viewport.minDepth(0);
             viewport.maxDepth(1);
 

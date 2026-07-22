@@ -30,6 +30,7 @@ module com.destrostudios.icetea.core {
     exports com.destrostudios.icetea.core.compute;
     exports com.destrostudios.icetea.core.data;
     exports com.destrostudios.icetea.core.data.values;
+    exports com.destrostudios.icetea.core.device;
     exports com.destrostudios.icetea.core.filter;
     exports com.destrostudios.icetea.core.font;
     exports com.destrostudios.icetea.core.input;

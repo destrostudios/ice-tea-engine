@@ -29,7 +29,7 @@ public class ComputePipeline extends Pipeline {
             Shader compShader = computeActionGroup.getComputeShader();
             long compShaderModule = application.getShaderManager().createShaderModule(compShader, ShaderType.COMPUTE_SHADER, referenceComputeAction.getResourceDescriptorSet().getShaderDeclaration());
 
-            VkPipelineShaderStageCreateInfo compShaderStageInfo = VkPipelineShaderStageCreateInfo.callocStack(stack);
+            VkPipelineShaderStageCreateInfo compShaderStageInfo = VkPipelineShaderStageCreateInfo.calloc(stack);
             compShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
             compShaderStageInfo.stage(VK_SHADER_STAGE_COMPUTE_BIT);
             compShaderStageInfo.module(compShaderModule);
@@ -37,7 +37,7 @@ public class ComputePipeline extends Pipeline {
 
             // ===> PIPELINE LAYOUT CREATION <===
 
-            VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
+            VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
             pipelineLayoutInfo.pSetLayouts(referenceComputeAction.getResourceDescriptorSet().getDescriptorSetLayouts(stack));
             if (computeActionGroup.getPushConstantsSize() > 0) {

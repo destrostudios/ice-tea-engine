@@ -36,7 +36,7 @@ public class ResizableMemoryBuffer extends ResizableBuffer {
         try (MemoryStack stack = stackPush()) {
             LongBuffer pBuffer = stack.mallocLong(1);
             PointerBuffer pBufferAllocation = stack.mallocPointer(1);
-            allocationInfo = VmaAllocationInfo.callocStack(stack);
+            allocationInfo = VmaAllocationInfo.calloc(stack);
             application.getMemoryManager().createBuffer(size, bufferUsage, memoryUsage, memoryFlags, pBuffer, pBufferAllocation, allocationInfo);
             buffer = pBuffer.get(0);
             bufferAllocation = pBufferAllocation.get(0);

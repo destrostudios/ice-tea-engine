@@ -177,10 +177,10 @@ public class ImGuiSystem extends AppSystem implements WindowResizeListener, KeyL
                 imGuiIO.addKeyEvent(imguiKey, false);
             }
         }
-        imGuiIO.addKeyEvent(ImGuiKey.ModCtrl, (keyEvent.getModifiers() & GLFW_MOD_CONTROL) != 0);
-        imGuiIO.addKeyEvent(ImGuiKey.ModShift, (keyEvent.getModifiers() & GLFW_MOD_SHIFT) != 0);
-        imGuiIO.addKeyEvent(ImGuiKey.ModAlt, (keyEvent.getModifiers() & GLFW_MOD_ALT) != 0);
-        imGuiIO.addKeyEvent(ImGuiKey.ModSuper, (keyEvent.getModifiers() & GLFW_MOD_SUPER) != 0);
+        imGuiIO.addKeyEvent(ImGuiKey.ImGuiMod_Ctrl, (keyEvent.getModifiers() & GLFW_MOD_CONTROL) != 0);
+        imGuiIO.addKeyEvent(ImGuiKey.ImGuiMod_Shift, (keyEvent.getModifiers() & GLFW_MOD_SHIFT) != 0);
+        imGuiIO.addKeyEvent(ImGuiKey.ImGuiMod_Alt, (keyEvent.getModifiers() & GLFW_MOD_ALT) != 0);
+        imGuiIO.addKeyEvent(ImGuiKey.ImGuiMod_Super, (keyEvent.getModifiers() & GLFW_MOD_SUPER) != 0);
         if (imGuiIO.getWantCaptureKeyboard()) {
             keyEvent.stopPropagating();
         }

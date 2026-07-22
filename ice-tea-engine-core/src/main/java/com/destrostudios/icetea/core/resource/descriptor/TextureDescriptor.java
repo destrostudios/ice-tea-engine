@@ -25,7 +25,7 @@ public abstract class TextureDescriptor extends ResourceDescriptor<Texture> {
     @Override
     protected void initWriteDescriptorSet(VkWriteDescriptorSet descriptorWrite, MemoryStack stack) {
         super.initWriteDescriptorSet(descriptorWrite, stack);
-        VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.callocStack(1, stack);
+        VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, stack);
         imageInfo.imageLayout(resource.getLayoutForDescriptor());
         imageInfo.imageView(resource.getImageView());
         imageInfo.sampler(resource.getSampler());

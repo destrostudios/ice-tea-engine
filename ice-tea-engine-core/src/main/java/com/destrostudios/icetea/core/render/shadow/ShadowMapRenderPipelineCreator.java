@@ -40,7 +40,7 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
             shaderStagesCount++;
         }
 
-        VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.callocStack(shaderStagesCount, stack);
+        VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.calloc(shaderStagesCount, stack);
 
         ShaderManager shaderManager = application.getShaderManager();
         int shaderStageIndex = 0;
@@ -74,14 +74,14 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
 
         // ===> VERTEX STAGE <===
 
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.callocStack(stack);
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
         vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
         vertexInputInfo.pVertexBindingDescriptions(getVertexBindingDescriptions(state.getVertexSize()));
         vertexInputInfo.pVertexAttributeDescriptions(getVertexAttributeDescriptions(state.getVertexFields()));
 
         // ===> ASSEMBLY STAGE <===
 
-        VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(stack);
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack);
         inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
         inputAssembly.topology(state.getTopology());
 
@@ -89,7 +89,7 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
 
         VkPipelineDynamicStateCreateInfo dynamic = null;
         if (state.getDynamicStates() != null) {
-            dynamic = VkPipelineDynamicStateCreateInfo.callocStack(stack);
+            dynamic = VkPipelineDynamicStateCreateInfo.calloc(stack);
             dynamic.sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
             dynamic.pDynamicStates(stack.ints(state.getDynamicStates()));
         }
@@ -97,7 +97,7 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         // ===> VIEWPORT & SCISSOR <===
         // TODO: The viewport state is not needed if the dynamic state is set and the renderer provides all dynamic input
 
-        VkViewport.Buffer viewport = VkViewport.callocStack(1, stack);
+        VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
         viewport.x(0);
         viewport.y(0);
         viewport.width(renderJob.getExtent().width());
@@ -105,18 +105,18 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         viewport.minDepth(0);
         viewport.maxDepth(1);
 
-        VkRect2D.Buffer scissor = VkRect2D.callocStack(1, stack);
-        scissor.offset(VkOffset2D.callocStack(stack).set(0, 0));
+        VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
+        scissor.offset(VkOffset2D.calloc(stack).set(0, 0));
         scissor.extent(renderJob.getExtent());
 
-        VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.callocStack(stack);
+        VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.calloc(stack);
         viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
         viewportState.pViewports(viewport);
         viewportState.pScissors(scissor);
 
         // ===> RASTERIZATION STAGE <===
 
-        VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.callocStack(stack);
+        VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack);
         rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
         rasterizer.polygonMode(state.getPolygonMode());
         rasterizer.lineWidth(1);
@@ -129,14 +129,14 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
 
         // ===> MULTISAMPLING <===
 
-        VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.callocStack(stack);
+        VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.calloc(stack);
         multisampling.sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
         multisampling.rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
         multisampling.flags(0);
 
         // ===> DEPTH STENCIL <===
 
-        VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.callocStack(stack);
+        VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack);
         depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
         depthStencil.depthTestEnable(true);
         depthStencil.depthWriteEnable(true);
@@ -147,14 +147,14 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
 
         VkPipelineTessellationStateCreateInfo tessellation = null;
         if (state.getTessellationPatchSize() > 0) {
-            tessellation = VkPipelineTessellationStateCreateInfo.callocStack(stack);
+            tessellation = VkPipelineTessellationStateCreateInfo.calloc(stack);
             tessellation.sType(VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO);
             tessellation.patchControlPoints(state.getTessellationPatchSize());
         }
 
         // ===> PIPELINE LAYOUT CREATION <===
 
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(stack);
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
         pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
         pipelineLayoutInfo.pSetLayouts(descriptorSetLayouts);
         VkPushConstantRange.Buffer pushConstantRange = VkPushConstantRange.calloc(1)
@@ -170,7 +170,7 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         }
         long pipelineLayout = pPipelineLayout.get(0);
 
-        VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.callocStack(1, stack);
+        VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
         pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
         pipelineInfo.pStages(shaderStages);
         pipelineInfo.pVertexInputState(vertexInputInfo);

@@ -108,8 +108,8 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
     }
 
     private void initRenderPass(MemoryStack stack) {
-        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.callocStack(1, stack);
-        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.callocStack(1, stack);
+        VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(1, stack);
+        VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.calloc(1, stack);
 
         // Depth attachment (shadow map)
         VkAttachmentDescription depthAttachment = attachments.get(0);
@@ -128,11 +128,11 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
 
         // Subpass and dependencies
 
-        VkSubpassDescription.Buffer subpass = VkSubpassDescription.callocStack(1, stack);
+        VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
         subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
         subpass.pDepthStencilAttachment(depthAttachmentRef);
 
-        VkSubpassDependency.Buffer dependencies = VkSubpassDependency.callocStack(2, stack);
+        VkSubpassDependency.Buffer dependencies = VkSubpassDependency.calloc(2, stack);
 
         VkSubpassDependency dependency1 = dependencies.get(0);
         dependency1.srcSubpass(VK_SUBPASS_EXTERNAL);
@@ -152,7 +152,7 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
         dependency2.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
         dependency2.dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
 
-        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.callocStack(stack);
+        VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.calloc(stack);
         renderPassCreateInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
         renderPassCreateInfo.pAttachments(attachments);
         renderPassCreateInfo.pSubpasses(subpass);
@@ -321,7 +321,7 @@ public class ShadowMapRenderJob extends GeometryRenderJob<ShadowMapGeometryRende
 
     @Override
     public VkClearValue.Buffer getClearValues(MemoryStack stack) {
-        VkClearValue.Buffer clearValues = VkClearValue.callocStack(1, stack);
+        VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
         clearValues.get(0).depthStencil().set(1, 0);
         return clearValues;
     }

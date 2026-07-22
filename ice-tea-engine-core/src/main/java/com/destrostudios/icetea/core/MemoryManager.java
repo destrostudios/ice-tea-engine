@@ -28,10 +28,10 @@ public class MemoryManager {
 
     public void init() {
         try (MemoryStack stack = stackPush()) {
-            VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.callocStack(stack);
+            VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.calloc(stack);
             vulkanFunctions.set(application.getInstance(), application.getLogicalDevice());
 
-            VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.callocStack(stack);
+            VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.calloc(stack);
             allocatorCreateInfo.physicalDevice(application.getPhysicalDevice());
             allocatorCreateInfo.device(application.getLogicalDevice());
             allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
@@ -48,13 +48,13 @@ public class MemoryManager {
 
     public void createBuffer(long size, int bufferUsage, int memoryUsage, int memoryFlags, LongBuffer pBuffer, PointerBuffer pBufferAllocation, VmaAllocationInfo allocationInfo) {
         try (MemoryStack stack = stackPush()) {
-            VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.callocStack(stack);
+            VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.calloc(stack);
             bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
             bufferCreateInfo.size(size);
             bufferCreateInfo.usage(bufferUsage);
             bufferCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
-            VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.callocStack(stack);
+            VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.calloc(stack);
             allocationCreateInfo.flags(memoryFlags);
             allocationCreateInfo.usage(memoryUsage);
 
@@ -80,7 +80,7 @@ public class MemoryManager {
 
     public void copyBuffer(long sourceBuffer, long destinationBuffer, long size) {
         try (MemoryStack stack = stackPush()) {
-            VkBufferCopy.Buffer region = VkBufferCopy.callocStack(1, stack);
+            VkBufferCopy.Buffer region = VkBufferCopy.calloc(1, stack);
             region.size(size);
             application.getCommandPool().executeSingleTimeCommands(commandBuffer -> {
                 vkCmdCopyBuffer(commandBuffer, sourceBuffer, destinationBuffer, region);

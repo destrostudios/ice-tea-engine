@@ -49,10 +49,10 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
 
     private void initDescriptorSetLayout() {
         try (MemoryStack stack = stackPush()) {
-            VkDescriptorSetLayoutCreateInfo layoutCreateInfo = VkDescriptorSetLayoutCreateInfo.callocStack(stack);
+            VkDescriptorSetLayoutCreateInfo layoutCreateInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
             layoutCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
 
-            VkDescriptorSetLayoutBinding.Buffer layoutBinding = VkDescriptorSetLayoutBinding.callocStack(1, stack);
+            VkDescriptorSetLayoutBinding.Buffer layoutBinding = VkDescriptorSetLayoutBinding.calloc(1, stack);
             layoutBinding.binding(0);
             layoutBinding.descriptorCount(1);
             layoutBinding.descriptorType(descriptorType);
@@ -71,12 +71,12 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
 
     private void initDescriptorPool() {
         try (MemoryStack stack = stackPush()) {
-            VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.callocStack(stack);
+            VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.calloc(stack);
             poolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
             poolCreateInfo.maxSets(descriptorSets.length);
             poolCreateInfo.flags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 
-            VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.callocStack(1, stack);
+            VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.calloc(1, stack);
             poolSize.descriptorCount(descriptorSets.length);
             poolSize.type(descriptorType);
             poolCreateInfo.pPoolSizes(poolSize);
@@ -92,7 +92,7 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
 
     private void initDescriptorSets() {
         try (MemoryStack stack = stackPush()) {
-            VkDescriptorSetAllocateInfo allocateInfo = VkDescriptorSetAllocateInfo.callocStack(stack);
+            VkDescriptorSetAllocateInfo allocateInfo = VkDescriptorSetAllocateInfo.calloc(stack);
             allocateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
             allocateInfo.descriptorPool(descriptorPool);
 
@@ -123,7 +123,7 @@ public abstract class ResourceDescriptor<R extends Resource> extends NativeObjec
 
     protected void updateDescriptorSets() {
         try (MemoryStack stack = stackPush()) {
-            VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.callocStack(descriptorSets.length, stack);
+            VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(descriptorSets.length, stack);
             for (int i = 0; i < descriptorWrites.capacity(); i++) {
                 VkWriteDescriptorSet descriptorWrite = descriptorWrites.get(i);
                 descriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);

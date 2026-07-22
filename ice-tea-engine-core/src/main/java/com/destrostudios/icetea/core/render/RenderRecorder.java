@@ -35,7 +35,7 @@ public class RenderRecorder {
 	private StagedResizableMemoryBuffer boundIndexBuffer;
 
 	public void beginRenderPass(RenderJob<?> renderJob, MemoryStack stack) {
-		VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.callocStack(stack);
+		VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.calloc(stack);
 		renderPassBeginInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
 		renderPassBeginInfo.renderPass(renderJob.getRenderPass());
 		renderPassBeginInfo.renderArea(renderJob.getRenderArea(stack));

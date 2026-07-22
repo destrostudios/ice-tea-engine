@@ -44,7 +44,7 @@ public abstract class ComputeJob extends NativeObject {
         try (MemoryStack stack = stackPush()) {
             commandBuffer = application.getCommandPool().allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-            VkCommandBufferBeginInfo bufferBeginInfo = VkCommandBufferBeginInfo.callocStack(stack);
+            VkCommandBufferBeginInfo bufferBeginInfo = VkCommandBufferBeginInfo.calloc(stack);
             bufferBeginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
             bufferBeginInfo.flags(VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT);
             int result = vkBeginCommandBuffer(commandBuffer, bufferBeginInfo);
@@ -63,7 +63,7 @@ public abstract class ComputeJob extends NativeObject {
 
     private void initFence() {
         try (MemoryStack stack = stackPush()) {
-            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.callocStack(stack);
+            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.calloc(stack);
             fenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
             fenceCreateInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
 
@@ -78,7 +78,7 @@ public abstract class ComputeJob extends NativeObject {
 
     private void initSignalSempahore() {
         try (MemoryStack stack = stackPush()) {
-            VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.callocStack(stack);
+            VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.calloc(stack);
             semaphoreCreateInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
             LongBuffer pSignalSemaphore = stack.mallocLong(1);
             int result = vkCreateSemaphore(application.getLogicalDevice(), semaphoreCreateInfo, null, pSignalSemaphore);
@@ -104,7 +104,7 @@ public abstract class ComputeJob extends NativeObject {
 
     public void submit() {
         try (MemoryStack stack = stackPush()) {
-            VkSubmitInfo submitInfo = VkSubmitInfo.callocStack(stack);
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 

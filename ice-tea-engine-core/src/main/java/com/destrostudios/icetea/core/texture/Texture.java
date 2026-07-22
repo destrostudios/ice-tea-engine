@@ -66,7 +66,7 @@ public class Texture extends Resource {
     }
 
     public void createImage(int flags, MemoryStack stack) {
-        VkImageCreateInfo imageCreateInfo = VkImageCreateInfo.callocStack(stack);
+        VkImageCreateInfo imageCreateInfo = VkImageCreateInfo.calloc(stack);
         imageCreateInfo.sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
         imageCreateInfo.imageType(VK_IMAGE_TYPE_2D);
         imageCreateInfo.extent().width(width);
@@ -82,10 +82,10 @@ public class Texture extends Resource {
         imageCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
         imageCreateInfo.flags(flags);
 
-        VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.callocStack(stack);
+        VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.calloc(stack);
         allocationCreateInfo.usage(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
-        VmaAllocationInfo allocationInfo = VmaAllocationInfo.callocStack(stack);
+        VmaAllocationInfo allocationInfo = VmaAllocationInfo.calloc(stack);
 
         LongBuffer pImage = stack.mallocLong(1);
         PointerBuffer pImageAllocation = stack.mallocPointer(1);
@@ -125,11 +125,11 @@ public class Texture extends Resource {
             stack
         );
 
-        VkBufferImageCopy.Buffer region = VkBufferImageCopy.callocStack(1, stack);
+        VkBufferImageCopy.Buffer region = VkBufferImageCopy.calloc(1, stack);
         region.imageSubresource().aspectMask(aspectMask);
         region.imageSubresource().mipLevel(mipLevel);
         region.imageSubresource().layerCount(layers);
-        region.imageExtent(VkExtent3D.callocStack(stack).set(width, height, 1));
+        region.imageExtent(VkExtent3D.calloc(stack).set(width, height, 1));
 
         vkCmdCopyBufferToImage(commandBuffer, buffer, image, getLayout(mipLevel), region);
 
@@ -151,7 +151,7 @@ public class Texture extends Resource {
 
     // TODO: This methods behaviour (not doing the transitions itself for performance reasons) should probably be aligned with copyFromBuffer+generateMipmaps (which do them themselves, in a slightly unperformant way)
     public void copyFromTexture(VkCommandBuffer commandBuffer, Texture srcTexture, int srcLayer, int srcMipLevel, int dstArrayLayer, int dstMipLevel, int regionWidth, int regionHeight, MemoryStack stack) {
-        VkImageCopy.Buffer region = VkImageCopy.callocStack(1, stack);
+        VkImageCopy.Buffer region = VkImageCopy.calloc(1, stack);
 
         region.srcSubresource().aspectMask(srcTexture.getAspectMask());
         region.srcSubresource().baseArrayLayer(srcLayer);
@@ -176,7 +176,7 @@ public class Texture extends Resource {
         }
 
         // Check if format supports linear blitting
-        VkFormatProperties formatProperties = VkFormatProperties.mallocStack(stack);
+        VkFormatProperties formatProperties = VkFormatProperties.malloc(stack);
         vkGetPhysicalDeviceFormatProperties(application.getPhysicalDevice(), format, formatProperties);
         if ((formatProperties.optimalTilingFeatures() & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0) {
             throw new RuntimeException("Texture format does not support linear blitting");
@@ -216,7 +216,7 @@ public class Texture extends Resource {
             int nextMipWidth = (mipWidth > 1) ? (mipWidth / 2) : 1;
             int nextMipHeight = (mipHeight > 1) ? (mipHeight / 2) : 1;
 
-            VkImageBlit.Buffer blit = VkImageBlit.callocStack(1, stack);
+            VkImageBlit.Buffer blit = VkImageBlit.calloc(1, stack);
             blit.srcOffsets(0).set(0, 0, 0);
             blit.srcOffsets(1).set(mipWidth, mipHeight, 1);
             blit.srcSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
@@ -294,7 +294,7 @@ public class Texture extends Resource {
         int levelCount,
         MemoryStack stack
     ) {
-        VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.callocStack(1, stack);
+        VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.calloc(1, stack);
         barrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
         barrier.image(image);
         barrier.oldLayout(getLayout(baseMipLevel));
@@ -347,7 +347,7 @@ public class Texture extends Resource {
     }
 
     public long createSeparateImageView(int viewType, int baseArrayLayer, int layerCount, MemoryStack stack) {
-        VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.callocStack(stack);
+        VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.calloc(stack);
         viewInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
         viewInfo.image(image);
         viewInfo.format(format);
@@ -370,7 +370,7 @@ public class Texture extends Resource {
     }
 
     public void createSampler(int addressMode, Integer maxAnisotropy, int borderColor, int mipMapMode, MemoryStack stack) {
-        VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.callocStack(stack);
+        VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.calloc(stack);
         samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
         samplerCreateInfo.magFilter(VK_FILTER_LINEAR);
         samplerCreateInfo.minFilter(VK_FILTER_LINEAR);

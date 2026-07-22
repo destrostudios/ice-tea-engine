@@ -53,7 +53,7 @@ public abstract class RenderJob<RPC extends RenderPipelineCreator<?, ?>> extends
 
     protected void initFrameBuffers(Function<Integer, long[]> getAttachmentsByFrameBufferIndex, int frameBuffersCount) {
         try (MemoryStack stack = stackPush()) {
-            VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.callocStack(stack);
+            VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.calloc(stack);
             framebufferCreateInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
             framebufferCreateInfo.renderPass(renderPass);
             framebufferCreateInfo.width(extent.width());
@@ -85,8 +85,8 @@ public abstract class RenderJob<RPC extends RenderPipelineCreator<?, ?>> extends
     }
 
     public VkRect2D getRenderArea(MemoryStack stack) {
-        VkRect2D renderArea = VkRect2D.callocStack(stack);
-        renderArea.offset(VkOffset2D.callocStack(stack).set(0, 0));
+        VkRect2D renderArea = VkRect2D.calloc(stack);
+        renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
         renderArea.extent(extent);
         return renderArea;
     }
@@ -256,7 +256,7 @@ public abstract class RenderJob<RPC extends RenderPipelineCreator<?, ?>> extends
 
     private int findSupportedFormat(IntBuffer formatCandidates, int tiling, int features) {
         try (MemoryStack stack = stackPush()) {
-            VkFormatProperties props = VkFormatProperties.callocStack(stack);
+            VkFormatProperties props = VkFormatProperties.calloc(stack);
             for (int i = 0; i < formatCandidates.capacity(); ++i) {
                 int format = formatCandidates.get(i);
                 vkGetPhysicalDeviceFormatProperties(application.getPhysicalDevice(), format, props);

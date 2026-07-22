@@ -40,7 +40,7 @@ public class FftButterflyComputeActionGroup extends ComputeActionGroup {
             recordComputeAction(commandBuffer, computeActions.get(1), stack);
             recordComputeAction(commandBuffer, computeActions.get(2), stack);
 
-            VkMemoryBarrier.Buffer barrier = VkMemoryBarrier.callocStack(1, stack)
+            VkMemoryBarrier.Buffer barrier = VkMemoryBarrier.calloc(1, stack)
                     .sType(VK_STRUCTURE_TYPE_MEMORY_BARRIER)
                     .srcAccessMask(VK_ACCESS_SHADER_WRITE_BIT)
                     .dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
