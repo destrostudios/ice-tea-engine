@@ -7,7 +7,6 @@ import lombok.Setter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
-import org.lwjgl.util.vma.VmaAllocationInfo;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
@@ -85,11 +84,9 @@ public class Texture extends Resource {
         VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.calloc(stack);
         allocationCreateInfo.usage(VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
-        VmaAllocationInfo allocationInfo = VmaAllocationInfo.calloc(stack);
-
         LongBuffer pImage = stack.mallocLong(1);
         PointerBuffer pImageAllocation = stack.mallocPointer(1);
-        int result = vmaCreateImage(application.getMemoryManager().getAllocator(), imageCreateInfo, allocationCreateInfo, pImage, pImageAllocation, allocationInfo);
+        int result = vmaCreateImage(application.getMemoryManager().getAllocator(), imageCreateInfo, allocationCreateInfo, pImage, pImageAllocation, null);
         if (result != VK_SUCCESS) {
             throw new RuntimeException("Failed to create image (result = " + result + ")");
         }

@@ -125,6 +125,7 @@ public abstract class RenderJob<RPC extends RenderPipelineCreator<?, ?>> extends
     protected void cleanupNativeInternal() {
         frameBuffers.forEach(frameBuffer -> vkDestroyFramebuffer(application.getLogicalDevice(), frameBuffer, null));
         vkDestroyRenderPass(application.getLogicalDevice(), renderPass, null);
+        // TODO: There should be the need to extent.free() here to avoid a tiny memory leak, however the app then crashes (so it's probably still used a bit longer elsewhere?) Might be fixable by not caching+reusing a VkExtent2D, but an internal object and building fresh VkExtent2D on-demand
         super.cleanupNativeInternal();
     }
 

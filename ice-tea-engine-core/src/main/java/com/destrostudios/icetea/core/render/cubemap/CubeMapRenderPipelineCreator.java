@@ -48,8 +48,8 @@ public class CubeMapRenderPipelineCreator extends MeshRenderPipelineCreator<Cube
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
         vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-        vertexInputInfo.pVertexBindingDescriptions(getVertexBindingDescriptions(state.getVertexSize()));
-        vertexInputInfo.pVertexAttributeDescriptions(getVertexAttributeDescriptions(state.getVertexFields()));
+        vertexInputInfo.pVertexBindingDescriptions(getVertexBindingDescriptions(state.getVertexSize(), stack));
+        vertexInputInfo.pVertexAttributeDescriptions(getVertexAttributeDescriptions(state.getVertexFields(), stack));
 
         // ===> ASSEMBLY STAGE <===
 

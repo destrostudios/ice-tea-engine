@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryUtil.memAlloc;
+import static org.lwjgl.system.MemoryUtil.memFree;
 
 public class ResizableByteBuffer extends ResizableBuffer {
 
@@ -31,8 +32,10 @@ public class ResizableByteBuffer extends ResizableBuffer {
 
     @Override
     protected void cleanupBuffer() {
-        // Nothing to do here (TODO: Check if this really is enough)
-        byteBuffer = null;
+        if (byteBuffer != null) {
+            memFree(byteBuffer);
+            byteBuffer = null;
+        }
     }
 
     @Override

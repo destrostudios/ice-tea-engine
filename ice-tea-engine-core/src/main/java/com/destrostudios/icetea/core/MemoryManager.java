@@ -46,7 +46,7 @@ public class MemoryManager {
         }
     }
 
-    public void createBuffer(long size, int bufferUsage, int memoryUsage, int memoryFlags, LongBuffer pBuffer, PointerBuffer pBufferAllocation, VmaAllocationInfo allocationInfo) {
+    public void createBuffer(long size, int bufferUsage, int memoryUsage, int memoryFlags, LongBuffer pBuffer, PointerBuffer pBufferAllocation) {
         try (MemoryStack stack = stackPush()) {
             VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.calloc(stack);
             bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
@@ -58,7 +58,7 @@ public class MemoryManager {
             allocationCreateInfo.flags(memoryFlags);
             allocationCreateInfo.usage(memoryUsage);
 
-            int result = vmaCreateBuffer(allocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pBufferAllocation, allocationInfo);
+            int result = vmaCreateBuffer(allocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pBufferAllocation, null);
             if (result != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create buffer (result = " + result + ")");
             }

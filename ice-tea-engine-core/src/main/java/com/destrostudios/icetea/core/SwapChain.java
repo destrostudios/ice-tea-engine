@@ -492,6 +492,7 @@ public class SwapChain extends NativeObject implements WindowResizeListener {
         primaryCommandPool.cleanupNative();
         imageViews.forEach(imageView -> vkDestroyImageView(application.getLogicalDevice(), imageView, null));
         vkDestroySwapchainKHR(application.getLogicalDevice(), swapChain, null);
+        // TODO: There should be the need to extent.free() here to avoid a tiny memory leak, however the app then crashes (so it's probably still used a bit longer elsewhere?) Might be fixable by not caching+reusing a VkExtent2D, but an internal object and building fresh VkExtent2D on-demand
         super.cleanupNativeInternal();
     }
 

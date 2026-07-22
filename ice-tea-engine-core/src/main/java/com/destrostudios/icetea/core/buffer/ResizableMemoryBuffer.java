@@ -4,7 +4,6 @@ import com.destrostudios.icetea.core.clone.CloneContext;
 import lombok.Getter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.vma.VmaAllocationInfo;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
@@ -29,15 +28,13 @@ public class ResizableMemoryBuffer extends ResizableBuffer {
     @Getter
     protected Long buffer;
     protected Long bufferAllocation;
-    protected VmaAllocationInfo allocationInfo;
 
     @Override
     protected void createBuffer() {
         try (MemoryStack stack = stackPush()) {
             LongBuffer pBuffer = stack.mallocLong(1);
             PointerBuffer pBufferAllocation = stack.mallocPointer(1);
-            allocationInfo = VmaAllocationInfo.calloc(stack);
-            application.getMemoryManager().createBuffer(size, bufferUsage, memoryUsage, memoryFlags, pBuffer, pBufferAllocation, allocationInfo);
+            application.getMemoryManager().createBuffer(size, bufferUsage, memoryUsage, memoryFlags, pBuffer, pBufferAllocation);
             buffer = pBuffer.get(0);
             bufferAllocation = pBufferAllocation.get(0);
         }
