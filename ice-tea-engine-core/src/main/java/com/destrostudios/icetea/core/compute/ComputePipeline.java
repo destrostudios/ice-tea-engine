@@ -41,7 +41,7 @@ public class ComputePipeline extends Pipeline {
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
             pipelineLayoutInfo.pSetLayouts(referenceComputeAction.getResourceDescriptorSet().getDescriptorSetLayouts(stack));
             if (computeActionGroup.getPushConstantsSize() > 0) {
-                VkPushConstantRange.Buffer pushConstantRange = VkPushConstantRange.calloc(1)
+                VkPushConstantRange.Buffer pushConstantRange = VkPushConstantRange.calloc(1, stack)
                         .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
                         .size(computeActionGroup.getPushConstantsSize())
                         .offset(0);
@@ -57,7 +57,7 @@ public class ComputePipeline extends Pipeline {
 
             // ===> COMPUTE PIPELINE CREATION <===
 
-            VkComputePipelineCreateInfo.Buffer computePipelineCreateInfo = VkComputePipelineCreateInfo.calloc(1)
+            VkComputePipelineCreateInfo.Buffer computePipelineCreateInfo = VkComputePipelineCreateInfo.calloc(1, stack)
                     .sType(VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO)
                     .stage(compShaderStageInfo)
                     .layout(pipelineLayout);

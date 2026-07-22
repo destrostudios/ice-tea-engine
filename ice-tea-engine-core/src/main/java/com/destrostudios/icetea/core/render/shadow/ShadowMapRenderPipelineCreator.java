@@ -157,7 +157,7 @@ public class ShadowMapRenderPipelineCreator extends EssentialGeometryRenderPipel
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
         pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
         pipelineLayoutInfo.pSetLayouts(descriptorSetLayouts);
-        VkPushConstantRange.Buffer pushConstantRange = VkPushConstantRange.calloc(1)
+        VkPushConstantRange.Buffer pushConstantRange = VkPushConstantRange.calloc(1, stack)
                 .stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
                 .size(renderJob.getPushConstants().getData().getSize())
                 .offset(0);
